@@ -30,3 +30,7 @@
     transform: rotate(360deg);
   }
 }
+
+.recharts-cartesian-axis-tick {    
+  font-size: 1.0rem;
+}

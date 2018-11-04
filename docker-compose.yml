@@ -1,6 +1,21 @@
 version: '2'
 
 services:
+  # Sanic Web Server
+  api:
+    restart: always
+    build: ./app
+    ports:
+      - 5555:80
+    links:
+      - postgres:postgres
+    depends_on:
+      - postgres
+    volumes:
+      - ./app:/app/
+    environment:
+      - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@localhost:6432/${DATABASE_NAME}
+
   # PostgreSQL database
   postgres:
     restart: always
