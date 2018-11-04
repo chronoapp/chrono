@@ -9,3 +9,5 @@ node_modules
 .venv
 .ipynb_checkpoints
 .env
+
+nlp
