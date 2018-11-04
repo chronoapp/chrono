@@ -1,0 +1,11 @@
+*.iml
+*.pycache
+__pycache__
+.idea
+node_modules
+.vscode
+
+.DS_STORE
+.venv
+.ipynb_checkpoints
+.env

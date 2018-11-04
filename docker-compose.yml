@@ -1,0 +1,18 @@
+version: '2'
+
+services:
+  # PostgreSQL database
+  postgres:
+    restart: always
+    image: sameersbn/postgresql:9.6-2
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    ports:
+      - "6432:5432"
+    environment:
+      DB_USER: ${DATABASE_USER}
+      DB_PASS: ${DATABASE_PASS}
+      DB_NAME: ${DATABASE_NAME}
+
+volumes:
+  postgres_data:   # PostgreSQL data volume
