@@ -19,7 +19,7 @@ class User(Base):
     def __init__(self, username):
         self.username = username
 
-association_table = Table('event_label', Base.metadata,
+event_label_association_table = Table('event_label', Base.metadata,
     Column('event_id', BigInteger, ForeignKey('event.id')),
     Column('label_id', Integer, ForeignKey('label.id'))
 )
@@ -33,11 +33,11 @@ class Event(Base):
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     user = relationship('User', backref=backref(
         'events', lazy='dynamic', cascade='all,delete'))
-    title = Column(String(255))
+    title = Column(String(255), index=True)
     description = Column(Text())
     start_time = Column(DateTime())
     end_time = Column(DateTime())
-    labels = relationship('Label', secondary=association_table)
+    labels = relationship('Label', lazy='joined', secondary=event_label_association_table)
 
     def __init__(self, g_id: str, title: str, description: str,
         start_time: datetime, end_time: datetime):
@@ -47,6 +47,16 @@ class Event(Base):
         self.start_time = start_time
         self.end_time = end_time
 
+    def toJson(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'start_time': self.start_time,
+            'end_time': self.start_time,
+            'labels': [l.toJson() for l in self.labels]
+        }
+
 
 class Label(Base):
     __tablename__ = 'label'
@@ -55,7 +65,22 @@ class Label(Base):
     user = relationship('User', backref=backref(
         'labels', lazy='dynamic', cascade='all,delete'))
     title = Column(String(255))
+    key = Column(String(50))
 
     def __init__(self, title):
         self.title = title
 
+    def toJson(self):
+        return {
+            'title': self.title,
+            'key': self.key
+        }
+
+# class UserEventLabel(Base):
+#     """User defined label for an event.
+#     """
+#     __tablename__ = 'user_event_label'
+#     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+#     user = relationship('User', backref=backref(
+#         'event_labels', lazy='dynamic', cascade='all,delete'))
+#     title = Column(String(255), index=True)

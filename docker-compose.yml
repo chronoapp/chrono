@@ -14,7 +14,7 @@ services:
     volumes:
       - ./app:/app/
     environment:
-      - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@localhost:6432/${DATABASE_NAME}
+      - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@postgres:5432/${DATABASE_NAME}
 
   # PostgreSQL database
   postgres:
