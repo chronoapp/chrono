@@ -27,6 +27,13 @@ async def getHealthCheck(request):
     return response.json({'data': {'healthcheck': 'OK'}})
 
 
+@app.route('/labels')
+async def getLabels(request):
+    return response.json({
+        'labels': DEFAULT_CATEGORIES
+    })
+
+
 @app.route('/stats')
 async def getUserStats(request):
     userId = request.args.get('user_id')

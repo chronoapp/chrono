@@ -76,7 +76,7 @@ class Label(Base):
             'key': self.key
         }
 
-# class UserEventLabel(Base):
+# class UserSetEventLabel(Base):
 #     """User defined label for an event.
 #     """
 #     __tablename__ = 'user_event_label'
