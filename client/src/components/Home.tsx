@@ -110,22 +110,22 @@ export class Home extends Component<Props,State> {
                 <div className="container">
                   <div className="columns is-multiline">
                     <div className="column is-5">
-                    <BarChart layout={'vertical'} width={600} height={350} data={data}
-                        margin={{top: 5, right: 30, left: 20, bottom: 5}}>
-                      <CartesianGrid strokeDasharray="3 3"/>
-                      <XAxis type="number"/>
-                      <YAxis dataKey="name" type="category"/>
-                      <Tooltip/>
-                      <Legend />
-                      <Bar dataKey="hours" />
-                    </BarChart>
+                      <BarChart layout={'vertical'} width={600} height={350} data={data}
+                          margin={{top: 5, right: 30, left: 20, bottom: 5}}>
+                        <CartesianGrid strokeDasharray="3 3"/>
+                        <XAxis type="number"/>
+                        <YAxis dataKey="name" type="category"/>
+                        <Tooltip/>
+                        <Legend />
+                        <Bar dataKey="hours" />
+                      </BarChart>
                     </div>
-                    <div className="column is-5">
-                    <PieChart width={400} height={350}>
-                      <Pie data={data} dataKey="hours" nameKey="name" label={this.renderCustomLabel} outerRadius={80}>
-                      </Pie>
-                      <Tooltip/>
-                    </PieChart>
+                    <div className="column is-5 is-offset-1">
+                      <PieChart width={400} height={350}>
+                        <Pie data={data} dataKey="hours" nameKey="name" label={this.renderCustomLabel} outerRadius={80}>
+                        </Pie>
+                        <Tooltip/>
+                      </PieChart>
                     </div>
                     <div className="card column is-5">
                       <div className="">

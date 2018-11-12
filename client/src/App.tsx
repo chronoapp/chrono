@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
 import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 import { Home } from './components/Home';
+import { EventList } from './components/EventList';
 
-import './App.css';
-import 'bulma/css/bulma.css'
+import 'font-awesome/css/font-awesome.min.css';
+import './style/index.sass'
+import './style/App.css';
 
 class App extends Component<{}, {}> {
   options: any
@@ -31,15 +33,9 @@ class App extends Component<{}, {}> {
 
           <div id="navbarBasicExample" className="navbar-menu">
             <div className="navbar-start">
-              <a className="navbar-item">
-                Trends
-              </a>
-              <a className="navbar-item">
-                Labels
-              </a>
-              <a className="navbar-item">
-                Calendar
-              </a>
+              <Link to='/'className="navbar-item">Trends</Link>
+              <Link to='/events/'className="navbar-item">Events</Link>
+              <a className="navbar-item">Calendar</a>
             </div>
 
             <div className="navbar-end">
@@ -57,6 +53,7 @@ class App extends Component<{}, {}> {
           </div>
         </nav>
         <Route path="/" exact component={Home} />
+        <Route path="/events/" component={EventList} />
         </div>
       </Router>
     );
