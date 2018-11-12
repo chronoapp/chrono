@@ -36,13 +36,13 @@ async def getUserStats(request):
         "SELECT\
             sum(EXTRACT(EPOCH FROM (end_time - start_time))),\
             (date_trunc('seconds',\
-                (start_time - timestamptz 'epoch') / {0}) * {0} + timestamptz 'epoch') as time_chunk\
+                (start_time - timestamptz 'epoch') / :seconds) * :seconds + timestamptz 'epoch') as time_chunk\
         FROM event\
-        WHERE event.user_id = {1}\
+        WHERE event.user_id = :userId\
         GROUP BY time_chunk\
-        ORDER BY time_chunk DESC".format(weekSeconds, userId)
+        ORDER BY time_chunk DESC"
 
-    result = engine.execute(text(query))
+    result = engine.execute(text(query), seconds=weekSeconds, userId=userId)
     names = []
     for row in result:
         print(row)
