@@ -3,7 +3,6 @@ version: '2'
 services:
   # Sanic Web Server
   api:
-    restart: always
     build: ./app
     ports:
       - 5555:80
@@ -18,7 +17,6 @@ services:
 
   # PostgreSQL database
   postgres:
-    restart: always
     image: sameersbn/postgresql:9.6-2
     volumes:
       - postgres_data:/var/lib/postgresql

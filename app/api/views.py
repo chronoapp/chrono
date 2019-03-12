@@ -88,7 +88,7 @@ def getUserStats():
 
 
 @app.route('/events')
-def getEvents(request):
+def getEvents():
     #TODO: use token
     userId = request.args.get('user_id')
 
@@ -153,5 +153,5 @@ class EventAPI(MethodView):
 
 
 eventApi = EventAPI.as_view('event-api')
-app.add_url_rule('/events/<int:eventId>',
-    view_func=eventApi, methods=['GET', 'PUT', 'DELETE',])
+# app.add_url_rule('/events/', defaults={'eventId': None}, view_func=eventApi, methods=['GET'])
+app.add_url_rule('/events/<int:eventId>', view_func=eventApi, methods=['GET', 'PUT', 'DELETE',])
