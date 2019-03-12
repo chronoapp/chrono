@@ -1,4 +1,4 @@
-import { CalendarEvent } from '../models/Event';
+import { CalendarEvent, EventLabel } from '../models/Event';
 
 const API_URL = 'http://localhost:5555'
 const userId = '1'; // TODO
@@ -10,6 +10,11 @@ function handleErrors(response: any) {
     return response.json();
 }
 
+export function getStats() {
+    return fetch(`${API_URL}/stats?user_id=${userId}`)
+        .then(handleErrors);
+}
+
 export function getEvents(): Promise<CalendarEvent[]> {
     return fetch(`${API_URL}/events?user_id=${userId}`)
         .then(handleErrors)
@@ -19,9 +24,20 @@ export function getEvents(): Promise<CalendarEvent[]> {
         });
 }
 
-
 export function getLabels(): Promise<string[]> {
     return fetch(`${API_URL}/labels?user_id=${userId}`)
         .then(handleErrors)
         .then(resp => resp.labels);
+}
+
+export function addLabel(eventId: number, label: EventLabel): Promise<EventLabel[]> {
+    return fetch(`${API_URL}/events/${eventId}/add_label?user_id=${userId}`, {
+        method: 'POST',
+        body: JSON.stringify({
+            'key': label.key
+        })
+    })
+        .then(handleErrors)
+        .then(resp => resp.labels.map(
+            (labelJson: any) => EventLabel.fromJson(labelJson)));
 }

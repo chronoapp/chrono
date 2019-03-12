@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import { getEvents, getLabels } from '../util/Api';
-import { CalendarEvent } from '../models/Event';
+import { getEvents, getLabels, addLabel } from '../util/Api';
+import { CalendarEvent, EventLabel } from '../models/Event';
 
 interface Props {}
 interface State {
@@ -32,19 +32,28 @@ export class EventList extends Component<Props, State> {
     }
 
     toggleAddLabelDropdown(eventId: number) {
-      return (_evt: any) => {
-        if (this.state.dropdownEventId == eventId) {
-          this.setState({dropdownEventId: 0});
-        } else {
-          this.setState({dropdownEventId: eventId})
-        }
+      if (this.state.dropdownEventId == eventId) {
+        this.setState({dropdownEventId: 0});
+      } else {
+        this.setState({dropdownEventId: eventId})
       }
+    }
+
+    addLabel(eventId: number, label: string) {
+      const { events } = this.state;
+      const event = events.filter(e => e.id == eventId)[0];
+      const newLabel = new EventLabel(label, label)
+      event.labels.push(newLabel);
+      this.setState({events});
+      this.toggleAddLabelDropdown(eventId);
+
+      addLabel(eventId, newLabel);
     }
 
     renderDropdown(eventId: number) {
       return (
         <div className={`dropdown ${eventId == this.state.dropdownEventId ? 'is-active' : ''}`}>
-          <div onClick={this.toggleAddLabelDropdown(eventId)} className="dropdown-trigger">
+          <div onClick={_evt => this.toggleAddLabelDropdown(eventId)} className="dropdown-trigger">
               <span className="icon button" aria-haspopup="true" aria-controls="dropdown-menu">
                 <i className="fa fa-plus-circle" aria-hidden="true"></i>
               </span>
@@ -52,7 +61,7 @@ export class EventList extends Component<Props, State> {
           <div className="dropdown-menu" id="dropdown-menu" role="menu">
             <div className="dropdown-content">
               {this.state.labels.map(label => 
-                <a key={label} href="#" className="dropdown-item">
+                <a onClick={_evt => this.addLabel(eventId, label)} key={label} className="dropdown-item">
                   {label}
                 </a>
               )}
@@ -92,7 +101,7 @@ export class EventList extends Component<Props, State> {
                         <th>{event.title}</th>
                         <td>
                           {event.labels.map(label => 
-                              <span className="tag">label</span>
+                              <span key={label.key} className="tag">{label.title}</span>
                           )}
                           {this.renderDropdown(event.id)}
                         </td>

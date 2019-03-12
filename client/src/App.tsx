@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { BrowserRouter as Router, Route, Link } from "react-router-dom";
-import { Home } from './components/Home';
+import { Categories } from './components/Categories';
+import { Trends } from './components/Trends';
 import { EventList } from './components/EventList';
 
 import 'font-awesome/css/font-awesome.min.css';
@@ -34,6 +35,7 @@ class App extends Component<{}, {}> {
           <div id="navbarBasicExample" className="navbar-menu">
             <div className="navbar-start">
               <Link to='/'className="navbar-item">Trends</Link>
+              <Link to='/categories/'className="navbar-item">Categories</Link>
               <Link to='/events/'className="navbar-item">Events</Link>
               <a className="navbar-item">Calendar</a>
             </div>
@@ -52,7 +54,8 @@ class App extends Component<{}, {}> {
             </div>
           </div>
         </nav>
-        <Route path="/" exact component={Home} />
+        <Route path="/" exact component={Trends} />
+        <Route path="/categories" exact component={Categories} />
         <Route path="/events/" component={EventList} />
         </div>
       </Router>

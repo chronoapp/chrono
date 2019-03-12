@@ -7,7 +7,7 @@ interface State {
     dropdownActive: boolean
 }
 
-export class Home extends Component<Props,State> {
+export class Categories extends Component<Props,State> {
 
     constructor(props: Props) {
         super(props);
@@ -55,7 +55,7 @@ export class Home extends Component<Props,State> {
               <button className="button" aria-haspopup="true" aria-controls="dropdown-menu">
                 <span>Last 7 days</span>
                 <span className="icon is-small">
-                  <i className="fas fa-angle-down" aria-hidden="true"></i>
+                  <i className="fa fa-angle-down" aria-hidden="true"></i>
                 </span>
               </button>
             </div>
