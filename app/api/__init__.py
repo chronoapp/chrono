@@ -1,17 +1,19 @@
 import os
-from sanic import Sanic
-from sanic import response
-from sanic_cors import CORS
+
+from flask import Flask
+from flask_cors import CORS
+
 import logging
 
-sanicApp = Sanic(__name__)
-sanicApp.config['CORS_AUTOMATIC_OPTIONS'] = True
-CORS(sanicApp)
+flaskApp = Flask(__name__)
+flaskApp.config['CORS_AUTOMATIC_OPTIONS'] = True
+CORS(flaskApp)
+
 
 from .views import *
 
 if __name__ == '__main__':
-    sanicApp.run(
+    flaskApp.run(
         host='0.0.0.0',
         debug=True,
         log_config=logging.DEBUG,

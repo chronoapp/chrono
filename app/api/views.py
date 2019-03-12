@@ -1,10 +1,18 @@
-from sanic import response
-from sanic.views import HTTPMethodView
-from sqlalchemy import text
+from flask import jsonify, request
+from flask.views import MethodView
+from sqlalchemy import text, func
 
-from . import sanicApp as app
+from . import flaskApp as app
 from .db import scoped_session, engine
 from .models import User, Label, Event
+
+from enum import Enum
+
+
+class TimeSpan(Enum):
+    DAILY = 1
+    DAYS_14 = 14
+    DAYS_30 = 30
 
 
 DEFAULT_CATEGORIES = ['eat', 'entertainment', 'transportation', 'work', 'exercise',
@@ -23,19 +31,19 @@ def createUser(username):
 
 
 @app.route('/')
-async def getHealthCheck(request):
-    return response.json({'data': {'healthcheck': 'OK'}})
+def getHealthCheck():
+    return jsonify({'data': {'healthcheck': 'OK'}})
 
 
 @app.route('/labels')
-async def getLabels(request):
-    return response.json({
+def getLabels():
+    return jsonify({
         'labels': DEFAULT_CATEGORIES
     })
 
 
 @app.route('/stats')
-async def getUserStats(request):
+def getUserStats():
     userId = request.args.get('user_id')
     daySeconds = 24 * 60 * 60
     weekSeconds = daySeconds * 7
@@ -44,51 +52,106 @@ async def getUserStats(request):
             sum(EXTRACT(EPOCH FROM (end_time - start_time))),\
             (date_trunc('seconds',\
                 (start_time - timestamptz 'epoch') / :seconds) * :seconds + timestamptz 'epoch') as time_chunk\
-        FROM event\
-        WHERE event.user_id = :userId\
+        FROM (\
+            SELECT\
+                event.start_time,\
+                event.end_time as end_time,\
+                label.key as label\
+            FROM event\
+            INNER JOIN event_label ON event_label.event_id = event.id\
+            INNER JOIN label ON label.id = event_label.label_id\
+            WHERE label.key = :label\
+            AND event.user_id = :userId\
+        ) as sq\
         GROUP BY time_chunk\
-        ORDER BY time_chunk DESC"
+        ORDER BY time_chunk ASC"
 
-    result = engine.execute(text(query), seconds=weekSeconds, userId=userId)
-    names = []
+    result = engine.execute(text(query),
+        seconds=weekSeconds,
+        userId=userId,
+        label='work')
+
+    labels = []
+    durations = []
     for row in result:
-        print(row)
+        duration, date = row
+        labels.append(date.strftime('%Y-%m-%d'))
+        durations.append(duration / 60.0 / 60.0)
 
     with scoped_session() as session:
         user = session.query(User).get(userId)
         results = session.query(Event)
-        return response.json({
+        return jsonify({
+            'labels': labels,
+            'values': durations
         })
 
 
 @app.route('/events')
-async def getEvents(request):
+def getEvents(request):
     #TODO: use token
     userId = request.args.get('user_id')
 
     with scoped_session() as session:
         user = session.query(User).get(userId)
-        # eventWithLabel = user.events.join(Event.labels)
-        # print(eventWithLabel.count())
         events = [e.toJson() for e in user.events.all()]
-
-        return response.json({
+        return jsonify({
             'events': events
         })
 
 
-class EventLabelView(HTTPMethodView):
-    async def get(self, request, eventId):
-        #TODO: use token
+@app.route('/events/<eventId>/add_label', methods=['POST'])
+def addEventLabel(request, eventId):
+    userId = request.args.get('user_id')
+    labelKey = request.json.get('key')
+
+    with scoped_session() as session:
+        user = session.query(User).get(userId)
+        event = user.events.filter_by(id=eventId).first()
+        label = user.labels.filter_by(key=labelKey).first()
+        event.labels.append(label)
+
+        # # Add to all events with the same title
+        # otherEvents = user.events.filter_by(title=event.title).all()
+        # for event in otherEvents:
+        #     event.labels.append(label)
+
+        return jsonify({
+            'labels': [l.toJson() for l in event.labels]
+        })
+
+
+class EventAPI(MethodView):
+    def get(self, eventId):
         userId = request.args.get('user_id')
 
         with scoped_session() as session:
             user = session.query(User).get(userId)
-            event = user.events.get(eventId)
+            event = user.events.filter_by(id=eventId).first()
             labels = event.labels.all()
 
-            return response.json({
+            return jsonify({
                 'labels': [l.toJson() for l in labels]
             })
 
-app.add_route(EventLabelView.as_view(), '/events/<eventId>/labels')
+    def put(self, eventId):
+        userId = request.args.get('user_id')
+        keys = request.json.get('keys')
+
+        with scoped_session() as session:
+            user = session.query(User).get(userId)
+            event = user.events.filter_by(id=eventId).first()
+            labels = user.labels.filter(Label.key.in_(keys)).all()
+            event.labels = labels
+
+            return jsonify({
+                'labels': [l.toJson() for l in labels]
+            })
+
+    def delete(self, eventId):
+        pass
+
+
+eventApi = EventAPI.as_view('event-api')
+app.add_url_rule('/events/<int:eventId>',
+    view_func=eventApi, methods=['GET', 'PUT', 'DELETE',])
