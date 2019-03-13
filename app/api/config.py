@@ -1,5 +1,5 @@
 import logging
-
+import os
 
 class BaseConfig(object):
     VERSION = '1.0'
@@ -13,7 +13,8 @@ class BaseConfig(object):
 
     GOOG_CLIENT_ID = '836759072617-pgtfcimhgkskl9geq9570h2gm9aqplkk.apps.googleusercontent.com'
     GOOG_CLIENT_SECRET = 'Q6NTZ7ABo3cELntZxMi2hR7a'
-
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    CORS_AUTOMATIC_OPTIONS  = True
 
 class DevelopmentConfig(BaseConfig):
     """Development configuration."""
