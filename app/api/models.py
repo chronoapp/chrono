@@ -76,11 +76,14 @@ class Label(Base):
             'key': self.key
         }
 
-# class UserSetEventLabel(Base):
-#     """User defined label for an event.
-#     """
-#     __tablename__ = 'user_event_label'
-#     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-#     user = relationship('User', backref=backref(
-#         'event_labels', lazy='dynamic', cascade='all,delete'))
-#     title = Column(String(255), index=True)
+
+class UserEventLabel(Base):
+    """User defined label for an event.
+    """
+    __tablename__ = 'user_event_label'
+    id = Column(BigInteger, primary_key=True, autoincrement=True, nullable=False)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    user = relationship('User', backref=backref(
+        'event_labels', lazy='dynamic', cascade='all,delete'))
+    title = Column(String(255), index=True)
+    label = Column(String(255))
