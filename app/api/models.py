@@ -12,6 +12,9 @@ class User(db.Model):
     def __init__(self, username):
         self.username = username
 
+    def getClassifierPath(self):
+        return f'/var/lib/model_data/{self.username}.pkl'
+
 
 event_label_association_table = Table('event_label', db.Model.metadata,
     db.Column('event_id', db.BigInteger, db.ForeignKey('event.id')),

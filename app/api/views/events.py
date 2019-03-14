@@ -1,3 +1,4 @@
+import json
 from flask.views import MethodView
 from flask import jsonify, request
 
@@ -24,7 +25,7 @@ class EventAPI(MethodView):
 
     def put(self, eventId):
         userId = request.args.get('user_id')
-        keys = request.json.get('keys')
+        keys = json.loads(request.data).get('keys')
 
         with scoped_session() as session:
             user = session.query(User).get(userId)
@@ -41,9 +42,9 @@ class EventAPI(MethodView):
 
 
 @app.route('/events/<eventId>/add_label', methods=['POST'])
-def addEventLabel(request, eventId):
+def addEventLabel(eventId):
     userId = request.args.get('user_id')
-    labelKey = request.json.get('key')
+    labelKey = json.loads(request.data).get('key')
 
     with scoped_session() as session:
         user = session.query(User).get(userId)
