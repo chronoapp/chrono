@@ -40,6 +40,27 @@ class EventAPI(MethodView):
         pass
 
 
+@app.route('/events/<eventId>/add_label', methods=['POST'])
+def addEventLabel(request, eventId):
+    userId = request.args.get('user_id')
+    labelKey = request.json.get('key')
+
+    with scoped_session() as session:
+        user = session.query(User).get(userId)
+        event = user.events.filter_by(id=eventId).first()
+        label = user.labels.filter_by(key=labelKey).first()
+        event.labels.append(label)
+
+        # # Add to all events with the same title
+        # otherEvents = user.events.filter_by(title=event.title).all()
+        # for event in otherEvents:
+        #     event.labels.append(label)
+
+        return jsonify({
+            'labels': [l.toJson() for l in event.labels]
+        })
+
+
 eventApi = EventAPI.as_view('event-api')
 # app.add_url_rule('/events/', defaults={'eventId': None}, view_func=eventApi, methods=['GET'])
 app.add_url_rule('/events/<int:eventId>', view_func=eventApi, methods=['GET', 'PUT', 'DELETE',])

@@ -97,7 +97,7 @@ def getEvents():
     with scoped_session() as session:
         user = session.query(User).get(userId)
         events = [
-            e.toJson() for e in user.events.order_by(desc(Event.end_time)).limit(50)
+            e.toJson() for e in user.events.order_by(desc(Event.end_time)).limit(100)
         ]
 
         return jsonify({
@@ -118,25 +118,4 @@ def getUnlabelledEvents():
 
         return jsonify({
             'events': list(uniqueEventTitles)
-        })
-
-
-@app.route('/events/<eventId>/add_label', methods=['POST'])
-def addEventLabel(request, eventId):
-    userId = request.args.get('user_id')
-    labelKey = request.json.get('key')
-
-    with scoped_session() as session:
-        user = session.query(User).get(userId)
-        event = user.events.filter_by(id=eventId).first()
-        label = user.labels.filter_by(key=labelKey).first()
-        event.labels.append(label)
-
-        # # Add to all events with the same title
-        # otherEvents = user.events.filter_by(title=event.title).all()
-        # for event in otherEvents:
-        #     event.labels.append(label)
-
-        return jsonify({
-            'labels': [l.toJson() for l in event.labels]
         })

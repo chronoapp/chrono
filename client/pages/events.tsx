@@ -57,9 +57,7 @@ class EventList extends Component<Props, State> {
       return (
         <div className={`dropdown ${eventId == this.state.dropdownEventId ? 'is-active' : ''}`}>
           <div onClick={_evt => this.toggleAddLabelDropdown(eventId)} className="dropdown-trigger">
-              <span className="icon button" aria-haspopup="true" aria-controls="dropdown-menu">
-                <i className="fa fa-plus-circle" aria-hidden="true"></i>
-              </span>
+            <a className="button is-text is-small">add label</a>
           </div>
           <div className="dropdown-menu" id="dropdown-menu" role="menu">
             <div className="dropdown-content">

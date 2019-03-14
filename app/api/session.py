@@ -5,7 +5,8 @@ Notes:
      and reduces noise in code by not having to manually
      commit or rollback the db if a exception occurs.
 """
-import os, warnings, logging
+
+import os
 from contextlib import contextmanager
 
 from sqlalchemy import create_engine
@@ -13,10 +14,10 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 
 engine = create_engine(os.environ['DATABASE_URL'], poolclass=NullPool)
-logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 # TODO: connect to pgbouncer
 Session = sessionmaker(bind=engine)
+
 
 @contextmanager
 def scoped_session():
@@ -24,7 +25,7 @@ def scoped_session():
     try:
         yield session
         session.commit()
-    except:
+    except Exception:
         session.rollback()
         raise
     finally:
