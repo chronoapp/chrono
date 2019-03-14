@@ -1,13 +1,14 @@
 import React, { Component } from 'react';
 import { BarChart, PieChart, Pie, Bar, XAxis, YAxis,
     CartesianGrid, Tooltip, Legend, Label, LabelList, LineChart, Line} from 'recharts';
+import Layout from '../components/Layout';
 
 interface Props {}
 interface State {
     dropdownActive: boolean
 }
 
-export class Categories extends Component<Props,State> {
+class Categories extends Component<Props,State> {
 
     constructor(props: Props) {
         super(props);
@@ -33,13 +34,13 @@ export class Categories extends Component<Props,State> {
         return (
             <LineChart width={600} height={300} data={data}
             margin={{top: 5, right: 30, left: 20, bottom: 5}}>
-            <XAxis dataKey="name"/>
-            <YAxis/>
-            <CartesianGrid strokeDasharray="3 3"/>
-            <Tooltip/>
-            <Legend />
-            <Line type="monotone" dataKey="pv" stroke="#8884d8" activeDot={{r: 8}}/>
-            <Line type="monotone" dataKey="uv" stroke="#82ca9d" />
+              <XAxis dataKey="name"/>
+              <YAxis/>
+              <CartesianGrid strokeDasharray="3 3"/>
+              <Tooltip/>
+              <Legend />
+              <Line type="monotone" dataKey="pv" stroke="#8884d8" activeDot={{r: 8}}/>
+              <Line type="monotone" dataKey="uv" stroke="#82ca9d" />
             </LineChart>
         );
     }
@@ -91,9 +92,9 @@ export class Categories extends Component<Props,State> {
             {name: 'Browsing', hours: 11 },
             {name: 'Meetups', hours: 5 },
           ];
-      
-          return (
-            <div className="App">
+
+        return (
+            <Layout>
               <section>
                 <div className="container">
                   <h1 className="title">
@@ -135,7 +136,9 @@ export class Categories extends Component<Props,State> {
                   </div>
                 </div>
               </section>
-            </div>
-          );
+            </Layout>
+        );
     }
 }
+
+export default Categories;

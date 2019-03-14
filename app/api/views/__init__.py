@@ -1,10 +1,10 @@
 from flask import jsonify, request
 from flask.views import MethodView
-from sqlalchemy import text, func
+from sqlalchemy import text, func, desc
 
-from . import flaskApp as app
-from .db import scoped_session, engine
-from .models import User, Label, Event
+from api import flaskApp as app
+from api.db import scoped_session, engine
+from api.models import User, Label, Event
 
 from enum import Enum
 
@@ -94,9 +94,26 @@ def getEvents():
 
     with scoped_session() as session:
         user = session.query(User).get(userId)
-        events = [e.toJson() for e in user.events.all()]
+        events = [e.toJson() for e in user.events.order_by(desc(Event.end_time)).all()]
+
         return jsonify({
             'events': events
+        })
+
+
+@app.route('/unlabelled_events')
+def getUnlabelledEvents():
+    """Get unique events which have not been labelled.
+    """
+    userId = request.args.get('user_id')
+    with scoped_session() as session:
+        user = session.query(User).get(userId)
+        uniqueEventTitles = set()
+        for event in user.events.all():
+            uniqueEventTitles.add(event.title)
+
+        return jsonify({
+            'events': list(uniqueEventTitles)
         })
 
 

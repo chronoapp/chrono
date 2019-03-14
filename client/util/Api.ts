@@ -1,4 +1,5 @@
 import { CalendarEvent, EventLabel } from '../models/Event';
+import 'isomorphic-unfetch';
 
 const API_URL = 'http://localhost:5555'
 const userId = '1'; // TODO
@@ -10,18 +11,17 @@ function handleErrors(response: any) {
     return response.json();
 }
 
-export function getStats() {
+export async function getStats() {
     return fetch(`${API_URL}/stats?user_id=${userId}`)
         .then(handleErrors);
 }
 
-export function getEvents(): Promise<CalendarEvent[]> {
-    return fetch(`${API_URL}/events?user_id=${userId}`)
-        .then(handleErrors)
-        .then(resp => {
-            return resp.events.map((eventJson: any) =>
-                CalendarEvent.fromJson(eventJson))
-        });
+export async function getEvents(): Promise<CalendarEvent[]> {
+    const resp = await fetch(`${API_URL}/events?user_id=${userId}`)
+        .then(handleErrors);
+
+    return resp.events.map((eventJson: any) =>
+        CalendarEvent.fromJson(eventJson))
 }
 
 export function getLabels(): Promise<string[]> {

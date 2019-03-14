@@ -1,40 +1,39 @@
-import React, { Component } from 'react';
+import * as React from 'react';
+import Layout from '../components/Layout';
 import { Line } from 'react-chartjs-2';
 import { getStats } from '../util/Api';
 
-interface Props {}
-interface State {
-    dropdownActive: boolean,
+interface Props {
     chartData: any
 }
 
-export class Trends extends Component<Props,State> {
+interface State {
+    dropdownActive: boolean
+}
 
+class Home extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
           dropdownActive: false,
-          chartData: {
-            labels: [],
-            values: [],
-          }
         }
         this.toggleDropdown = this.toggleDropdown.bind(this);      
+    }
+
+    static async getInitialProps () {
+        const resp = await getStats();
+
+        const chartData = {
+            labels: resp.labels,
+            values: resp.values,
+        }
+
+        return { chartData: chartData }
     }
 
     toggleDropdown() {
         const dropdownActive = !this.state.dropdownActive;
         this.setState({dropdownActive: dropdownActive});
-    }
-
-    componentWillMount() {
-      getStats().then(resp => {
-        const chartData = {
-          labels: resp.labels,
-          values: resp.values,
-        }
-        this.setState({chartData: chartData});
-      })
     }
 
     renderDropdown() {
@@ -63,6 +62,11 @@ export class Trends extends Component<Props,State> {
       }
 
     render() {
+        const { chartData } = this.props;
+        if (!chartData) {
+            return <div/>
+        }
+
         const options = {
             title: {
               text: "Work over Time"
@@ -93,17 +97,17 @@ export class Trends extends Component<Props,State> {
           }
 
         const data = {
-            labels: this.state.chartData.labels,
+            labels: chartData.labels,
             datasets: [{
                 label: "Time spent",
                 borderColor: '#165cad',
                 fill: false,
-                data: this.state.chartData.values,
+                data: chartData.values,
             }]
         }
 
         return (
-            <div className="App">
+            <Layout>
               <section>
                 <div className="container">
                   <h1 className="title">
@@ -137,7 +141,9 @@ export class Trends extends Component<Props,State> {
                   </div>
                 </div>
               </section>
-            </div>
+            </Layout>
         );
     }
 }
+  
+export default Home
