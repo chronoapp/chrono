@@ -1,9 +1,9 @@
 root = true
 
-[app/web/frontend/**.{js,tsx,ts}]
+[app/client/**.{js,tsx,ts}]
 indent_style = space
 indent_size = 2
 
-[app/web/**.py]
+[app/**.py]
 indent_style = space
 indent_size = 4

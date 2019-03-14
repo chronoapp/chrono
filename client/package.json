@@ -1,8 +1,8 @@
 {
   "scripts": {
-    "dev": "next -p 8080",
+    "dev": "next",
     "build": "next build",
-    "start": "next start -p 8080"
+    "start": "next start"
   },
   "dependencies": {
     "@types/react": "^16.8.7",

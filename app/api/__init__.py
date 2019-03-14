@@ -1,4 +1,4 @@
-import os
+from typing import Any
 
 from flask import Flask
 from flask_cors import CORS
@@ -8,11 +8,15 @@ from flask_sqlalchemy import SQLAlchemy
 import logging
 
 logging.basicConfig(level=logging.INFO)
-flaskApp = Flask(__name__)
-flaskApp.config.from_object('api.config.DevelopmentConfig')
-CORS(flaskApp)
-db = SQLAlchemy(flaskApp)
-Migrate(flaskApp, db)
+app = Flask(__name__)
+app.config.from_object('api.config.DevelopmentConfig')
+CORS(app)
+db: Any = SQLAlchemy(app)
+Migrate(app, db)
 
-from .views import *
+from api.views import *
 
+
+@app.cli.command()
+def get_data():
+    logging.info('OK')

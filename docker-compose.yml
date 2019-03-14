@@ -15,7 +15,7 @@ services:
       - model_data:/var/lib/model_data/
     environment:
       - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@postgres:5432/${DATABASE_NAME}
-      - FLASK_APP=api:flaskApp
+      - FLASK_APP=api:app
 
   # PostgreSQL database
   postgres:

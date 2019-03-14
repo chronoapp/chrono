@@ -35,8 +35,8 @@ export default ({ children, title = 'Timecouncil' }) => (
             <div id="navbarBasicExample" className="navbar-menu">
             <div className="navbar-start">
                 <Link href='/'><a className="navbar-item">Trends</a></Link>
-                <Link href='/categories/'><a className="navbar-item">Categories</a></Link>
-                <Link href='/events/'><a className="navbar-item">Events</a></Link>
+                <Link href='/categories'><a className="navbar-item">Categories</a></Link>
+                <Link href='/events'><a className="navbar-item">Events</a></Link>
                 <a className="navbar-item">Calendar</a>
             </div>
 

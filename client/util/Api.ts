@@ -17,20 +17,21 @@ export async function getStats() {
 }
 
 export async function getEvents(): Promise<CalendarEvent[]> {
-    const resp = await fetch(`${API_URL}/events?user_id=${userId}`)
-        .then(handleErrors);
-
-    return resp.events.map((eventJson: any) =>
-        CalendarEvent.fromJson(eventJson))
+    return fetch(`${API_URL}/events?user_id=${userId}`)
+        .then(handleErrors)
+        .then((resp) => {
+            return resp.events.map((eventJson: any) =>
+            CalendarEvent.fromJson(eventJson))
+        });
 }
 
-export function getLabels(): Promise<string[]> {
+export async function getLabels(): Promise<string[]> {
     return fetch(`${API_URL}/labels?user_id=${userId}`)
         .then(handleErrors)
         .then(resp => resp.labels);
 }
 
-export function addLabel(eventId: number, label: EventLabel): Promise<EventLabel[]> {
+export async function addLabel(eventId: number, label: EventLabel): Promise<EventLabel[]> {
     return fetch(`${API_URL}/events/${eventId}/add_label?user_id=${userId}`, {
         method: 'POST',
         body: JSON.stringify({
