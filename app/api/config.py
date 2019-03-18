@@ -12,10 +12,16 @@ class BaseConfig(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     LOG_LEVEL = logging.INFO
 
-    GOOG_CLIENT_ID = '836759072617-pgtfcimhgkskl9geq9570h2gm9aqplkk.apps.googleusercontent.com'
-    GOOG_CLIENT_SECRET = 'Q6NTZ7ABo3cELntZxMi2hR7a'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     CORS_AUTOMATIC_OPTIONS = True
+
+    PROJECT_ID = 'timecouncil'
+    APP_URL = 'http://localhost:3000'
+    API_URL = 'https://test.timecouncil.com'
+    GOOGLE_CLIENT_ID = '77797678955-052bf8kfcjblu9tf5ni8lk6ufp7dceap.apps.googleusercontent.com'
+    GOOGLE_CLIENT_SECRET = 'iAH7T1el2c8Z_Q6H6qsnIcDJ'
+
+    TOKEN_SECRET = 'Od94eZnNSZS2VO6xQtTiBET6aY8avvlR'
 
 
 class DevelopmentConfig(BaseConfig):

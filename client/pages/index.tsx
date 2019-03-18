@@ -2,6 +2,7 @@ import * as React from 'react';
 import Layout from '../components/Layout';
 import { Line } from 'react-chartjs-2';
 import { getStats } from '../util/Api';
+import Cookies from 'universal-cookie';
 
 interface Props {
     chartData: any
@@ -20,8 +21,10 @@ class Home extends React.Component<Props, State> {
         this.toggleDropdown = this.toggleDropdown.bind(this);      
     }
 
-    static async getInitialProps () {
+    static async getInitialProps({ req }) {
         const resp = await getStats();
+        const cookies = new Cookies(req.headers.cookie);
+        console.log(cookies.get('auth_token'))
 
         const chartData = {
             labels: resp.labels,

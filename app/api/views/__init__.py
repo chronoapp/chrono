@@ -1,14 +1,18 @@
+from os.path import dirname, basename, isfile
+import glob
+from enum import Enum
+
 from flask import jsonify, request
-from flask.views import MethodView
-from sqlalchemy import text, func, desc
+from sqlalchemy import text, desc
 
 from api import app
 from api.session import scoped_session, engine
 from api.models import User, Label, Event
 
-from enum import Enum
 
-from .events import *
+# Include all in this directory.
+modules = glob.glob(dirname(__file__) + "/*.py")
+__all__ = [basename(f)[:-3] for f in modules if isfile(f) and not f.endswith('__init__.py')]
 
 
 class TimeSpan(Enum):

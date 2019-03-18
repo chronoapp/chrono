@@ -1,4 +1,5 @@
 import { CalendarEvent, EventLabel } from '../models/Event';
+import { cookies } from '../util/Auth';
 import 'isomorphic-unfetch';
 
 const API_URL = 'http://localhost:5555'
@@ -10,6 +11,22 @@ function handleErrors(response: any) {
     }
     return response.json();
 }
+
+// ================== Authentication ==================
+
+export async function authenticate(
+    code: string,
+    state: string) {
+
+    return fetch(`${API_URL}/oauth/google/token`, {
+        method: 'POST',
+        body: JSON.stringify({
+            code, state
+        })
+    }).then(handleErrors);
+}
+
+// ================== Trends and Stats ==================
 
 export async function getStats() {
     return fetch(`${API_URL}/stats?user_id=${userId}`)

@@ -1,5 +1,7 @@
 from datetime import datetime
 from sqlalchemy import func, Table
+from sqlalchemy.dialects.postgresql import JSONB
+from google.oauth2.credentials import Credentials
 
 from api import db
 
@@ -9,11 +11,55 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=False)
     username = db.Column(db.String(255))
 
-    def __init__(self, username):
-        self.username = username
+    email = db.Column(db.String(255))
+    name = db.Column(db.String(255))
+    picture_url = db.Column(db.String(255))
+
+    google_oauth_state = db.Column(db.String(255), nullable=True)
+    credentials = db.relationship('UserCredential',
+        cascade='save-update, merge, delete, delete-orphan',
+        uselist=False,
+        backref='user')
+
+    def __init__(self, email, name, pictureUrl):
+        self.email = email
+        self.name = name
+        self.picture_url = pictureUrl
 
     def getClassifierPath(self):
         return f'/var/lib/model_data/{self.username}.pkl'
+
+
+class UserCredential(db.Model):
+    __tablename__ = 'user_credentials'
+    user_id = db.Column(db.Integer,
+                        db.ForeignKey('user.id'),
+                        primary_key=True)
+
+    token = db.Column(db.String(255))
+    refresh_token = db.Column(db.String(255))
+    token_uri = db.Column(db.String(255))
+    client_id = db.Column(db.String(255))
+    client_secret = db.Column(db.String(255))
+    scopes = db.Column(db.String(255))
+
+    def __init__(self, credentials: Credentials):
+        self.token = credentials.token,
+        self.refresh_token = credentials.refresh_token,
+        self.token_uri = credentials.token_uri,
+        self.client_id = credentials.client_id,
+        self.client_secret = credentials.client_secret,
+        self.scopes = credentials.scopes
+
+    def toDict(self):
+        return {
+            'token': self.token,
+            'refresh_token': self.refresh_token,
+            'token_uri': self.token_uri,
+            'client_id': self.client_id,
+            'client_secret': self.client_secret,
+            'scopes': self.scopes
+        }
 
 
 event_label_association_table = Table('event_label', db.Model.metadata,
