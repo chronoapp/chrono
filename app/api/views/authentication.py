@@ -3,7 +3,7 @@ import json
 import jwt
 import requests
 
-from flask import jsonify, request
+from flask import jsonify, request, redirect
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
@@ -49,9 +49,7 @@ def googleAuth():
         prompt='consent',
         include_granted_scopes='true')
 
-    return jsonify({
-        'url': authorization_url
-    })
+    return redirect(authorization_url)
 
 
 @app.route('/oauth/google/token', methods=['POST'])

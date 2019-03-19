@@ -23,8 +23,11 @@ class Home extends React.Component<Props, State> {
 
     static async getInitialProps({ req }) {
         const resp = await getStats();
-        const cookies = new Cookies(req.headers.cookie);
-        console.log(cookies.get('auth_token'))
+        
+        if (req) {
+          const cookies = new Cookies(req.headers.cookie);
+          console.log(cookies.get('auth_token'))
+        }
 
         const chartData = {
             labels: resp.labels,

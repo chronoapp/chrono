@@ -1,6 +1,7 @@
 import * as React from 'react';
 import Link from 'next/link'
 import Head from 'next/head'
+import { getOauthUrl } from '../util/Api';
 
 // import 'font-awesome/css/font-awesome.min.css';
 import '../style/index.sass'
@@ -43,8 +44,7 @@ export default ({ children, title = 'Timecouncil' }) => (
             <div className="navbar-end">
                 <div className="navbar-item">
                 <div className="buttons">
-                    <a className="button is-primary"><strong>Sign up</strong></a>
-                    <a className="button is-light">Log in</a>
+                    <Link href={getOauthUrl()}><a className="button is-primary"><strong>Log in</strong></a></Link>
                 </div>
                 </div>
             </div>

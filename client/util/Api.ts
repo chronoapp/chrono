@@ -1,5 +1,4 @@
 import { CalendarEvent, EventLabel } from '../models/Event';
-import { cookies } from '../util/Auth';
 import 'isomorphic-unfetch';
 
 const API_URL = 'http://localhost:5555'
@@ -13,6 +12,10 @@ function handleErrors(response: any) {
 }
 
 // ================== Authentication ==================
+
+export function getOauthUrl() {
+    return `${API_URL}/oauth/google/auth`
+}
 
 export async function authenticate(
     code: string,
