@@ -36,7 +36,7 @@ class UserCredential(db.Model):
                         db.ForeignKey('user.id'),
                         primary_key=True)
 
-    token = db.Column(db.String(255))
+    token = db.Column(db.String(255), index=True)
     refresh_token = db.Column(db.String(255))
     token_uri = db.Column(db.String(255))
     client_id = db.Column(db.String(255))

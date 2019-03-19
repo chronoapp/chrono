@@ -5,7 +5,8 @@ import { getStats } from '../util/Api';
 import Cookies from 'universal-cookie';
 
 interface Props {
-    chartData: any
+    chartData: any,
+    authToken: string
 }
 
 interface State {
@@ -21,20 +22,27 @@ class Home extends React.Component<Props, State> {
         this.toggleDropdown = this.toggleDropdown.bind(this);      
     }
 
+    static getAuthToken(req) {
+      let cookies;
+      if (req) {
+        cookies = new Cookies(req.headers.cookie);
+      } else {
+        cookies = new Cookies()
+      }
+
+      return cookies.get('auth_token');
+    }
+
     static async getInitialProps({ req }) {
-        const resp = await getStats();
-        
-        if (req) {
-          const cookies = new Cookies(req.headers.cookie);
-          console.log(cookies.get('auth_token'))
-        }
+        const authToken = Home.getAuthToken(req)
+        const resp = await getStats(authToken);
 
         const chartData = {
             labels: resp.labels,
             values: resp.values,
         }
 
-        return { chartData: chartData }
+        return { chartData, authToken }
     }
 
     toggleDropdown() {
@@ -68,9 +76,9 @@ class Home extends React.Component<Props, State> {
       }
 
     render() {
-        const { chartData } = this.props;
-        if (!chartData) {
-            return <div/>
+        const { chartData, authToken } = this.props;
+        if (!authToken) {
+            return <Layout loggedIn={false} children={null}/>
         }
 
         const options = {

@@ -81,8 +81,8 @@ def googleAuthCallback():
         user.credentials = credentials
         db.session.commit()
 
-        authToken = jwt.encode({'token': authCode},
-            app.config['TOKEN_SECRET'], algorithm='HS256')
+        authToken = jwt.encode({'token': token},
+            app.config['TOKEN_SECRET'], algorithm='HS256').decode('utf-8')
 
         return jsonify({
             'token': str(authToken)

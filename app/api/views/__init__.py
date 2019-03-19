@@ -8,7 +8,7 @@ from sqlalchemy import text, desc
 from api import app
 from api.session import scoped_session, engine
 from api.models import User, Label, Event
-
+from api.views.middleware import authorized
 
 # Include all in this directory.
 modules = glob.glob(dirname(__file__) + "/*.py")
@@ -49,6 +49,7 @@ def getLabels():
 
 
 @app.route('/stats')
+@authorized
 def getUserStats():
     userId = request.args.get('user_id')
     daySeconds = 24 * 60 * 60
@@ -57,7 +58,8 @@ def getUserStats():
         "SELECT\
             sum(EXTRACT(EPOCH FROM (end_time - start_time))),\
             (date_trunc('seconds',\
-                (start_time - timestamptz 'epoch') / :seconds) * :seconds + timestamptz 'epoch') as time_chunk\
+                (start_time - timestamptz 'epoch') / :seconds) * :seconds + timestamptz 'epoch')\
+                    as time_chunk\
         FROM (\
             SELECT\
                 event.start_time,\

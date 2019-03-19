@@ -1,5 +1,6 @@
 import { CalendarEvent, EventLabel } from '../models/Event';
 import 'isomorphic-unfetch';
+import Cookies from 'universal-cookie';
 
 const API_URL = 'http://localhost:5555'
 const userId = '1'; // TODO
@@ -17,6 +18,12 @@ export function getOauthUrl() {
     return `${API_URL}/oauth/google/auth`
 }
 
+export function signOut() {
+    // TODO: Update state after this.
+    const cookies = new Cookies();
+    cookies.remove('auth_token')
+}
+
 export async function authenticate(
     code: string,
     state: string) {
@@ -31,9 +38,11 @@ export async function authenticate(
 
 // ================== Trends and Stats ==================
 
-export async function getStats() {
-    return fetch(`${API_URL}/stats?user_id=${userId}`)
-        .then(handleErrors);
+export async function getStats(authToken: string) {
+    return fetch(`${API_URL}/stats?user_id=${userId}`, {
+        headers: { 'Authorization': authToken }
+    })
+    .then(handleErrors);
 }
 
 export async function getEvents(): Promise<CalendarEvent[]> {
