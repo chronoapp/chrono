@@ -1,7 +1,7 @@
 import jwt
 import logging
 
-from flask import request, jsonify
+from flask import request, jsonify, abort
 from functools import wraps
 
 from api import app
@@ -23,9 +23,11 @@ def authorized(route):
             if credentials:
                 user = credentials.user
                 if not user:
-                    return jsonify({}, code=403)
+                    return jsonify({'errorCode': 'UNAUTHORIZED'}), 403
 
                 request.environ['user'] = user
+        else:
+            return jsonify({'errorCode': 'UNAUTHORIZED'}), 403
 
         return route(*args, **kwargs)
 

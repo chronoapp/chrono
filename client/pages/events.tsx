@@ -91,29 +91,31 @@ class EventList extends Component<Props, State> {
 
             <section className="columns">
             <table className="table column is-8 is-offset-2">
-                <thead>
+              <thead>
                 <tr>
-                    <th>Event</th>
-                    <th>Label</th>
+                  <th>Date</th>
+                  <th>Event</th>
+                  <th>Label</th>
                 </tr>
-                </thead>
-                <tbody>
+              </thead>
+              <tbody>
                 {
-                    events.map(event => {
-                        return (
-                        <tr key={`event-${event.id}`}>
-                            <td>{event.title}</td>
-                            <td>
-                            {event.labels.map(label => 
-                                <span key={label.key} className="tag">{label.title}</span>
-                            )}
-                            {this.renderDropdown(event.id)}
-                            </td>
-                        </tr>
-                        );
-                    })
+                  events.map(event => {
+                    return (
+                      <tr key={`event-${event.id}`}>
+                          <td>{event.dayDisplay}</td>
+                          <td>{event.title}</td>
+                          <td>
+                          {event.labels.map(label => 
+                              <span key={label.key} className="tag">{label.title}</span>
+                          )}
+                          {this.renderDropdown(event.id)}
+                          </td>
+                      </tr>
+                    );
+                  })
                 }
-                </tbody>
+              </tbody>
             </table>
             </section>
         </Layout>

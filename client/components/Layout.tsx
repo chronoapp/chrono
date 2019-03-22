@@ -24,7 +24,6 @@ export default class Layout extends React.Component<Props, {}> {
                 <div className="navbar-start">
                     <Link href='/'><a className="navbar-item">Trends</a></Link>
                     <Link href='/events'><a className="navbar-item">Events</a></Link>
-                    <Link href='/categories'><a className="navbar-item">Categories</a></Link>
                     <a className="navbar-item">Calendar</a>
                 </div>
             ) : null;

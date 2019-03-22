@@ -8,7 +8,7 @@ from flask import jsonify, request
 from api.session import scoped_session
 from api.models import User, Label, Event
 from api.utils.middleware import authorized
-from api import app
+from api import app, db
 
 """For operations on the Events.
 """
@@ -23,10 +23,9 @@ class EventAPI(MethodView):
         if eventId:
             user = request.environ.get('user')
             event = user.events.filter_by(id=eventId).first()
-            labels = event.labels.all()
 
             return jsonify({
-                'labels': [l.toJson() for l in labels]
+                'event': event.toJson()
             })
 
         else:
@@ -45,9 +44,10 @@ class EventAPI(MethodView):
         event = user.events.filter_by(id=eventId).first()
         labels = user.labels.filter(Label.key.in_(keys)).all()
         event.labels = labels
+        db.session.commit()
 
         return jsonify({
-            'labels': [l.toJson() for l in labels]
+            'event': event.toJson()
         })
 
     @authorized
