@@ -2,7 +2,6 @@ import * as React from 'react';
 import Layout from '../components/Layout';
 import { Line } from 'react-chartjs-2';
 import { getTrends, getAuthToken } from '../util/Api';
-import Cookies from 'universal-cookie';
 
 interface Props {
     chartData: any,
