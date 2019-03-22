@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { getEvents, getLabels, addLabel } from '../util/Api';
+import { getAuthToken, getEvents, getLabels, addLabel } from '../util/Api';
 import { CalendarEvent, EventLabel } from '../models/Event';
 import Layout from '../components/Layout';
 
@@ -23,9 +23,10 @@ class EventList extends Component<Props, State> {
         this.toggleAddLabelDropdown = this.toggleAddLabelDropdown.bind(this);
     }
 
-    static async getInitialProps () {
-        const events = await getEvents();
-        const labels = await getLabels();
+    static async getInitialProps({req}) {
+        const authToken = getAuthToken(req);
+        const events = await getEvents(authToken);
+        const labels = await getLabels(authToken);
 
         return {
             events,
@@ -48,7 +49,8 @@ class EventList extends Component<Props, State> {
       event.labels.push(newLabel);
 
       this.toggleAddLabelDropdown(eventId);
-      addLabel(eventId, newLabel);
+      const authToken = getAuthToken();
+      addLabel(authToken, eventId, newLabel);
     }
 
     renderDropdown(eventId: number) {

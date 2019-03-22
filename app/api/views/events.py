@@ -1,9 +1,13 @@
 import json
+import logging
+
+from sqlalchemy import desc
 from flask.views import MethodView
 from flask import jsonify, request
 
 from api.session import scoped_session
-from api.models import User, Label
+from api.models import User, Label, Event
+from api.utils.middleware import authorized
 from api import app
 
 """For operations on the Events.
@@ -11,11 +15,13 @@ from api import app
 
 
 class EventAPI(MethodView):
-    def get(self, eventId):
-        userId = request.args.get('user_id')
 
-        with scoped_session() as session:
-            user = session.query(User).get(userId)
+    @authorized
+    def get(self, eventId):
+        logging.info('EventAPI::get')
+
+        if eventId:
+            user = request.environ.get('user')
             event = user.events.filter_by(id=eventId).first()
             labels = event.labels.all()
 
@@ -23,45 +29,52 @@ class EventAPI(MethodView):
                 'labels': [l.toJson() for l in labels]
             })
 
-    def put(self, eventId):
-        userId = request.args.get('user_id')
-        keys = json.loads(request.data).get('keys')
-
-        with scoped_session() as session:
-            user = session.query(User).get(userId)
-            event = user.events.filter_by(id=eventId).first()
-            labels = user.labels.filter(Label.key.in_(keys)).all()
-            event.labels = labels
+        else:
+            user = request.environ.get('user')
+            userEvents = user.events.order_by(desc(Event.end_time)).limit(100)
 
             return jsonify({
-                'labels': [l.toJson() for l in labels]
+                'events': [e.toJson() for e in userEvents]
             })
 
+    @authorized
+    def put(self, eventId):
+        user = request.environ.get('user')
+        keys = json.loads(request.data).get('keys')
+
+        event = user.events.filter_by(id=eventId).first()
+        labels = user.labels.filter(Label.key.in_(keys)).all()
+        event.labels = labels
+
+        return jsonify({
+            'labels': [l.toJson() for l in labels]
+        })
+
+    @authorized
     def delete(self, eventId):
         pass
 
 
 @app.route('/events/<eventId>/add_label', methods=['POST'])
+@authorized
 def addEventLabel(eventId):
-    userId = request.args.get('user_id')
+    user = request.environ.get('user')
     labelKey = json.loads(request.data).get('key')
 
-    with scoped_session() as session:
-        user = session.query(User).get(userId)
-        event = user.events.filter_by(id=eventId).first()
-        label = user.labels.filter_by(key=labelKey).first()
-        event.labels.append(label)
+    event = user.events.filter_by(id=eventId).first()
+    label = user.labels.filter_by(key=labelKey).first()
+    event.labels.append(label)
 
-        # # Add to all events with the same title
-        # otherEvents = user.events.filter_by(title=event.title).all()
-        # for event in otherEvents:
-        #     event.labels.append(label)
+    # # Add to all events with the same title
+    # otherEvents = user.events.filter_by(title=event.title).all()
+    # for event in otherEvents:
+    #     event.labels.append(label)
 
-        return jsonify({
-            'labels': [l.toJson() for l in event.labels]
-        })
+    return jsonify({
+        'labels': [l.toJson() for l in event.labels]
+    })
 
 
 eventApi = EventAPI.as_view('event-api')
-# app.add_url_rule('/events/', defaults={'eventId': None}, view_func=eventApi, methods=['GET'])
-app.add_url_rule('/events/<int:eventId>', view_func=eventApi, methods=['GET', 'PUT', 'DELETE',])
+app.add_url_rule('/events/', defaults={'eventId': None}, view_func=eventApi, methods=['GET'])
+app.add_url_rule('/events/<int:eventId>', view_func=eventApi, methods=['GET', 'PUT', 'DELETE'])

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Layout from '../components/Layout';
 import { Line } from 'react-chartjs-2';
-import { getStats } from '../util/Api';
+import { getTrends, getAuthToken } from '../util/Api';
 import Cookies from 'universal-cookie';
 
 interface Props {
@@ -22,20 +22,9 @@ class Home extends React.Component<Props, State> {
         this.toggleDropdown = this.toggleDropdown.bind(this);      
     }
 
-    static getAuthToken(req) {
-      let cookies;
-      if (req) {
-        cookies = new Cookies(req.headers.cookie);
-      } else {
-        cookies = new Cookies()
-      }
-
-      return cookies.get('auth_token');
-    }
-
     static async getInitialProps({ req }) {
-        const authToken = Home.getAuthToken(req)
-        const resp = await getStats(authToken);
+        const authToken = getAuthToken(req);
+        const resp = await getTrends(authToken);
 
         const chartData = {
             labels: resp.labels,

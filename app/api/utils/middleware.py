@@ -1,7 +1,7 @@
 import jwt
 import logging
 
-from flask import request
+from flask import request, jsonify
 from functools import wraps
 
 from api import app
@@ -16,14 +16,16 @@ def authorized(route):
         authToken = request.headers.get('Authorization')
 
         if authToken:
-            logging.info(authToken)
             tokenData = jwt.decode(authToken, app.config['TOKEN_SECRET'], algorithm='HS256')
             accessToken = tokenData.get('token')
 
             credentials = UserCredential.query.filter(UserCredential.token == accessToken).first()
             if credentials:
                 user = credentials.user
-                logging.info(user)
+                if not user:
+                    return jsonify({}, code=403)
+
+                request.environ['user'] = user
 
         return route(*args, **kwargs)
 
