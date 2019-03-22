@@ -30,7 +30,7 @@ class EventAPI(MethodView):
 
         else:
             user = request.environ.get('user')
-            userEvents = user.events.order_by(desc(Event.end_time)).limit(100)
+            userEvents = user.events.order_by(desc(Event.end_time)).limit(150)
 
             return jsonify({
                 'events': [e.toJson() for e in userEvents]
@@ -64,6 +64,7 @@ def addEventLabel(eventId):
     event = user.events.filter_by(id=eventId).first()
     label = user.labels.filter_by(key=labelKey).first()
     event.labels.append(label)
+    db.session.commit()
 
     # # Add to all events with the same title
     # otherEvents = user.events.filter_by(title=event.title).all()

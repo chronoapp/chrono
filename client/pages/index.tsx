@@ -23,11 +23,15 @@ class Home extends React.Component<Props, State> {
 
     static async getInitialProps({ req }) {
         const authToken = getAuthToken(req);
-        const resp = await getTrends(authToken);
+        let chartData = {}
 
-        const chartData = {
-            labels: resp.labels,
-            values: resp.values,
+        if (authToken) {
+          const resp = await getTrends(authToken);
+
+          chartData = {
+              labels: resp.labels,
+              values: resp.values,
+          }
         }
 
         return { chartData, authToken }

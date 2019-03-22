@@ -3,6 +3,7 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
+import click
 import json
 import logging
 import pickle
@@ -24,32 +25,10 @@ from api.session import scoped_session
 
 
 @app.cli.command()
-def update_events():
-    username = 'winston'
-    with scoped_session() as session:
-        user = session.query(User).filter(User.username == username).first()
-
-        with open('./scripts/events.json', 'r') as f:
-            data = json.loads(f.read())
-
-        newEvents = 0
-        for d in data:
-            google_id = d['id']
-            summary = d['summary']
-            description = d['description']
-            start = datetime.fromisoformat(d['start'])
-            end = datetime.fromisoformat(d['end'])
-            delta = end - start
-            minutes = delta.seconds / 60
-
-            existingEvent = user.events.filter(Event.g_id == google_id).first()
-
-            if not existingEvent:
-                event = Event(google_id, summary, description, start, end)
-                user.events.append(event)
-                newEvents += 1
-
-        logging.info(f'Added {newEvents} events.')
+@click.argument('username')
+def sync_cal(username):
+    from api.calendar.sync import syncGoogleCalendar
+    syncGoogleCalendar(username)
 
 
 @app.cli.command()
