@@ -3,7 +3,6 @@ import Link from 'next/link'
 import Head from 'next/head'
 import { getOauthUrl, signOut } from '../util/Api';
 
-// import 'font-awesome/css/font-awesome.min.css';
 import '../style/index.sass'
 import '../style/app.scss';
 

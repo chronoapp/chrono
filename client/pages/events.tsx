@@ -79,44 +79,57 @@ class EventList extends Component<Props, State> {
       return (
         <Layout>
             <section>
-            <div className="container">
-                <h1 className="title">
-                Event Labels
-                </h1>
-                <p className="subtitle">
-                Label my events.
-                </p>
-            </div>
+              <div className="container">
+                  <h1 className="title">
+                    Event Labels
+                  </h1>
+                  <p className="subtitle">
+                    Label my events.
+                  </p>
+              </div><br/>
             </section>
 
             <section className="columns">
-            <table className="table column is-8 is-offset-2">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Event</th>
-                  <th>Label</th>
-                </tr>
-              </thead>
-              <tbody>
-                {
-                  events.map(event => {
-                    return (
-                      <tr key={`event-${event.id}`}>
-                          <td>{event.dayDisplay}</td>
-                          <td>{event.title}</td>
-                          <td>
-                          {event.labels.map(label => 
-                              <span key={label.key} className="tag">{label.title}</span>
-                          )}
-                          {this.renderDropdown(event.id)}
-                          </td>
-                      </tr>
-                    );
-                  })
-                }
-              </tbody>
-            </table>
+              <div className="column is-7 is-offset-2">
+                <div className="field has-addons">
+                  <div className="control is-expanded">
+                    <input className="input" type="text" placeholder="Find an event"/>
+                  </div>
+                  <div className="control">
+                    <a className="button is-info">
+                      Search
+                    </a>
+                  </div>
+                </div>
+
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Event</th>
+                      <th>Label</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {
+                      events.map(event => {
+                        return (
+                          <tr key={`event-${event.id}`}>
+                              <td>{event.dayDisplay}</td>
+                              <td>{event.title}</td>
+                              <td>
+                              {event.labels.map(label => 
+                                  <span key={label.key} className="tag">{label.title}</span>
+                              )}
+                              {this.renderDropdown(event.id)}
+                              </td>
+                          </tr>
+                        );
+                      })
+                    }
+                  </tbody>
+                </table>
+              </div>
             </section>
         </Layout>
       );
