@@ -19,9 +19,9 @@ class EventAPI(MethodView):
     @authorized
     def get(self, eventId):
         logging.info('EventAPI::get')
+        user = request.environ.get('user')
 
         if eventId:
-            user = request.environ.get('user')
             event = user.events.filter_by(id=eventId).first()
 
             return jsonify({
@@ -29,8 +29,11 @@ class EventAPI(MethodView):
             })
 
         else:
-            user = request.environ.get('user')
-            userEvents = user.events.order_by(desc(Event.end_time)).limit(150)
+            query = request.args.get('query')
+            if query:
+                userEvents = Event.search(user.id, query)
+            else:
+                userEvents = user.events.order_by(desc(Event.end_time)).limit(150)
 
             return jsonify({
                 'events': [e.toJson() for e in userEvents]

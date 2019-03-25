@@ -1,9 +1,11 @@
 from datetime import datetime
-from sqlalchemy import func, Table
-from sqlalchemy.dialects.postgresql import JSONB
 from google.oauth2.credentials import Credentials
 
+from sqlalchemy import func, Table, Index, text
+from sqlalchemy.dialects.postgresql import JSONB
+
 from api import db
+from api.session import engine
 
 
 class User(db.Model):
@@ -70,7 +72,7 @@ event_label_association_table = Table('event_label', db.Model.metadata,
 
 class Event(db.Model):
     __tablename__ = 'event'
-    id = db.Column(db.BigInteger, primary_key=True, nullable=False)
+    id = db.Column(db.BigInteger, primary_key=True, nullable=False, index=True)
     g_id = db.Column(db.String(255), unique=True)
 
     # Many to one
@@ -82,6 +84,29 @@ class Event(db.Model):
     start_time = db.Column(db.DateTime())
     end_time = db.Column(db.DateTime())
     labels = db.relationship('Label', lazy='joined', secondary=event_label_association_table)
+
+    @classmethod
+    def search(cls, userId: str, searchQuery: str):
+        sqlQuery = """
+            SELECT id FROM (
+                SELECT event.*,
+                    setweight(to_tsvector('english', event.title), 'A') ||
+                    setweight(to_tsvector('english', coalesce(event.description, '')), 'B') as doc
+                FROM event
+                WHERE event.user_id = :userId
+            ) search
+            WHERE search.doc @@ to_tsquery(:query || ':*')
+            ORDER BY ts_rank(search.doc, to_tsquery(:query || ':*')) DESC
+            LIMIT 20;
+        """
+
+        rows = engine.execute(text(sqlQuery),
+                query=searchQuery,
+                userId=userId)
+
+        rowIds = [r[0] for r in rows]
+
+        return Event.query.filter(Event.id.in_(rowIds)).all()
 
     def __init__(self, g_id: str, title: str, description: str,
             start_time: datetime, end_time: datetime):

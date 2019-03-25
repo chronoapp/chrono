@@ -67,6 +67,17 @@ export async function getEvents(authToken: string): Promise<CalendarEvent[]> {
     });
 }
 
+export async function searchEvents(authToken: string, query: string): Promise<CalendarEvent[]> {
+    return fetch(`${API_URL}/events/?query=${query}`, {
+        headers: { 'Authorization': authToken }
+    })
+    .then(handleErrors)
+    .then((resp) => {
+        return resp.events.map((eventJson: any) =>
+        CalendarEvent.fromJson(eventJson))
+    });
+}
+
 export async function getLabels(authToken: string): Promise<string[]> {
     return fetch(`${API_URL}/labels`, {
         headers: { 'Authorization': authToken }

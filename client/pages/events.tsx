@@ -1,15 +1,20 @@
 import React, { Component } from 'react';
-import { getAuthToken, getEvents, getLabels, addLabel } from '../util/Api';
+import {
+  getAuthToken,
+  getEvents,
+  getLabels,
+  addLabel,
+  searchEvents } from '../util/Api';
 import { CalendarEvent, EventLabel } from '../models/Event';
 import Layout from '../components/Layout';
 
-interface Props {
-    events: CalendarEvent[]
-    labels: string[]
-}
+interface Props {}
 
 interface State {
   dropdownEventId: number
+  searchValue: string
+  events: CalendarEvent[]
+  labels: string[]
 }
 
 class EventList extends Component<Props, State> {
@@ -17,21 +22,26 @@ class EventList extends Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-          dropdownEventId: 0
+          dropdownEventId: 0,
+          searchValue: "",
+          events: [],
+          labels: []
         }
 
         this.toggleAddLabelDropdown = this.toggleAddLabelDropdown.bind(this);
+        this.onSearchChange = this.onSearchChange.bind(this);
+        this.onSearchSubmit = this.onSearchSubmit.bind(this);
     }
 
-    static async getInitialProps({req}) {
-        const authToken = getAuthToken(req);
-        const events = await getEvents(authToken);
-        const labels = await getLabels(authToken);
+    async componentWillMount() {
+      const authToken = getAuthToken();
+      const events = await getEvents(authToken);
+      const labels = await getLabels(authToken);
 
-        return {
-            events,
-            labels,
-        }
+      this.setState({
+        events,
+        labels
+      })
     }
 
     toggleAddLabelDropdown(eventId: number) {
@@ -43,8 +53,7 @@ class EventList extends Component<Props, State> {
     }
 
     addLabel(eventId: number, label: string) {
-      const { events } = this.props;
-      const event = events.filter(e => e.id == eventId)[0];
+      const event = this.state.events.filter(e => e.id == eventId)[0];
       const newLabel = new EventLabel(label, label)
       event.labels.push(newLabel);
 
@@ -54,7 +63,7 @@ class EventList extends Component<Props, State> {
     }
 
     renderDropdown(eventId: number) {
-      const { labels } = this.props;
+      const { labels } = this.state;
 
       return (
         <div className={`dropdown ${eventId == this.state.dropdownEventId ? 'is-active' : ''}`}>
@@ -74,8 +83,55 @@ class EventList extends Component<Props, State> {
       );
     }
 
+    onSearchChange(event) {
+      this.setState({searchValue: event.target.value});
+    }
+
+    onSearchSubmit() {
+      const { searchValue } = this.state;
+      searchEvents(getAuthToken(), searchValue).then((events) => {
+        this.setState({events})
+      })
+    }
+
+    renderTable() {
+      const { events } = this.state;
+      if (events.length == 0) {
+        return <div/>
+      }
+
+      return (
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Event</th>
+              <th>Label</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              events.map(event => {
+                return (
+                  <tr key={`event-${event.id}`}>
+                      <td>{event.dayDisplay}</td>
+                      <td>{event.title}</td>
+                      <td>
+                      {event.labels.map(label => 
+                          <span key={label.key} className="tag">{label.title}</span>
+                      )}
+                      {this.renderDropdown(event.id)}
+                      </td>
+                  </tr>
+                );
+              })
+            }
+          </tbody>
+        </table>
+      );
+    }
+
     render() {
-      const { events } = this.props;
       return (
         <Layout>
             <section>
@@ -90,45 +146,26 @@ class EventList extends Component<Props, State> {
             </section>
 
             <section className="columns">
-              <div className="column is-7 is-offset-2">
+              <div className="column is-8 is-offset-2">
                 <div className="field has-addons">
                   <div className="control is-expanded">
-                    <input className="input" type="text" placeholder="Find an event"/>
+                    <input
+                      className="input"
+                      type="text"
+                      value={this.state.searchValue}
+                      onChange={this.onSearchChange}
+                      placeholder="Find an event"/>
                   </div>
                   <div className="control">
-                    <a className="button is-info">
+                    <a
+                      className="button is-info"
+                      onClick={this.onSearchSubmit}>
                       Search
                     </a>
                   </div>
                 </div>
 
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Event</th>
-                      <th>Label</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {
-                      events.map(event => {
-                        return (
-                          <tr key={`event-${event.id}`}>
-                              <td>{event.dayDisplay}</td>
-                              <td>{event.title}</td>
-                              <td>
-                              {event.labels.map(label => 
-                                  <span key={label.key} className="tag">{label.title}</span>
-                              )}
-                              {this.renderDropdown(event.id)}
-                              </td>
-                          </tr>
-                        );
-                      })
-                    }
-                  </tbody>
-                </table>
+                { this.renderTable() }
               </div>
             </section>
         </Layout>
