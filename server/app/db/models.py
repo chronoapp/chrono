@@ -3,7 +3,7 @@ from google.oauth2.credentials import Credentials
 
 from sqlalchemy import Boolean, Column, Integer,\
     String, Column, ForeignKey, BigInteger, Table, Text, DateTime, text
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship, backref, Session
 
 from app.db.base_class import Base
 from app.db.session import engine
@@ -88,7 +88,7 @@ class Event(Base):
     labels = relationship('Label', lazy='joined', secondary=event_label_association_table)
 
     @classmethod
-    def search(cls, userId: str, searchQuery: str):
+    def search(cls, session: Session, userId: str, searchQuery: str, limit: int = 50):
         sqlQuery = """
             SELECT id FROM (
                 SELECT event.*,
@@ -99,16 +99,17 @@ class Event(Base):
             ) search
             WHERE search.doc @@ to_tsquery(:query || ':*')
             ORDER BY ts_rank(search.doc, to_tsquery(:query || ':*')) DESC
-            LIMIT 20;
+            LIMIT :limit;
         """
 
         rows = engine.execute(text(sqlQuery),
                 query=searchQuery,
-                userId=userId)
+                userId=userId,
+                limit=limit)
 
         rowIds = [r[0] for r in rows]
 
-        return Event.query.filter(Event.id.in_(rowIds)).all()
+        return session.query(Event).filter(Event.id.in_(rowIds)).all()
 
     def __init__(self, g_id: str, title: str, description: str,
             start_time: datetime, end_time: datetime):
