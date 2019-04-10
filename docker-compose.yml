@@ -1,27 +1,26 @@
 version: '2'
 
 services:
-  # Sanic Web Server
-  api:
-    build: ./app
+  # FastAPI / Starlette
+  fastapi:
+    build: ./server
     ports:
-      - 5555:80
+      - 8888:80
     links:
-      - postgres:postgres
+      - postgres_db:postgres
     depends_on:
-      - postgres
+      - postgres_db
     volumes:
-      - ./app:/app/
+      - ./server:/app/
       - model_data:/var/lib/model_data/
     environment:
       - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@postgres:5432/${DATABASE_NAME}
-      - FLASK_APP=api:app
 
   # PostgreSQL database
-  postgres:
-    image: sameersbn/postgresql:9.6-2
+  postgres_db:
+    image: sameersbn/postgresql:10-1
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_db_data:/var/lib/postgresql
     ports:
       - "6432:5432"
     environment:
@@ -29,6 +28,8 @@ services:
       DB_PASS: ${DATABASE_PASS}
       DB_NAME: ${DATABASE_NAME}
 
+
 volumes:
   postgres_data:   # PostgreSQL data volume
+  postgres_db_data:   # PostgreSQL data volume
   model_data:

@@ -48,6 +48,6 @@ def getUserTrends(user=Depends(get_current_user)):
         durations.append(duration / 60.0 / 60.0)
 
     return {
-        'labels': [],
-        'values': []
+        'labels': labels,
+        'values': durations
     }
