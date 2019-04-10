@@ -6,6 +6,7 @@ from googleapiclient.discovery import build
 
 from app.db.session import scoped_session
 from app.db.models import User, Event
+from app.core.logger import logger
 
 
 def syncGoogleCalendar(username, days: int = 30):
@@ -32,7 +33,7 @@ def syncGoogleCalendar(username, days: int = 30):
                 user.events.append(event)
                 newEvents += 1
 
-        print(f'Added {newEvents} events.')
+        logger.info(f'Added {newEvents} events.')
 
 
 def getEvents(service, startDaysAgo, endDaysAgo):

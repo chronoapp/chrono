@@ -138,8 +138,9 @@ class Label(Base):
     title = Column(String(255))
     key = Column(String(50))
 
-    def __init__(self, title):
+    def __init__(self, title: str, key: str):
         self.title = title
+        self.key = key
 
     def toJson(self):
         return {

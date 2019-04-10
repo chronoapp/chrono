@@ -19,9 +19,11 @@ DEFAULT_CATEGORIES = ['eat', 'entertainment', 'transportation', 'work', 'exercis
 def add_labels(username):
     with scoped_session() as session:
         user = session.query(User).filter(User.username == username).first()
+        for l in user.labels:
+            session.delete(l)
 
         for category in DEFAULT_CATEGORIES:
-            label = Label(category)
+            label = Label(category, category.lower())
             user.labels.append(label)
 
         session.add(user)
