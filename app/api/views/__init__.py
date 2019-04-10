@@ -45,9 +45,8 @@ def getHealthCheck():
 @authorized
 def getLabels():
     user = request.environ.get('user')
-
     return jsonify({
-        'labels': [l.key for l in user.labels.all()]
+        'labels': [label.toJson() for label in user.labels.all()]
     })
 
 

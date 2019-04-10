@@ -10,3 +10,16 @@ db_session = scoped_session(
     sessionmaker(autocommit=False, autoflush=False, bind=engine)
 )
 Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+@contextmanager
+def scoped_session():
+    session = Session()
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()

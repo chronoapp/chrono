@@ -2,7 +2,7 @@ from datetime import datetime
 from google.oauth2.credentials import Credentials
 
 from sqlalchemy import Boolean, Column, Integer,\
-    String, Column, ForeignKey, BigInteger, Table, Text, DateTime
+    String, Column, ForeignKey, BigInteger, Table, Text, DateTime, text
 from sqlalchemy.orm import relationship, backref
 
 from app.db.base_class import Base
@@ -37,8 +37,8 @@ class User(Base):
 class UserCredential(Base):
     __tablename__ = 'user_credentials'
     user_id = Column(Integer,
-                        ForeignKey('user.id'),
-                        primary_key=True)
+                ForeignKey('user.id'),
+                primary_key=True)
 
     token = Column(String(255), index=True)
     refresh_token = Column(String(255))
