@@ -1,5 +1,6 @@
 import * as React from 'react';
 import Layout from '../components/Layout';
+import Labels from '../components/Labels';
 import { Line } from 'react-chartjs-2';
 import { getTrends, getAuthToken } from '../util/Api';
 
@@ -12,6 +13,9 @@ interface State {
     dropdownActive: boolean
 }
 
+/**
+ * List of trends.
+ */
 class Home extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
@@ -93,7 +97,7 @@ class Home extends React.Component<Props, State> {
                   },
                   scaleLabel: {
                     display: true,
-                    labelString: 'time spent'
+                    labelString: 'Hours per 7 days'
                   }
               }]
             },
@@ -105,7 +109,7 @@ class Home extends React.Component<Props, State> {
         const data = {
             labels: chartData.labels,
             datasets: [{
-                label: "Time spent",
+                label: "Hours",
                 borderColor: '#165cad',
                 fill: false,
                 data: chartData.values,
@@ -117,32 +121,33 @@ class Home extends React.Component<Props, State> {
               <section>
                 <div className="container">
                   <h1 className="title">
-                    Time Trends
+                        Time Trends
                   </h1>
                   <p className="subtitle">
                     Activities over time.
                   </p>
                   <div className="notification columns">
-                      { this.renderDropdown() }
+                    { this.renderDropdown() }
                   </div>
-                </div>
-              </section>
 
-              <section className="section">
-                <div className="container">
                   <div className="columns">
-                    <div className="card column is-8">
-                      <div className="card-header">
-                        <p className="card-header-title">Time spent: &nbsp;<span className="has-text-grey">Work</span></p>
-                        <div className="card-header-icon" aria-label="more options">
-                        <span className="icon">
-                            <i className="fa fa-angle-down" aria-hidden="true"></i>
-                        </span>
+                    <div className="column is-3">
+                      <Labels/>
+                    </div>
+                    <div className="column is-9">
+                      <div className="card">
+                        <div className="card-header">
+                          <p className="card-header-title">Time spent: &nbsp;<span className="has-text-grey">Work</span></p>
+                          <div className="card-header-icon" aria-label="more options">
+                          <span className="icon">
+                              <i className="fa fa-angle-down" aria-hidden="true"></i>
+                          </span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="card-content">
-                        <Line data={data} options={options}/>
-                      </div>
+                        <div className="card-content">
+                          <Line data={data} options={options}/>
+                        </div>
+                    </div>
                     </div>
                   </div>
                 </div>

@@ -5,7 +5,8 @@ import {
   getLabels,
   addLabel,
   searchEvents } from '../util/Api';
-import { CalendarEvent, EventLabel } from '../models/Event';
+import { CalendarEvent } from '../models/Event';
+import { Label } from '../models/Label';
 import Layout from '../components/Layout';
 
 interface Props {}
@@ -14,7 +15,7 @@ interface State {
   dropdownEventId: number
   searchValue: string
   events: CalendarEvent[]
-  labels: string[]
+  labels: Label[]
 }
 
 class EventList extends Component<Props, State> {
@@ -54,7 +55,7 @@ class EventList extends Component<Props, State> {
 
     addLabel(eventId: number, label: string) {
       const event = this.state.events.filter(e => e.id == eventId)[0];
-      const newLabel = new EventLabel(label, label)
+      const newLabel = new Label(label, label)
       event.labels.push(newLabel);
 
       this.toggleAddLabelDropdown(eventId);
@@ -72,9 +73,9 @@ class EventList extends Component<Props, State> {
           </div>
           <div className="dropdown-menu" id="dropdown-menu" role="menu">
             <div className="dropdown-content">
-              {labels.map(label => 
-                <a onClick={_evt => this.addLabel(eventId, label)} key={label} className="dropdown-item">
-                  {label}
+              {labels.map((label) => 
+                <a onClick={_evt => this.addLabel(eventId, label.key)} key={label.key} className="dropdown-item">
+                  {label.title}
                 </a>
               )}
             </div>

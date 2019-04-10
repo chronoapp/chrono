@@ -1,6 +1,7 @@
-import { CalendarEvent, EventLabel } from '../models/Event';
 import 'isomorphic-unfetch';
 import Cookies from 'universal-cookie';
+import { CalendarEvent } from '../models/Event';
+import { Label } from '../models/Label';
 
 const API_URL = 'http://localhost:5555'
 
@@ -78,18 +79,18 @@ export async function searchEvents(authToken: string, query: string): Promise<Ca
     });
 }
 
-export async function getLabels(authToken: string): Promise<string[]> {
+export async function getLabels(authToken: string): Promise<Label[]> {
     return fetch(`${API_URL}/labels`, {
         headers: { 'Authorization': authToken }
     })
     .then(handleErrors)
-    .then(resp => resp.labels);
+    .then(resp => resp.labels.map((label) => Label.fromJson(label)))
 }
 
 export async function addLabel(
     authToken: string,
     eventId: number,
-    label: EventLabel): Promise<EventLabel[]> {
+    label: Label): Promise<Label[]> {
 
     return fetch(`${API_URL}/events/${eventId}/add_label`, {
         method: 'POST',
@@ -100,5 +101,5 @@ export async function addLabel(
     })
     .then(handleErrors)
     .then(resp => resp.labels.map(
-        (labelJson: any) => EventLabel.fromJson(labelJson)));
+        (labelJson: any) => Label.fromJson(labelJson)));
 }

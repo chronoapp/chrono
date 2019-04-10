@@ -1,17 +1,5 @@
 
-export class EventLabel {
-    title: string
-    key: string
-
-    static fromJson(labelJson: any) {
-        return new EventLabel(labelJson.title, labelJson.key);
-    }
-
-    constructor(title: string, key: string) {
-        this.title = title;
-        this.key = key;
-    }
-}
+import { Label } from './Label';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -21,7 +9,7 @@ export class CalendarEvent {
     description: string
     startTime: Date
     endTime: Date
-    labels: EventLabel[]
+    labels: Label[]
     dayDisplay: string
 
     static fromJson(eventJson: {
@@ -30,11 +18,11 @@ export class CalendarEvent {
     }): CalendarEvent {
         return new CalendarEvent(eventJson.id, eventJson.title,
             eventJson.description, new Date(eventJson.start_time), new Date(eventJson.end_time),
-            eventJson.labels.map(labelJson => EventLabel.fromJson(labelJson)));
+            eventJson.labels.map(labelJson => Label.fromJson(labelJson)));
     }
 
     constructor(id: number, title: string, description: string, startTime: Date,
-        endTime: Date, labels: EventLabel[]) {
+        endTime: Date, labels: Label[]) {
         this.id = id;
         this.title = title;
         this.description = description;
