@@ -72,6 +72,7 @@ def googleAuthCallback():
         user = User.query.filter(User.email == email).first()
         if not user:
             user = User(email, name, pictureUrl)
+            db.session.add(user)
         else:
             user.email = email
             user.name = name

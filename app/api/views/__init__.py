@@ -42,9 +42,12 @@ def getHealthCheck():
 
 
 @app.route('/labels')
+@authorized
 def getLabels():
+    user = request.environ.get('user')
+
     return jsonify({
-        'labels': DEFAULT_CATEGORIES
+        'labels': [l.key for l in user.labels.all()]
     })
 
 
