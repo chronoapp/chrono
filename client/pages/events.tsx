@@ -3,7 +3,7 @@ import {
   getAuthToken,
   getEvents,
   getLabels,
-  addLabel,
+  updateEvent,
   searchEvents } from '../util/Api';
 import { CalendarEvent } from '../models/Event';
 import { Label } from '../models/Label';
@@ -60,7 +60,8 @@ class EventList extends Component<Props, State> {
 
       this.toggleAddLabelDropdown(eventId);
       const authToken = getAuthToken();
-      addLabel(authToken, eventId, newLabel);
+
+      updateEvent(authToken, event);
     }
 
     renderDropdown(eventId: number) {

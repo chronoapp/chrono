@@ -9,7 +9,6 @@ router = APIRouter()
 
 
 class LabelVM(BaseModel):
-    id: int
     key: str
     title: str
 

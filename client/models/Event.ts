@@ -31,4 +31,15 @@ export class CalendarEvent {
         this.labels = labels;
         this.dayDisplay = `${MONTHS[this.startTime.getMonth()]} ${this.startTime.getDate()}`
     }
+
+    public toDict() {
+        return {
+            'id': this.id,
+            'title': this.title,
+            'description': this.description,
+            'start_time': this.startTime,
+            'end_time': this.endTime,
+            'labels': this.labels
+        }
+    }
 }

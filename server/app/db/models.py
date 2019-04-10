@@ -88,7 +88,7 @@ class Event(Base):
     labels = relationship('Label', lazy='joined', secondary=event_label_association_table)
 
     @classmethod
-    def search(cls, session: Session, userId: str, searchQuery: str, limit: int = 50):
+    def search(cls, session: Session, userId: str, searchQuery: str, limit: int = 100):
         sqlQuery = """
             SELECT id FROM (
                 SELECT event.*,
@@ -119,16 +119,6 @@ class Event(Base):
         self.start_time = start_time
         self.end_time = end_time
 
-    def toJson(self):
-        return {
-            'id': self.id,
-            'title': self.title,
-            'description': self.description,
-            'start_time': self.start_time,
-            'end_time': self.start_time,
-            'labels': [l.toJson() for l in self.labels]
-        }
-
 
 class Label(Base):
     __tablename__ = 'label'
@@ -142,12 +132,6 @@ class Label(Base):
     def __init__(self, title: str, key: str):
         self.title = title
         self.key = key
-
-    def toJson(self):
-        return {
-            'title': self.title,
-            'key': self.key
-        }
 
 
 class UserEventLabel(Base):

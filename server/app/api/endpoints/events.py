@@ -14,18 +14,21 @@ from app.db.models import Event, User
 router = APIRouter()
 
 
-class EventVM(BaseModel):
+class EventBaseVM(BaseModel):
     """Viewmodel for events.
     """
-    id: int
     title: str
     description: Optional[str] = None
-    start_time: str
-    end_time: str
-    labels: List[LabelVM]
+    start_time: Optional[str]
+    end_time: Optional[str]
+    labels: List[LabelVM] = []
 
 
-@router.get('/events/', response_model=List[EventVM])
+class EventInDBVM(EventBaseVM):
+    id: int
+
+
+@router.get('/events/', response_model=List[EventInDBVM])
 async def getEvents(
         query: str = "",
         limit: int = 100,
@@ -43,10 +46,42 @@ async def getEvents(
             .limit(100).all()
 
 
-@router.get('/event/{event_id}')
+@router.get('/events/{event_id}', response_model=EventInDBVM)
 async def getEvent(
         event_id: int,
         user: User = Depends(get_current_user),
         session: Session = Depends(get_db)):
 
+    logger.info(event_id)
     return user.events.filter_by(id=event_id).first()
+
+
+@router.put('/events/{event_id}', response_model=EventInDBVM)
+async def updateEvent(
+        event: EventBaseVM,
+        event_id: int,
+        user: User = Depends(get_current_user),
+        session: Session = Depends(get_db)):
+
+    eventDb = user.events.filter_by(id=event_id).first()
+    if not eventDb:
+        eventDb = Event(
+            None, event.title, event.description,
+            event.start_time, event.end_time)
+    else:
+        logger.info(event)
+        if event.title:
+            eventDb.title = event.title
+
+        if event.labels:
+            eventDb.labels.clear()
+            for label in event.labels:
+                label = user.labels.filter_by(key=label.key).first()
+                eventDb.labels.append(label)
+
+        # TODO: Update other fields.
+
+    session.commit()
+    session.refresh(eventDb)
+
+    return eventDb

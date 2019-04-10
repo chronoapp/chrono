@@ -9,7 +9,7 @@ export class Label {
     }
 
     constructor(title: string, key: string) {
-        this.title = title;
-        this.key = key;
+        this.title = title
+        this.key = key
     }
 }
