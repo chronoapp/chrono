@@ -1,7 +1,8 @@
 from fastapi import APIRouter
 
-from app.api.endpoints import healthcheck
+from app.api.endpoints import healthcheck, authentication, trends
 
 api_router = APIRouter()
 api_router.include_router(healthcheck.router)
-
+api_router.include_router(authentication.router)
+api_router.include_router(trends.router)
