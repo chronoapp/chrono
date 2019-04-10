@@ -1,9 +1,9 @@
-import logging
 from sqlalchemy import text
 from fastapi import APIRouter, Depends
 
 from app.api.utils.security import get_current_user
 from app.db.session import engine
+from app.core.logger import logger
 
 router = APIRouter()
 
@@ -11,7 +11,7 @@ router = APIRouter()
 @router.get('/trends')
 def getUserTrends(user=Depends(get_current_user)):
     userId = user.id
-    logging.info(f'getUserTrends:{userId}')
+    logger.info(f'getUserTrends:{userId}')
 
     daySeconds = 24 * 60 * 60
     weekSeconds = daySeconds * 7

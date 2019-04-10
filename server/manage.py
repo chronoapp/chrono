@@ -16,7 +16,7 @@ DEFAULT_CATEGORIES = ['eat', 'entertainment', 'transportation', 'work', 'exercis
 
 @main.command()
 @click.argument('username')
-def init(username):
+def add_labels(username):
     with scoped_session() as session:
         user = session.query(User).filter(User.username == username).first()
 
