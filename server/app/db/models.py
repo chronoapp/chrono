@@ -135,7 +135,7 @@ class Label(Base):
     def __init__(self, title: str, key: str):
         self.title = title
         self.key = key
-        self.color_hex = 'f5f5f5'
+        self.color_hex = '#f5f5f5'
 
 
 class UserEventLabel(Base):

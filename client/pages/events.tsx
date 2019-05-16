@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import tinycolor from 'tinycolor2';
 import {
   getAuthToken,
   getEvents,
@@ -53,15 +54,22 @@ class EventList extends Component<Props, State> {
       }
     }
 
-    addLabel(eventId: number, label: string) {
-      const event = this.state.events.filter(e => e.id == eventId)[0];
-      const newLabel = new Label(label, label, 'F5F5F5')
-      event.labels.push(newLabel);
+    addLabel(eventId: number, labelKey: string) {
+      const event = this.state.events.find(e => e.id == eventId);
+      if (!event) return
+      if (event.labels.find(l => l.key === labelKey)) {
+        this.toggleAddLabelDropdown(eventId);
+        return
+      }
+
+      const label = this.state.labels.find(l => l.key == labelKey);
+      if (label) {
+        event.labels.push(label);
+        const authToken = getAuthToken();
+        updateEvent(authToken, event);
+      }
 
       this.toggleAddLabelDropdown(eventId);
-      const authToken = getAuthToken();
-
-      updateEvent(authToken, event);
     }
 
     removeLabel(eventId: number, labelKey: string) {
@@ -85,8 +93,17 @@ class EventList extends Component<Props, State> {
           <div className="dropdown-menu" id="dropdown-menu" role="menu">
             <div className="dropdown-content">
               {labels.map((label) => 
-                <a onClick={_evt => this.addLabel(eventId, label.key)} key={label.key} className="dropdown-item">
-                  {label.title}
+                <a onClick={_evt => this.addLabel(eventId, label.key)} key={label.key}
+                  className="dropdown-item ">
+                  <div
+                    style={{
+                      backgroundColor: label.color_hex,
+                      display: 'inline-block',
+                      verticalAlign: 'middle'
+                    }}
+                    className="event-label">
+                  </div>
+                  <span style={{marginLeft: '.5em'}}>{label.title}</span>
                 </a>
               )}
             </div>
@@ -129,15 +146,25 @@ class EventList extends Component<Props, State> {
                       <td>{event.dayDisplay}</td>
                       <td>{event.title}</td>
                       <td>
-                      {event.labels.map(label => 
+                      {event.labels.map(label => {
+                        const labelStyle = {
+                          backgroundColor: label.color_hex,
+                          marginRight: 5,
+                          color: tinycolor(label.color_hex).getLuminance() < 0.5 ?
+                            'white': '#4a4a4a',
+                        }
+
+                        return (
                           <span
                             onClick={() => this.removeLabel(event.id, label.key)}
                             key={label.key}
-                            style={{backgroundColor: `#${label.color_hex}`, marginRight: 5}}
+                            style={labelStyle}
                             className="tag"
                           >
                             {label.title}
                           </span>
+                        )
+                      }
                       )}
                       {this.renderDropdown(event.id)}
                       </td>

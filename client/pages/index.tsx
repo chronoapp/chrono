@@ -2,13 +2,12 @@ import * as React from 'react';
 import Layout from '../components/Layout';
 import LabelPanel from '../components/LabelPanel';
 import { Line } from 'react-chartjs-2';
-import { getTrends, getAuthToken, getLabels } from '../util/Api';
+import { getTrends, getAuthToken, getLabels, putLabel } from '../util/Api';
 import { Label } from '../models/Label';
 
 interface Props {
     chartData: any,
     authToken: string,
-    labels: Label[]
 }
 
 interface State {
@@ -82,9 +81,12 @@ class Home extends React.Component<Props, State> {
 
     render() {
         const { chartData, authToken } = this.props;
+
         if (!authToken) {
             return <Layout loggedIn={false} children={null}/>
         }
+
+        const { labels } = this.state;
 
         const options = {
             title: {
@@ -141,7 +143,16 @@ class Home extends React.Component<Props, State> {
 
                   <div className="columns">
                     <div className="column is-3">
-                      <LabelPanel labels={this.state.labels}/>
+                      <LabelPanel
+                        labels={labels}
+                        updateLabel={(label) => {
+                          putLabel(label, authToken).then(label => {
+                            const replaceIdx = labels.findIndex(l => l.key == label.key);
+                            labels[replaceIdx] = label;
+                            this.setState({labels});
+                          })
+                        }}
+                      />
                     </div>
                     <div className="column is-9">
                       <div className="card">

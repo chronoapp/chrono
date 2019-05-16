@@ -76,7 +76,7 @@ export async function updateEvent(authToken, event: CalendarEvent): Promise<Cale
     return fetch(`${API_URL}/events/${event.id}`, {
         method: 'PUT',
         headers: { 'Authorization': authToken },
-        body: JSON.stringify(event.toDict())
+        body: JSON.stringify(event)
     })
     .then(handleErrors)
     .then((resp) => CalendarEvent.fromJson(resp));
@@ -99,4 +99,14 @@ export async function getLabels(authToken: string): Promise<Label[]> {
     })
     .then(handleErrors)
     .then(resp => resp.map((label) => Label.fromJson(label)))
+}
+
+export async function putLabel(label: Label, authToken: string): Promise<Label> {
+    return fetch(`${API_URL}/labels/${label.key}`, {
+        method: 'PUT',
+        body: JSON.stringify(label),
+        headers: { 'Authorization': authToken }
+    })
+    .then(handleErrors)
+    .then(Label.fromJson)
 }

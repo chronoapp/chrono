@@ -50,8 +50,16 @@ code {
   font-size: 1.0rem;
 }
 
-.event_label {
-  border-radius: 5px;
-  width: 20px;
-  height: 20px;
+.event-label {
+  border-radius: .3em;
+  width: 1.25em;
+  height: 1.25em;
+
+  &--hoverable {
+    &:hover {
+      transform: scale(1.1);
+      box-shadow: 0.05em .1em .2em 0 rgba(50,50,50,0.4);
+    }
+  }
 }
+
