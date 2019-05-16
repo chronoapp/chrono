@@ -38,11 +38,13 @@ def syncGoogleCalendar(username, days: int = 30):
 
 def getEvents(service, startDaysAgo, endDaysAgo):
     calendarList = service.calendarList().list(maxResults=10).execute()
-    calendarIds = [cal.get('id') for cal in calendarList.get('items')]
-
     eventList = []
 
-    for calId in calendarIds:
+    for calendar in calendarList.get('items'):
+        calId = calendar.get('id')
+
+        summary = calendar.get('summary')
+        print(f'Sync Calendar: {summary}')
         prev = (datetime.utcnow() - timedelta(days=startDaysAgo)).isoformat() + 'Z'
         end = (datetime.utcnow() - timedelta(days=endDaysAgo)).isoformat() + 'Z'
         eventsResult = service.events().list(

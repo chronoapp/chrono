@@ -40,7 +40,8 @@ async def getEvents(
     logger.info(f'limit:{limit}')
 
     if query:
-        return Event.search(session, user.id, query)
+        tsQuery = ' & '.join(query.split())
+        return Event.search(session, user.id, tsQuery)
     else:
         return user.events.order_by(desc(Event.end_time))\
             .limit(limit).all()
@@ -52,7 +53,6 @@ async def getEvent(
         user: User = Depends(get_current_user),
         session: Session = Depends(get_db)):
 
-    logger.info(event_id)
     return user.events.filter_by(id=event_id).first()
 
 

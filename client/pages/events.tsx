@@ -167,6 +167,11 @@ class EventList extends Component<Props, State> {
                       type="text"
                       value={this.state.searchValue}
                       onChange={this.onSearchChange}
+                      onKeyPress={(event) => {
+                        if (event.key == 'Enter') {
+                          this.onSearchSubmit();
+                        }
+                      }}
                       placeholder="Find an event"/>
                   </div>
                   <div className="control">

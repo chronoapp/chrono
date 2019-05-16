@@ -2,15 +2,18 @@ import * as React from 'react';
 import Layout from '../components/Layout';
 import Labels from '../components/Labels';
 import { Line } from 'react-chartjs-2';
-import { getTrends, getAuthToken } from '../util/Api';
+import { getTrends, getAuthToken, getLabels } from '../util/Api';
+import { Label } from '../models/Label';
 
 interface Props {
     chartData: any,
-    authToken: string
+    authToken: string,
+    labels: Label[]
 }
 
 interface State {
     dropdownActive: boolean
+    labels: Label[]
 }
 
 /**
@@ -21,6 +24,7 @@ class Home extends React.Component<Props, State> {
         super(props);
         this.state = {
           dropdownActive: false,
+          labels: []
         }
         this.toggleDropdown = this.toggleDropdown.bind(this);      
     }
@@ -31,7 +35,6 @@ class Home extends React.Component<Props, State> {
 
         if (authToken) {
           const resp = await getTrends(authToken);
-
           chartData = {
               labels: resp.labels,
               values: resp.values,
@@ -39,6 +42,12 @@ class Home extends React.Component<Props, State> {
         }
 
         return { chartData, authToken }
+    }
+
+    async componentWillMount() {
+      const authToken = getAuthToken();
+      const labels = await getLabels(authToken);
+      this.setState({labels});
     }
 
     toggleDropdown() {
@@ -132,7 +141,7 @@ class Home extends React.Component<Props, State> {
 
                   <div className="columns">
                     <div className="column is-3">
-                      <Labels/>
+                      <Labels labels={this.state.labels}/>
                     </div>
                     <div className="column is-9">
                       <div className="card">
