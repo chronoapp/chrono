@@ -2,7 +2,7 @@ version: '2'
 
 services:
   # FastAPI / Starlette
-  fastapi:
+  api:
     build: ./server
     ports:
       - 8888:80
