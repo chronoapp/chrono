@@ -104,9 +104,9 @@ class Event(Base):
         """
 
         rows = engine.execute(text(sqlQuery),
-                query=searchQuery,
-                userId=userId,
-                limit=limit)
+            query=searchQuery,
+            userId=userId,
+            limit=limit)
 
         rowIds = [r[0] for r in rows]
 
@@ -130,10 +130,12 @@ class Label(Base):
         'labels', lazy='dynamic', cascade='all,delete'))
     title = Column(String(255))
     key = Column(String(50))
+    color_hex = Column(String(50), nullable=False)
 
     def __init__(self, title: str, key: str):
         self.title = title
         self.key = key
+        self.color_hex = 'f5f5f5'
 
 
 class UserEventLabel(Base):

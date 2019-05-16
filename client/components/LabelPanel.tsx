@@ -9,7 +9,7 @@ interface IProps {
 /**
  * List of labels.
  */
-export default function Labels(props: IProps) {
+export default function LabelPanel(props: IProps) {
 
     return (
         <nav className="panel">
@@ -23,10 +23,8 @@ export default function Labels(props: IProps) {
     function getLabel(label: Label) {
         return (
             <a className={`panel-block ${false ? 'is-active' : ''}`}>
-                <span className="panel-icon">
-                    <i className="fas fa-book" aria-hidden="true"></i>
-                </span>
-                {label.title}
+                <div style={{backgroundColor: `#${label.color_hex}`}} className="event_label"></div>
+                <span style={{marginLeft: 10}}>{label.title}</span>
             </a>
         )
     }

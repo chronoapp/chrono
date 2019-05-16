@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
@@ -11,6 +11,7 @@ router = APIRouter()
 class LabelVM(BaseModel):
     key: str
     title: str
+    color_hex: str
 
 
 @router.get('/labels/', response_model=List[LabelVM])

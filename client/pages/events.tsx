@@ -55,7 +55,7 @@ class EventList extends Component<Props, State> {
 
     addLabel(eventId: number, label: string) {
       const event = this.state.events.filter(e => e.id == eventId)[0];
-      const newLabel = new Label(label, label)
+      const newLabel = new Label(label, label, 'F5F5F5')
       event.labels.push(newLabel);
 
       this.toggleAddLabelDropdown(eventId);
@@ -130,8 +130,14 @@ class EventList extends Component<Props, State> {
                       <td>{event.title}</td>
                       <td>
                       {event.labels.map(label => 
-                          <span onClick={() => this.removeLabel(event.id, label.key)}
-                            key={label.key} className="tag">{label.title}</span>
+                          <span
+                            onClick={() => this.removeLabel(event.id, label.key)}
+                            key={label.key}
+                            style={{backgroundColor: `#${label.color_hex}`, marginRight: 5}}
+                            className="tag"
+                          >
+                            {label.title}
+                          </span>
                       )}
                       {this.renderDropdown(event.id)}
                       </td>

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Layout from '../components/Layout';
-import Labels from '../components/Labels';
+import LabelPanel from '../components/LabelPanel';
 import { Line } from 'react-chartjs-2';
 import { getTrends, getAuthToken, getLabels } from '../util/Api';
 import { Label } from '../models/Label';
@@ -141,7 +141,7 @@ class Home extends React.Component<Props, State> {
 
                   <div className="columns">
                     <div className="column is-3">
-                      <Labels labels={this.state.labels}/>
+                      <LabelPanel labels={this.state.labels}/>
                     </div>
                     <div className="column is-9">
                       <div className="card">

@@ -20,6 +20,7 @@ def syncGoogleCalendar(username, days: int = 30):
         eventList = getEvents(service, days, 0)
 
         newEvents = 0
+        updatedEvents = 0
         for event in eventList:
             google_id = event['id']
             summary = event['summary']
@@ -29,10 +30,19 @@ def syncGoogleCalendar(username, days: int = 30):
 
             existingEvent = user.events.filter(Event.g_id == google_id).first()
             if not existingEvent:
+                # New event
+                newEvents += 1
                 event = Event(google_id, summary, description, start, end)
                 user.events.append(event)
-                newEvents += 1
+            else:
+                # Update Event
+                updatedEvents += 1
+                existingEvent.title = summary
+                existingEvent.description = description
+                existingEvent.start_time = start
+                existingEvent.end_time = end
 
+        logger.info(f'Updated {updatedEvents} events.')
         logger.info(f'Added {newEvents} events.')
 
 
