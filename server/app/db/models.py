@@ -3,6 +3,7 @@ from google.oauth2.credentials import Credentials
 
 from sqlalchemy import Boolean, Column, Integer,\
     String, Column, ForeignKey, BigInteger, Table, Text, DateTime, text
+from sqlalchemy import desc
 from sqlalchemy.orm import relationship, backref, Session
 
 from app.db.base_class import Base
@@ -109,7 +110,8 @@ class Event(Base):
 
         rowIds = [r[0] for r in rows]
 
-        return session.query(Event).filter(Event.id.in_(rowIds)).all()
+        return session.query(Event).filter(Event.id.in_(rowIds))\
+            .order_by(desc(Event.end_time)).all()
 
     def __init__(self, g_id: str, title: str, description: str,
             start_time: datetime, end_time: datetime):

@@ -121,7 +121,7 @@ class Home extends React.Component<Props, State> {
               <section>
                 <div className="container">
                   <h1 className="title">
-                        Time Trends
+                    Trends
                   </h1>
                   <p className="subtitle">
                     Activities over time.

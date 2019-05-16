@@ -64,6 +64,16 @@ class EventList extends Component<Props, State> {
       updateEvent(authToken, event);
     }
 
+    removeLabel(eventId: number, labelKey: string) {
+      const event = this.state.events.find(e => e.id == eventId);
+      if (event) {
+        const remainingLabels = event.labels.filter((l) => l.key !== labelKey);
+        event.labels = remainingLabels;
+        updateEvent(getAuthToken(), event);
+        this.setState({events: this.state.events});
+      }
+    }
+
     renderDropdown(eventId: number) {
       const { labels } = this.state;
 
@@ -120,7 +130,8 @@ class EventList extends Component<Props, State> {
                       <td>{event.title}</td>
                       <td>
                       {event.labels.map(label => 
-                          <span key={label.key} className="tag">{label.title}</span>
+                          <span onClick={() => this.removeLabel(event.id, label.key)}
+                            key={label.key} className="tag">{label.title}</span>
                       )}
                       {this.renderDropdown(event.id)}
                       </td>

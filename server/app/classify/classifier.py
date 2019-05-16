@@ -16,6 +16,8 @@ from app.core.logger import logger
 
 
 def updateClassifier(username: str):
+    """Updates the stored classifier.
+    """
     with scoped_session() as session:
         user = session.query(User).filter(User.username == username).first()
         labelledEvents = user.events.filter(Event.labels.any()).all()
@@ -23,25 +25,25 @@ def updateClassifier(username: str):
         eventTitles = np.array([e.title for e in labelledEvents])
         eventLabels = np.array([[l.title for l in e.labels] for e in labelledEvents])
 
-    mlb = MultiLabelBinarizer()
-    eventLabelsBin = mlb.fit_transform(eventLabels)
+        mlb = MultiLabelBinarizer()
+        eventLabelsBin = mlb.fit_transform(eventLabels)
 
-    # Classify with Linear SVC
-    classifier = Pipeline([
-        ('vectorizer', CountVectorizer(ngram_range=(1, 3))),
-        ('tfidf', TfidfTransformer()),
-        ('clf', OneVsRestClassifier(LinearSVC(multi_class="ovr")))])
+        # Classify with Linear SVC
+        classifier = Pipeline([
+            ('vectorizer', CountVectorizer(ngram_range=(1, 3))),
+            ('tfidf', TfidfTransformer()),
+            ('clf', OneVsRestClassifier(LinearSVC(multi_class="ovr")))])
 
-    classifier.fit(eventTitles, eventLabelsBin)
+        classifier.fit(eventTitles, eventLabelsBin)
 
-    pathlib.Path('/var/lib/model_data').mkdir(parents=True, exist_ok=True)
-    classifierPath = user.getClassifierPath()
-    with open(classifierPath, 'wb') as f:
-        data = {
-            'binarizer': mlb,
-            'classifier': classifier
-        }
-        pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
+        pathlib.Path('/var/lib/model_data').mkdir(parents=True, exist_ok=True)
+        classifierPath = user.getClassifierPath()
+        with open(classifierPath, 'wb') as f:
+            data = {
+                'binarizer': mlb,
+                'classifier': classifier
+            }
+            pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def classifyEvents(username: str):

@@ -43,7 +43,7 @@ async def getEvents(
         return Event.search(session, user.id, query)
     else:
         return user.events.order_by(desc(Event.end_time))\
-            .limit(100).all()
+            .limit(limit).all()
 
 
 @router.get('/events/{event_id}', response_model=EventInDBVM)
@@ -73,11 +73,10 @@ async def updateEvent(
         if event.title:
             eventDb.title = event.title
 
-        if event.labels:
-            eventDb.labels.clear()
-            for label in event.labels:
-                label = user.labels.filter_by(key=label.key).first()
-                eventDb.labels.append(label)
+        eventDb.labels.clear()
+        for label in event.labels:
+            label = user.labels.filter_by(key=label.key).first()
+            eventDb.labels.append(label)
 
         # TODO: Update other fields.
 

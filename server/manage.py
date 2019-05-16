@@ -3,6 +3,7 @@ import logging
 
 from app.db.session import scoped_session
 from app.db.models import User, Label
+from app.classify.classifier import classifyEvents, updateClassifier
 
 
 @click.group()
@@ -34,6 +35,18 @@ def add_labels(username):
 def sync_cal(username):
     from app.calendar.sync import syncGoogleCalendar
     syncGoogleCalendar(username)
+
+
+@main.command()
+@click.argument('username')
+def update_classifier(username):
+    updateClassifier(username)
+
+
+@main.command()
+@click.argument('username')
+def auto_label(username):
+    classifyEvents(username)
 
 
 if __name__ == "__main__":
