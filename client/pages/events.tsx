@@ -90,24 +90,26 @@ class EventList extends Component<Props, State> {
           <div onClick={_evt => this.toggleAddLabelDropdown(eventId)} className="dropdown-trigger">
             <a className="button is-text is-small">add label</a>
           </div>
-          <div className="dropdown-menu" id="dropdown-menu" role="menu">
-            <div className="dropdown-content">
-              {labels.map((label) => 
-                <a onClick={_evt => this.addLabel(eventId, label.key)} key={label.key}
-                  className="dropdown-item ">
-                  <div
-                    style={{
-                      backgroundColor: label.color_hex,
-                      display: 'inline-block',
-                      verticalAlign: 'middle'
-                    }}
-                    className="event-label">
-                  </div>
-                  <span style={{marginLeft: '.5em'}}>{label.title}</span>
-                </a>
-              )}
-            </div>
-          </div>
+          {eventId === this.state.dropdownEventId ? 
+            <div className="dropdown-menu" id="dropdown-menu" role="menu">
+              <div className="dropdown-content">
+                {labels.map((label) => 
+                  <a onClick={_evt => this.addLabel(eventId, label.key)} key={label.key}
+                    className="dropdown-item ">
+                    <div
+                      style={{
+                        backgroundColor: label.color_hex,
+                        display: 'inline-block',
+                        verticalAlign: 'middle'
+                      }}
+                      className="event-label">
+                    </div>
+                    <span style={{marginLeft: '.5em'}}>{label.title}</span>
+                  </a>
+                )}
+              </div>
+            </div> : null
+          }
         </div>
       );
     }
@@ -134,6 +136,7 @@ class EventList extends Component<Props, State> {
           <thead>
             <tr>
               <th>Date</th>
+              <th>Duration</th>
               <th>Event</th>
               <th>Label</th>
             </tr>
@@ -144,6 +147,7 @@ class EventList extends Component<Props, State> {
                 return (
                   <tr key={`event-${event.id}`}>
                       <td>{event.dayDisplay}</td>
+                      <td>{event.getDuration()}</td>
                       <td>{event.title}</td>
                       <td>
                       {event.labels.map(label => {

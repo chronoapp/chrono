@@ -42,4 +42,17 @@ export class CalendarEvent {
             'labels': this.labels
         }
     }
+
+    public getDuration(): string {
+        const milliseconds = this.endTime.getTime() - this.startTime.getTime();
+        const minutes = milliseconds / 1000 / 60;
+
+        if (minutes < 60) {
+            return `${minutes}m`;
+        } else {
+            const hours = Math.floor(minutes / 60);
+            const min = minutes % 60;
+            return min > 0 ? `${hours}h ${min}m` : `${hours}h`;
+        }
+    }
 }

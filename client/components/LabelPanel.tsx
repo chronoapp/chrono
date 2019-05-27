@@ -61,7 +61,7 @@ export default class LabelPanel extends React.Component<IProps, IState> {
                         onClick={_ => this.toggleLabelKeyColor(label.key)}
                         style={{backgroundColor: label.color_hex}}
                         className="event-label event-label--hoverable dropdown-trigger"></div>
-                    {this.getColorPicker()}
+                    {label.key === this.state.selectedLabelKeyColor ? this.getColorPicker() : null}
                 </div>
                 <span style={{marginLeft: 10}}>{label.title}</span>
             </a>
