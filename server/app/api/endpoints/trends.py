@@ -8,8 +8,10 @@ from app.core.logger import logger
 router = APIRouter()
 
 
-@router.get('/trends')
-def getUserTrends(user=Depends(get_current_user)):
+@router.get('/trends/{label_key}')
+def getUserTrends(
+        label_key: str,
+        user=Depends(get_current_user)):
     userId = user.id
     logger.info(f'getUserTrends:{userId}')
 
@@ -38,7 +40,7 @@ def getUserTrends(user=Depends(get_current_user)):
     result = engine.execute(text(query),
         seconds=weekSeconds,
         userId=userId,
-        label='work')
+        label=label_key)
 
     labels = []
     durations = []

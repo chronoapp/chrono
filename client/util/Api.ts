@@ -55,7 +55,7 @@ export async function authenticate(
 // TODO: Log users out if response is 403.
 
 export async function getTrends(authToken: string) {
-    return fetch(`${API_URL}/trends`, {
+    return fetch(`${API_URL}/trends/work`, {
         headers: { 'Authorization': authToken }
     })
     .then(handleErrors);

@@ -34,7 +34,7 @@ def add_labels(username):
 @click.argument('username')
 def sync_cal(username):
     from app.calendar.sync import syncGoogleCalendar
-    syncGoogleCalendar(username)
+    syncGoogleCalendar(username, 30)
 
 
 @main.command()
@@ -46,7 +46,7 @@ def update_classifier(username):
 @main.command()
 @click.argument('username')
 def auto_label(username):
-    classifyEvents(username)
+    classifyEvents(username, startDaysAgo=30)
 
 
 if __name__ == "__main__":

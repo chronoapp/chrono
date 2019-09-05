@@ -2,6 +2,7 @@ import numpy as np
 import pathlib
 import pickle
 from sqlalchemy import and_
+from datetime import datetime, timedelta
 
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer
@@ -46,7 +47,7 @@ def updateClassifier(username: str):
             pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def classifyEvents(username: str):
+def classifyEvents(username: str, startDaysAgo=365):
     with scoped_session() as session:
         user = session.query(User).filter(User.username == username).first()
 
@@ -55,7 +56,11 @@ def classifyEvents(username: str):
             classifier = data['classifier']
             mlb = data['binarizer']
 
-        unlabelledEvents = user.events.filter(and_(~Event.labels.any(), Event.title != None))
+        unlabelledEvents = user.events.filter(and_(
+            ~Event.labels.any(),
+            Event.title != None,
+            Event.start_time > datetime.utcnow() - timedelta(days=startDaysAgo)
+        ))
         eventTitles = [e.title for e in unlabelledEvents]
         predicted = mlb.inverse_transform(classifier.predict(eventTitles))
 

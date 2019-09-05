@@ -1,18 +1,20 @@
 import * as React from 'react';
 import Layout from '../components/Layout';
 import LabelPanel from '../components/LabelPanel';
-import { Line } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 import { getTrends, getAuthToken, getLabels, putLabel } from '../util/Api';
 import { Label } from '../models/Label';
 
 interface Props {
-    chartData: any,
     authToken: string,
 }
 
 interface State {
-    dropdownActive: boolean
-    labels: Label[]
+    timespanDropdownActive: boolean
+    labelDropdownActive: boolean
+    labels: Label[],
+    selectedLabel: Label | null,
+    chartData: any,
 }
 
 /**
@@ -22,65 +24,76 @@ class Home extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-          dropdownActive: false,
-          labels: []
+          timespanDropdownActive: false,
+          labelDropdownActive: false,
+          labels: [],
+          selectedLabel: null,
+          chartData: {},
         }
         this.toggleDropdown = this.toggleDropdown.bind(this);      
     }
 
     static async getInitialProps({ req }) {
         const authToken = getAuthToken(req);
-        let chartData = {}
-
-        if (authToken) {
-          const resp = await getTrends(authToken);
-          chartData = {
-              labels: resp.labels,
-              values: resp.values,
-          }
-        }
-
-        return { chartData, authToken }
+        return { authToken }
     }
 
     async componentWillMount() {
       const authToken = getAuthToken();
       const labels = await getLabels(authToken);
-      this.setState({labels});
+      const trends = await getTrends(authToken);
+      const selectedLabel = labels.length > 0 ? labels[0] : null;
+
+      const chartData = {
+          labels: trends.labels,
+          values: trends.values,
+      }
+
+      this.setState({
+        labels,
+        chartData,
+        selectedLabel
+      });
     }
 
     toggleDropdown() {
-        const dropdownActive = !this.state.dropdownActive;
-        this.setState({dropdownActive: dropdownActive});
+        const timespanDropdownActive = !this.state.timespanDropdownActive;
+        this.setState({timespanDropdownActive: timespanDropdownActive});
+    }
+
+    async handleSelectedLabelChange() {
+      const authToken = getAuthToken();
+      const trends = await getTrends(authToken);
     }
 
     renderDropdown() {
-        return (
-          <div className={`dropdown is-hoverable ${this.state.dropdownActive ? 'is-active': ''}`}>
-            <div onClick={this.toggleDropdown} className="dropdown-trigger">
-              <button className="button" aria-haspopup="true" aria-controls="dropdown-menu">
-                <span>Last 7 days</span>
-                <span className="icon is-small">
-                  <i className="fa fa-angle-down" aria-hidden="true"></i>
-                </span>
-              </button>
-            </div>
-            <div className="dropdown-menu" id="dropdown-menu" role="menu">
-              <div className="dropdown-content">
-                <a className="dropdown-item">
-                  7 days
-                </a>
-                <a className="dropdown-item">
-                  14 days
-                </a>
-              </div>
+      return (
+        <div className={`dropdown is-hoverable ${this.state.timespanDropdownActive ? 'is-active': ''}`}>
+          <div onClick={this.toggleDropdown} className="dropdown-trigger">
+            <button className="button" aria-haspopup="true" aria-controls="dropdown-menu">
+              <span>Last 7 days</span>
+              <span className="icon is-small">
+                <i className="fa fa-angle-down" aria-hidden="true"></i>
+              </span>
+            </button>
+          </div>
+          <div className="dropdown-menu" id="dropdown-menu" role="menu">
+            <div className="dropdown-content">
+              <a className="dropdown-item">
+                7 days
+              </a>
+              <a className="dropdown-item">
+                14 days
+              </a>
             </div>
           </div>
-        );
-      }
+        </div>
+      );
+    }
 
     render() {
-        const { chartData, authToken } = this.props;
+        const { authToken } = this.props;
+        const { chartData } = this.state;
 
         if (!authToken) {
             return <Layout loggedIn={false} children={null}/>
@@ -117,6 +130,8 @@ class Home extends React.Component<Props, State> {
             }
           }
 
+        const workLabel = labels.find(label => label.key === 'work')
+        const colorHex = workLabel ? workLabel.color_hex : 'white';
         const data = {
             labels: chartData.labels,
             datasets: [{
@@ -124,6 +139,7 @@ class Home extends React.Component<Props, State> {
                 borderColor: '#165cad',
                 fill: false,
                 data: chartData.values,
+                backgroundColor: colorHex,
             }]
         }
 
@@ -138,6 +154,7 @@ class Home extends React.Component<Props, State> {
                     Activities over time.
                   </p>
                   <div className="notification columns">
+                    During
                     { this.renderDropdown() }
                   </div>
 
@@ -157,7 +174,7 @@ class Home extends React.Component<Props, State> {
                     <div className="column is-9">
                       <div className="card">
                         <div className="card-header">
-                          <p className="card-header-title">Time spent: &nbsp;<span className="has-text-grey">Work</span></p>
+                          <p className="card-header-title">Time spent per week</p>
                           <div className="card-header-icon" aria-label="more options">
                           <span className="icon">
                               <i className="fa fa-angle-down" aria-hidden="true"></i>
@@ -165,7 +182,7 @@ class Home extends React.Component<Props, State> {
                           </div>
                         </div>
                         <div className="card-content">
-                          <Line data={data} options={options}/>
+                          <Bar data={data} options={options}/>
                         </div>
                     </div>
                     </div>
