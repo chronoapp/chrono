@@ -1,11 +1,57 @@
+import enum
 from sqlalchemy import text
 from fastapi import APIRouter, Depends
+from datetime import datetime, timedelta
+from dataclasses import dataclass
 
 from app.api.utils.security import get_current_user
 from app.db.session import engine
 from app.core.logger import logger
 
+DAY_SECONDS = 24 * 60 * 60
+WEEK_SECONDS = DAY_SECONDS * 7
+
 router = APIRouter()
+
+
+class TrendType(enum.Enum):
+    LAST_7_DAYS = 1
+    LAST_14_DAYS = 2
+    LAST_30_DAYS = 3
+    LAST_8_WEEKS = 4
+    LAST_16_WEEKS = 5
+    LAST_52_WEEKS = 6
+
+
+@dataclass
+class TrendConfig:
+    timeSeconds: int
+    startTime: datetime
+
+    def __init__(self, trendType: TrendType):
+        if trendType == TrendType.LAST_7_DAYS:
+            self.timeSeconds = DAY_SECONDS
+            self.startTime = datetime.now() - timedelta(days=7)
+
+        if trendType == TrendType.LAST_14_DAYS:
+            self.timeSeconds = DAY_SECONDS
+            self.startTime = datetime.now() - timedelta(days=14)
+
+        if trendType == TrendType.LAST_30_DAYS:
+            self.timeSeconds = DAY_SECONDS
+            self.startTime = datetime.now() - timedelta(days=30)
+
+        if trendType == TrendType.LAST_8_WEEKS:
+            self.timeSeconds = WEEK_SECONDS
+            self.startTime = datetime.now() - timedelta(days=8 * 7)
+
+        if trendType == TrendType.LAST_16_WEEKS:
+            self.timeSeconds = WEEK_SECONDS
+            self.startTime = datetime.now() - timedelta(days=16 * 7)
+
+        if trendType == TrendType.LAST_52_WEEKS:
+            self.timeSeconds = WEEK_SECONDS
+            self.startTime = datetime.now() - timedelta(days=52 * 7)
 
 
 @router.get('/trends/{label_key}')
@@ -15,8 +61,7 @@ def getUserTrends(
     userId = user.id
     logger.info(f'getUserTrends:{userId}')
 
-    daySeconds = 24 * 60 * 60
-    weekSeconds = daySeconds * 7
+    trendsConfig = TrendConfig(TrendType.LAST_16_WEEKS)
     query = \
         "SELECT\
             sum(EXTRACT(EPOCH FROM (end_time - start_time))),\
@@ -32,14 +77,16 @@ def getUserTrends(
             INNER JOIN event_label ON event_label.event_id = event.id\
             INNER JOIN label ON label.id = event_label.label_id\
             WHERE label.key = :label\
+            AND event.start_time >= :start_time\
             AND event.user_id = :userId\
         ) as sq\
         GROUP BY time_chunk\
         ORDER BY time_chunk ASC"
 
     result = engine.execute(text(query),
-        seconds=weekSeconds,
+        seconds=trendsConfig.timeSeconds,
         userId=userId,
+        start_time=trendsConfig.startTime,
         label=label_key)
 
     labels = []

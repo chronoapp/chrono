@@ -34,7 +34,6 @@ async def putLabel(
 
     logger.info(label)
     labelDb = user.labels.filter_by(key=label_key).first()
-    logger.info(labelDb)
 
     if not labelDb:
         labelDb = Label(label.title, label.key, label.color_hex)

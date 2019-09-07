@@ -61,11 +61,6 @@ class Home extends React.Component<Props, State> {
         this.setState({timespanDropdownActive: timespanDropdownActive});
     }
 
-    async handleSelectedLabelChange() {
-      const authToken = getAuthToken();
-      const trends = await getTrends(authToken);
-    }
-
     renderDropdown() {
       return (
         <div className={`dropdown is-hoverable ${this.state.timespanDropdownActive ? 'is-active': ''}`}>
@@ -154,7 +149,6 @@ class Home extends React.Component<Props, State> {
                     Activities over time.
                   </p>
                   <div className="notification columns">
-                    During
                     { this.renderDropdown() }
                   </div>
 
