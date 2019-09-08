@@ -138,13 +138,20 @@ class Label(Base):
         self.color_hex = '#f5f5f5'
 
 
-class UserEventLabel(Base):
-    """User defined label for an event.
+class LabelRule(Base):
+    """Rule to always add a label to the event with the title
     """
-    __tablename__ = 'user_event_label'
+    __tablename__ = 'label_rule'
     id = Column(BigInteger, primary_key=True, autoincrement=True, nullable=False)
+    text = Column(String(255), nullable=False)
+
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     user = relationship('User', backref=backref(
-        'event_labels', lazy='dynamic', cascade='all,delete'))
-    title = Column(String(255), index=True)
-    label = Column(String(255))
+        'label_rules', lazy='dynamic', cascade='all,delete'))
+
+    label_id = Column(Integer, ForeignKey('label.id'), nullable=False)
+    label = relationship('Label', backref=backref(
+        'rules', lazy='dynamic', cascade='all,delete'))
+
+    def __init__(self, text: str):
+        self.text = text
