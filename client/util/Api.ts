@@ -2,6 +2,7 @@ import 'isomorphic-unfetch';
 import Cookies from 'universal-cookie';
 import { CalendarEvent } from '../models/Event';
 import { Label } from '../models/Label';
+import { LabelRule } from '../models/LabelRule';
 
 const API_URL = 'http://localhost:8888/api/v1'
 
@@ -61,8 +62,8 @@ export async function getTrends(authToken: string) {
     .then(handleErrors);
 }
 
-export async function getEvents(authToken: string): Promise<CalendarEvent[]> {
-    return fetch(`${API_URL}/events/`, {
+export async function getEvents(authToken: string, title: string = ""): Promise<CalendarEvent[]> {
+    return fetch(`${API_URL}/events/?title=${title}`, {
         headers: { 'Authorization': authToken }
     })
     .then(handleErrors)
@@ -93,8 +94,10 @@ export async function searchEvents(authToken: string, query: string): Promise<Ca
     });
 }
 
-export async function getLabels(authToken: string): Promise<Label[]> {
-    return fetch(`${API_URL}/labels/`, {
+// Labels
+
+export async function getLabels(authToken: string, title: string = '', ): Promise<Label[]> {
+    return fetch(`${API_URL}/labels/?title=${title}`, {
         headers: { 'Authorization': authToken }
     })
     .then(handleErrors)
@@ -109,4 +112,24 @@ export async function putLabel(label: Label, authToken: string): Promise<Label> 
     })
     .then(handleErrors)
     .then(Label.fromJson)
+}
+
+// Label Rules
+
+export async function getLabelRules(labelText: string, authToken: string): Promise<LabelRule[]> {
+    return fetch(`${API_URL}/label_rules/?text=${labelText}`, {
+        headers: { 'Authorization': authToken }
+    })
+    .then(handleErrors)
+    .then(resp => resp.map((rule) => LabelRule.fromJson(rule)))
+}
+
+export async function putLabelRule(labelRule: LabelRule, authToken: string): Promise<LabelRule> {
+    return fetch(`${API_URL}/label_rules/`, {
+        method: 'PUT',
+        body: JSON.stringify(labelRule),
+        headers: { 'Authorization': authToken }
+    })
+    .then(handleErrors)
+    .then(LabelRule.fromJson)
 }

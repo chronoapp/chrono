@@ -30,6 +30,7 @@ class EventInDBVM(EventBaseVM):
 
 @router.get('/events/', response_model=List[EventInDBVM])
 async def getEvents(
+        title: str = "",
         query: str = "",
         limit: int = 100,
         user: User = Depends(get_current_user),
@@ -39,7 +40,9 @@ async def getEvents(
     logger.info(f'query:{query}')
     logger.info(f'limit:{limit}')
 
-    if query:
+    if title:
+        return user.events.filter(Event.title.ilike(title)).all()
+    elif query:
         tsQuery = ' & '.join(query.split())
         return Event.search(session, user.id, tsQuery)
     else:

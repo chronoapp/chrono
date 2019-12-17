@@ -129,7 +129,7 @@ class Label(Base):
     user = relationship('User', backref=backref(
         'labels', lazy='dynamic', cascade='all,delete'))
     title = Column(String(255))
-    key = Column(String(50))
+    key = Column(String(50), index=True)
     color_hex = Column(String(50), nullable=False)
 
     def __init__(self, title: str, key: str):
@@ -137,9 +137,13 @@ class Label(Base):
         self.key = key
         self.color_hex = '#f5f5f5'
 
+    def __repr__(self):
+        return f'<Label {self.key} {self.title}/>'
+
 
 class LabelRule(Base):
-    """Rule to always add a label to the event with the title
+    """Rule to always add a Label to the event when the title is {LabelRule.text}
+    when the calendar syncs.
     """
     __tablename__ = 'label_rule'
     id = Column(BigInteger, primary_key=True, autoincrement=True, nullable=False)

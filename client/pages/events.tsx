@@ -5,18 +5,38 @@ import {
   getEvents,
   getLabels,
   updateEvent,
-  searchEvents } from '../util/Api';
+  searchEvents,
+  getLabelRules,
+  putLabelRule,
+} from '../util/Api';
 import { CalendarEvent } from '../models/Event';
 import { Label } from '../models/Label';
+import { LabelRule } from '../models/LabelRule';
 import Layout from '../components/Layout';
 
 interface Props {}
+
+/**
+ * Data needed to apply a label to a calendar event.
+ * Either apply it to the one event, or all events.
+ */
+interface LabelRuleState {
+  addLabelRuleModalActive: boolean
+  numEvents: number
+  event: CalendarEvent
+  label: Label
+  applyAll: boolean
+}
 
 interface State {
   dropdownEventId: number
   searchValue: string
   events: CalendarEvent[]
   labels: Label[]
+
+  // Label Rule
+  addLabelRuleModalActive: boolean
+  labelRuleState: LabelRuleState | null
 }
 
 class EventList extends Component<Props, State> {
@@ -27,12 +47,15 @@ class EventList extends Component<Props, State> {
           dropdownEventId: 0,
           searchValue: "",
           events: [],
-          labels: []
+          labels: [],
+          addLabelRuleModalActive: false,
+          labelRuleState: null,
         }
 
         this.toggleAddLabelDropdown = this.toggleAddLabelDropdown.bind(this);
         this.onSearchChange = this.onSearchChange.bind(this);
-        this.onSearchSubmit = this.onSearchSubmit.bind(this);
+        this.refreshEvents = this.refreshEvents.bind(this);
+        this.applyLabelToEvent = this.applyLabelToEvent.bind(this);
     }
 
     async componentWillMount() {
@@ -54,7 +77,7 @@ class EventList extends Component<Props, State> {
       }
     }
 
-    addLabel(eventId: number, labelKey: string) {
+    async addLabel(eventId: number, labelKey: string) {
       const event = this.state.events.find(e => e.id == eventId);
       if (!event) return
       if (event.labels.find(l => l.key === labelKey)) {
@@ -62,14 +85,50 @@ class EventList extends Component<Props, State> {
         return
       }
 
+      const authToken = getAuthToken();
       const label = this.state.labels.find(l => l.key == labelKey);
-      if (label) {
-        event.labels.push(label);
-        const authToken = getAuthToken();
-        updateEvent(authToken, event);
+      if (!label) return
+
+      // If labelRule doesn't exist, add to add to all labels?
+      // TODO: rethink the UI or make it more performant
+      const labelRules = await getLabelRules(event.title, authToken)
+      const labelRuleState = {
+        event: event,
+        label: label,
+        addLabelRuleModalActive: false,
+        numEvents: 1,
+        applyAll: false
+      }
+
+      if (labelRules.length == 0) {
+        const eventsWithTitle = await getEvents(authToken, event.title)
+        labelRuleState.addLabelRuleModalActive = true
+        labelRuleState.numEvents = eventsWithTitle.length
+        this.setState({labelRuleState})
+      } else {
+        this.setState({labelRuleState})
+        this.applyLabelToEvent();
       }
 
       this.toggleAddLabelDropdown(eventId);
+    }
+
+    async applyLabelToEvent() {
+      const { labelRuleState } = this.state;
+      if (!labelRuleState) return
+      const authToken = getAuthToken();
+
+      if (labelRuleState.applyAll) {
+        const labelRule = new LabelRule(labelRuleState.event.title, labelRuleState.label.id);
+        putLabelRule(labelRule, authToken).then((_labelRule) => {
+          this.refreshEvents();
+        });        
+      } else {
+        labelRuleState.event.labels.push(labelRuleState.label);
+        updateEvent(authToken, labelRuleState.event);
+      }
+
+      this.setState({labelRuleState: null});
     }
 
     removeLabel(eventId: number, labelKey: string) {
@@ -79,6 +138,24 @@ class EventList extends Component<Props, State> {
         event.labels = remainingLabels;
         updateEvent(getAuthToken(), event);
         this.setState({events: this.state.events});
+      }
+    }
+
+    onSearchChange(event) {
+      this.setState({searchValue: event.target.value});
+    }
+
+    async refreshEvents() {
+      const { searchValue } = this.state;
+      const authToken = getAuthToken();
+      if (searchValue) {
+        searchEvents(authToken, searchValue).then((events) => {
+          this.setState({events})
+        })
+      } else {
+        getEvents(authToken).then((events) => {
+          this.setState({events})
+        })
       }
     }
 
@@ -114,15 +191,61 @@ class EventList extends Component<Props, State> {
       );
     }
 
-    onSearchChange(event) {
-      this.setState({searchValue: event.target.value});
-    }
+    renderAddLabelRuleModal() {
+      const { labelRuleState } = this.state;
+      if (!labelRuleState) {
+        return null;
+      }
 
-    onSearchSubmit() {
-      const { searchValue } = this.state;
-      searchEvents(getAuthToken(), searchValue).then((events) => {
-        this.setState({events})
-      })
+      return (
+        <div className={`modal ${labelRuleState.addLabelRuleModalActive ? 'is-active' : null}`}>
+          <div className="modal-background"></div>
+          <div className="modal-card">
+            <header className="modal-card-head">
+              <p className="modal-card-title">Add label to event</p>
+            </header>
+            <section className="modal-card-body">
+            <div className="control radio-list">
+              <label className="radio">
+                <input type="radio" name="foobar"
+                  checked={!labelRuleState.applyAll}
+                  onChange={() => {
+                    labelRuleState.applyAll = !labelRuleState.applyAll
+                    this.setState({labelRuleState})
+                  }}
+                  />
+                <span>Apply once</span>
+              </label>
+              <label className="radio">
+                <input type="radio" name="foobar"
+                  checked={labelRuleState.applyAll}
+                  onChange={() => {
+                    labelRuleState.applyAll = !labelRuleState.applyAll
+                    this.setState({labelRuleState})
+                  }}
+                />
+                <span>
+                  Apply to <b>{labelRuleState.numEvents}</b> events and future events with title <b>{labelRuleState.event.title}</b>.
+                </span>
+              </label>
+            </div>
+            </section>
+            <footer className="modal-card-foot">
+              <button className="button is-success"
+                onClick={this.applyLabelToEvent}>
+                  Apply
+              </button>
+              <button className="button"
+                onClick={() => {
+                  labelRuleState.addLabelRuleModalActive = false;
+                  this.setState({labelRuleState})}
+              }>
+                Cancel
+              </button>
+            </footer>
+          </div>
+        </div>
+      )
     }
 
     renderTable() {
@@ -206,7 +329,7 @@ class EventList extends Component<Props, State> {
                       onChange={this.onSearchChange}
                       onKeyPress={(event) => {
                         if (event.key == 'Enter') {
-                          this.onSearchSubmit();
+                          this.refreshEvents();
                         }
                       }}
                       placeholder="Find an event"/>
@@ -214,12 +337,12 @@ class EventList extends Component<Props, State> {
                   <div className="control">
                     <a
                       className="button is-info"
-                      onClick={this.onSearchSubmit}>
+                      onClick={this.refreshEvents}>
                       Search
                     </a>
                   </div>
                 </div>
-
+                { this.renderAddLabelRuleModal() }
                 { this.renderTable() }
               </div>
             </section>
