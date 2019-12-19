@@ -159,3 +159,6 @@ class LabelRule(Base):
 
     def __init__(self, text: str):
         self.text = text
+
+    def __repr__(self):
+        return f'<LabelRule {self.text} {self.label.title}>'

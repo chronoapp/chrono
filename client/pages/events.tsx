@@ -225,7 +225,7 @@ class EventList extends Component<Props, State> {
                   }}
                 />
                 <span>
-                  Apply to <b>{labelRuleState.numEvents}</b> events and future events with title <b>{labelRuleState.event.title}</b>.
+                  Apply to all <b>{labelRuleState.numEvents}</b> events with title <b>{labelRuleState.event.title}</b>.
                 </span>
               </label>
             </div>

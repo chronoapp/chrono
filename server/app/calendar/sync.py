@@ -5,7 +5,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 from app.db.session import scoped_session
-from app.db.models import User, Event
+from app.db.models import User, Event, LabelRule
 from app.core.logger import logger
 
 
@@ -28,8 +28,8 @@ def syncGoogleCalendar(username, days: int = 30):
             start = datetime.fromisoformat(event['start'])
             end = datetime.fromisoformat(event['end'])
 
-            existingEvent = user.events.filter(Event.g_id == google_id).first()
-            if not existingEvent:
+            event = user.events.filter(Event.g_id == google_id).first()
+            if not event:
                 # New event
                 newEvents += 1
                 event = Event(google_id, summary, description, start, end)
@@ -37,10 +37,17 @@ def syncGoogleCalendar(username, days: int = 30):
             else:
                 # Update Event
                 updatedEvents += 1
-                existingEvent.title = summary
-                existingEvent.description = description
-                existingEvent.start_time = start
-                existingEvent.end_time = end
+                event.title = summary
+                event.description = description
+                event.start_time = start
+                event.end_time = end
+
+            # Auto Labelling
+            if event.title:
+                labelRules = user.label_rules.filter(LabelRule.text.ilike(event.title))
+                for rule in labelRules:
+                    if not rule.label in event.labels:
+                        event.labels.append(rule.label)
 
         logger.info(f'Updated {updatedEvents} events.')
         logger.info(f'Added {newEvents} events.')
