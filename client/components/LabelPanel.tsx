@@ -1,4 +1,8 @@
 import * as React from 'react';
+import Icon from '@mdi/react'
+import { mdiDotsHorizontal } from '@mdi/js'
+
+import Hoverable from '../core/Hoverable';
 import { Label } from '../models/Label';
 import { getSortedLabelColors } from '../models/LabelColors';
 
@@ -55,16 +59,26 @@ export default class LabelPanel extends React.Component<IProps, IState> {
 
     private getLabel(label: Label) {
         return (
-            <a key={label.key} className={`panel-block ${false ? 'is-active' : ''}`}>
-                <div className={`dropdown ${label.key === this.state.selectedLabelKeyColor ? 'is-active' : ''}`}>
-                    <div
-                        onClick={_ => this.toggleLabelKeyColor(label.key)}
-                        style={{backgroundColor: label.color_hex}}
-                        className="event-label event-label--hoverable dropdown-trigger"></div>
-                    {label.key === this.state.selectedLabelKeyColor ? this.getColorPicker() : null}
-                </div>
-                <span style={{marginLeft: 10}}>{label.title}</span>
-            </a>
+            <Hoverable>
+                {(isMouseInside, mouseEnter, mouseLeave) => (
+                <a onMouseEnter={mouseEnter} onMouseLeave={mouseLeave} key={label.key}
+                    className={`panel-block ${false ? 'is-active' : ''}`}>
+                    <div className={`dropdown ${label.key === this.state.selectedLabelKeyColor ? 'is-active' : ''}`}>
+                        <div
+                            onClick={_ => this.toggleLabelKeyColor(label.key)}
+                            style={{backgroundColor: label.color_hex}}
+                            className="event-label event-label--hoverable dropdown-trigger"></div>
+                        {label.key === this.state.selectedLabelKeyColor ? this.getColorPicker() : null}
+                    </div>
+                    <span style={{marginLeft: 10}}>{label.title}</span>
+                    {isMouseInside ? <Icon path={mdiDotsHorizontal}
+                        style={{marginLeft: 'auto'}}
+                        size={1}
+                        horizontal
+                        vertical/>: null}
+                </a>
+                )}
+            </Hoverable>
         )
     }
 
