@@ -10,7 +10,7 @@ class LabelColor {
     }
 }
 
-const LABEL_COLORS = [
+export const LABEL_COLORS = [
     new LabelColor('grey', '#f5f5f5'),
     new LabelColor('tomato', '#ff6347'),
     new LabelColor('flamingo', '#fc8eac'),

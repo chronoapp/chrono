@@ -1,12 +1,22 @@
 import * as React from 'react';
-import Layout from '../components/Layout';
-import LabelPanel from '../components/LabelPanel';
+import Icon from '@mdi/react'
+import { mdiPlus } from '@mdi/js'
 import { Bar } from 'react-chartjs-2';
+
+import Layout from '../components/Layout';
+import ColorPicker from '../components/ColorPicker';
+import LabelPanel from '../components/LabelPanel';
 import { getTrends, getAuthToken, getLabels, putLabel } from '../util/Api';
 import { Label } from '../models/Label';
+import { LABEL_COLORS } from '../models/LabelColors';
 
 interface Props {
     authToken: string,
+    label: Label
+}
+
+interface ProjectModalState {
+  modalActive: boolean;
 }
 
 interface State {
@@ -15,6 +25,8 @@ interface State {
     labels: Label[],
     selectedLabel: Label | null,
     chartData: any,
+
+    projectModal: ProjectModalState | null,
 }
 
 /**
@@ -29,8 +41,12 @@ class Home extends React.Component<Props, State> {
           labels: [],
           selectedLabel: null,
           chartData: {},
+
+          projectModal: null,
         }
+
         this.toggleDropdown = this.toggleDropdown.bind(this);      
+        this.onClickAddProject = this.onClickAddProject.bind(this);
     }
 
     static async getInitialProps({ req }) {
@@ -54,6 +70,15 @@ class Home extends React.Component<Props, State> {
         chartData,
         selectedLabel
       });
+    }
+
+    onClickAddProject() {
+      const labelHex = LABEL_COLORS[0].hex;
+      const projectModal = {
+        modalActive: true,
+        label: new Label(-1, '', '', labelHex),
+      }
+      this.setState({projectModal});
     }
 
     toggleDropdown() {
@@ -141,6 +166,8 @@ class Home extends React.Component<Props, State> {
         return (
             <Layout>
               <section>
+                {this.renderProjectLabelModal()}
+
                 <div className="container">
                   <h1 className="title">
                     Trends
@@ -164,6 +191,15 @@ class Home extends React.Component<Props, State> {
                           })
                         }}
                       />
+                      <button
+                        className="button is-white"
+                        onClick={this.onClickAddProject}>
+                          <Icon path={mdiPlus}
+                              size={1}
+                              horizontal
+                              vertical/>
+                          Add Project
+                      </button>
                     </div>
                     <div className="column is-9">
                       <div className="card">
@@ -185,6 +221,52 @@ class Home extends React.Component<Props, State> {
               </section>
             </Layout>
         );
+    }
+
+    renderProjectLabelModal() {
+      const { projectModal } = this.state;
+      if (!projectModal) {
+        return null;
+      }
+
+      return (
+        <div className={`modal ${projectModal.modalActive ? 'is-active' : null}`}>
+          <div className="modal-background"></div>
+          <div className="modal-card">
+            <header className="modal-card-head">
+              <p className="modal-card-title">Add Project</p>
+            </header>
+            <section className="modal-card-body">
+              <div className="field">
+                <div className="control">
+                  <label className="label">Project Name</label>
+                  <input className="input" type="text" placeholder=""/>
+                </div>
+              </div>
+              <div className="field">
+                <div className="control">
+                  <label className="label">Color</label>
+                  <div
+                    onClick={_ => {}}
+                    style={{backgroundColor: projectModal.label.color_hex}}
+                    className="event-label event-label--hoverable dropdown-trigger"></div>
+                  <ColorPicker onSelectLabelColor={(labelColor) => {
+                    console.log(`SELECTED: ${labelColor}`)
+                  }}/>
+                </div>
+              </div>
+            </section>
+            <footer className="modal-card-foot">
+              <button className="button is-link">Add</button>
+              <button className="button"
+                onClick={() => {
+                  projectModal.modalActive = false
+                  this.setState({projectModal})
+                }} >Cancel</button>
+            </footer>
+          </div>
+        </div>
+      )
     }
 }
   

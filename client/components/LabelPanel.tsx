@@ -3,8 +3,10 @@ import Icon from '@mdi/react'
 import { mdiDotsHorizontal } from '@mdi/js'
 
 import Hoverable from '../core/Hoverable';
+import ColorPicker from './ColorPicker';
 import { Label } from '../models/Label';
 import { getSortedLabelColors } from '../models/LabelColors';
+
 
 interface IProps {
     labels: Label[]
@@ -32,8 +34,8 @@ export default class LabelPanel extends React.Component<IProps, IState> {
 
     render() {
         return (
-            <nav className="panel">
-                <p className="panel-heading">labels</p>
+            <nav className="panel" style={{marginBottom: '0.5rem'}}>
+                <p className="panel-heading">Projects</p>
                 {this.props.labels.map(this.getLabel)}
             </nav>
         );
@@ -68,7 +70,8 @@ export default class LabelPanel extends React.Component<IProps, IState> {
                             onClick={_ => this.toggleLabelKeyColor(label.key)}
                             style={{backgroundColor: label.color_hex}}
                             className="event-label event-label--hoverable dropdown-trigger"></div>
-                        {label.key === this.state.selectedLabelKeyColor ? this.getColorPicker() : null}
+                        {label.key === this.state.selectedLabelKeyColor ?
+                            <ColorPicker onSelectLabelColor={this.onClickLabelColor}/> : null}
                     </div>
                     <span style={{marginLeft: 10}}>{label.title}</span>
                     {isMouseInside ? <Icon path={mdiDotsHorizontal}
@@ -79,39 +82,6 @@ export default class LabelPanel extends React.Component<IProps, IState> {
                 </a>
                 )}
             </Hoverable>
-        )
-    }
-
-    private getColorPicker() {
-        const colors = this.labelColors.map(x => x.hex);
-
-        return (
-            <div className="dropdown-menu" id="dropdown-menu" role="menu" style={{maxWidth: '12em'}}>
-                <div className="dropdown-content">
-                    <div className="columns" style={{paddingLeft: '1.5em', marginBottom: 0}}>
-                        {colors.slice(0, colors.length/2).map(color => {
-                            return (
-                                <div key={color} className="column is-1">
-                                    <div style={{backgroundColor: color}}
-                                        onClick={() => this.onClickLabelColor(color)}
-                                        className="event-label event-label--hoverable"></div>
-                                </div>
-                            )
-                        })}
-                    </div>
-                    <div className="columns" style={{paddingLeft: '1.5em'}}>
-                        {colors.slice(6, colors.length).map(color => {
-                            return (
-                                <div key={color} className="column is-1">
-                                    <div style={{backgroundColor: color}}
-                                        onClick={() => this.onClickLabelColor(color)}
-                                        className="event-label event-label--hoverable"></div>
-                                </div>
-                            )
-                        })}
-                    </div>
-                </div>
-            </div>
         )
     }
 }

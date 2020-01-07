@@ -231,7 +231,7 @@ class EventList extends Component<Props, State> {
             </div>
             </section>
             <footer className="modal-card-foot">
-              <button className="button is-success"
+              <button className="button is-link"
                 onClick={this.applyLabelToEvent}>
                   Apply
               </button>

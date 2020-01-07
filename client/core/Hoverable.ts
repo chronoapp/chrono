@@ -1,7 +1,11 @@
 import { Component } from 'react';
 
-export default class Hoverable extends Component<{children: any}, {isMouseInside: boolean}> {
-    constructor(props: {children: any}) {
+interface IProps {
+    children: any;
+}
+
+export default class Hoverable extends Component<IProps, { isMouseInside: boolean }> {
+    constructor(props: IProps) {
         super(props);
         this.state = {
             isMouseInside: false
@@ -18,9 +22,9 @@ export default class Hoverable extends Component<{children: any}, {isMouseInside
 
     render() {
         return this.props.children(
-        this.state.isMouseInside, 
-        this.mouseEnter, 
-        this.mouseLeave
+            this.state.isMouseInside, 
+            this.mouseEnter, 
+            this.mouseLeave
         )
     }
 }
