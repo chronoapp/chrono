@@ -9,7 +9,7 @@ from app.db.models import User, Event, LabelRule
 from app.core.logger import logger
 
 
-def syncGoogleCalendar(username, days: int = 30):
+def syncGoogleCalendar(username: str, days: int = 30):
     """Syncs events from google calendar.
     """
     with scoped_session() as session:

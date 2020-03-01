@@ -133,3 +133,11 @@ export async function putLabelRule(labelRule: LabelRule, authToken: string): Pro
     .then(handleErrors)
     .then(LabelRule.fromJson)
 }
+
+export async function syncCalendar(authToken: string) {
+    return fetch(`${API_URL}/sync/`, {
+        method: 'POST',
+        headers: { 'Authorization': authToken }
+    })
+    .then(handleErrors)
+}

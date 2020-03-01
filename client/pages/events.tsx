@@ -8,6 +8,7 @@ import {
   searchEvents,
   getLabelRules,
   putLabelRule,
+  syncCalendar,
 } from '../util/Api';
 import { CalendarEvent } from '../models/Event';
 import { Label } from '../models/Label';
@@ -37,6 +38,7 @@ interface State {
   // Label Rule
   addLabelRuleModalActive: boolean
   labelRuleState: LabelRuleState | null
+  isRefreshing: boolean
 }
 
 class EventList extends Component<Props, State> {
@@ -50,12 +52,14 @@ class EventList extends Component<Props, State> {
           labels: [],
           addLabelRuleModalActive: false,
           labelRuleState: null,
+          isRefreshing: false,
         }
 
         this.toggleAddLabelDropdown = this.toggleAddLabelDropdown.bind(this);
         this.onSearchChange = this.onSearchChange.bind(this);
         this.refreshEvents = this.refreshEvents.bind(this);
         this.applyLabelToEvent = this.applyLabelToEvent.bind(this);
+        this.refreshCalendar = this.refreshCalendar.bind(this);
     }
 
     async componentWillMount() {
@@ -129,6 +133,14 @@ class EventList extends Component<Props, State> {
       }
 
       this.setState({labelRuleState: null});
+    }
+
+    async refreshCalendar() {
+      const authToken = getAuthToken();
+      this.setState({isRefreshing: true})
+      await syncCalendar(authToken)
+      await this.refreshEvents();
+      this.setState({isRefreshing: false});
     }
 
     removeLabel(eventId: number, labelKey: string) {
@@ -305,6 +317,7 @@ class EventList extends Component<Props, State> {
     }
 
     render() {
+      const { isRefreshing } = this.state;
       return (
         <Layout>
             <section>
@@ -313,7 +326,12 @@ class EventList extends Component<Props, State> {
                     Event Labels
                   </h1>
                   <p className="subtitle">
-                    Label my events.
+                    Label my events&nbsp;
+                    <button
+                      onClick={this.refreshCalendar}
+                      className={`button is-small is-link ${isRefreshing ? "is-loading": null}`}>
+                      Refresh
+                    </button>
                   </p>
               </div><br/>
             </section>
