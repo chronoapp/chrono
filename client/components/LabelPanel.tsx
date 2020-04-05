@@ -61,7 +61,7 @@ export default class LabelPanel extends React.Component<IProps, IState> {
 
     private getLabel(label: Label) {
         return (
-            <Hoverable>
+            <Hoverable key={label.id}>
                 {(isMouseInside, mouseEnter, mouseLeave) => (
                 <a onMouseEnter={mouseEnter} onMouseLeave={mouseLeave} key={label.key}
                     className={`panel-block ${false ? 'is-active' : ''}`}>

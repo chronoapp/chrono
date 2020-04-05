@@ -7,7 +7,7 @@ import Layout from '../components/Layout';
 import ColorPicker from '../components/ColorPicker';
 import LabelPanel from '../components/LabelPanel';
 import { getTrends, getAuthToken, getLabels, putLabel } from '../util/Api';
-import { Label } from '../models/Label';
+import { Label, TimePeriod } from '../models/Label';
 import { LABEL_COLORS } from '../models/LabelColors';
 
 interface Props {
@@ -24,9 +24,10 @@ interface State {
     labelDropdownActive: boolean
     labels: Label[],
     selectedLabel: Label | null,
-    chartData: any,
+    trends: any,
 
     projectModal: ProjectModalState | null,
+    selectedTimePeriod: TimePeriod,
 }
 
 /**
@@ -40,13 +41,15 @@ class Home extends React.Component<Props, State> {
           labelDropdownActive: false,
           labels: [],
           selectedLabel: null,
-          chartData: {},
+          trends: {},
 
           projectModal: null,
+          selectedTimePeriod: 'WEEK',
         }
 
         this.toggleDropdown = this.toggleDropdown.bind(this);      
         this.onClickAddProject = this.onClickAddProject.bind(this);
+        this.onTimePeriodSelected = this.onTimePeriodSelected.bind(this);
     }
 
     static async getInitialProps({ req }) {
@@ -57,17 +60,12 @@ class Home extends React.Component<Props, State> {
     async componentWillMount() {
       const authToken = getAuthToken();
       const labels = await getLabels(authToken);
-      const trends = await getTrends(authToken);
+      const trends = await getTrends(authToken, this.state.selectedTimePeriod);
       const selectedLabel = labels.length > 0 ? labels[0] : null;
-
-      const chartData = {
-          labels: trends.labels,
-          values: trends.values,
-      }
 
       this.setState({
         labels,
-        chartData,
+        trends,
         selectedLabel
       });
     }
@@ -84,6 +82,14 @@ class Home extends React.Component<Props, State> {
     toggleDropdown() {
         const timespanDropdownActive = !this.state.timespanDropdownActive;
         this.setState({timespanDropdownActive: timespanDropdownActive});
+    }
+
+    onTimePeriodSelected(timePeriod: TimePeriod) {
+      this.setState({selectedTimePeriod: timePeriod});
+
+      getTrends(getAuthToken(), timePeriod).then(trends => {
+        this.setState({trends});  
+      })      
     }
 
     renderDropdown() {
@@ -111,9 +117,29 @@ class Home extends React.Component<Props, State> {
       );
     }
 
+    renderTimePeriodSelections() {
+      const { selectedTimePeriod } = this.state;
+      return (
+        <div className="field has-addons">
+            <button onClick={() => this.onTimePeriodSelected('DAY')}
+              className={`button is-small ${selectedTimePeriod === 'DAY' ? 'is-active' : ''}`}>
+              Day
+            </button>
+            <button onClick={() => this.onTimePeriodSelected('WEEK')}
+              className={`button is-small ${selectedTimePeriod === 'WEEK' ? 'is-active' : ''}`}>
+              Week
+            </button>
+            <button onClick={() => this.onTimePeriodSelected('MONTH')}
+              className={`button is-small ${selectedTimePeriod === 'MONTH' ? 'is-active' : ''}`}>
+              Month
+            </button>
+        </div>
+      )
+    }
+
     render() {
         const { authToken } = this.props;
-        const { chartData } = this.state;
+        const { trends } = this.state;
 
         if (!authToken) {
             return <Layout loggedIn={false} children={null}/>
@@ -153,12 +179,12 @@ class Home extends React.Component<Props, State> {
         const workLabel = labels.find(label => label.key === 'work')
         const colorHex = workLabel ? workLabel.color_hex : 'white';
         const data = {
-            labels: chartData.labels,
+            labels: trends.labels,
             datasets: [{
                 label: "Hours",
                 borderColor: '#165cad',
                 fill: false,
-                data: chartData.values,
+                data: trends.values,
                 backgroundColor: colorHex,
             }]
         }
@@ -169,14 +195,13 @@ class Home extends React.Component<Props, State> {
                 {this.renderProjectLabelModal()}
 
                 <div className="container">
-                  <h1 className="title">
-                    Trends
-                  </h1>
-                  <p className="subtitle">
-                    Activities over time.
-                  </p>
-                  <div className="notification columns">
-                    { this.renderDropdown() }
+                  <div className="level">
+                    <div className="level-left">
+                    </div>
+
+                    <div className="level-right">
+                      { this.renderTimePeriodSelections() }
+                    </div>
                   </div>
 
                   <div className="columns">
@@ -204,7 +229,9 @@ class Home extends React.Component<Props, State> {
                     <div className="column is-9">
                       <div className="card">
                         <div className="card-header">
-                          <p className="card-header-title">Time spent per week</p>
+                          <p className="card-header-title">
+                            Time spent on &nbsp;<span className="tag is-light">Work</span>&nbsp; per week
+                          </p>
                           <div className="card-header-icon" aria-label="more options">
                           <span className="icon">
                               <i className="fa fa-angle-down" aria-hidden="true"></i>

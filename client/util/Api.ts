@@ -1,7 +1,7 @@
 import 'isomorphic-unfetch';
 import Cookies from 'universal-cookie';
 import { CalendarEvent } from '../models/Event';
-import { Label } from '../models/Label';
+import { Label, TimePeriod } from '../models/Label';
 import { LabelRule } from '../models/LabelRule';
 
 const API_URL = 'http://localhost:8888/api/v1'
@@ -55,9 +55,9 @@ export async function authenticate(
 // ================== Trends and Stats ==================
 // TODO: Log users out if response is 403.
 
-export async function getTrends(authToken: string) {
-    return fetch(`${API_URL}/trends/work`, {
-        headers: { 'Authorization': authToken }
+export async function getTrends(authToken: string, timePeriod: TimePeriod) {
+    return fetch(`${API_URL}/trends/work?time_period=${timePeriod}`, {
+        headers: { 'Authorization': authToken },
     })
     .then(handleErrors);
 }

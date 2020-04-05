@@ -316,54 +316,49 @@ class EventList extends Component<Props, State> {
       );
     }
 
+    renderSearchBar() {
+      return (
+        <div className="field has-addons">
+          <div className="control is-expanded">
+            <input
+              className="input"
+              type="text"
+              value={this.state.searchValue}
+              onChange={this.onSearchChange}
+              onKeyPress={(event) => {
+                if (event.key == 'Enter') {
+                  this.refreshEvents();
+                }
+              }}
+              placeholder="Find an event"/>
+          </div>
+          <div className="control">
+            <a
+              className="button is-info"
+              onClick={this.refreshEvents}>
+              Search
+            </a>
+          </div>
+          <button
+            style={{marginLeft: '1em'}}
+            onClick={this.refreshCalendar}
+            className={`button is-small is-link ${this.state.isRefreshing ? "is-loading": null}`}>
+            Refresh
+          </button>
+        </div>
+      );
+    }
+
     render() {
-      const { isRefreshing } = this.state;
       return (
         <Layout>
-            <section>
-              <div className="container">
-                  <h1 className="title">
-                    Event Labels
-                  </h1>
-                  <p className="subtitle">
-                    Label my events&nbsp;
-                    <button
-                      onClick={this.refreshCalendar}
-                      className={`button is-small is-link ${isRefreshing ? "is-loading": null}`}>
-                      Refresh
-                    </button>
-                  </p>
-              </div><br/>
-            </section>
-
-            <section className="columns">
-              <div className="column is-8 is-offset-2">
-                <div className="field has-addons">
-                  <div className="control is-expanded">
-                    <input
-                      className="input"
-                      type="text"
-                      value={this.state.searchValue}
-                      onChange={this.onSearchChange}
-                      onKeyPress={(event) => {
-                        if (event.key == 'Enter') {
-                          this.refreshEvents();
-                        }
-                      }}
-                      placeholder="Find an event"/>
-                  </div>
-                  <div className="control">
-                    <a
-                      className="button is-info"
-                      onClick={this.refreshEvents}>
-                      Search
-                    </a>
-                  </div>
-                </div>
-                { this.renderAddLabelRuleModal() }
-                { this.renderTable() }
-              </div>
-            </section>
+          <section className="columns">
+            <div className="column is-8 is-offset-2">
+              { this.renderSearchBar() }
+              { this.renderAddLabelRuleModal() }
+              { this.renderTable() }
+            </div>
+          </section>
         </Layout>
       );
     }

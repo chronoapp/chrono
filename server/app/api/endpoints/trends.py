@@ -23,45 +23,39 @@ class TrendType(enum.Enum):
     LAST_52_WEEKS = 6
 
 
+class TimePeriod(enum.Enum):
+    DAY = 'DAY'
+    WEEK = 'WEEK'
+    MONTH = 'MONTH'
+
+
 @dataclass
 class TrendConfig:
-    timeSeconds: int
+    timePeriod: TimePeriod
     startTime: datetime
 
-    def __init__(self, trendType: TrendType):
-        if trendType == TrendType.LAST_7_DAYS:
-            self.timeSeconds = DAY_SECONDS
-            self.startTime = datetime.now() - timedelta(days=7)
+    def getTimeSeconds(self):
+        if self.timePeriod == TimePeriod.DAY:
+            return DAY_SECONDS
+        if self.timePeriod == TimePeriod.WEEK:
+            return WEEK_SECONDS
 
-        if trendType == TrendType.LAST_14_DAYS:
-            self.timeSeconds = DAY_SECONDS
-            self.startTime = datetime.now() - timedelta(days=14)
-
-        if trendType == TrendType.LAST_30_DAYS:
-            self.timeSeconds = DAY_SECONDS
-            self.startTime = datetime.now() - timedelta(days=30)
-
-        if trendType == TrendType.LAST_8_WEEKS:
-            self.timeSeconds = WEEK_SECONDS
-            self.startTime = datetime.now() - timedelta(days=8 * 7)
-
-        if trendType == TrendType.LAST_16_WEEKS:
-            self.timeSeconds = WEEK_SECONDS
-            self.startTime = datetime.now() - timedelta(days=16 * 7)
-
-        if trendType == TrendType.LAST_52_WEEKS:
-            self.timeSeconds = WEEK_SECONDS
-            self.startTime = datetime.now() - timedelta(days=52 * 7)
+        return WEEK_SECONDS
 
 
 @router.get('/trends/{label_key}')
 def getUserTrends(
         label_key: str,
+        time_period: str = "WEEK",
         user=Depends(get_current_user)):
     userId = user.id
     logger.info(f'getUserTrends:{userId}')
 
-    trendsConfig = TrendConfig(TrendType.LAST_16_WEEKS)
+    trendsConfig = TrendConfig(
+        TimePeriod[time_period],
+        datetime.now() - timedelta(days=16 * 7))
+    logger.info(trendsConfig)
+
     query = \
         "SELECT\
             sum(EXTRACT(EPOCH FROM (end_time - start_time))),\
@@ -84,7 +78,7 @@ def getUserTrends(
         ORDER BY time_chunk ASC"
 
     result = engine.execute(text(query),
-        seconds=trendsConfig.timeSeconds,
+        seconds=trendsConfig.getTimeSeconds(),
         userId=userId,
         start_time=trendsConfig.startTime,
         label=label_key)
