@@ -28,8 +28,6 @@ services:
       DB_PASS: ${DATABASE_PASS}
       DB_NAME: ${DATABASE_NAME}
 
-
 volumes:
-  postgres_data:   # PostgreSQL data volume
   postgres_db_data:   # PostgreSQL data volume
   model_data:

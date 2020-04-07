@@ -1,4 +1,6 @@
-from sqlalchemy import desc
+from datetime import datetime
+
+from sqlalchemy import desc, and_
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -41,12 +43,15 @@ async def getEvents(
     logger.info(f'limit:{limit}')
 
     if title:
-        return user.events.filter(Event.title.ilike(title)).all()
+        return user.events.filter(
+            and_(Event.end_time <= datetime.now(),
+                Event.title.ilike(title))).all()
     elif query:
         tsQuery = ' & '.join(query.split())
         return Event.search(session, user.id, tsQuery)
     else:
-        return user.events.order_by(desc(Event.end_time))\
+        return user.events.filter(Event.end_time <= datetime.now())\
+            .order_by(desc(Event.end_time))\
             .limit(limit).all()
 
 

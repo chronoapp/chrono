@@ -9,7 +9,7 @@ from app.db.models import User, Event, LabelRule
 from app.core.logger import logger
 
 
-def syncGoogleCalendar(username: str, days: int = 30):
+def syncGoogleCalendar(username: str, startDaysAgo: int = 30, endDaysAgo: int = 0):
     """Syncs events from google calendar.
     """
     with scoped_session() as session:
@@ -17,7 +17,7 @@ def syncGoogleCalendar(username: str, days: int = 30):
 
         credentials = Credentials(**user.credentials.toDict())
         service = build('calendar', 'v3', credentials=credentials, cache_discovery=False)
-        eventList = getEvents(service, days, 0)
+        eventList = getEvents(service, startDaysAgo, endDaysAgo)
 
         newEvents = 0
         updatedEvents = 0
