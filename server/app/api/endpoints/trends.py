@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from datetime import datetime, timedelta
 
 from app.api.utils.security import get_current_user
-from app.db.session import engine
+from app.db.session import scoped_session
 from app.core.logger import logger
 
 DAY_SECONDS = 24 * 60 * 60
@@ -25,7 +25,7 @@ def getUserTrends(
         time_period: str = "WEEK",
         user=Depends(get_current_user)):
     userId = user.id
-    logger.info(f'getUserTrends:{userId}')
+    logger.info(f'{userId, time_period}')
 
     timePeriod = TimePeriod[time_period]
     endTime = datetime.now()
@@ -37,14 +37,8 @@ def getUserTrends(
         diff = timedelta(days=12 * 7)
 
     startTime = endTime - diff
-    result = getTrendsDataResult(userId, label_key, startTime,
+    labels, durations = getTrendsDataResult(userId, label_key, startTime,
         endTime, timePeriod)
-
-    labels, durations = [], []
-    for row in result:
-        date, duration, _ = row
-        labels.append(date.strftime('%Y-%m-%d'))
-        durations.append(duration / 60.0 / 60.0)
 
     return {
         'labels': labels,
@@ -61,39 +55,50 @@ def getTrendsDataResult(
     """Executes the DB query for time spent on the activity label,
     grouped by TimePeriod.
     """
+    labels, durations = [], []
 
-    timePeriodValue = timePeriod.value.lower()
-    query = """
-        with filtered_events as (
-                SELECT
-                    event.start_time,
-                    event.end_time as end_time,
-                    label.key as label
-                FROM event
-                INNER JOIN event_label ON event_label.event_id = event.id
-                INNER JOIN label ON label.id = event_label.label_id
-                WHERE label.key = :label\
-                AND event.start_time >= :start_time\
-                AND event.end_time <= :end_time\
-                AND event.user_id = :userId\
-            )
-        SELECT starting,
-            coalesce(sum(EXTRACT(EPOCH FROM (e.end_time - e.start_time))), 0),
-            count(e.start_time) AS event_count
-        FROM generate_series(date_trunc('TIME_PERIOD', :start_time)
-                            , :end_time
-                            , interval '1 TIME_PERIOD') g(starting)
-        LEFT JOIN filtered_events e
-            ON e.start_time > g.starting
-            AND e.start_time <  g.starting + interval '1 TIME_PERIOD'
-        GROUP BY starting
-        ORDER BY starting;
-    """.replace('TIME_PERIOD', timePeriodValue)
+    with scoped_session() as session:
+        timePeriodValue = timePeriod.value.lower()
+        query = """
+            with filtered_events as (
+                    SELECT
+                        event.start_time,
+                        event.end_time as end_time,
+                        label.key as label
+                    FROM event
+                    INNER JOIN event_label ON event_label.event_id = event.id
+                    INNER JOIN label ON label.id = event_label.label_id
+                    WHERE label.key = :label\
+                    AND event.start_time >= :start_time\
+                    AND event.end_time <= :end_time\
+                    AND event.user_id = :userId\
+                )
+            SELECT starting,
+                coalesce(sum(EXTRACT(EPOCH FROM (e.end_time - e.start_time))), 0),
+                count(e.start_time) AS event_count
+            FROM generate_series(date_trunc('TIME_PERIOD', :start_time)
+                                , :end_time
+                                , interval '1 TIME_PERIOD') g(starting)
+            LEFT JOIN filtered_events e
+                ON e.start_time > g.starting
+                AND e.start_time <  g.starting + interval '1 TIME_PERIOD'
+            GROUP BY starting
+            ORDER BY starting;
+        """.replace('TIME_PERIOD', timePeriodValue)
 
-    result = engine.execute(text(query),
-        userId=userId,
-        start_time=startTime,
-        end_time=endTime,
-        label=label)
+        result = session.execute(
+            text(query),
+            {
+                'userId': userId,
+                'start_time': startTime,
+                'end_time': endTime,
+                'label': label
+            }
+        )
 
-    return result
+        for row in result:
+            date, duration, _ = row
+            labels.append(date.strftime('%Y-%m-%d'))
+            durations.append(duration / 60.0 / 60.0)
+
+    return labels, durations

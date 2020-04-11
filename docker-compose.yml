@@ -7,14 +7,20 @@ services:
     ports:
       - 8888:80
     links:
-      - postgres_db:postgres
-    depends_on:
-      - postgres_db
+      - pg_bouncer:pg_bouncer
     volumes:
       - ./server:/app/
       - model_data:/var/lib/model_data/
     environment:
-      - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@postgres:5432/${DATABASE_NAME}
+      - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@pg_bouncer:5432/${DATABASE_NAME}
+
+  # Postgres Connection Pool
+  pg_bouncer:
+    image: edoburu/pgbouncer
+    links:
+      - postgres_db:postgres_db
+    environment:
+      - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@postgres_db:5432/${DATABASE_NAME}
 
   # PostgreSQL database
   postgres_db:
