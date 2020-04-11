@@ -12,7 +12,7 @@
     "@zeit/next-sass": "^1.0.1",
     "babel-plugin-styled-components": "^1.10.7",
     "bulma": "^0.7.4",
-    "chart.js": "^2.7.3",
+    "chart.js": "^2.9.3",
     "cowsay-browser": "^1.1.8",
     "isomorphic-unfetch": "^3.0.0",
     "next": "^9.3.4",
