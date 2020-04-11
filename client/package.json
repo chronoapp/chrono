@@ -5,23 +5,28 @@
     "start": "next start"
   },
   "dependencies": {
+    "@atlaskit/tree": "^7.1.2",
     "@mdi/js": "^4.7.95",
     "@mdi/react": "^1.2.1",
     "@types/react": "^16.8.7",
     "@zeit/next-sass": "^1.0.1",
-    "@zeit/next-typescript": "^1.1.1",
+    "babel-plugin-styled-components": "^1.10.7",
     "bulma": "^0.7.4",
     "chart.js": "^2.7.3",
     "cowsay-browser": "^1.1.8",
     "isomorphic-unfetch": "^3.0.0",
-    "next": "^8.0.3",
+    "next": "^9.3.4",
     "node-sass": "^4.13.1",
-    "react": "^16.8.4",
-    "react-chartjs-2": "^2.7.4",
-    "react-dom": "^16.8.4",
+    "react": "^16.13.1",
+    "react-chartjs-2": "^2.9.0",
+    "react-dom": "^16.13.1",
     "recharts": "^1.5.0",
+    "styled-components": "^5.1.0",
     "tinycolor2": "^1.4.1",
     "universal-cookie": "^3.0.7"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/node": "^13.11.1",
+    "typescript": "^3.8.3"
+  }
 }

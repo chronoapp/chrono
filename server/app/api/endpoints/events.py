@@ -44,14 +44,14 @@ async def getEvents(
 
     if title:
         return user.events.filter(
-            and_(Event.end_time <= datetime.now(),
+            and_(Event.start_time <= datetime.now(),
                 Event.title.ilike(title))).all()
     elif query:
         tsQuery = ' & '.join(query.split())
         return Event.search(session, user.id, tsQuery)
     else:
-        return user.events.filter(Event.end_time <= datetime.now())\
-            .order_by(desc(Event.end_time))\
+        return user.events.filter(Event.start_time <= datetime.now())\
+            .order_by(desc(Event.start_time))\
             .limit(limit).all()
 
 

@@ -62,7 +62,7 @@ class EventList extends Component<Props, State> {
         this.refreshCalendar = this.refreshCalendar.bind(this);
     }
 
-    async componentWillMount() {
+    async componentDidMount() {
       const authToken = getAuthToken();
       const events = await getEvents(authToken);
       const labels = await getLabels(authToken);
