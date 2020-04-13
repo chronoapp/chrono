@@ -125,6 +125,8 @@ class Event(Base):
 class Label(Base):
     __tablename__ = 'label'
     id = Column(BigInteger, primary_key=True, autoincrement=True, nullable=False)
+    parent_id = Column(BigInteger, ForeignKey('label.id'), nullable=True)
+
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     user = relationship('User', backref=backref(
         'labels', lazy='dynamic', cascade='all,delete'))

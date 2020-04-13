@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
@@ -15,6 +15,7 @@ class LabelVM(BaseModel):
     key: str
     title: str
     color_hex: str
+    parent_id: Optional[int]
 
 
 class LabelInDbVM(LabelVM):

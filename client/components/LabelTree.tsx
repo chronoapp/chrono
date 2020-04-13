@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-
+import { resetServerContext } from 'react-beautiful-dnd-next';
 import Tree, {
     mutateTree,
     moveItemOnTree,
@@ -10,9 +10,11 @@ import Tree, {
     ItemId,
     TreeSourcePosition,
     TreeDestinationPosition,
-  } from '@atlaskit/tree';
-import { resetServerContext } from 'react-beautiful-dnd-next';
+} from '@atlaskit/tree';
+import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 
+import { createTreeFromLabels } from '../util/Tree';
 import { Label } from '../models/Label';
 
 const NavigationItemWrapper = styled.div`
@@ -48,41 +50,8 @@ interface IProps {
 }
 
 export default function LabelTree(props: IProps) {
-    const [tree, setTree] = useState(getLabelTree(props.labels))
-
-    function _createItem(id: string, data: any) {
-        return {
-          id: `${id}`,
-          children: [],
-          hasChildren: false,
-          isExpanded: false,
-          isChildrenLoading: false,
-          data: data
-        };
-    }
-
-    function getLabelTree(labels: Label[]) {
-        resetServerContext();
-
-        const rootItem = _createItem('1', null)
-        const tree: TreeData = {
-            rootId: rootItem.id,
-            items: { [rootItem.id]: rootItem },
-        }
-
-        labels.forEach((label, idx) => {
-            const leafItem = _createItem(`${rootItem.id}-${idx}`, label);
-
-            const root = tree.items[rootItem.id];
-            root.children.push(leafItem.id);
-            root.isExpanded = true;
-            root.hasChildren = true;
-
-            tree.items[leafItem.id] = leafItem
-        });
-
-        return tree;
-    }
+    resetServerContext();
+    const [tree, setTree] = useState(createTreeFromLabels(props.labels))
 
     function getIcon(
         item: TreeItem,
@@ -90,7 +59,17 @@ export default function LabelTree(props: IProps) {
         onCollapse: (itemId: ItemId) => void) {
 
         if (item.children && item.children.length > 0) {
-            return ">"
+            return item.isExpanded ? (
+                    <KeyboardArrowDownIcon
+                        style={{marginBottom: '5px'}}
+                        onClick={() => onCollapse(item.id)}
+                    />
+                ) : (
+                    <ChevronRightIcon
+                        style={{marginBottom: '5px'}}
+                        onClick={() => onExpand(item.id)}
+                    />
+                );
         }
 
         return <EmptyIcon/>;
