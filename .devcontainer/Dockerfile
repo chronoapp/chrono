@@ -60,6 +60,11 @@ RUN apt-get update \
 # Switch back to dialog for any ad-hoc use of apt-get
 ENV DEBIAN_FRONTEND=dialog
 
+# Install Node to build assets with webpack
+RUN curl -sL https://deb.nodesource.com/setup_14.x | sh
+RUN apt-get -y install nodejs
+RUN npm install -g yarn
+
 # Setting the ENTRYPOINT to docker-init.sh will configure non-root access to 
 # the Docker socket if "overrideCommand": false is set in devcontainer.json. 
 # The script will also execute CMD if you need to alter startup behaviors.

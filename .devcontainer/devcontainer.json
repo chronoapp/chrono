@@ -1,9 +1,10 @@
 {
     "name": "Hyperspeed Codespace",
     "dockerComposeFile": "docker-compose.yml",
-    "workspaceFolder": "./",
+    "workspaceFolder": "/workspace",
     "service": "docker-in-docker",
     "extensions": [
-		  "ms-azuretools.vscode-docker"
-	  ]
+        "ms-azuretools.vscode-docker"
+    ],
+    "forwardPorts": [3000, 8888],
 }
