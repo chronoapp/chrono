@@ -1,6 +1,8 @@
 {
     "name": "Hyperspeed Codespace",
     "dockerComposeFile": "docker-compose.yml",
+    "workspaceFolder": "/app",
+    "service": "docker-in-docker",
 
 	"mounts": [ "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind" ],
 	"settings": { 
@@ -11,8 +13,6 @@
 	"postCreateCommand": "docker --version",
     "forwardPorts": [3000, 8888],
     
-    "workspaceFolder": "/app",
-    "service": "docker-in-docker",
     "extensions": [
 		  "ms-azuretools.vscode-docker"
 	  ]
