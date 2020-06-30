@@ -1,10 +1,9 @@
 import React from 'react'
 import clsx from 'clsx'
-import scrollbarSize from 'dom-helpers/scrollbarSize'
 import { format } from '../util/localizer'
 import * as dates from '../util/dates'
 
-function TimeGridHeader(props: { range: Date[]; leftPad: number }) {
+function TimeGridHeader(props: { range: Date[]; leftPad: number; marginRight: number }) {
   function renderHeaderCells() {
     const today = new Date() // TODO: pass via props.
 
@@ -20,7 +19,7 @@ function TimeGridHeader(props: { range: Date[]; leftPad: number }) {
 
   // TODO: Add space for gutter
   return (
-    <div style={{ marginRight: scrollbarSize() }} className={clsx('cal-time-header')}>
+    <div style={{ marginRight: props.marginRight }} className={clsx('cal-time-header')}>
       <div style={{ width: props.leftPad }} className="rbc-label cal-time-header-gutter" />
 
       <div className="cal-time-header-content">

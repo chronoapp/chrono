@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react'
+import scrollbarSize from 'dom-helpers/scrollbarSize'
 
 import * as dates from '../util/dates'
 import Event from '../models/Event'
@@ -11,28 +12,56 @@ function remToPixels(rem) {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
 }
 
-function TimeGrid(props: {
+interface IProps {
   range: Date[]
   step: number
   timeslots: number
   min: Date
   max: Date
   events: Event[]
-}) {
-  const GUTTER_LINE_WIDTH = 0.5
-  const [gutterWidth, setGutterWidth] = useState(0)
-  const slotMetrics = new SlotMetrics(props.min, props.max, props.step, props.timeslots)
+}
 
-  const gutterRef = useCallback((node) => {
-    if (node !== null) {
-      const width = remToPixels(GUTTER_LINE_WIDTH) + node.getBoundingClientRect().width
-      setGutterWidth(width)
+interface IState {
+  gutterWidth: number
+  scrollbarSize: number
+}
+
+const GUTTER_LINE_WIDTH = 0.5
+
+class TimeGrid extends React.Component<IProps, IState> {
+  private slotMetrics: SlotMetrics
+  private gutterRef
+
+  static defaultProps = {
+    step: 30,
+    timeslots: 2,
+    min: dates.startOf(new Date(), 'day'),
+    max: dates.endOf(new Date(), 'day'),
+  }
+
+  constructor(props: IProps) {
+    super(props)
+    this.slotMetrics = new SlotMetrics(props.min, props.max, props.step, props.timeslots)
+    this.gutterRef = React.createRef()
+
+    this.state = {
+      gutterWidth: 0,
+      scrollbarSize: 0,
     }
-  }, [])
+  }
 
-  function renderDays(range: Date[]) {
+  componentDidMount() {
+    if (this.gutterRef) {
+      const { current } = this.gutterRef
+      // console.log(this.gutterRef)
+      const width = remToPixels(GUTTER_LINE_WIDTH) + current.getBoundingClientRect().width
+      this.setState({ gutterWidth: width, scrollbarSize: scrollbarSize() })
+    }
+  }
+
+  private renderDays(range: Date[]) {
     return range.map((date, jj) => {
-      const dayEvents = props.events.filter((event) =>
+      const dayEvents = this.props.events.filter((event) =>
         dates.inRange(date, event.start, event.end, 'day')
       )
 
@@ -41,16 +70,16 @@ function TimeGrid(props: {
           key={jj}
           events={dayEvents}
           date={date}
-          step={props.step}
-          timeslots={props.timeslots}
-          min={dates.merge(date, props.min)}
-          max={dates.merge(date, props.max)}
+          step={this.props.step}
+          timeslots={this.props.timeslots}
+          min={dates.merge(date, this.props.min)}
+          max={dates.merge(date, this.props.max)}
         />
       )
     })
   }
 
-  function renderDateTick(idx: number) {
+  private renderDateTick(idx: number) {
     return (
       <div
         className="cal-timeslot-group"
@@ -63,7 +92,7 @@ function TimeGrid(props: {
     )
   }
 
-  function renderDateLabel(group: Date[], idx: number) {
+  private renderDateLabel(group: Date[], idx: number) {
     const timeRange = format(group[0], 'LT')
 
     return (
@@ -73,32 +102,33 @@ function TimeGrid(props: {
     )
   }
 
-  return (
-    <div className="cal-time-view">
-      <TimeGridHeader range={props.range} leftPad={gutterWidth} />
+  public render() {
+    const { gutterWidth, scrollbarSize } = this.state
 
-      <div className="cal-time-content">
-        <div ref={gutterRef} className="cal-time-gutter">
-          {slotMetrics.groups.map((group, idx) => {
-            return renderDateLabel(group, idx)
-          })}
+    return (
+      <div className="cal-time-view">
+        <TimeGridHeader
+          range={this.props.range}
+          leftPad={gutterWidth}
+          marginRight={scrollbarSize}
+        />
+
+        <div className="cal-time-content">
+          <div ref={this.gutterRef} className="cal-time-gutter">
+            {this.slotMetrics.groups.map((group, idx) => {
+              return this.renderDateLabel(group, idx)
+            })}
+          </div>
+          <div className="cal-time-gutter">
+            {this.slotMetrics.groups.map((_group, idx) => {
+              return this.renderDateTick(idx)
+            })}
+          </div>
+          {this.renderDays(this.props.range)}
         </div>
-        <div className="cal-time-gutter">
-          {slotMetrics.groups.map((_group, idx) => {
-            return renderDateTick(idx)
-          })}
-        </div>
-        {renderDays(props.range)}
       </div>
-    </div>
-  )
-}
-
-TimeGrid.defaultProps = {
-  step: 30,
-  timeslots: 2,
-  min: dates.startOf(new Date(), 'day'),
-  max: dates.endOf(new Date(), 'day'),
+    )
+  }
 }
 
 export default TimeGrid
