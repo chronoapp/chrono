@@ -5,5 +5,5 @@
     "semi": false,
     "newline-before-return": true,
     "no-var-keyword": true,
-    "tabWidth": 4
+    "tabWidth": 2
 }
