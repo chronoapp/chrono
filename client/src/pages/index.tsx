@@ -1,17 +1,19 @@
 import React from 'react'
 import Layout from '../components/Layout'
 
+import Calendar from '../calendar/Calendar'
+
 interface Props {}
 interface State {}
 
-class Calendar extends React.Component<Props, State> {
+class Home extends React.Component<Props, State> {
   render() {
     return (
       <Layout>
-        <div>TODO.</div>
+        <Calendar />
       </Layout>
     )
   }
 }
 
-export default Calendar
+export default Home
