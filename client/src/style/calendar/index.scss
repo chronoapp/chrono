@@ -1,0 +1,28 @@
+@import 'variables.scss';
+
+.cal-calendar {
+    flex: 1 1 auto;
+    box-sizing: border-box;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.cal-calendar *,
+.cal-calendar *:before,
+.cal-calendar *:after {
+    box-sizing: inherit;
+}
+
+.cal-ellipsis {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cal-row {
+    display: flex;
+    flex-direction: row;
+}

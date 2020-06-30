@@ -33,7 +33,7 @@ interface State {
 /**
  * List of trends.
  */
-class Home extends React.Component<Props, State> {
+class Trends extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
@@ -297,4 +297,4 @@ class Home extends React.Component<Props, State> {
   }
 }
 
-export default Home
+export default Trends

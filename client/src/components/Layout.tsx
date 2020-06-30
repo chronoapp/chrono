@@ -21,10 +21,10 @@ export default class Layout extends React.Component<Props, {}> {
   renderNavItems() {
     const startNavItems = this.props.loggedIn ? (
       <div className="navbar-start">
-        <Link href="/calendar">
+        <Link href="/">
           <a className="navbar-item">Calendar</a>
         </Link>
-        <Link href="/">
+        <Link href="/trends">
           <a className="navbar-item">Trends</a>
         </Link>
         <Link href="/events">
