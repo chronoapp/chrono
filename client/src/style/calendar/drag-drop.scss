@@ -1,0 +1,26 @@
+.cal-dnd-resize-ns-anchor {
+    width: 100%;
+    text-align: center;
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 50%;
+    max-height: 8px;
+    z-index: 100;
+
+    &:first-child {
+        top: 0;
+    }
+
+    &:last-child {
+        bottom: 0;
+    }
+
+    &:hover {
+        cursor: ns-resize;
+    }
+}
+
+.cal-dnd-interacting {
+    opacity: 0.5;
+}

@@ -26,3 +26,9 @@
     display: flex;
     flex-direction: row;
 }
+
+
+@import 'time-grid.scss';
+@import 'time-column.scss';
+@import 'events.scss';
+@import 'drag-drop.scss';

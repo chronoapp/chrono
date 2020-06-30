@@ -1,0 +1,83 @@
+@import './variables';
+
+.cal-slot-selection {
+    z-index: 10;
+    position: absolute;
+    background-color: $event-bg;
+    color: $time-selection-color;
+    font-size: 75%;
+    width: 100%;
+    padding: 3px;
+    box-shadow: $event-shadow;
+    border-radius: $event-border-radius;
+}
+
+.cal-time-view {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    width: 100%;
+    border: 1px solid $calendar-border;
+    min-height: 0;
+
+    .cal-row {
+        box-sizing: border-box;
+        min-height: 30px;
+    }
+}
+
+.cal-time-content {
+    display: flex;
+    flex: 1 0 0%;
+    align-items: flex-start;
+    width: 100%;
+    border-top: 2px solid $calendar-border;
+    overflow-y: auto;
+    position: relative;
+
+    >.cal-time-gutter {
+        flex: none;
+    }
+
+    >*+*>* {
+        border-left: 1px solid $cell-border;
+    }
+
+    .cal-rtl &>*+*>* {
+        border-left-width: 0;
+        border-right: 1px solid $cell-border;
+    }
+
+    >.cal-day-slot {
+        width: 100%;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+}
+
+// Headers
+
+.cal-time-header {
+    display: flex;
+    flex: 0 0 auto; // should not shrink below height
+    flex-direction: row;
+}
+
+.cal-time-header-content {
+    flex: 1;
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    border-left: 1px solid $cell-border;
+}
+
+.cal-header {
+    text-align: center;
+    border-left: 1px solid $cell-border;
+    flex: 1;
+    min-width: $min-column-width;
+}
+
+.cal-today {
+    font-weight: bold;
+}

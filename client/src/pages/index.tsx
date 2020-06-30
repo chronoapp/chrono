@@ -10,6 +10,7 @@ class Home extends React.Component<Props, State> {
   render() {
     return (
       <Layout>
+        <div className="left-section"></div>
         <Calendar />
       </Layout>
     )
