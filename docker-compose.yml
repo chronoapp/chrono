@@ -1,39 +1,39 @@
 version: '2'
 
 services:
-  # FastAPI / Starlette
-  api:
-    build: ./server
-    ports:
-      - 8888:80
-    links:
-      - pg_bouncer:pg_bouncer
-    volumes:
-      - ./server:/app/
-      - model_data:/var/lib/model_data/
-    environment:
-      - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@pg_bouncer:5432/${DATABASE_NAME}
+    # FastAPI / Starlette
+    api:
+        build: ./server
+        ports:
+            - 8888:80
+        links:
+            - pg_bouncer:pg_bouncer
+        volumes:
+            - ./server:/app/
+            - model_data:/var/lib/model_data/
+        environment:
+            - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@pg_bouncer:5432/${DATABASE_NAME}
 
-  # Postgres Connection Pool
-  pg_bouncer:
-    image: edoburu/pgbouncer
-    links:
-      - postgres_db:postgres_db
-    environment:
-      - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@postgres_db:5432/${DATABASE_NAME}
+    # Postgres Connection Pool
+    pg_bouncer:
+        image: edoburu/pgbouncer
+        links:
+            - postgres_db:postgres_db
+        environment:
+            - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@postgres_db:5432/${DATABASE_NAME}
 
-  # PostgreSQL database
-  postgres_db:
-    image: sameersbn/postgresql:10-1
-    volumes:
-      - postgres_db_data:/var/lib/postgresql
-    ports:
-      - "6432:5432"
-    environment:
-      DB_USER: ${DATABASE_USER}
-      DB_PASS: ${DATABASE_PASS}
-      DB_NAME: ${DATABASE_NAME}
+    # PostgreSQL database
+    postgres_db:
+        image: sameersbn/postgresql:10-1
+        volumes:
+            - postgres_db_data:/var/lib/postgresql
+        ports:
+            - '6432:5432'
+        environment:
+            DB_USER: ${DATABASE_USER}
+            DB_PASS: ${DATABASE_PASS}
+            DB_NAME: ${DATABASE_NAME}
 
 volumes:
-  postgres_db_data:   # PostgreSQL data volume
-  model_data:
+    postgres_db_data: # PostgreSQL data volume
+    model_data:
