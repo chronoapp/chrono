@@ -57,7 +57,7 @@ class Trends extends React.Component<Props, State> {
     return { authToken }
   }
 
-  async componentWillMount() {
+  async componentDidMount() {
     const authToken = getAuthToken()
     const labels = await getLabels(authToken)
     const trends = await getTrends(authToken, this.state.selectedTimePeriod)
