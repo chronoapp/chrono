@@ -7,10 +7,10 @@ export interface LabelState {
   loading: boolean
 }
 
-interface ActionType {
-  type: 'START' | 'INIT' | 'UPDATE'
-  payload: Label[] | Label
-}
+type ActionType =
+  | { type: 'START' }
+  | { type: 'INIT'; payload: Label[] }
+  | { type: 'UPDATE'; payload: Label }
 
 const initialState: LabelState = {
   labels: [],
@@ -20,9 +20,9 @@ const initialState: LabelState = {
 /**
  * TODO: Type this.
  */
-export const LabelContext = createContext(undefined!)
+export const LabelContext = createContext(undefined)
 
-function labelReducer(labelState: LabelState, action: ActionType) {
+function labelReducer({ labels }: LabelState, action: ActionType) {
   switch (action.type) {
     case 'START':
       return {
@@ -34,9 +34,9 @@ function labelReducer(labelState: LabelState, action: ActionType) {
         labels: action.payload,
       }
     case 'UPDATE':
-      const label: Label = action.payload as Label
+      const label = action.payload
       return {
-        labels: labelState.labels.map((l) => {
+        labels: labels.map((l) => {
           if (label.key == l.key) {
             return label
           } else {
@@ -52,6 +52,6 @@ function labelReducer(labelState: LabelState, action: ActionType) {
 export function LabelsContextProvider(props) {
   const [labelState, dispatch] = useReducer(labelReducer, initialState)
   return (
-    <LabelContext.Provider value={[labelState, dispatch]}>{props.children}</LabelContext.Provider>
+    <LabelContext.Provider value={{ labelState, dispatch }}>{props.children}</LabelContext.Provider>
   )
 }

@@ -1,14 +1,13 @@
 import * as React from 'react'
-import Icon from '@mdi/react'
-import { mdiPlus } from '@mdi/js'
 import { Bar } from 'react-chartjs-2'
 
 import Layout from '../components/Layout'
 import ColorPicker from '../components/ColorPicker'
-import LabelPanel from '../components/LabelPanel'
-import { getTrends, getAuthToken, getLabels, putLabel } from '../util/Api'
+import { getTrends, getAuthToken } from '../util/Api'
 import { Label, TimePeriod } from '../models/Label'
 import { LABEL_COLORS } from '../models/LabelColors'
+
+import { LabelContext } from '../components/LabelsContext'
 
 interface Props {
   authToken: string
@@ -22,7 +21,6 @@ interface ProjectModalState {
 interface State {
   timespanDropdownActive: boolean
   labelDropdownActive: boolean
-  labels: Label[]
   selectedLabel: Label | null
   trends: any
 
@@ -39,7 +37,6 @@ class Trends extends React.Component<Props, State> {
     this.state = {
       timespanDropdownActive: false,
       labelDropdownActive: false,
-      labels: [],
       selectedLabel: null,
       trends: {},
 
@@ -57,16 +54,14 @@ class Trends extends React.Component<Props, State> {
     return { authToken }
   }
 
+  static contextType = LabelContext
+
   async componentDidMount() {
     const authToken = getAuthToken()
-    const labels = await getLabels(authToken)
     const trends = await getTrends(authToken, this.state.selectedTimePeriod)
-    const selectedLabel = labels.length > 0 ? labels[0] : null
 
     this.setState({
-      labels,
       trends,
-      selectedLabel,
     })
   }
 
@@ -143,13 +138,46 @@ class Trends extends React.Component<Props, State> {
 
   render() {
     const { authToken } = this.props
-    const { trends } = this.state
 
     if (!authToken) {
       return <Layout loggedIn={false} children={null} />
     }
 
-    const { labels } = this.state
+    return (
+      <Layout>
+        {this.renderProjectLabelModal()}
+
+        <div className="container">
+          <div className="level">
+            <div className="level-left"></div>
+            <div className="level-right">{this.renderTimePeriodSelections()}</div>
+          </div>
+
+          <div className="card">
+            <div className="card-header">
+              <p className="card-header-title">
+                Time spent on &nbsp;
+                <span className="tag is-light">Work</span>&nbsp; per week
+              </p>
+              <div className="card-header-icon" aria-label="more options">
+                <span className="icon">
+                  <i className="fa fa-angle-down" aria-hidden="true"></i>
+                </span>
+              </div>
+            </div>
+            <LabelContext.Consumer>
+              {({ labelState: { labels } }) => (
+                <div className="card-content">{this.renderChart(labels)}</div>
+              )}
+            </LabelContext.Consumer>
+          </div>
+        </div>
+      </Layout>
+    )
+  }
+
+  renderChart(labels: Label[]) {
+    const { trends } = this.state
 
     const options = {
       title: {
@@ -196,36 +224,7 @@ class Trends extends React.Component<Props, State> {
         },
       ],
     }
-
-    return (
-      <Layout>
-        {this.renderProjectLabelModal()}
-
-        <div className="container">
-          <div className="level">
-            <div className="level-left"></div>
-            <div className="level-right">{this.renderTimePeriodSelections()}</div>
-          </div>
-
-          <div className="card">
-            <div className="card-header">
-              <p className="card-header-title">
-                Time spent on &nbsp;
-                <span className="tag is-light">Work</span>&nbsp; per week
-              </p>
-              <div className="card-header-icon" aria-label="more options">
-                <span className="icon">
-                  <i className="fa fa-angle-down" aria-hidden="true"></i>
-                </span>
-              </div>
-            </div>
-            <div className="card-content">
-              <Bar data={data} options={options} />
-            </div>
-          </div>
-        </div>
-      </Layout>
-    )
+    return <Bar data={data} options={options} />
   }
 
   renderProjectLabelModal() {

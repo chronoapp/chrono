@@ -13,7 +13,7 @@ import { LabelContext } from './LabelsContext'
  * Panel with a list of labels.
  */
 export default function LabelPanel() {
-  const [labelState, dispatch] = useContext(LabelContext)
+  const { labelState, dispatch } = useContext(LabelContext)
   const [selectedLabelKeyColor, setSelectedLabelKeyColor] = useState('')
 
   useEffect(() => {
