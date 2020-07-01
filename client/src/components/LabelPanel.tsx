@@ -13,7 +13,7 @@ import { LabelContext } from './LabelsContext'
  * Panel with a list of labels.
  */
 export default function LabelPanel() {
-  const { labelState, dispatch } = useContext(LabelContext)
+  const { labelState, dispatch } = useContext<any>(LabelContext)
   const [selectedLabelKeyColor, setSelectedLabelKeyColor] = useState('')
 
   useEffect(() => {
@@ -48,7 +48,9 @@ export default function LabelPanel() {
   }
 
   function onClickLabelColor(labelColor: string) {
-    const selectedLabel = labelState.labels.find((label) => label.key == selectedLabelKeyColor)
+    const selectedLabel = labelState.labels.find(
+      (label: Label) => label.key == selectedLabelKeyColor
+    )
     if (selectedLabel) {
       selectedLabel.color_hex = labelColor
       updateLabel(selectedLabel)
@@ -59,7 +61,7 @@ export default function LabelPanel() {
   function getLabel(label: Label) {
     return (
       <Hoverable key={label.id}>
-        {(isMouseInside, mouseEnter, mouseLeave) => (
+        {(isMouseInside: boolean, mouseEnter: any, mouseLeave: any) => (
           <a
             onMouseEnter={mouseEnter}
             onMouseLeave={mouseLeave}

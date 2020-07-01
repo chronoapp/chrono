@@ -7,7 +7,7 @@ const API_URL = 'http://localhost:8888/api/v1'
 
 function handleErrors(response: any) {
   if (!response.ok) {
-    response.json().then((r) => {
+    response.json().then((r: any) => {
       console.log(r)
     })
 
@@ -18,7 +18,7 @@ function handleErrors(response: any) {
 
 // ================== Authentication ==================
 
-export function getAuthToken(req?) {
+export function getAuthToken(req?: any) {
   let cookies
   if (req != null) {
     cookies = new Cookies(req.headers.cookie)
@@ -68,7 +68,7 @@ export async function getEvents(authToken: string, title: string = ''): Promise<
     })
 }
 
-export async function updateEvent(authToken, event: CalendarEvent): Promise<CalendarEvent> {
+export async function updateEvent(authToken: string, event: CalendarEvent): Promise<CalendarEvent> {
   return fetch(`${API_URL}/events/${event.id}`, {
     method: 'PUT',
     headers: { Authorization: authToken },
@@ -95,7 +95,7 @@ export async function getLabels(authToken: string, title: string = ''): Promise<
     headers: { Authorization: authToken },
   })
     .then(handleErrors)
-    .then((resp) => resp.map((label) => Label.fromJson(label)))
+    .then((resp) => resp.map((label: any) => Label.fromJson(label)))
 }
 
 export async function putLabel(label: Label, authToken: string): Promise<Label> {
@@ -115,7 +115,7 @@ export async function getLabelRules(labelText: string, authToken: string): Promi
     headers: { Authorization: authToken },
   })
     .then(handleErrors)
-    .then((resp) => resp.map((rule) => LabelRule.fromJson(rule)))
+    .then((resp) => resp.map((rule: any) => LabelRule.fromJson(rule)))
 }
 
 export async function putLabelRule(labelRule: LabelRule, authToken: string): Promise<LabelRule> {

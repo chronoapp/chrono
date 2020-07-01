@@ -2,8 +2,8 @@ import React from 'react'
 import { authenticate } from '../util/Api'
 import Cookies from 'universal-cookie'
 
-class Auth extends React.Component<{ query; resp }, {}> {
-  static async getInitialProps({ query }) {
+class Auth extends React.Component<{ query: any; resp: any }, {}> {
+  static async getInitialProps({ query }: any) {
     return { query }
   }
 

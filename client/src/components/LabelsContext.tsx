@@ -49,7 +49,7 @@ function labelReducer({ labels }: LabelState, action: ActionType) {
   }
 }
 
-export function LabelsContextProvider(props) {
+export function LabelsContextProvider(props: any) {
   const [labelState, dispatch] = useReducer(labelReducer, initialState)
   return (
     <LabelContext.Provider value={{ labelState, dispatch }}>{props.children}</LabelContext.Provider>

@@ -356,7 +356,6 @@ class EventList extends Component<Props, State> {
   render() {
     return (
       <Layout>
-        <div className="left-section"></div>
         <section>
           {this.renderSearchBar()}
           {this.renderAddLabelRuleModal()}
