@@ -200,22 +200,6 @@ class Trends extends React.Component<Props, State> {
     return (
       <Layout>
         {this.renderProjectLabelModal()}
-        <div className="left-section">
-          <LabelPanel
-            labels={labels}
-            updateLabel={(label) => {
-              putLabel(label, authToken).then((label) => {
-                const replaceIdx = labels.findIndex((l) => l.key == label.key)
-                labels[replaceIdx] = label
-                this.setState({ labels })
-              })
-            }}
-          />
-          <button className="button is-white" onClick={this.onClickAddProject}>
-            <Icon path={mdiPlus} size={1} horizontal vertical />
-            Add Project
-          </button>
-        </div>
 
         <div className="container">
           <div className="level">

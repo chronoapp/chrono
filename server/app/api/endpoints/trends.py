@@ -20,10 +20,7 @@ class TimePeriod(enum.Enum):
 
 
 @router.get('/trends/{label_key}')
-def getUserTrends(
-        label_key: str,
-        time_period: str = "WEEK",
-        user=Depends(get_current_user)):
+def getUserTrends(label_key: str, time_period: str = "WEEK", user=Depends(get_current_user)):
     userId = user.id
     logger.info(f'{userId, time_period}')
 
@@ -37,21 +34,13 @@ def getUserTrends(
         diff = timedelta(days=12 * 7)
 
     startTime = endTime - diff
-    labels, durations = getTrendsDataResult(userId, label_key, startTime,
-        endTime, timePeriod)
+    labels, durations = getTrendsDataResult(userId, label_key, startTime, endTime, timePeriod)
 
-    return {
-        'labels': labels,
-        'values': durations
-    }
+    return {'labels': labels, 'values': durations}
 
 
-def getTrendsDataResult(
-        userId: int,
-        label: str,
-        startTime: datetime,
-        endTime: datetime,
-        timePeriod: TimePeriod):
+def getTrendsDataResult(userId: int, label: str, startTime: datetime, endTime: datetime,
+                        timePeriod: TimePeriod):
     """Executes the DB query for time spent on the activity label,
     grouped by TimePeriod.
     """
@@ -86,15 +75,12 @@ def getTrendsDataResult(
             ORDER BY starting;
         """.replace('TIME_PERIOD', timePeriodValue)
 
-        result = session.execute(
-            text(query),
-            {
-                'userId': userId,
-                'start_time': startTime,
-                'end_time': endTime,
-                'label': label
-            }
-        )
+        result = session.execute(text(query), {
+            'userId': userId,
+            'start_time': startTime,
+            'end_time': endTime,
+            'label': label
+        })
 
         for row in result:
             date, duration, _ = row

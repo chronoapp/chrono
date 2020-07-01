@@ -3,7 +3,6 @@ from datetime import datetime
 from sqlalchemy import desc, and_
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import datetime
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -37,7 +36,7 @@ class EventInDBVM(EventBaseVM):
 @router.get('/events/', response_model=List[EventInDBVM])
 async def getEvents(title: str = "",
                     query: str = "",
-                    limit: int = 10,
+                    limit: int = 100,
                     user: User = Depends(get_current_user),
                     session: Session = Depends(get_db)):
 

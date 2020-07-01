@@ -1,7 +1,12 @@
 import * as React from 'react'
+import Icon from '@mdi/react'
 import Link from 'next/link'
 import Head from 'next/head'
+
 import { getOauthUrl, signOut } from '../util/Api'
+import LabelPanel from './LabelPanel'
+import { LabelsContextProvider } from './LabelsContext'
+import { mdiPlus } from '@mdi/js'
 
 import '../style/index.sass'
 import '../style/app.scss'
@@ -12,6 +17,9 @@ interface Props {
   loggedIn: boolean
 }
 
+/**
+ * Top Level Layout for the navigation and body.
+ */
 export default class Layout extends React.Component<Props, {}> {
   static defaultProps = {
     title: 'Timecouncil',
@@ -106,7 +114,18 @@ export default class Layout extends React.Component<Props, {}> {
           {this.renderNavItems()}
         </nav>
 
-        <div className="app-content">{this.renderChildren()}</div>
+        <div className="app-content">
+          <LabelsContextProvider>
+            <div className="left-section">
+              <LabelPanel />
+              <button className="button is-white" onClick={() => {}}>
+                <Icon path={mdiPlus} size={1} horizontal vertical />
+                Add Project
+              </button>
+            </div>
+            {this.renderChildren()}
+          </LabelsContextProvider>
+        </div>
 
         <footer></footer>
       </div>
