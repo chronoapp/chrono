@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy import desc, and_
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from datetime import datetime
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -21,9 +22,12 @@ class EventBaseVM(BaseModel):
     """
     title: str
     description: Optional[str] = None
-    start_time: Optional[str]
-    end_time: Optional[str]
+    start_time: Optional[datetime]
+    end_time: Optional[datetime]
     labels: List[LabelVM] = []
+
+    class Config:
+        orm_mode = True
 
 
 class EventInDBVM(EventBaseVM):
@@ -31,21 +35,19 @@ class EventInDBVM(EventBaseVM):
 
 
 @router.get('/events/', response_model=List[EventInDBVM])
-async def getEvents(
-        title: str = "",
-        query: str = "",
-        limit: int = 100,
-        user: User = Depends(get_current_user),
-        session: Session = Depends(get_db)):
+async def getEvents(title: str = "",
+                    query: str = "",
+                    limit: int = 10,
+                    user: User = Depends(get_current_user),
+                    session: Session = Depends(get_db)):
 
     logger.info(f'getEvents:{user.username}')
     logger.info(f'query:{query}')
     logger.info(f'limit:{limit}')
 
     if title:
-        return user.events.filter(
-            and_(Event.start_time <= datetime.now(),
-                Event.title.ilike(title))).all()
+        return user.events.filter(and_(Event.start_time <= datetime.now(),
+                                       Event.title.ilike(title))).all()
     elif query:
         tsQuery = ' & '.join(query.split())
         return Event.search(session, user.id, tsQuery)
@@ -56,26 +58,22 @@ async def getEvents(
 
 
 @router.get('/events/{event_id}', response_model=EventInDBVM)
-async def getEvent(
-        event_id: int,
-        user: User = Depends(get_current_user),
-        session: Session = Depends(get_db)):
+async def getEvent(event_id: int,
+                   user: User = Depends(get_current_user),
+                   session: Session = Depends(get_db)):
 
     return user.events.filter_by(id=event_id).first()
 
 
 @router.put('/events/{event_id}', response_model=EventInDBVM)
-async def updateEvent(
-        event: EventBaseVM,
-        event_id: int,
-        user: User = Depends(get_current_user),
-        session: Session = Depends(get_db)):
+async def updateEvent(event: EventBaseVM,
+                      event_id: int,
+                      user: User = Depends(get_current_user),
+                      session: Session = Depends(get_db)):
 
     eventDb = user.events.filter_by(id=event_id).first()
     if not eventDb:
-        eventDb = Event(
-            None, event.title, event.description,
-            event.start_time, event.end_time)
+        eventDb = Event(None, event.title, event.description, event.start_time, event.end_time)
     else:
         logger.info(event)
         if event.title:

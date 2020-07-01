@@ -17,25 +17,25 @@ class LabelVM(BaseModel):
     color_hex: str
     parent_id: Optional[int]
 
+    class Config:
+        orm_mode = True
+
 
 class LabelInDbVM(LabelVM):
     id: int
 
 
 @router.get('/labels/', response_model=List[LabelInDbVM])
-async def getLabels(
-        user=Depends(get_current_user),
-        session=Depends(get_db)):
+async def getLabels(user=Depends(get_current_user), session=Depends(get_db)):
 
     return user.labels.order_by(Label.title).all()
 
 
 @router.put('/labels/{label_key}', response_model=LabelInDbVM)
-async def putLabel(
-        label: LabelVM,
-        label_key: str,
-        user: User = Depends(get_current_user),
-        session: Session = Depends(get_db)):
+async def putLabel(label: LabelVM,
+                   label_key: str,
+                   user: User = Depends(get_current_user),
+                   session: Session = Depends(get_db)):
 
     logger.info(label)
     labelDb = user.labels.filter_by(key=label_key).first()

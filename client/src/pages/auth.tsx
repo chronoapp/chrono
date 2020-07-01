@@ -1,30 +1,26 @@
-import React from 'react';
-import { authenticate } from '../util/Api';
-import Cookies from 'universal-cookie';
+import React from 'react'
+import { authenticate } from '../util/Api'
+import Cookies from 'universal-cookie'
 
+class Auth extends React.Component<{ query; resp }, {}> {
+  static async getInitialProps({ query }) {
+    return { query }
+  }
 
-class Auth extends React.Component<{ query, resp },{}> {
+  public async componentDidMount() {
+    const { code, state } = this.props.query
 
-    static async getInitialProps({ query }) {
-        return { query }
-    }
+    const cookies = new Cookies()
+    const resp = await authenticate(code, state)
+    cookies.set('auth_token', resp.token)
 
-    public async componentDidMount() {
-        const { code, state } = this.props.query;
+    window.location.replace('/')
+  }
 
-        const cookies = new Cookies();
-        const resp = await authenticate(code, state);
-        cookies.set('auth_token', resp.token);
-
-        window.location.replace('/');
-    }
-
-    public render() {
-        // TODO: Handle errors.
-        return (
-            <div>Authenticating..</div>
-        )
-    }
+  public render() {
+    // TODO: Handle errors.
+    return <div>Authenticating..</div>
+  }
 }
 
-export default Auth;
+export default Auth

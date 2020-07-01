@@ -5,6 +5,9 @@ import { Constants, arrayUnique, targetPositionHasChanged, popoverInfosAreEqual 
 
 const DEFAULT_POSITION_ORDER: Position[] = ['top', 'right', 'left', 'bottom']
 
+/**
+ * TODO(winston): Make this dynamically "pop" toward the center of the screen.
+ */
 class Popover extends React.Component<PopoverProps, PopoverState> {
   private targetRef = React.createRef<HTMLElement>()
   private targetRect?: ClientRect = undefined
@@ -38,7 +41,6 @@ class Popover extends React.Component<PopoverProps, PopoverState> {
       }
     }
 
-    // eslint-disable-next-line no-restricted-syntax
     return null
   }
 

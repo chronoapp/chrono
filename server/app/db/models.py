@@ -22,9 +22,9 @@ class User(Base):
 
     google_oauth_state = Column(String(255), nullable=True)
     credentials = relationship('UserCredential',
-        cascade='save-update, merge, delete, delete-orphan',
-        uselist=False,
-        backref='user')
+                               cascade='save-update, merge, delete, delete-orphan',
+                               uselist=False,
+                               backref='user')
 
     def __init__(self, email, name, pictureUrl):
         self.email = email
@@ -37,9 +37,7 @@ class User(Base):
 
 class UserCredential(Base):
     __tablename__ = 'user_credentials'
-    user_id = Column(Integer,
-                ForeignKey('user.id'),
-                primary_key=True)
+    user_id = Column(Integer, ForeignKey('user.id'), primary_key=True)
 
     token = Column(String(255), index=True)
     refresh_token = Column(String(255))
@@ -68,9 +66,8 @@ class UserCredential(Base):
 
 
 event_label_association_table = Table('event_label', Base.metadata,
-    Column('event_id', BigInteger, ForeignKey('event.id')),
-    Column('label_id', Integer, ForeignKey('label.id'))
-)
+                                      Column('event_id', BigInteger, ForeignKey('event.id')),
+                                      Column('label_id', Integer, ForeignKey('label.id')))
 
 
 class Event(Base):
@@ -80,8 +77,7 @@ class Event(Base):
 
     # Many to one
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    user = relationship('User', backref=backref(
-        'events', lazy='dynamic', cascade='all,delete'))
+    user = relationship('User', backref=backref('events', lazy='dynamic', cascade='all,delete'))
     title = Column(String(255), index=True)
     description = Column(Text())
     start_time = Column(DateTime())
@@ -103,18 +99,15 @@ class Event(Base):
             LIMIT :limit;
         """
 
-        rows = engine.execute(text(sqlQuery),
-            query=searchQuery,
-            userId=userId,
-            limit=limit)
+        rows = engine.execute(text(sqlQuery), query=searchQuery, userId=userId, limit=limit)
 
         rowIds = [r[0] for r in rows]
 
         return session.query(Event).filter(Event.id.in_(rowIds))\
             .order_by(desc(Event.end_time)).all()
 
-    def __init__(self, g_id: str, title: str, description: str,
-            start_time: datetime, end_time: datetime):
+    def __init__(self, g_id: str, title: str, description: str, start_time: datetime,
+                 end_time: datetime):
         self.g_id = g_id
         self.title = title
         self.description = description
@@ -128,8 +121,7 @@ class Label(Base):
     parent_id = Column(BigInteger, ForeignKey('label.id'), nullable=True)
 
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    user = relationship('User', backref=backref(
-        'labels', lazy='dynamic', cascade='all,delete'))
+    user = relationship('User', backref=backref('labels', lazy='dynamic', cascade='all,delete'))
     title = Column(String(255))
     key = Column(String(50), index=True)
     color_hex = Column(String(50), nullable=False)
@@ -152,12 +144,11 @@ class LabelRule(Base):
     text = Column(String(255), nullable=False)
 
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    user = relationship('User', backref=backref(
-        'label_rules', lazy='dynamic', cascade='all,delete'))
+    user = relationship('User',
+                        backref=backref('label_rules', lazy='dynamic', cascade='all,delete'))
 
     label_id = Column(Integer, ForeignKey('label.id'), nullable=False)
-    label = relationship('Label', backref=backref(
-        'rules', lazy='dynamic', cascade='all,delete'))
+    label = relationship('Label', backref=backref('rules', lazy='dynamic', cascade='all,delete'))
 
     def __init__(self, text: str):
         self.text = text
