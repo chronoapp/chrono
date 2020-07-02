@@ -6,7 +6,6 @@ import Head from 'next/head'
 import { getOauthUrl, signOut } from '../util/Api'
 import LabelPanel from './LabelPanel'
 import { LabelsContextProvider } from './LabelsContext'
-import { mdiPlus } from '@mdi/js'
 
 import '../style/index.sass'
 import '../style/app.scss'
@@ -118,10 +117,6 @@ export default class Layout extends React.Component<Props, {}> {
           <LabelsContextProvider>
             <div className="left-section">
               <LabelPanel />
-              <button className="button is-white" onClick={() => {}}>
-                <Icon path={mdiPlus} size={1} horizontal vertical />
-                Add Project
-              </button>
             </div>
             {this.renderChildren()}
           </LabelsContextProvider>

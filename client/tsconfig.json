@@ -24,8 +24,7 @@
     "isolatedModules": true,
     "module": "esnext",
     "moduleResolution": "node",
-    "jsx": "preserve",
-
+    "jsx": "preserve"
   },
   "exclude": [
     "node_modules"

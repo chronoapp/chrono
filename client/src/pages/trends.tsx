@@ -2,10 +2,8 @@ import * as React from 'react'
 import { Bar } from 'react-chartjs-2'
 
 import Layout from '../components/Layout'
-import ColorPicker from '../components/ColorPicker'
 import { getTrends, getAuthToken } from '../util/Api'
 import { Label, TimePeriod } from '../models/Label'
-import { LABEL_COLORS } from '../models/LabelColors'
 
 import { LabelContext } from '../components/LabelsContext'
 
@@ -14,17 +12,12 @@ interface Props {
   label: Label
 }
 
-interface ProjectModalState {
-  modalActive: boolean
-}
-
 interface State {
   timespanDropdownActive: boolean
   labelDropdownActive: boolean
   selectedLabel: Label | null
   trends: any
 
-  projectModal: ProjectModalState | null
   selectedTimePeriod: TimePeriod
 }
 
@@ -40,12 +33,10 @@ class Trends extends React.Component<Props, State> {
       selectedLabel: null,
       trends: {},
 
-      projectModal: null,
       selectedTimePeriod: 'WEEK',
     }
 
     this.toggleDropdown = this.toggleDropdown.bind(this)
-    this.onClickAddProject = this.onClickAddProject.bind(this)
     this.onTimePeriodSelected = this.onTimePeriodSelected.bind(this)
   }
 
@@ -61,15 +52,6 @@ class Trends extends React.Component<Props, State> {
     this.setState({
       trends,
     })
-  }
-
-  onClickAddProject() {
-    const labelHex = LABEL_COLORS[0].hex
-    const projectModal = {
-      modalActive: true,
-      label: new Label(-1, 0, '', '', labelHex),
-    }
-    this.setState({ projectModal })
   }
 
   toggleDropdown() {
@@ -143,8 +125,6 @@ class Trends extends React.Component<Props, State> {
 
     return (
       <Layout>
-        {this.renderProjectLabelModal()}
-
         <div className="container">
           <div className="level">
             <div className="level-left"></div>
@@ -223,58 +203,6 @@ class Trends extends React.Component<Props, State> {
       ],
     }
     return <Bar data={data} options={options} />
-  }
-
-  renderProjectLabelModal() {
-    const { projectModal } = this.state
-    if (!projectModal) {
-      return null
-    }
-
-    return (
-      <div className={`modal ${projectModal.modalActive ? 'is-active' : null}`}>
-        <div className="modal-background"></div>
-        <div className="modal-card">
-          <header className="modal-card-head">
-            <p className="modal-card-title">Add Project</p>
-          </header>
-          <section className="modal-card-body">
-            <div className="field">
-              <div className="control">
-                <label className="label">Project Name</label>
-                <input className="input" type="text" placeholder="" />
-              </div>
-            </div>
-            <div className="field">
-              <div className="control">
-                <label className="label">Color</label>
-                <div
-                  onClick={(_) => {}}
-                  className="event-label event-label--hoverable dropdown-trigger"
-                ></div>
-                <ColorPicker
-                  onSelectLabelColor={(labelColor) => {
-                    console.log(`SELECTED: ${labelColor}`)
-                  }}
-                />
-              </div>
-            </div>
-          </section>
-          <footer className="modal-card-foot">
-            <button className="button is-link">Add</button>
-            <button
-              className="button"
-              onClick={() => {
-                projectModal.modalActive = false
-                this.setState({ projectModal })
-              }}
-            >
-              Cancel
-            </button>
-          </footer>
-        </div>
-      </div>
-    )
   }
 }
 
