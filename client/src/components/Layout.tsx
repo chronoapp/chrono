@@ -2,10 +2,8 @@ import * as React from 'react'
 import Link from 'next/link'
 import Head from 'next/head'
 
-import { getOauthUrl, signOut } from '../util/Api'
+import { signOut } from '../util/Api'
 import LabelPanel from './LabelPanel'
-import { LabelsContextProvider } from './LabelsContext'
-import Login from './Login'
 
 import '../style/index.sass'
 import '../style/app.scss'
@@ -82,12 +80,10 @@ export default class Layout extends React.Component<Props, {}> {
         </nav>
 
         <div className="app-content">
-          <LabelsContextProvider>
-            <div className="left-section">
-              <LabelPanel />
-            </div>
-            {this.props.children}
-          </LabelsContextProvider>
+          <div className="left-section">
+            <LabelPanel />
+          </div>
+          {this.props.children}
         </div>
 
         <footer></footer>

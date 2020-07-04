@@ -4,7 +4,7 @@ import { getAuthToken, getLabels, putLabel } from '../util/Api'
 import Icon from '@mdi/react'
 import { mdiDotsHorizontal, mdiPlus } from '@mdi/js'
 
-import Hoverable from '../core/Hoverable'
+import Hoverable from '../lib/Hoverable'
 import ColorPicker from './ColorPicker'
 import { Label } from '../models/Label'
 import { LABEL_COLORS } from '../models/LabelColors'
@@ -18,7 +18,7 @@ interface LabelModalState {
 /**
  * Panel with a list of labels.
  */
-export default function LabelPanel() {
+function LabelPanel() {
   const [selectedLabelKeyColor, setSelectedLabelKeyColor] = useState('')
   const { labelState, dispatch } = useContext<any>(LabelContext)
 
@@ -78,6 +78,7 @@ export default function LabelPanel() {
             onMouseLeave={mouseLeave}
             key={label.key}
             className={`panel-block ${false ? 'is-active' : ''}`}
+            style={{ borderBottom: 'none' }}
           >
             <div className={`dropdown ${label.key === selectedLabelKeyColor ? 'is-active' : ''}`}>
               <div
@@ -165,9 +166,7 @@ export default function LabelPanel() {
     <>
       {newLabelModal.active && renderProjectLabelModal()}
       <span className="has-text-left has-text-weight-medium">Tags</span>
-      <div className="panel" style={{ marginBottom: '0.5rem' }}>
-        {labelState.labels.map(getLabel)}
-      </div>
+      <div style={{ marginBottom: '0.5rem' }}>{labelState.labels.map(getLabel)}</div>
       <button className="button is-white has-text-left" onClick={onClickAddProject}>
         <Icon path={mdiPlus} size={1} horizontal vertical />
         Add Tag
@@ -175,3 +174,5 @@ export default function LabelPanel() {
     </>
   )
 }
+
+export default LabelPanel
