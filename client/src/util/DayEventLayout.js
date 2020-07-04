@@ -199,6 +199,7 @@ export default function getStyledEvents(
             height: event.height,
             width: event.width,
             xOffset: Math.max(0, event.xOffset),
+            border: event.xOffset == 0 ? 'none' : '1px solid white',
         },
     }))
 }

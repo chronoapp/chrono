@@ -1,7 +1,6 @@
 @import './variables';
 
 .cal-event {
-    border: none;
     box-sizing: border-box;
     box-shadow: none;
     margin: 0;
@@ -33,7 +32,7 @@
 
 .cal-event-label {
     @extend .cal-ellipsis;
-    font-size: 80%;
+    font-size: 75%;
 }
 
 .cal-event-overlaps {

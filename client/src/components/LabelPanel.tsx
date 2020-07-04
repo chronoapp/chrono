@@ -77,8 +77,7 @@ function LabelPanel() {
             onMouseEnter={mouseEnter}
             onMouseLeave={mouseLeave}
             key={label.key}
-            className={`panel-block ${false ? 'is-active' : ''}`}
-            style={{ borderBottom: 'none' }}
+            className={`tag-block`}
           >
             <div className={`dropdown ${label.key === selectedLabelKeyColor ? 'is-active' : ''}`}>
               <div

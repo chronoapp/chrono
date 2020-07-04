@@ -7,7 +7,7 @@ import { Direction, EventActionContext } from './EventActionContext'
 
 interface IProps {
   event: Event
-  style: { top: number; width: number; height: number; xOffset: number }
+  style: { top: number; width: number; height: number; xOffset: number; border: string }
   label: string
   isPreview: boolean
   innerRef?: React.Ref<HTMLDivElement>
@@ -80,6 +80,7 @@ class TimeGridEvent extends React.Component<IProps> {
           left: stringifyPercent(this.props.style.xOffset),
           width: stringifyPercent(this.props.style.width),
           height: stringifyPercent(this.props.style.height),
+          border: this.props.style.border,
           zIndex: this.props.isPreview ? 10 : 1,
         }}
         onMouseDown={this.handleStartDragging}
