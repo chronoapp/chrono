@@ -8,10 +8,16 @@ function TimeGridHeader(props: { range: Date[]; leftPad: number; marginRight: nu
     const today = new Date() // TODO: pass via props.
 
     return props.range.map((date, i) => {
-      const dateString = format(date, 'DD ddd')
+      const dayNumber = format(date, 'DD')
+      const dateString = format(date, 'ddd')
+      const isToday = dates.eq(date, today, 'day')
+
       return (
         <div key={i} className={clsx('cal-header', dates.eq(date, today, 'day') && 'cal-today')}>
-          <span>{dateString}</span>
+          <span className={clsx({ 'cal-header-day-selected': isToday })}>{dateString}</span>
+          <div className={clsx({ 'is-size-5': true, 'cal-header-day-num-selected': isToday })}>
+            {dayNumber}
+          </div>
         </div>
       )
     })

@@ -1,11 +1,11 @@
 import * as React from 'react'
-import Icon from '@mdi/react'
 import Link from 'next/link'
 import Head from 'next/head'
 
 import { getOauthUrl, signOut } from '../util/Api'
 import LabelPanel from './LabelPanel'
 import { LabelsContextProvider } from './LabelsContext'
+import Login from './Login'
 
 import '../style/index.sass'
 import '../style/app.scss'
@@ -13,7 +13,6 @@ import '../style/app.scss'
 interface Props {
   title: string
   children: any
-  loggedIn: boolean
 }
 
 /**
@@ -22,64 +21,33 @@ interface Props {
 export default class Layout extends React.Component<Props, {}> {
   static defaultProps = {
     title: 'Timecouncil',
-    loggedIn: true,
   }
 
   renderNavItems() {
-    const startNavItems = this.props.loggedIn ? (
-      <div className="navbar-start">
-        <Link href="/">
-          <a className="navbar-item">Calendar</a>
-        </Link>
-        <Link href="/trends">
-          <a className="navbar-item">Trends</a>
-        </Link>
-        <Link href="/events">
-          <a className="navbar-item">Events</a>
-        </Link>
-      </div>
-    ) : null
-
-    const endNavItems = this.props.loggedIn ? (
-      <a onClick={signOut} className="button is-white">
-        Log out
-      </a>
-    ) : (
-      <Link href={getOauthUrl()}>
-        <a className="button is-primary">
-          <strong>Log in</strong>
-        </a>
-      </Link>
-    )
-
     return (
       <div id="navbarBasicExample" className="navbar-menu">
-        {startNavItems}
-
+        <div className="navbar-start">
+          <Link href="/">
+            <a className="navbar-item">Calendar</a>
+          </Link>
+          <Link href="/trends">
+            <a className="navbar-item">Trends</a>
+          </Link>
+          <Link href="/events">
+            <a className="navbar-item">Events</a>
+          </Link>
+        </div>
         <div className="navbar-end">
           <div className="navbar-item">
-            <div className="buttons">{endNavItems}</div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  renderChildren() {
-    if (this.props.loggedIn) {
-      return this.props.children
-    } else {
-      return (
-        <div className="hero">
-          <div className="hero-body">
-            <div className="container">
-              <h1 className="title">Time tracking with google calendar</h1>
-              <h2 className="subtitle">Track your creative / project / work hours.</h2>
+            <div className="buttons">
+              <a onClick={signOut} className="button is-white">
+                Log out
+              </a>
             </div>
           </div>
         </div>
-      )
-    }
+      </div>
+    )
   }
 
   render() {
@@ -118,7 +86,7 @@ export default class Layout extends React.Component<Props, {}> {
             <div className="left-section">
               <LabelPanel />
             </div>
-            {this.renderChildren()}
+            {this.props.children}
           </LabelsContextProvider>
         </div>
 

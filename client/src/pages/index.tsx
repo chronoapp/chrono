@@ -1,6 +1,6 @@
 import React from 'react'
 import Layout from '../components/Layout'
-import { getAuthToken } from '../util/Api'
+import { auth } from '../util/Api'
 import Calendar from '../calendar/Calendar'
 
 interface Props {
@@ -9,8 +9,8 @@ interface Props {
 interface State {}
 
 class Home extends React.Component<Props, State> {
-  static async getInitialProps({ req }) {
-    const authToken = getAuthToken(req)
+  static async getInitialProps(ctx) {
+    const authToken = auth(ctx)
     return { authToken }
   }
 

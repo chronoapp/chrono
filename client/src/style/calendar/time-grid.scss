@@ -17,7 +17,6 @@
     flex-direction: column;
     flex: 1;
     width: 100%;
-    border: 1px solid $calendar-border;
     min-height: 0;
 
     .cal-row {
@@ -31,7 +30,7 @@
     flex: 1 0 0%;
     align-items: flex-start;
     width: 100%;
-    border-top: 2px solid $calendar-border;
+    border-top: 1px solid $calendar-border;
     overflow-y: auto;
     position: relative;
 
@@ -74,8 +73,26 @@
 .cal-header {
     text-align: center;
     border-left: 1px solid $cell-border;
+    border-top: none;
     flex: 1;
     min-width: $min-column-width;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 8px;
+}
+
+.cal-header-day-selected {
+    color: $cal-blue;
+}
+
+.cal-header-day-num-selected {
+    color: white;
+    background-color: $cal-blue;
+    border-radius: 5px;
+    width: 40px;
+
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .cal-today {

@@ -1,3 +1,4 @@
+import Router from 'next/router'
 import Cookies from 'universal-cookie'
 import { CalendarEvent } from '../models/Event'
 import { Label, TimePeriod } from '../models/Label'
@@ -18,6 +19,29 @@ function handleErrors(response: any) {
 
 // ================== Authentication ==================
 
+export function auth(ctx) {
+  let token
+  if (ctx.req) {
+    const cookies = new Cookies(ctx.req.headers.cookie)
+    token = cookies.get('auth_token')
+
+    if (!token) {
+      ctx.res.writeHead(302, { Location: '/login' })
+      ctx.res.end()
+      return
+    }
+  } else {
+    let cookies = new Cookies()
+    token = cookies.get('auth_token')
+  }
+
+  if (!token) {
+    Router.push('/login')
+  }
+
+  return token
+}
+
 export function getAuthToken(req?: any) {
   let cookies
   if (req != null) {
@@ -29,7 +53,7 @@ export function getAuthToken(req?: any) {
   return cookies.get('auth_token') || ''
 }
 
-export function getOauthUrl() {
+export function getOauthUrl(): string {
   return `${API_URL}/oauth/google/auth`
 }
 
@@ -37,6 +61,8 @@ export function signOut() {
   // TODO: Update state after this.
   const cookies = new Cookies()
   cookies.remove('auth_token')
+
+  Router.push('/login')
 }
 
 export async function authenticate(code: string, state: string) {

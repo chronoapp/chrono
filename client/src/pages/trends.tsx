@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Bar } from 'react-chartjs-2'
 
 import Layout from '../components/Layout'
-import { getTrends, getAuthToken } from '../util/Api'
+import { getTrends, getAuthToken, auth } from '../util/Api'
 import { Label, TimePeriod } from '../models/Label'
 
 import { LabelContext } from '../components/LabelsContext'
@@ -40,14 +40,13 @@ class Trends extends React.Component<Props, State> {
     this.onTimePeriodSelected = this.onTimePeriodSelected.bind(this)
   }
 
-  static async getInitialProps({ req }) {
-    const authToken = getAuthToken(req)
+  static async getInitialProps(ctx) {
+    const authToken = auth(ctx)
     return { authToken }
   }
 
   async componentDidMount() {
-    const authToken = getAuthToken()
-    const trends = await getTrends(authToken, this.state.selectedTimePeriod)
+    const trends = await getTrends(this.props.authToken, this.state.selectedTimePeriod)
 
     this.setState({
       trends,
@@ -62,7 +61,7 @@ class Trends extends React.Component<Props, State> {
   onTimePeriodSelected(timePeriod: TimePeriod) {
     this.setState({ selectedTimePeriod: timePeriod })
 
-    getTrends(getAuthToken(), timePeriod).then((trends) => {
+    getTrends(this.props.authToken, timePeriod).then((trends) => {
       this.setState({ trends })
     })
   }
@@ -117,12 +116,6 @@ class Trends extends React.Component<Props, State> {
   }
 
   render() {
-    const { authToken } = this.props
-
-    if (!authToken) {
-      return <Layout loggedIn={false} children={null} />
-    }
-
     return (
       <Layout>
         <div className="container">

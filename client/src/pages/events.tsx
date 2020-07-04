@@ -1,7 +1,6 @@
 import React, { Component } from 'react'
 import tinycolor from 'tinycolor2'
 import {
-  getAuthToken,
   getEvents,
   getLabels,
   updateEvent,
@@ -9,13 +8,16 @@ import {
   getLabelRules,
   putLabelRule,
   syncCalendar,
+  auth,
 } from '../util/Api'
 import { CalendarEvent } from '../models/Event'
 import { Label } from '../models/Label'
 import { LabelRule } from '../models/LabelRule'
 import Layout from '../components/Layout'
 
-interface Props {}
+interface Props {
+  authToken: string
+}
 
 /**
  * Data needed to apply a label to a calendar event.
@@ -61,8 +63,13 @@ class EventList extends Component<Props, State> {
     this.refreshCalendar = this.refreshCalendar.bind(this)
   }
 
+  static async getInitialProps(ctx) {
+    const authToken = auth(ctx)
+    return { authToken }
+  }
+
   async componentDidMount() {
-    const authToken = getAuthToken()
+    const authToken = this.props.authToken
     const events = await getEvents(authToken)
     const labels = await getLabels(authToken)
 
@@ -88,7 +95,7 @@ class EventList extends Component<Props, State> {
       return
     }
 
-    const authToken = getAuthToken()
+    const { authToken } = this.props
     const label = this.state.labels.find((l) => l.key == labelKey)
     if (!label) return
 
@@ -119,25 +126,23 @@ class EventList extends Component<Props, State> {
   async applyLabelToEvent() {
     const { labelRuleState } = this.state
     if (!labelRuleState) return
-    const authToken = getAuthToken()
 
     if (labelRuleState.applyAll) {
       const labelRule = new LabelRule(labelRuleState.event.title, labelRuleState.label.id)
-      putLabelRule(labelRule, authToken).then((_labelRule) => {
+      putLabelRule(labelRule, this.props.authToken).then((_labelRule) => {
         this.refreshEvents()
       })
     } else {
       labelRuleState.event.labels.push(labelRuleState.label)
-      updateEvent(authToken, labelRuleState.event)
+      updateEvent(this.props.authToken, labelRuleState.event)
     }
 
     this.setState({ labelRuleState: null })
   }
 
   async refreshCalendar() {
-    const authToken = getAuthToken()
     this.setState({ isRefreshing: true })
-    await syncCalendar(authToken)
+    await syncCalendar(this.props.authToken)
     await this.refreshEvents()
     this.setState({ isRefreshing: false })
   }
@@ -147,7 +152,7 @@ class EventList extends Component<Props, State> {
     if (event) {
       const remainingLabels = event.labels.filter((l) => l.key !== labelKey)
       event.labels = remainingLabels
-      updateEvent(getAuthToken(), event)
+      updateEvent(this.props.authToken, event)
       this.setState({ events: this.state.events })
     }
   }
@@ -158,7 +163,8 @@ class EventList extends Component<Props, State> {
 
   async refreshEvents() {
     const { searchValue } = this.state
-    const authToken = getAuthToken()
+    const authToken = this.props.authToken
+
     if (searchValue) {
       searchEvents(authToken, searchValue).then((events) => {
         this.setState({ events })
