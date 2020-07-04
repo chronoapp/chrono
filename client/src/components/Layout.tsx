@@ -5,8 +5,7 @@ import Head from 'next/head'
 import { signOut } from '../util/Api'
 import LabelPanel from './LabelPanel'
 
-import '../style/index.sass'
-import '../style/app.scss'
+import '../style/index.scss'
 
 interface Props {
   title: string

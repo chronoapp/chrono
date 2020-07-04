@@ -1,7 +1,10 @@
 import * as React from 'react'
 import { getOauthUrl } from '../util/Api'
-import '../style/index.sass'
+import '../style/index.scss'
 
+/**
+ * TODO: Redirect to home if already logged in.
+ */
 function Login(props) {
   return (
     <div
