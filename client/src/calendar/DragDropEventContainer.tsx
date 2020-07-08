@@ -203,7 +203,7 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
             <TimeGridEvent
               event={event}
               label={timeRangeFormat(event.start, event.end)}
-              style={{ top, height, width: 100, xOffset: 0 }}
+              style={{ top, height, width: 100, xOffset: 0, border: 'none' }}
               isPreview={true}
             />
           )}

@@ -32,7 +32,10 @@ export function eventSegments(event: Event, range: Date[]): EventSegment {
   return new EventSegment(event, span, padding + 1, Math.max(padding + span, 1))
 }
 
-export function eventLevels(rowSegments: EventSegment[], limit: number = Infinity) {
+export function eventLevels(
+  rowSegments: EventSegment[],
+  limit: number = Infinity
+): { levels: EventSegment[][]; extra: EventSegment[] } {
   let i,
     j,
     seg,

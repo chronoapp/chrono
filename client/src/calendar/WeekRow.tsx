@@ -1,8 +1,11 @@
 import React from 'react'
 import clsx from 'clsx'
+
 import * as dates from '../util/dates'
 import { format } from '../util/localizer'
 import Event from '../models/Event'
+import DateSlotMetrics from './utils/DateSlotMetrics'
+import EventRow from './EventRow'
 
 interface IProps {
   key: number
@@ -11,6 +14,9 @@ interface IProps {
   events: Event[]
 }
 
+/**
+ * Row used for month and full day events in the week view.
+ */
 function WeekRow(props: IProps) {
   function renderBackgroundCells() {
     return (
@@ -37,12 +43,18 @@ function WeekRow(props: IProps) {
     )
   }
 
+  const dayMetrics = new DateSlotMetrics(props.range, props.events, 5, 1)
+
   return (
     <div className="cal-month-row">
       {renderBackgroundCells()}
 
       <div className="cal-row-content">
         <div className="cal-row">{props.range.map(renderHeadingCell)}</div>
+
+        {dayMetrics.levels.map((segments, idx) => (
+          <EventRow key={idx} segments={segments} slotMetrics={dayMetrics} />
+        ))}
       </div>
     </div>
   )
