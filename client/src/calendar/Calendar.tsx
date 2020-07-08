@@ -42,7 +42,7 @@ function Calendar() {
     ),
     new Event(
       3,
-      'Work on ABC',
+      'Work on ABC with friends',
       dateMath.add(dateMath.add(start, 1, 'day'), 12, 'hours'),
       dateMath.add(dateMath.add(start, 1, 'day'), 15, 'hours'),
       false

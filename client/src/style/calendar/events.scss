@@ -11,6 +11,8 @@
     cursor: pointer;
     width: 100%;
     text-align: left;
+    font-size: 80%;
+    padding-top: 5px;
 
     .cal-slot-selecting & {
         cursor: inherit;
@@ -32,7 +34,7 @@
 
 .cal-event-label {
     @extend .cal-ellipsis;
-    font-size: 75%;
+    font-size: 90%;
 }
 
 .cal-event-overlaps {
