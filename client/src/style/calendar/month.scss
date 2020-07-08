@@ -29,6 +29,10 @@
     border-left: 1px solid $cell-border;
 }
 
+.cal-row-content {
+    z-index: 1;
+}
+
 .cal-row {
     display: flex;
     flex-direction: row;
@@ -38,4 +42,14 @@
     text-align: center;
     flex: 1 0 0;
     padding-top: 5px;
+    font-size: 0.8em;
+}
+
+.cal-off-range {
+    color: #999999;
+}
+
+.cal-current-day-bg-month {
+    @extend .cal-current-day-bg;
+    width: 30px;
 }

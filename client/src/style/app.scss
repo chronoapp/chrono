@@ -50,6 +50,11 @@ code {
   }
 }
 
+.navbar {
+  border-bottom: 1px solid #dfdfdf;
+  height: 3rem;
+}
+
 .app-content {
   padding-top: 0.5rem;
   height: calc(100vh - 4rem);

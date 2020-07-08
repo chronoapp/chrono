@@ -56,10 +56,10 @@ function Calendar() {
   const [dragDropAction, setDragDropAction] = useState<DragDropAction | undefined>(undefined)
 
   useEffect(() => {
-    document.addEventListener('keydown', handleEscapeKey)
+    document.addEventListener('keydown', handleKeyboardShortcuts)
 
     return function cleanup() {
-      document.removeEventListener('keydown', handleEscapeKey)
+      document.removeEventListener('keydown', handleKeyboardShortcuts)
     }
   }, [])
 
@@ -73,10 +73,18 @@ function Calendar() {
     onCancelSelection,
   }
 
-  function handleEscapeKey(e: KeyboardEvent) {
+  function handleKeyboardShortcuts(e: KeyboardEvent) {
     if (e.key === 'Escape') {
       onCancelSelection()
       setDisplayToggleActive(false)
+    }
+
+    if (e.key === 'w') {
+      selectDisplay('Week')
+    }
+
+    if (e.key === 'm') {
+      selectDisplay('Month')
     }
   }
 

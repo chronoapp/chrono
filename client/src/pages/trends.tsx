@@ -124,24 +124,17 @@ class Trends extends React.Component<Props, State> {
             <div className="level-right">{this.renderTimePeriodSelections()}</div>
           </div>
 
-          <div className="card">
-            <div className="card-header">
-              <p className="card-header-title">
-                Time spent on &nbsp;
-                <span className="tag is-light">Work</span>&nbsp; per week
-              </p>
-              <div className="card-header-icon" aria-label="more options">
-                <span className="icon">
-                  <i className="fa fa-angle-down" aria-hidden="true"></i>
-                </span>
-              </div>
-            </div>
-            <LabelContext.Consumer>
-              {({ labelState: { labels } }) => (
-                <div className="card-content">{this.renderChart(labels)}</div>
-              )}
-            </LabelContext.Consumer>
+          <div>
+            <p className="card-header-title">
+              Time spent on &nbsp;
+              <span className="tag is-light">Work</span>&nbsp; per week
+            </p>
           </div>
+          <LabelContext.Consumer>
+            {({ labelState: { labels } }) => (
+              <div className="card-content">{this.renderChart(labels)}</div>
+            )}
+          </LabelContext.Consumer>
         </div>
       </Layout>
     )

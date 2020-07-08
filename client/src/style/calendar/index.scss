@@ -40,6 +40,16 @@
     background: $out-of-range-bg-color;
 }
 
+.cal-current-day-bg {
+    color: white;
+    background-color: $cal-blue;
+    border-radius: 5px;
+    width: 40px;
+
+    margin-left: auto;
+    margin-right: auto;
+}
+
 @import 'time-grid.scss';
 @import 'time-column.scss';
 @import 'events.scss';
