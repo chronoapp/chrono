@@ -5,7 +5,7 @@ import * as dates from '../util/dates'
 import Event from '../models/Event'
 import DayColumn from './DayColumn'
 import TimeGridHeader from './TimeGridHeader'
-import SlotMetrics from '../util/SlotMetrics'
+import SlotMetrics from './utils/SlotMetrics'
 import { format } from '../util/localizer'
 
 function remToPixels(rem) {

@@ -13,7 +13,7 @@ import * as dates from '../util/dates'
 import { timeRangeFormat } from '../util/localizer'
 import { EventActionContext, DragDropAction } from './EventActionContext'
 import Event from '../models/Event'
-import SlotMetrics from '../util/SlotMetrics'
+import SlotMetrics from './utils/SlotMetrics'
 
 interface IProps {
   slotMetrics: SlotMetrics

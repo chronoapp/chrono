@@ -71,12 +71,16 @@ export class CalendarEvent {
   }
 }
 
+/**
+ * TODO: Merge with CalendarEvent
+ */
 export default class Event {
   public id: number
   public title: string
   public start: Date
   public end: Date
   public creating: boolean
+  public isAllDay: boolean
 
   constructor(id: number, title: string, start: Date, end: Date, creating: boolean) {
     this.id = id
@@ -84,5 +88,6 @@ export default class Event {
     this.start = start
     this.end = end
     this.creating = creating
+    this.isAllDay = false
   }
 }

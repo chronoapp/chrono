@@ -4,7 +4,7 @@ import clsx from 'clsx'
 import Popover from '../lib/popover/Popover'
 import { PopoverInfo } from '../lib/popover/index'
 
-import SlotMetrics from '../util/SlotMetrics'
+import SlotMetrics from './utils/SlotMetrics'
 import getStyledEvents from './utils/DayEventLayout'
 import { timeRangeFormat } from '../util/localizer'
 import * as dates from '../util/dates'
