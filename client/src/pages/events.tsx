@@ -281,7 +281,7 @@ class EventList extends Component<Props, State> {
     }
 
     return (
-      <table className="table">
+      <table className="table has-text-left">
         <thead>
           <tr>
             <th>Date</th>

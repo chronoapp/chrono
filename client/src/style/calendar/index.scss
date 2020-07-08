@@ -27,8 +27,21 @@
     flex-direction: row;
 }
 
+.cal-abs-full {
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.cal-off-range-bg {
+    background: $out-of-range-bg-color;
+}
 
 @import 'time-grid.scss';
 @import 'time-column.scss';
 @import 'events.scss';
 @import 'drag-drop.scss';
+@import 'month.scss'

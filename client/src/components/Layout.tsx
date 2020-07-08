@@ -77,7 +77,7 @@ function Layout(props: Props) {
         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
       </Head>
 
-      <nav className="navbar" role="navigation" aria-label="main navigation">
+      <nav className="navbar is-light" role="navigation" aria-label="main navigation">
         <div className="navbar-brand">
           <a className="navbar-item" href="#">
             <span className="primary">timecouncil</span>
