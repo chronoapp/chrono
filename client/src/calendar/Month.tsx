@@ -4,6 +4,7 @@ import chunk from 'lodash/chunk'
 import Event from '../models/Event'
 import * as dates from '../util/dates'
 import { startOfWeek } from '../util/localizer'
+import { inRange, sortEvents } from './utils/eventLevels'
 import WeekRow from './WeekRow'
 
 interface IProps {
@@ -17,7 +18,10 @@ function Month(props: IProps) {
   const weeks = chunk(month, 7)
 
   function renderWeek(week: Date[], weekIdx: number) {
-    return <WeekRow range={week} date={props.date} key={weekIdx} />
+    const eventsForWeek = props.events.filter((e) => inRange(e, week[0], week[week.length - 1]))
+    eventsForWeek.sort((a, b) => sortEvents(a, b))
+
+    return <WeekRow range={week} date={props.date} key={weekIdx} events={eventsForWeek} />
   }
 
   return (

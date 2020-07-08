@@ -2,11 +2,13 @@ import React from 'react'
 import clsx from 'clsx'
 import * as dates from '../util/dates'
 import { format } from '../util/localizer'
+import Event from '../models/Event'
 
 interface IProps {
   key: number
   date: Date
   range: Date[]
+  events: Event[]
 }
 
 function WeekRow(props: IProps) {
@@ -14,13 +16,9 @@ function WeekRow(props: IProps) {
     return (
       <div className="cal-row-bg">
         {props.range.map((date, index) => {
+          const isOffRange = dates.month(props.date) !== dates.month(date)
           return (
-            <div
-              className={clsx(
-                'cal-day-bg',
-                dates.month(props.date) !== dates.month(date) && 'cal-off-range-bg'
-              )}
-            ></div>
+            <div key={index} className={clsx('cal-day-bg', isOffRange && 'cal-off-range-bg')}></div>
           )
         })}
       </div>
@@ -29,9 +27,12 @@ function WeekRow(props: IProps) {
 
   function renderHeadingCell(date: Date, index: number) {
     const label = format(date, 'DD')
+    const isOffRange = dates.month(props.date) !== dates.month(date)
+    let isCurrent = dates.eq(date, props.date, 'day')
+
     return (
-      <div key={`header_${index}`} className="cal-date-cell">
-        {label}
+      <div key={`header_${index}`} className={clsx('cal-date-cell', isOffRange && 'cal-off-range')}>
+        <div className={clsx(isCurrent && 'cal-current-day-bg-month')}>{label}</div>
       </div>
     )
   }
