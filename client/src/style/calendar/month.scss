@@ -56,4 +56,32 @@
 
 .cal-row-segment {
     padding: 0 3px 1px 1px;
+
+    .cal-event-content {
+        @extend .cal-ellipsis;
+        font-weight: 500;
+        flex: 1;
+        padding-left: 3px;
+    }
+}
+
+.cal-event-row {
+    box-sizing: border-box;
+    box-shadow: none;
+    text-align: left;
+    font-size: 75%;
+    width: 100%;
+    padding: $event-padding;
+}
+
+.cal-label-circle {
+    background-color: $cal-blue;
+    height: 8px;
+    width: 8px;
+    border-radius: 50%;
+    margin-right: 3px;
+}
+
+.cal-label-start-date {
+    flex: 0 0 1;
 }

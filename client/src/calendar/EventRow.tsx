@@ -5,6 +5,7 @@ import * as dates from '../util/dates'
 import Event from '../models/Event'
 import { EventSegment } from './utils/eventLevels'
 import DateSlotMetrics from './utils/DateSlotMetrics'
+import { timeFormatShort } from '../util/localizer'
 
 interface IProps {
   segments: EventSegment[]
@@ -15,16 +16,33 @@ export default function EventRow(props: IProps) {
   function renderSpan(slots: number, len: number, key: string, content?: React.ReactElement) {
     const flexBasis = (Math.abs(len) / slots) * 100 + '%'
     return (
-      <div style={{ flexBasis: flexBasis }} className="cal-row-segment" key={key}>
+      <div
+        style={{ flexBasis: flexBasis, maxWidth: flexBasis }}
+        className="cal-row-segment"
+        key={key}
+      >
         {content}
       </div>
     )
   }
 
   function renderEvent(event: Event) {
-    const content = <div className="cal-event-content">{event.title}</div>
-
-    return <div className="cal-event">{content}</div>
+    if (event.isAllDay) {
+      return (
+        <div className="cal-event">
+          <div className="cal-event-content">{event.title}</div>
+        </div>
+      )
+    } else {
+      const content = (
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div className="cal-label-circle" />
+          <div className="cal-label-start-date">{timeFormatShort(event.start)}</div>
+          <div className="cal-event-content">{event.title}</div>
+        </div>
+      )
+      return <div className="cal-event-row">{content}</div>
+    }
   }
 
   let lastEnd = 1
