@@ -61,8 +61,8 @@ class TimeGrid extends React.Component<IProps, IState> {
 
   private renderDays(range: Date[]) {
     return range.map((date, jj) => {
-      const dayEvents = this.props.events.filter((event) =>
-        dates.inRange(date, event.start, event.end, 'day')
+      const dayEvents = this.props.events.filter(
+        (event) => dates.inRange(date, event.start, event.end, 'day') && !event.isAllDay
       )
 
       return (

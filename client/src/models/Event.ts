@@ -82,12 +82,19 @@ export default class Event {
   public creating: boolean
   public isAllDay: boolean
 
-  constructor(id: number, title: string, start: Date, end: Date, creating: boolean) {
+  constructor(
+    id: number,
+    title: string,
+    start: Date,
+    end: Date,
+    creating: boolean,
+    isAllDay: boolean
+  ) {
     this.id = id
     this.title = title
     this.start = start
     this.end = end
     this.creating = creating
-    this.isAllDay = false
+    this.isAllDay = isAllDay
   }
 }

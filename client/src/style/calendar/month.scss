@@ -41,7 +41,7 @@
 .cal-date-cell {
     text-align: center;
     flex: 1 0 0;
-    padding-top: 5px;
+    padding: 5px 0 5px 0;
     font-size: 0.8em;
 }
 
@@ -72,6 +72,12 @@
     font-size: 75%;
     width: 100%;
     padding: $event-padding;
+    border-radius: $event-border-radius;
+    cursor: pointer;
+
+    &:hover {
+        background-color: $light;
+    }
 }
 
 .cal-label-circle {

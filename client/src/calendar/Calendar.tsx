@@ -31,6 +31,7 @@ function Calendar() {
       'Do Laundry',
       dateMath.add(start, 10, 'hours'),
       dateMath.add(start, 11, 'hours'),
+      false,
       false
     ),
     new Event(
@@ -38,6 +39,7 @@ function Calendar() {
       'Math HW',
       dateMath.add(start, 15, 'hours'),
       dateMath.add(start, 17, 'hours'),
+      false,
       false
     ),
     new Event(
@@ -45,7 +47,16 @@ function Calendar() {
       'Work on ABC with friends',
       dateMath.add(dateMath.add(start, 1, 'day'), 12, 'hours'),
       dateMath.add(dateMath.add(start, 1, 'day'), 15, 'hours'),
+      false,
       false
+    ),
+    new Event(
+      4,
+      'Long Event',
+      dateMath.add(dateMath.add(start, 2, 'day'), 0, 'hours'),
+      dateMath.add(dateMath.add(start, 5, 'day'), 0, 'hours'),
+      false,
+      true
     ),
   ]
   const [events, setEvents] = useState<Event[]>(defaultEvents)
