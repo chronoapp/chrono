@@ -10,6 +10,7 @@ export class CalendarEvent {
   endTime: Date
   labels: Label[]
   dayDisplay: string
+  allDay: boolean
 
   static fromJson(eventJson: {
     id: number
@@ -18,6 +19,7 @@ export class CalendarEvent {
     start_time: string
     end_time: string
     labels: string[]
+    all_day
   }): CalendarEvent {
     return new CalendarEvent(
       eventJson.id,
@@ -25,7 +27,8 @@ export class CalendarEvent {
       eventJson.description,
       new Date(eventJson.start_time),
       new Date(eventJson.end_time),
-      eventJson.labels.map((labelJson) => Label.fromJson(labelJson))
+      eventJson.labels.map((labelJson) => Label.fromJson(labelJson)),
+      eventJson.all_day
     )
   }
 
@@ -35,7 +38,8 @@ export class CalendarEvent {
     description: string,
     startTime: Date,
     endTime: Date,
-    labels: Label[]
+    labels: Label[],
+    allDay: boolean
   ) {
     this.id = id
     this.title = title
@@ -44,6 +48,7 @@ export class CalendarEvent {
     this.endTime = endTime
     this.labels = labels
     this.dayDisplay = `${MONTHS[this.startTime.getMonth()]} ${this.startTime.getDate()}`
+    this.allDay = allDay
   }
 
   public toDict() {

@@ -38,3 +38,7 @@ export function startOfWeek() {
 export function format(value: any, format: string) {
   return moment(value).format(format)
 }
+
+export function formatDateTime(value: any) {
+  return moment(value).format()
+}

@@ -88,8 +88,23 @@ export async function getCalendars(authToken: string): Promise<Calendar[]> {
     })
 }
 
-export async function getEvents(authToken: string, title: string = ''): Promise<CalendarEvent[]> {
-  return fetch(`${API_URL}/events/?title=${title}`, {
+export async function getEvents(
+  authToken: string,
+  title: string = '',
+  startDate?: string,
+  endDate?: string
+): Promise<CalendarEvent[]> {
+  const params = {
+    title: title,
+    start_date: startDate,
+    end_date: endDate,
+  }
+  var queryString = Object.keys(params)
+    .filter((key) => params[key])
+    .map((key) => key + '=' + params[key])
+    .join('&')
+
+  return fetch(`${API_URL}/events/?${queryString}`, {
     headers: { Authorization: authToken },
   })
     .then(handleErrors)

@@ -67,6 +67,9 @@ class TimeGridEvent extends React.Component<IProps> {
     const isInteracting =
       dnd && dnd.interacting && dnd.event.id === this.props.event.id && !this.props.isPreview
 
+    // Tiny gap to separate events.
+    const finalHeight = this.props.style.height - 0.15
+
     return (
       <div
         ref={this.props.innerRef}
@@ -79,7 +82,7 @@ class TimeGridEvent extends React.Component<IProps> {
           top: stringifyPercent(this.props.style.top),
           left: stringifyPercent(this.props.style.xOffset),
           width: stringifyPercent(this.props.style.width),
-          height: stringifyPercent(this.props.style.height),
+          height: stringifyPercent(finalHeight),
           border: this.props.style.border,
           zIndex: this.props.isPreview ? 10 : 1,
         }}

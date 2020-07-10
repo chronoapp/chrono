@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy import desc, and_
 from sqlalchemy.orm import Session
@@ -24,6 +24,7 @@ class EventBaseVM(BaseModel):
     start_time: Optional[datetime]
     end_time: Optional[datetime]
     labels: List[LabelVM] = []
+    all_day: bool
 
     class Config:
         orm_mode = True
@@ -37,8 +38,14 @@ class EventInDBVM(EventBaseVM):
 async def getEvents(title: str = "",
                     query: str = "",
                     limit: int = 100,
+                    start_date: Optional[str] = None,
+                    end_date: Optional[str] = None,
                     user: User = Depends(get_current_user),
                     session: Session = Depends(get_db)):
+
+    startFilter = datetime.fromisoformat(start_date) if start_date\
+        else datetime.now() - timedelta(days=365)
+    endFilter = datetime.fromisoformat(end_date) if end_date else datetime.now()
 
     logger.info(f'getEvents:{user.username}')
     logger.info(f'query:{query}')
@@ -51,7 +58,7 @@ async def getEvents(title: str = "",
         tsQuery = ' & '.join(query.split())
         return Event.search(session, user.id, tsQuery)
     else:
-        return user.events.filter(Event.start_time <= datetime.now())\
+        return user.events.filter(and_(Event.start_time >= startFilter, Event.start_time <= endFilter))\
             .order_by(desc(Event.start_time))\
             .limit(limit).all()
 
