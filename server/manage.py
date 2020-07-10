@@ -3,7 +3,6 @@ import logging
 
 from app.db.session import scoped_session
 from app.db.models import User, Label
-from app.classify.classifier import classifyEvents, updateClassifier
 
 
 @click.group()
@@ -11,15 +10,17 @@ def main():
     pass
 
 
-DEFAULT_CATEGORIES = ['eat', 'entertainment', 'transportation', 'work', 'exercise',
-              'social', 'reading', 'education', 'tourism', 'chore', 'event', 'sleep']
+DEFAULT_CATEGORIES = [
+    'eat', 'entertainment', 'transportation', 'work', 'exercise', 'social', 'reading', 'education',
+    'tourism', 'chore', 'event', 'sleep'
+]
 
 
 @main.command()
-@click.argument('username')
-def add_labels(username):
+@click.argument('userid')
+def add_labels(userid):
     with scoped_session() as session:
-        user = session.query(User).filter(User.username == username).first()
+        user = session.query(User).filter(User.id == userid).first()
         for l in user.labels:
             session.delete(l)
 
@@ -31,22 +32,24 @@ def add_labels(username):
 
 
 @main.command()
-@click.argument('username')
-def sync_cal(username):
+@click.argument('userid')
+def sync_cal(userid):
     from app.calendar.sync import syncGoogleCalendar
-    syncGoogleCalendar(username, 30)
+    syncGoogleCalendar(userid, 30)
 
 
 @main.command()
-@click.argument('username')
-def update_classifier(username):
-    updateClassifier(username)
+@click.argument('userid')
+def update_classifier(userid):
+    from app.classify.classifier import updateClassifier
+    updateClassifier(userid)
 
 
 @main.command()
-@click.argument('username')
-def auto_label(username):
-    classifyEvents(username, startDaysAgo=30)
+@click.argument('userid')
+def auto_label(userid):
+    from app.classify.classifier import classifyEvents
+    classifyEvents(userid, startDaysAgo=30)
 
 
 if __name__ == "__main__":

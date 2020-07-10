@@ -16,11 +16,11 @@ from app.db.session import scoped_session
 from app.core.logger import logger
 
 
-def updateClassifier(username: str):
+def updateClassifier(userId: int):
     """Updates the stored classifier.
     """
     with scoped_session() as session:
-        user = session.query(User).filter(User.username == username).first()
+        user = session.query(User).filter(User.id == userId).first()
         labelledEvents = user.events.filter(Event.labels.any()).all()
 
         eventTitles = np.array([e.title for e in labelledEvents])
@@ -30,37 +30,31 @@ def updateClassifier(username: str):
         eventLabelsBin = mlb.fit_transform(eventLabels)
 
         # Classify with Linear SVC
-        classifier = Pipeline([
-            ('vectorizer', CountVectorizer(ngram_range=(1, 3))),
-            ('tfidf', TfidfTransformer()),
-            ('clf', OneVsRestClassifier(LinearSVC(multi_class="ovr")))])
+        classifier = Pipeline([('vectorizer', CountVectorizer(ngram_range=(1, 3))),
+                               ('tfidf', TfidfTransformer()),
+                               ('clf', OneVsRestClassifier(LinearSVC(multi_class="ovr")))])
 
         classifier.fit(eventTitles, eventLabelsBin)
 
         pathlib.Path('/var/lib/model_data').mkdir(parents=True, exist_ok=True)
         classifierPath = user.getClassifierPath()
         with open(classifierPath, 'wb') as f:
-            data = {
-                'binarizer': mlb,
-                'classifier': classifier
-            }
+            data = {'binarizer': mlb, 'classifier': classifier}
             pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def classifyEvents(username: str, startDaysAgo=365):
+def classifyEvents(userId: int, startDaysAgo=365):
     with scoped_session() as session:
-        user = session.query(User).filter(User.username == username).first()
+        user = session.query(User).filter(User.id == userId).first()
 
         with open(user.getClassifierPath(), 'rb') as f:
             data = pickle.load(f)
             classifier = data['classifier']
             mlb = data['binarizer']
 
-        unlabelledEvents = user.events.filter(and_(
-            ~Event.labels.any(),
-            Event.title != None,
-            Event.start_time > datetime.utcnow() - timedelta(days=startDaysAgo)
-        ))
+        unlabelledEvents = user.events.filter(
+            and_(~Event.labels.any(), Event.title != None,
+                 Event.start_time > datetime.utcnow() - timedelta(days=startDaysAgo)))
         eventTitles = [e.title for e in unlabelledEvents]
         predicted = mlb.inverse_transform(classifier.predict(eventTitles))
 

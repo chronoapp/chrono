@@ -70,6 +70,37 @@ event_label_association_table = Table('event_label', Base.metadata,
                                       Column('label_id', Integer, ForeignKey('label.id')))
 
 
+class Calendar(Base):
+    __tablename__ = 'calendar'
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    user = relationship('User', backref=backref('calendars', lazy='dynamic', cascade='all,delete'))
+
+    id = Column(String(255), unique=True, primary_key=True)
+    timezone = Column(String(255))
+    summary = Column(String(255))
+    description = Column(Text())
+    background_color = Column(String(10))
+    foreground_color = Column(String(10))
+    selected = Column(Boolean)
+    access_role = Column(String(50))
+    primary = Column(Boolean)
+    deleted = Column(Boolean)
+
+    def __init__(self, id: str, timezone: str, summary: str, description: str,
+                 background_color: str, foreground_color: str, selected: bool, access_role: str,
+                 primary: bool, deleted: bool):
+        self.id = id
+        self.timezone = timezone
+        self.summary = summary
+        self.description = description
+        self.background_color = background_color
+        self.foreground_color = foreground_color
+        self.selected = selected
+        self.access_role = access_role
+        self.primary = primary
+        self.deleted = deleted
+
+
 class Event(Base):
     __tablename__ = 'event'
     id = Column(BigInteger, primary_key=True, nullable=False, index=True)
@@ -78,6 +109,11 @@ class Event(Base):
     # Many to one
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     user = relationship('User', backref=backref('events', lazy='dynamic', cascade='all,delete'))
+
+    calendar_id = Column(String(255), ForeignKey('calendar.id'), nullable=False)
+    calendar = relationship('Calendar',
+                            backref=backref('events', lazy='dynamic', cascade='all,delete'))
+
     title = Column(String(255), index=True)
     description = Column(Text())
     start_time = Column(DateTime())
@@ -107,12 +143,13 @@ class Event(Base):
             .order_by(desc(Event.end_time)).all()
 
     def __init__(self, g_id: str, title: str, description: str, start_time: datetime,
-                 end_time: datetime):
+                 end_time: datetime, calendar_id: str):
         self.g_id = g_id
         self.title = title
         self.description = description
         self.start_time = start_time
         self.end_time = end_time
+        self.calendar_id = calendar_id
 
 
 class Label(Base):
