@@ -55,7 +55,7 @@ class TimeGridEvent extends React.Component<IProps> {
     const title = this.props.event.title
     const isEditing = this.props.event.creating
     const inner = [
-      <div key="1" className="cal-event-content" style={{ paddingTop: '5px' }}>
+      <div key="1" className="cal-event-content" style={{ paddingTop: '3px' }}>
         {title}
       </div>,
       <div key="2" className="cal-event-label">

@@ -3,6 +3,7 @@ import Cookies from 'universal-cookie'
 import { CalendarEvent } from '../models/Event'
 import { Label, TimePeriod } from '../models/Label'
 import { LabelRule } from '../models/LabelRule'
+import Calendar from '../models/Calendar'
 
 const API_URL = 'http://localhost:8888/api/v1'
 
@@ -18,6 +19,8 @@ function handleErrors(response: any) {
 }
 
 // ================== Authentication ==================
+
+// TODO: Log users out if response is 403.
 
 export function auth(ctx) {
   let token
@@ -75,13 +78,14 @@ export async function authenticate(code: string, state: string) {
   }).then(handleErrors)
 }
 
-// ================== Trends and Stats ==================
-// TODO: Log users out if response is 403.
-
-export async function getTrends(authToken: string, timePeriod: TimePeriod) {
-  return fetch(`${API_URL}/trends/work?time_period=${timePeriod}`, {
+export async function getCalendars(authToken: string): Promise<Calendar[]> {
+  return fetch(`${API_URL}/calendars/`, {
     headers: { Authorization: authToken },
-  }).then(handleErrors)
+  })
+    .then(handleErrors)
+    .then((resp) => {
+      return resp.map((calendarJson: any) => Calendar.fromJson(calendarJson))
+    })
 }
 
 export async function getEvents(authToken: string, title: string = ''): Promise<CalendarEvent[]> {
@@ -112,6 +116,14 @@ export async function searchEvents(authToken: string, query: string): Promise<Ca
     .then((resp) => {
       return resp.map((eventJson: any) => CalendarEvent.fromJson(eventJson))
     })
+}
+
+// ================== Trends and Stats ==================
+
+export async function getTrends(authToken: string, timePeriod: TimePeriod) {
+  return fetch(`${API_URL}/trends/work?time_period=${timePeriod}`, {
+    headers: { Authorization: authToken },
+  }).then(handleErrors)
 }
 
 // Labels

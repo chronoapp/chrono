@@ -33,8 +33,8 @@ class TimeGrid extends React.Component<IProps, IState> {
   private gutterRef
 
   static defaultProps = {
-    step: 30,
-    timeslots: 2,
+    step: 15,
+    timeslots: 4,
     min: dates.startOf(new Date(), 'day'),
     max: dates.endOf(new Date(), 'day'),
   }
