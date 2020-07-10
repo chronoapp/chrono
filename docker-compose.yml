@@ -13,6 +13,15 @@ services:
       - model_data:/var/lib/model_data/
     environment:
       - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@pg_bouncer:5432/${DATABASE_NAME}
+      - APP_URL=${APP_URL}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - TOKEN_SECRET=${TOKEN_SECRET}
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/loki/api/v1/push'
+    # depends_on: loki
 
   # Postgres Connection Pool
   pg_bouncer:
