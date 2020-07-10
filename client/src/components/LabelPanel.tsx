@@ -165,10 +165,15 @@ function LabelPanel() {
     <>
       {newLabelModal.active && renderProjectLabelModal()}
       <span className="has-text-left has-text-weight-medium">Tags</span>
-      <div style={{ marginBottom: '0.5rem' }}>{labelState.labels.map(getLabel)}</div>
-      <button className="button is-white has-text-left" onClick={onClickAddProject}>
+      {labelState.labels.map(getLabel)}
+
+      <button
+        className="button is-text"
+        onClick={onClickAddProject}
+        style={{ justifyContent: 'left', marginBottom: '0.5rem' }}
+      >
         <Icon path={mdiPlus} size={1} horizontal vertical />
-        Add Tag
+        add tag
       </button>
     </>
   )

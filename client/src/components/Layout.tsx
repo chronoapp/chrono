@@ -6,6 +6,7 @@ import { useRouter } from 'next/router'
 
 import { signOut } from '../util/Api'
 import LabelPanel from './LabelPanel'
+import CalendarsPanel from './CalendarsPanel'
 
 import '../style/index.scss'
 
@@ -102,6 +103,7 @@ function Layout(props: Props) {
       <div className="app-content">
         <div className="left-section">
           <LabelPanel />
+          <CalendarsPanel />
         </div>
         {props.children}
       </div>

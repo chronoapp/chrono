@@ -122,7 +122,7 @@ function Calendar() {
   }
 
   function onSelectNewEvent(startDate: Date, endDate: Date) {
-    const event = new Event(-1, '(New event)', startDate, endDate, true)
+    const event = new Event(-1, '(New event)', startDate, endDate, true, false)
     const nextEvents = events.map((e) => e).filter((e) => e.id !== -1)
     nextEvents.push(event)
     setEvents(nextEvents)

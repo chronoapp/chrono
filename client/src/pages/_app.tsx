@@ -1,6 +1,7 @@
 import React from 'react'
 import App from 'next/app'
 import { LabelsContextProvider } from '../components/LabelsContext'
+import { CalendarsContextProvider } from '../components/CalendarsContext'
 
 /**
  * Custom Page Initiation.
@@ -12,7 +13,9 @@ class MyApp extends App {
 
     return (
       <LabelsContextProvider>
-        <Component {...pageProps} />
+        <CalendarsContextProvider>
+          <Component {...pageProps} />
+        </CalendarsContextProvider>
       </LabelsContextProvider>
     )
   }
