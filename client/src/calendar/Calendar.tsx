@@ -5,8 +5,9 @@ import Week from './Week'
 import Month from './Month'
 import Event from '../models/Event'
 import * as dates from '../util/dates'
-import { startOfWeek } from '../util/localizer'
-import * as dateMath from 'date-arithmetic'
+import { startOfWeek, formatDateTime } from '../util/localizer'
+import { hexToHSL } from './utils/Colors'
+import { getAuthToken, getEvents } from '../util/Api'
 
 import Icon from '@mdi/react'
 import { mdiChevronDown } from '@mdi/js'
@@ -23,43 +24,10 @@ type Display = 'Week' | 'Month'
 
 function Calendar() {
   const firstOfWeek = startOfWeek()
-  const start = dates.startOf(new Date(), 'week', firstOfWeek)
 
-  const defaultEvents: Event[] = [
-    new Event(
-      1,
-      'Do Laundry',
-      dateMath.add(start, 10, 'hours'),
-      dateMath.add(start, 11, 'hours'),
-      false,
-      false
-    ),
-    new Event(
-      2,
-      'Math HW',
-      dateMath.add(start, 15, 'hours'),
-      dateMath.add(start, 17, 'hours'),
-      false,
-      false
-    ),
-    new Event(
-      3,
-      'Work on ABC with friends',
-      dateMath.add(dateMath.add(start, 1, 'day'), 12, 'hours'),
-      dateMath.add(dateMath.add(start, 1, 'day'), 15, 'hours'),
-      false,
-      false
-    ),
-    new Event(
-      4,
-      'Long Event',
-      dateMath.add(dateMath.add(start, 2, 'day'), 0, 'hours'),
-      dateMath.add(dateMath.add(start, 5, 'day'), 0, 'hours'),
-      false,
-      true
-    ),
-  ]
-  const [events, setEvents] = useState<Event[]>(defaultEvents)
+  // TODO: Store startDate and endDate to prevent unnecessary refreshes.
+
+  const [events, setEvents] = useState<Event[]>([])
   const [display, setDisplay] = useState<Display>('Week')
   const [displayToggleActive, setDisplayToggleActive] = useState<boolean>(false)
 
@@ -73,6 +41,22 @@ function Calendar() {
       document.removeEventListener('keydown', handleKeyboardShortcuts)
     }
   }, [])
+
+  useEffect(() => {
+    const date = new Date()
+    if (display == 'Week') {
+      const start = dates.startOf(date, 'week', firstOfWeek)
+      const end = dates.endOf(date, 'week', firstOfWeek)
+      loadEvents(start, end)
+    }
+
+    if (display == 'Month') {
+      const month = dates.visibleDays(date, firstOfWeek)
+      const start = month[0]
+      const end = month[month.length - 1]
+      loadEvents(start, end)
+    }
+  }, [display])
 
   const defaultContext: EventActionContextType = {
     onStart: handleInteractionStart,
@@ -122,7 +106,7 @@ function Calendar() {
   }
 
   function onSelectNewEvent(startDate: Date, endDate: Date) {
-    const event = new Event(-1, '(New event)', startDate, endDate, true, false)
+    const event = new Event(-1, null, startDate, endDate, true, false, '#7986CB', '#fff')
     const nextEvents = events.map((e) => e).filter((e) => e.id !== -1)
     nextEvents.push(event)
     setEvents(nextEvents)
@@ -141,6 +125,39 @@ function Calendar() {
   function selectDisplay(display: Display) {
     setDisplay(display)
     setDisplayToggleActive(false)
+  }
+
+  async function loadEvents(start: Date, end: Date) {
+    const authToken = getAuthToken()
+
+    const date = new Date()
+    // const firstOfWeek = startOfWeek()
+    // const start = formatDateTime(dates.startOf(date, 'week', firstOfWeek))
+    // const end = formatDateTime(dates.endOf(date, 'week', firstOfWeek))
+    const events = await getEvents(authToken, '', formatDateTime(start), formatDateTime(end))
+
+    const results = events.map((event) => {
+      // TODO: Figure out a better color scheme for past event colors.
+      let bgColor = event.backgroundColor
+      if (event.endTime < date) {
+        const { h, s } = hexToHSL(event.backgroundColor)
+        const hsl = `hsl(${h}, ${s}%, 85%)`
+        bgColor = hsl
+      }
+
+      return new Event(
+        event.id,
+        event.title,
+        event.startTime,
+        event.endTime,
+        false,
+        event.allDay,
+        bgColor,
+        event.endTime < date ? 'hsl(0, 0%, 40%)' : '#fff'
+      )
+    })
+
+    setEvents(results)
   }
 
   function renderDisplaySelection() {

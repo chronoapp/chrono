@@ -13,7 +13,6 @@ interface IProps {
 }
 
 function Month(props: IProps) {
-  console.log(startOfWeek())
   const month = dates.visibleDays(props.date, startOfWeek())
   const weeks = chunk(month, 7)
 

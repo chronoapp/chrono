@@ -1,4 +1,4 @@
-$cal-blue: #2D9CDB;
+$cal-blue: #00A0CC;
 
 $out-of-range-color: lighten(#333, 40%) !default;
 $out-of-range-bg-color: lighten(#333, 70%) !default;
@@ -7,12 +7,7 @@ $calendar-border: #DDD !default;
 $cell-border: #DDD !default;
 
 $border-color: #CCC !default;
-
-$segment-width: percentage(1 / 7) !default;
-
 $time-selection-color: white !default;
-$time-selection-bg-color: rgba(0, 0, 0, .50) !default;
-$date-selection-bg-color: rgba(0, 0, 0, .10) !default;
 
 $event-bg: #7986CB !default;
 $event-outline: #3b99fc !default;
@@ -21,16 +16,8 @@ $event-border-radius: 5px !default;
 $event-padding: 2px 5px !default;
 $event-zindex: 4 !default;
 
-$btn-color: #373a3c !default;
-$btn-bg: #fff !default;
-$btn-border: #ccc !default;
-
 $current-time-color: #74ad31 !default;
-
-$rbc-css-prefix: rbc-i !default;
-
 $today-highlight-bg: #eaf6ff !default;
-
 
 $min-column-width: 70px;
 

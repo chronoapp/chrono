@@ -52,11 +52,10 @@ class TimeGridEvent extends React.Component<IProps> {
   }
 
   public render() {
-    const title = this.props.event.title
-    const isEditing = this.props.event.creating
+    const { event } = this.props
     const inner = [
       <div key="1" className="cal-event-content" style={{ paddingTop: '3px' }}>
-        {title}
+        {event.title}
       </div>,
       <div key="2" className="cal-event-label">
         {this.props.label}
@@ -76,15 +75,17 @@ class TimeGridEvent extends React.Component<IProps> {
         className={clsx({
           'cal-event': true,
           'cal-dnd-interacting': isInteracting,
-          'cal-editing': isEditing,
+          'cal-editing': event.creating,
         })}
         style={{
+          backgroundColor: event.backgroundColor,
           top: stringifyPercent(this.props.style.top),
           left: stringifyPercent(this.props.style.xOffset),
           width: stringifyPercent(this.props.style.width),
           height: stringifyPercent(finalHeight),
           border: this.props.style.border,
           zIndex: this.props.isPreview ? 10 : 1,
+          color: event.foregroundColor,
         }}
         onMouseDown={this.handleStartDragging}
         onTouchStart={this.handleStartDragging}

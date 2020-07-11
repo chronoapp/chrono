@@ -11,16 +11,9 @@ export class CalendarEvent {
   labels: Label[]
   dayDisplay: string
   allDay: boolean
+  backgroundColor: string
 
-  static fromJson(eventJson: {
-    id: number
-    title: string
-    description: string
-    start_time: string
-    end_time: string
-    labels: string[]
-    all_day
-  }): CalendarEvent {
+  static fromJson(eventJson): CalendarEvent {
     return new CalendarEvent(
       eventJson.id,
       eventJson.title,
@@ -28,7 +21,8 @@ export class CalendarEvent {
       new Date(eventJson.start_time),
       new Date(eventJson.end_time),
       eventJson.labels.map((labelJson) => Label.fromJson(labelJson)),
-      eventJson.all_day
+      eventJson.all_day,
+      eventJson.background_color
     )
   }
 
@@ -39,7 +33,8 @@ export class CalendarEvent {
     startTime: Date,
     endTime: Date,
     labels: Label[],
-    allDay: boolean
+    allDay: boolean,
+    backgroundColor: string
   ) {
     this.id = id
     this.title = title
@@ -49,6 +44,7 @@ export class CalendarEvent {
     this.labels = labels
     this.dayDisplay = `${MONTHS[this.startTime.getMonth()]} ${this.startTime.getDate()}`
     this.allDay = allDay
+    this.backgroundColor = backgroundColor
   }
 
   public toDict() {
@@ -86,6 +82,8 @@ export default class Event {
   public end: Date
   public creating: boolean
   public isAllDay: boolean
+  public backgroundColor: string
+  public foregroundColor: string
 
   constructor(
     id: number,
@@ -93,13 +91,17 @@ export default class Event {
     start: Date,
     end: Date,
     creating: boolean,
-    isAllDay: boolean
+    isAllDay: boolean,
+    backgroundColor: string,
+    foregroundColor: string
   ) {
     this.id = id
-    this.title = title
+    this.title = title || '(No title)'
     this.start = start
     this.end = end
     this.creating = creating
     this.isAllDay = isAllDay
+    this.backgroundColor = backgroundColor
+    this.foregroundColor = foregroundColor
   }
 }
