@@ -19,12 +19,13 @@ router = APIRouter()
 class EventBaseVM(BaseModel):
     """Viewmodel for events.
     """
-    title: str
+    title: Optional[str]
     description: Optional[str] = None
     start_time: Optional[datetime]
     end_time: Optional[datetime]
     labels: List[LabelVM] = []
-    all_day: bool
+    all_day: Optional[bool]
+    background_color: Optional[str]
 
     class Config:
         orm_mode = True
@@ -81,16 +82,14 @@ async def updateEvent(event: EventBaseVM,
     if not eventDb:
         eventDb = Event(None, event.title, event.description, event.start_time, event.end_time)
     else:
-        logger.info(event)
         if event.title:
             eventDb.title = event.title
+            # TODO: Update other fields.
 
-        eventDb.labels.clear()
-        for label in event.labels:
-            label = user.labels.filter_by(key=label.key).first()
-            eventDb.labels.append(label)
-
-        # TODO: Update other fields.
+    eventDb.labels.clear()
+    for label in event.labels:
+        label = user.labels.filter_by(key=label.key).first()
+        eventDb.labels.append(label)
 
     session.commit()
     session.refresh(eventDb)
