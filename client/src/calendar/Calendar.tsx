@@ -177,12 +177,6 @@ function Calendar() {
           <div className="button is-small is-light" onClick={() => setSelectedDate(today)}>
             Today
           </div>
-          <div
-            className="has-text-grey-dark pl-2"
-            style={{ display: 'flex', alignItems: 'center' }}
-          >
-            {title}
-          </div>
           <button
             className="button is-text is-small is-size-6"
             onClick={() => {
@@ -211,6 +205,12 @@ function Calendar() {
               <Icon path={mdiChevronRight} />
             </span>
           </button>
+          <div
+            className="has-text-grey-dark pl-2"
+            style={{ display: 'flex', alignItems: 'center' }}
+          >
+            {title}
+          </div>
         </div>
         <div>
           <div className="dropdown-trigger">

@@ -123,8 +123,8 @@ export function duration(start, end, unit, firstOfWeek) {
   )
 }
 
-export function diff(dateA, dateB, unit) {
-  if (!unit || unit === 'milliseconds') return Math.abs(+dateA - +dateB)
+export function diff(dateA: Date, dateB: Date, unit = 'milliseconds') {
+  if (unit === 'milliseconds') return Math.abs(+dateA - +dateB)
 
   // the .round() handles an edge case
   // with DST where the total won't be exact

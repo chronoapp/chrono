@@ -1,5 +1,8 @@
 import sortBy from 'lodash/sortBy'
 
+/**
+ * TODO: Type this.
+ */
 class Event {
   readonly start
   readonly end

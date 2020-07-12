@@ -31,6 +31,7 @@ const GUTTER_LINE_WIDTH = 0.5
 class TimeGrid extends React.Component<IProps, IState> {
   private slotMetrics: SlotMetrics
   private gutterRef
+  private contentRef
 
   static defaultProps = {
     step: 15,
@@ -43,6 +44,7 @@ class TimeGrid extends React.Component<IProps, IState> {
     super(props)
     this.slotMetrics = new SlotMetrics(props.min, props.max, props.step, props.timeslots)
     this.gutterRef = React.createRef()
+    this.contentRef = React.createRef()
 
     this.state = {
       gutterWidth: 0,
@@ -56,6 +58,44 @@ class TimeGrid extends React.Component<IProps, IState> {
       const width = remToPixels(GUTTER_LINE_WIDTH) + current.getBoundingClientRect().width
       this.setState({ gutterWidth: width, scrollbarSize: scrollbarSize() })
     }
+
+    this.updateScrollTop(this.props.events)
+  }
+
+  componentDidUpdate() {
+    this.updateScrollTop(this.props.events)
+  }
+
+  /**
+   * Makes sure the content is centered at a reasonable place.
+   * TODO: Maintain the original position after first load?
+   */
+  private updateScrollTop(events: Event[]) {
+    const { min, max } = this.props
+
+    if (!events || !events.length) {
+      return 0
+    }
+    const totalMillis = dates.diff(max, min)
+
+    const sampleSize = Math.min(events.length, 3)
+    const avgFromTop =
+      events
+        .splice(0, sampleSize)
+        .map((e) => {
+          const scrollToTime = e.start
+          const diffMillis = dates.subtract(
+            scrollToTime,
+            dates.startOf(scrollToTime, 'day'),
+            'milliseconds'
+          )
+          return diffMillis / totalMillis
+        })
+        .reduce((a, b) => a + b, 0) / sampleSize
+
+    const content = this.contentRef.current
+    const scrollTop = content.scrollHeight * avgFromTop
+    content.scrollTop = scrollTop
   }
 
   private renderDays(range: Date[]) {
@@ -112,7 +152,7 @@ class TimeGrid extends React.Component<IProps, IState> {
           marginRight={scrollbarSize}
         />
 
-        <div className="cal-time-content">
+        <div ref={this.contentRef} className="cal-time-content">
           <div ref={this.gutterRef} className="cal-time-gutter">
             {this.slotMetrics.groups.map((group, idx) => {
               return this.renderDateLabel(group, idx)

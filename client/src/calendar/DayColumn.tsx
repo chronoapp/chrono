@@ -79,7 +79,7 @@ class DayColumn extends React.Component<IProps, IState> {
     }
   }
 
-  componentWillReceiveProps(props: IProps) {
+  UNSAFE_componentWillReceiveProps(props: IProps) {
     this.slotMetrics = new SlotMetrics(props.min, props.max, props.step, props.timeslots)
   }
 
