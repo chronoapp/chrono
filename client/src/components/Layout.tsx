@@ -5,6 +5,7 @@ import Head from 'next/head'
 import { useRouter } from 'next/router'
 
 import { signOut } from '../util/Api'
+import MiniCalendar from '../calendar/MiniCalendar'
 import LabelPanel from './LabelPanel'
 import CalendarsPanel from './CalendarsPanel'
 
@@ -102,6 +103,7 @@ function Layout(props: Props) {
 
       <div className="app-content">
         <div className="left-section">
+          <MiniCalendar selectedDate={new Date()} />
           <LabelPanel />
           <CalendarsPanel />
         </div>

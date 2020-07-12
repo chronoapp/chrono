@@ -15,9 +15,7 @@ function TimeGridHeader(props: { range: Date[]; leftPad: number; marginRight: nu
       return (
         <div key={i} className={clsx('cal-header', dates.eq(date, today, 'day') && 'cal-today')}>
           <span className={clsx({ 'cal-header-day-selected': isToday })}>{dateString}</span>
-          <div className={clsx({ 'is-size-5': true, 'cal-current-day-bg': isToday })}>
-            {dayNumber}
-          </div>
+          <div className={clsx('is-size-5', isToday && 'cal-today-bg')}>{dayNumber}</div>
         </div>
       )
     })

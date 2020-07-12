@@ -1,16 +1,16 @@
 import * as dates from './dates'
 import moment from 'moment'
 
-export function timeFormatShort(date: Date) {
+export function timeFormatShort(date: Date, space: boolean = false) {
   const m = moment(date)
   const hour = m.format('h')
   const minutes = date.getMinutes()
   const meridian = m.format('A').toLowerCase()
 
   if (minutes === 0) {
-    return `${hour}${meridian}`
+    return `${hour}${space ? ' ' : ''}${meridian}`
   } else {
-    return `${hour}:${minutes}${meridian}`
+    return `${hour}:${minutes}${space ? ' ' : ''}${meridian}`
   }
 }
 
@@ -41,4 +41,12 @@ export function format(value: any, format: string) {
 
 export function formatDateTime(value: any) {
   return moment(value).format()
+}
+
+export function getWeekRange(date: Date) {
+  const firstOfWeek = startOfWeek()
+  const start = dates.startOf(date, 'week', firstOfWeek)
+  const end = dates.endOf(date, 'week', firstOfWeek)
+
+  return dates.range(start, end)
 }

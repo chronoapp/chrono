@@ -2,8 +2,7 @@ from datetime import datetime
 from google.oauth2.credentials import Credentials
 
 from sqlalchemy import Boolean, Column, Integer,\
-    String, Column, ForeignKey, BigInteger, Table, Text, DateTime, text
-from sqlalchemy import desc
+    String, Column, ForeignKey, BigInteger, Table, Text, DateTime, text, desc
 from sqlalchemy.orm import relationship, backref, Session
 
 from app.db.base_class import Base
@@ -121,11 +120,12 @@ class Event(Base):
     labels = relationship('Label', lazy='joined', secondary=event_label_association_table)
 
     @classmethod
-    def search(cls, session: Session, userId: str, searchQuery: str, limit: int = 100):
+    def search(cls, session: Session, userId: str, searchQuery: str, limit: int = 250):
         sqlQuery = """
             SELECT id FROM (
                 SELECT event.*,
-                    setweight(to_tsvector('english', event.title), 'A') ||
+                    setweight(to_tsvector('
+                SELECT event.*,english', event.title), 'A') ||
                     setweight(to_tsvector('english', coalesce(event.description, '')), 'B') as doc
                 FROM event
                 WHERE event.user_id = :userId
@@ -141,6 +141,17 @@ class Event(Base):
 
         return session.query(Event).filter(Event.id.in_(rowIds))\
             .order_by(desc(Event.end_time)).all()
+
+    @property
+    def background_color(self):
+        return self.calendar.background_color
+
+    @property
+    def all_day(self):
+        def isDayEvent(date):
+            return date.hour == 0 and date.minute == 0 and date.second == 0
+
+        return isDayEvent(self.start_time) and isDayEvent(self.end_time)
 
     def __init__(self, g_id: str, title: str, description: str, start_time: datetime,
                  end_time: datetime, calendar_id: str):

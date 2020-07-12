@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React from 'react'
 import scrollbarSize from 'dom-helpers/scrollbarSize'
 
 import * as dates from '../util/dates'
@@ -6,7 +6,7 @@ import Event from '../models/Event'
 import DayColumn from './DayColumn'
 import TimeGridHeader from './TimeGridHeader'
 import SlotMetrics from './utils/SlotMetrics'
-import { format } from '../util/localizer'
+import { timeFormatShort } from '../util/localizer'
 
 function remToPixels(rem) {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
@@ -93,7 +93,7 @@ class TimeGrid extends React.Component<IProps, IState> {
   }
 
   private renderDateLabel(group: Date[], idx: number) {
-    const timeRange = format(group[0], 'LT')
+    const timeRange = timeFormatShort(group[0], true).toUpperCase()
 
     return (
       <div className="cal-time-gutter-box" key={idx}>
