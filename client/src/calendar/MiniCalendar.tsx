@@ -19,17 +19,24 @@ export default function MiniCalendar(props: IProps) {
 
   function renderHeader() {
     const range = getWeekRange(props.selectedDate)
-    return range.map((day) => <div className="cal-mini-month-day">{format(day, 'dd')}</div>)
+    return range.map((day, idx) => (
+      <div key={idx} className="cal-mini-month-day">
+        {format(day, 'dd')}
+      </div>
+    ))
   }
 
-  function renderWeek(week: Date[]) {
+  function renderWeek(week: Date[], idx: number) {
     return (
-      <div className="cal-mini-month-row">
-        {week.map((day: Date) => {
+      <div key={idx} className="cal-mini-month-row">
+        {week.map((day: Date, idx) => {
           const label = format(day, 'D')
           const isToday = dates.eq(day, today, 'day')
           return (
-            <div className={clsx('cal-mini-month-day', isToday && 'cal-mini-month-today-bg')}>
+            <div
+              key={idx}
+              className={clsx('cal-mini-month-day', isToday && 'cal-mini-month-today-bg')}
+            >
               {label}
             </div>
           )
