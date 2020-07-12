@@ -35,10 +35,12 @@ export default function EventRow(props: IProps) {
       )
     } else {
       return (
-        <div className="cal-event-row" style={{ display: 'flex', alignItems: 'center' }}>
+        <div className="cal-event-row" style={{ alignItems: 'center' }}>
           <div className="cal-label-circle" />
-          <div className="cal-label-start-date">{timeFormatShort(event.start)}</div>
-          <div className="cal-event-content">{event.title}</div>
+          {timeFormatShort(event.start)}
+          <div className="cal-event-content" style={{ width: 0 }}>
+            {event.title}
+          </div>
         </div>
       )
     }

@@ -11,8 +11,15 @@ def main():
 
 
 DEFAULT_CATEGORIES = [
-    'eat', 'entertainment', 'transportation', 'work', 'exercise', 'social', 'reading', 'education',
-    'tourism', 'chore', 'event', 'sleep'
+    'eat',
+    'entertainment',
+    'transportation',
+    'work',
+    'exercise',
+    'social',
+    'reading',
+    'tourism',
+    'chore',
 ]
 
 
