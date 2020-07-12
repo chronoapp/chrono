@@ -3,8 +3,13 @@ import { weekRangeFormat, getWeekRange } from '../util/localizer'
 import TimeGrid from './TimeGrid'
 import Event from '../models/Event'
 
-function Week(props: { events: Event[] }) {
-  const range = getWeekRange(new Date())
+interface IProps {
+  events: Event[]
+  date: Date
+}
+
+function Week(props: IProps) {
+  const range = getWeekRange(props.date)
 
   return <TimeGrid events={props.events} range={range} />
 }

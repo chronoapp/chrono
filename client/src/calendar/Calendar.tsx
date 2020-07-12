@@ -24,11 +24,11 @@ type Display = 'Week' | 'Month'
 
 function Calendar() {
   const firstOfWeek = startOfWeek()
-  const date = new Date()
+  const today = new Date()
 
   // TODO: Store startDate and endDate to prevent unnecessary refreshes.
 
-  const [selectedDate, setSelectedDate] = useState<Date>(date)
+  const [selectedDate, setSelectedDate] = useState<Date>(today)
   const [events, setEvents] = useState<Event[]>([])
   const [display, setDisplay] = useState<Display>('Week')
   const [displayToggleActive, setDisplayToggleActive] = useState<boolean>(false)
@@ -45,23 +45,8 @@ function Calendar() {
   }, [])
 
   useEffect(() => {
-    if (display == 'Week') {
-      const start = dates.startOf(date, 'week', firstOfWeek)
-      const end = dates.endOf(date, 'week', firstOfWeek)
-      loadEvents(start, end)
-    }
-
-    if (display == 'Month') {
-      const month = dates.visibleDays(date, firstOfWeek)
-      const start = month[0]
-      const end = month[month.length - 1]
-      loadEvents(start, end)
-    }
-  }, [display])
-
-  useEffect(() => {
-    console.log(`Update Selected Day: ${selectedDate}`)
-  }, [selectedDate])
+    loadCurrentViewEvents()
+  }, [display, selectedDate])
 
   const defaultContext: EventActionContextType = {
     onStart: handleInteractionStart,
@@ -132,19 +117,29 @@ function Calendar() {
     setDisplayToggleActive(false)
   }
 
+  async function loadCurrentViewEvents() {
+    if (display == 'Week') {
+      const start = dates.startOf(selectedDate, 'week', firstOfWeek)
+      const end = dates.endOf(selectedDate, 'week', firstOfWeek)
+      loadEvents(start, end)
+    }
+
+    if (display == 'Month') {
+      const month = dates.visibleDays(selectedDate, firstOfWeek)
+      const start = month[0]
+      const end = month[month.length - 1]
+      loadEvents(start, end)
+    }
+  }
+
   async function loadEvents(start: Date, end: Date) {
     const authToken = getAuthToken()
-
-    const date = new Date()
-    // const firstOfWeek = startOfWeek()
-    // const start = formatDateTime(dates.startOf(date, 'week', firstOfWeek))
-    // const end = formatDateTime(dates.endOf(date, 'week', firstOfWeek))
     const events = await getEvents(authToken, '', formatDateTime(start), formatDateTime(end))
 
     const results = events.map((event) => {
       // TODO: Figure out a better color scheme for past event colors.
       let bgColor = event.backgroundColor
-      if (event.endTime < date) {
+      if (event.endTime < today) {
         const { h, s } = hexToHSL(event.backgroundColor)
         const hsl = `hsl(${h}, ${s}%, 85%)`
         bgColor = hsl
@@ -158,14 +153,14 @@ function Calendar() {
         false,
         event.allDay,
         bgColor,
-        event.endTime < date ? 'hsl(0, 0%, 40%)' : '#fff'
+        event.endTime < today ? 'hsl(0, 0%, 40%)' : '#fff'
       )
     })
 
     setEvents(results)
   }
 
-  function renderDisplaySelection() {
+  function renderDisplaySelectionHeader() {
     const title = getViewTitle()
 
     return (
@@ -179,19 +174,39 @@ function Calendar() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div className="button is-small is-light">Today</div>
+          <div className="button is-small is-light" onClick={() => setSelectedDate(today)}>
+            Today
+          </div>
           <div
             className="has-text-grey-dark pl-2"
             style={{ display: 'flex', alignItems: 'center' }}
           >
             {title}
           </div>
-          <button className="button is-text is-small is-size-6">
+          <button
+            className="button is-text is-small is-size-6"
+            onClick={() => {
+              if (display == 'Week') {
+                setSelectedDate(dates.subtract(selectedDate, 7, 'day'))
+              } else if (display == 'Month') {
+                setSelectedDate(dates.subtract(selectedDate, 1, 'month'))
+              }
+            }}
+          >
             <span className="icon">
               <Icon path={mdiChevronLeft} />
             </span>
           </button>
-          <button className="button is-text is-small is-size-6">
+          <button
+            className="button is-text is-small is-size-6"
+            onClick={() => {
+              if (display == 'Week') {
+                setSelectedDate(dates.add(selectedDate, 7, 'day'))
+              } else if (display == 'Month') {
+                setSelectedDate(dates.add(selectedDate, 1, 'month'))
+              }
+            }}
+          >
             <span className="icon icon-button">
               <Icon path={mdiChevronRight} />
             </span>
@@ -234,25 +249,23 @@ function Calendar() {
 
   function getViewTitle() {
     if (display == 'Week') {
-      return Week.getTitle(date)
-    }
-    if (display == 'Month') {
-      return Month.getTitle(date)
+      return Week.getTitle(selectedDate)
+    } else if (display == 'Month') {
+      return Month.getTitle(selectedDate)
     }
   }
 
   function renderCalendar() {
     if (display == 'Week') {
-      return <Week events={events} />
-    }
-    if (display == 'Month') {
-      return <Month date={date} events={events} />
+      return <Week date={selectedDate} events={events} />
+    } else if (display == 'Month') {
+      return <Month date={selectedDate} events={events} />
     }
   }
 
   return (
     <div className="cal-calendar">
-      {renderDisplaySelection()}
+      {renderDisplaySelectionHeader()}
       <EventActionContext.Provider value={defaultContext}>
         {renderCalendar()}
       </EventActionContext.Provider>

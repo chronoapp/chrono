@@ -53,7 +53,6 @@ class TimeGrid extends React.Component<IProps, IState> {
   componentDidMount() {
     if (this.gutterRef) {
       const { current } = this.gutterRef
-      // console.log(this.gutterRef)
       const width = remToPixels(GUTTER_LINE_WIDTH) + current.getBoundingClientRect().width
       this.setState({ gutterWidth: width, scrollbarSize: scrollbarSize() })
     }

@@ -5,4 +5,4 @@ router = APIRouter()
 
 @router.get('/')
 async def healthcheck():
-    return {'data': {'healthcheck': 'OK'}}
+    return {'data': 'ImATeapotShortAndStout'}

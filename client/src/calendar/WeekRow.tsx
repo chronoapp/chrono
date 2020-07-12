@@ -14,6 +14,9 @@ interface IProps {
   events: Event[]
 }
 
+const MIN_ROWS = 1
+const MAX_ROWS = 5
+
 /**
  * Row used for month and full day events in the week view.
  */
@@ -43,7 +46,7 @@ function WeekRow(props: IProps) {
     )
   }
 
-  const dayMetrics = new DateSlotMetrics(props.range, props.events, 5, 1)
+  const dayMetrics = new DateSlotMetrics(props.range, props.events, MAX_ROWS, MIN_ROWS)
 
   return (
     <div className="cal-month-row">
