@@ -10,7 +10,7 @@ import { hexToHSL } from './utils/Colors'
 import { getAuthToken, getEvents } from '../util/Api'
 
 import Icon from '@mdi/react'
-import { mdiChevronDown } from '@mdi/js'
+import { mdiChevronDown, mdiChevronLeft, mdiChevronRight } from '@mdi/js'
 
 import {
   EventActionContext,
@@ -24,9 +24,11 @@ type Display = 'Week' | 'Month'
 
 function Calendar() {
   const firstOfWeek = startOfWeek()
+  const date = new Date()
 
   // TODO: Store startDate and endDate to prevent unnecessary refreshes.
 
+  const [selectedDate, setSelectedDate] = useState<Date>(date)
   const [events, setEvents] = useState<Event[]>([])
   const [display, setDisplay] = useState<Display>('Week')
   const [displayToggleActive, setDisplayToggleActive] = useState<boolean>(false)
@@ -43,7 +45,6 @@ function Calendar() {
   }, [])
 
   useEffect(() => {
-    const date = new Date()
     if (display == 'Week') {
       const start = dates.startOf(date, 'week', firstOfWeek)
       const end = dates.endOf(date, 'week', firstOfWeek)
@@ -57,6 +58,10 @@ function Calendar() {
       loadEvents(start, end)
     }
   }, [display])
+
+  useEffect(() => {
+    console.log(`Update Selected Day: ${selectedDate}`)
+  }, [selectedDate])
 
   const defaultContext: EventActionContextType = {
     onStart: handleInteractionStart,
@@ -161,51 +166,85 @@ function Calendar() {
   }
 
   function renderDisplaySelection() {
+    const title = getViewTitle()
+
     return (
       <div
         className={clsx({ dropdown: true, 'is-active': displayToggleActive })}
-        style={{ justifyContent: 'right', paddingRight: '2rem', paddingBottom: '0.5rem' }}
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          paddingRight: '2rem',
+          paddingBottom: '0.5rem',
+        }}
       >
-        <div className="dropdown-trigger">
-          <button
-            className="button"
-            aria-haspopup="true"
-            aria-controls="dropdown-menu"
-            onClick={() => setDisplayToggleActive(!displayToggleActive)}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div className="button is-small is-light">Today</div>
+          <div
+            className="has-text-grey-dark pl-2"
+            style={{ display: 'flex', alignItems: 'center' }}
           >
-            <span>{display}</span>
-            <span className="icon is-small">
-              <Icon path={mdiChevronDown} />
+            {title}
+          </div>
+          <button className="button is-text is-small is-size-6">
+            <span className="icon">
+              <Icon path={mdiChevronLeft} />
+            </span>
+          </button>
+          <button className="button is-text is-small is-size-6">
+            <span className="icon icon-button">
+              <Icon path={mdiChevronRight} />
             </span>
           </button>
         </div>
+        <div>
+          <div className="dropdown-trigger">
+            <button
+              className="button is-small"
+              aria-haspopup="true"
+              aria-controls="dropdown-menu"
+              onClick={() => setDisplayToggleActive(!displayToggleActive)}
+            >
+              <span>{display}</span>
+              <span className="icon is-small">
+                <Icon path={mdiChevronDown} />
+              </span>
+            </button>
+          </div>
 
-        <div
-          className="dropdown-menu"
-          id="dropdown-menu"
-          role="menu"
-          style={{ left: 'auto', minWidth: '10rem' }}
-        >
-          <div className="dropdown-content has-text-left">
-            <a onClick={() => selectDisplay('Week')} className="dropdown-item">
-              Week
-            </a>
-            <a onClick={() => selectDisplay('Month')} className="dropdown-item">
-              Month
-            </a>
+          <div
+            className="dropdown-menu is-small"
+            id="dropdown-menu"
+            role="menu"
+            style={{ left: 'auto', minWidth: '10rem', right: '1em' }}
+          >
+            <div className="dropdown-content has-text-left">
+              <a onClick={() => selectDisplay('Week')} className="dropdown-item">
+                Week
+              </a>
+              <a onClick={() => selectDisplay('Month')} className="dropdown-item">
+                Month
+              </a>
+            </div>
           </div>
         </div>
       </div>
     )
   }
 
-  function renderCalendar() {
-    const date = new Date()
+  function getViewTitle() {
+    if (display == 'Week') {
+      return Week.getTitle(date)
+    }
+    if (display == 'Month') {
+      return Month.getTitle(date)
+    }
+  }
 
+  function renderCalendar() {
     if (display == 'Week') {
       return <Week events={events} />
     }
-
     if (display == 'Month') {
       return <Month date={date} events={events} />
     }

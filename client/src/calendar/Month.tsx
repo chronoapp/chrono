@@ -3,7 +3,7 @@ import chunk from 'lodash/chunk'
 
 import Event from '../models/Event'
 import * as dates from '../util/dates'
-import { startOfWeek } from '../util/localizer'
+import { startOfWeek, monthTitleFormat } from '../util/localizer'
 import { inRange, sortEvents } from './utils/eventLevels'
 import WeekRow from './WeekRow'
 
@@ -30,5 +30,7 @@ function Month(props: IProps) {
     </div>
   )
 }
+
+Month.getTitle = monthTitleFormat
 
 export default Month

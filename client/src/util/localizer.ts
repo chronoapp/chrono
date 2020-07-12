@@ -14,6 +14,10 @@ export function timeFormatShort(date: Date, space: boolean = false) {
   }
 }
 
+export function monthTitleFormat(date: Date): string {
+  return moment(date).format('MMMM YYYY')
+}
+
 export function weekRangeFormat(start: Date, end: Date) {
   return (
     moment(start).format('MMMM DD') +

@@ -2,11 +2,8 @@
 
 @import './variables.scss';
 
-$navbar-breakpoint: '600px';
-$primary: #2D9CDB;
-
 @import '../../node_modules/bulma/bulma.sass';
 
 @import './app.scss';
-@import './tags.scss';
+@import './elements.scss';
 @import './calendar/index.scss';
