@@ -9,6 +9,7 @@ import WeekRow from './WeekRow'
 
 interface IProps {
   events: Event[]
+  loading: boolean
   date: Date
 }
 
@@ -20,7 +21,15 @@ function Month(props: IProps) {
     const eventsForWeek = props.events.filter((e) => inRange(e, week[0], week[week.length - 1]))
     eventsForWeek.sort((a, b) => sortEvents(a, b))
 
-    return <WeekRow range={week} date={props.date} key={weekIdx} events={eventsForWeek} />
+    return (
+      <WeekRow
+        loading={props.loading}
+        range={week}
+        date={props.date}
+        key={weekIdx}
+        events={eventsForWeek}
+      />
+    )
   }
 
   return (

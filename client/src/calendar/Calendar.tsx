@@ -55,11 +55,18 @@ function Calendar() {
   }
 
   function selectDisplay(display: Display) {
+    if (display === 'Month') {
+      // HACK: Prevents flicker when switching months
+      eventActionContext.eventDispatch({ type: 'INIT', payload: [] })
+    }
+
     setDisplay(display)
     setDisplayToggleActive(false)
   }
 
   async function loadCurrentViewEvents() {
+    eventActionContext.eventDispatch({ type: 'START_LOAD' })
+
     if (display == 'Week') {
       const lastWeek = dates.subtract(selectedDate, 1, 'week')
       const nextWeek = dates.add(selectedDate, 1, 'week')
@@ -128,6 +135,8 @@ function Calendar() {
               if (display == 'Week') {
                 setSelectedDate(dates.subtract(selectedDate, 7, 'day'))
               } else if (display == 'Month') {
+                // HACK: Prevents flicker when switching months
+                eventActionContext.eventDispatch({ type: 'INIT', payload: [] })
                 setSelectedDate(dates.subtract(selectedDate, 1, 'month'))
               }
             }}
@@ -142,6 +151,7 @@ function Calendar() {
               if (display == 'Week') {
                 setSelectedDate(dates.add(selectedDate, 7, 'day'))
               } else if (display == 'Month') {
+                eventActionContext.eventDispatch({ type: 'INIT', payload: [] })
                 setSelectedDate(dates.add(selectedDate, 1, 'month'))
               }
             }}
@@ -201,11 +211,11 @@ function Calendar() {
   }
 
   function renderCalendar() {
-    const events = eventActionContext.eventState.events
+    const { events, loading } = eventActionContext.eventState
     if (display == 'Week') {
       return <Week date={selectedDate} events={events} />
     } else if (display == 'Month') {
-      return <Month date={selectedDate} events={events} />
+      return <Month loading={loading} date={selectedDate} events={events} />
     }
   }
 

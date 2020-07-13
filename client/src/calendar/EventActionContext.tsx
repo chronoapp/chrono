@@ -30,20 +30,29 @@ export const EventActionContext = createContext<EventActionContextType>(undefine
 
 export interface EventState {
   events: Event[]
+  loading: boolean
 }
 
 type ActionType =
+  | { type: 'START_LOAD' }
   | { type: 'INIT'; payload: Event[] }
   | { type: 'NEW_EVENT'; payload: { start: Date; end: Date } }
   | { type: 'CANCEL_SELECT' }
   | { type: 'UPDATE_EVENT'; payload: { event: Event } }
 
-function eventReducer({ events }: EventState, action: ActionType) {
+function eventReducer({ events, loading }: EventState, action: ActionType) {
   switch (action.type) {
+    case 'START_LOAD':
+      console.log('START_LOAD')
+      return {
+        loading: true,
+        events: events || [],
+      }
     case 'INIT':
       console.log(`INIT: ${action.payload.length} events.`)
       return {
         events: action.payload,
+        loading: false,
       }
 
     case 'NEW_EVENT':
@@ -85,6 +94,7 @@ export function EventActionProvider(props: any) {
   const [dragDropAction, setDragDropAction] = useState<DragDropAction | undefined>(undefined)
   const [eventState, eventDispatch] = useReducer(eventReducer, {
     events: [],
+    loading: false,
   })
 
   function handleInteractionStart() {

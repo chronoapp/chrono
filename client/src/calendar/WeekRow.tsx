@@ -12,6 +12,7 @@ interface IProps {
   date: Date
   range: Date[]
   events: Event[]
+  loading: boolean
 }
 
 const MIN_ROWS = 1
@@ -55,9 +56,10 @@ function WeekRow(props: IProps) {
       <div className="cal-row-content">
         <div className="cal-row">{props.range.map(renderHeadingCell)}</div>
 
-        {dayMetrics.levels.map((segments, idx) => (
-          <EventRow key={idx} segments={segments} slotMetrics={dayMetrics} />
-        ))}
+        {!props.loading &&
+          dayMetrics.levels.map((segments, idx) => (
+            <EventRow key={idx} segments={segments} slotMetrics={dayMetrics} />
+          ))}
       </div>
     </div>
   )
