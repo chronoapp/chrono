@@ -23,3 +23,5 @@ alembic revision -m "table changes" --autogenerate
 # Upgrade Database
 alembic upgrade head
 ```
+
+To test webhooks, add a tunnel `tunnelto --port 8888 --subdomain mydemoapp`

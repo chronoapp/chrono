@@ -54,6 +54,26 @@
     }
 }
 
+.cal-current-time-indicator {
+    position: absolute;
+    z-index: 3;
+    left: 0;
+    right: 0;
+    height: 2px;
+
+    background-color: $cal-primary;
+    pointer-events: none;
+}
+
+.cal-current-time-circle {
+    width: 12px;
+    height: 12px;
+    border-radius: 100%;
+    background-color: $cal-primary;
+    margin-left: -4px;
+    margin-top: -5px;
+}
+
 // Headers
 
 .cal-time-header {
@@ -82,7 +102,7 @@
 }
 
 .cal-header-day-selected {
-    color: $cal-blue;
+    color: $cal-primary;
 }
 
 .cal-today {

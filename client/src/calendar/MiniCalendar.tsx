@@ -46,7 +46,7 @@ export default function MiniCalendar(props: IProps) {
   }
 
   return (
-    <div className="mb-2 mt-5">
+    <div className="mt-5">
       <div className="cal-mini-month-header has-text-left pl-1">
         {format(props.selectedDate, 'MMMM YYYY')}
       </div>

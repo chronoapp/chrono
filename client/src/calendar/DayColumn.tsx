@@ -25,11 +25,13 @@ interface IProps {
   min: Date
   max: Date
   events: Event[]
+  isCurrentDay: boolean
 }
 
 interface IState {
   selecting: boolean
   selectRange?: SelectRange
+  timeIndicatorPosition: number
 }
 
 class SelectRange {
@@ -52,6 +54,9 @@ class DayColumn extends React.Component<IProps, IState> {
   private selection?: Selection
   private slotMetrics: SlotMetrics
 
+  private timeIndicatorTimeout
+  private intervalTriggered: boolean = false
+
   static contextType = EventActionContext
 
   constructor(props: IProps) {
@@ -62,6 +67,7 @@ class DayColumn extends React.Component<IProps, IState> {
     this.state = {
       selecting: false,
       selectRange: undefined,
+      timeIndicatorPosition: 0,
     }
 
     this.initSelection = this.initSelection.bind(this)
@@ -71,16 +77,62 @@ class DayColumn extends React.Component<IProps, IState> {
 
   componentDidMount() {
     this.initSelection()
+    if (this.props.isCurrentDay) {
+      this.setTimeIndicatorPositionUpdateInterval()
+    }
   }
 
   componentWillUnmount() {
     if (this.selection) {
       this.selection.teardown()
     }
+    this.clearTimeIndicatorInterval()
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevProps.isCurrentDay != this.props.isCurrentDay) {
+      this.clearTimeIndicatorInterval()
+
+      if (this.props.isCurrentDay) {
+        this.setTimeIndicatorPositionUpdateInterval()
+      }
+    }
   }
 
   UNSAFE_componentWillReceiveProps(props: IProps) {
     this.slotMetrics = new SlotMetrics(props.min, props.max, props.step, props.timeslots)
+  }
+
+  clearTimeIndicatorInterval() {
+    console.log('clearTimeIndicatorInterval')
+    this.intervalTriggered = false
+    window.clearTimeout(this.timeIndicatorTimeout)
+  }
+
+  setTimeIndicatorPositionUpdateInterval() {
+    if (!this.intervalTriggered) {
+      this.updatePositionTimeIndicator()
+    }
+
+    this.timeIndicatorTimeout = window.setTimeout(() => {
+      this.intervalTriggered = true
+      this.updatePositionTimeIndicator()
+      this.setTimeIndicatorPositionUpdateInterval()
+    }, 60000)
+  }
+
+  updatePositionTimeIndicator() {
+    const { min, max } = this.props
+    const current = new Date()
+
+    if (current >= min && current <= max) {
+      console.log('updatePositionTimeIndicator' + current)
+      const top = this.slotMetrics.getCurrentTimePosition(current)
+      this.intervalTriggered = true
+      this.setState({ timeIndicatorPosition: top })
+    } else {
+      this.clearTimeIndicatorInterval()
+    }
   }
 
   renderEventDialog(args: PopoverInfo) {
@@ -239,6 +291,14 @@ class DayColumn extends React.Component<IProps, IState> {
             style={{ top: `${selectRange.top}%`, height: `${selectRange.height}%` }}
           >
             <span>{timeRangeFormat(selectRange.startDate, selectRange.endDate)}</span>
+          </div>
+        )}
+        {this.props.isCurrentDay && this.intervalTriggered && (
+          <div
+            className="cal-current-time-indicator"
+            style={{ top: `${this.state.timeIndicatorPosition}%` }}
+          >
+            <div className="cal-current-time-circle" />
           </div>
         )}
       </div>

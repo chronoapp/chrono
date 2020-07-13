@@ -23,7 +23,7 @@ export default function CalendarsPanel() {
 
   return (
     <>
-      <span className="has-text-left has-text-weight-medium">Calendars</span>
+      <span className="has-text-left has-text-weight-medium mt-3">Calendars</span>
       {calendars.map((calendar, idx) => {
         return (
           <label key={idx} className="cal-checkbox-container has-text-left tag-block">

@@ -84,7 +84,6 @@ class TimeGridEvent extends React.Component<IProps> {
           width: stringifyPercent(this.props.style.width),
           height: stringifyPercent(finalHeight),
           border: this.props.style.border,
-          zIndex: this.props.isPreview ? 10 : 1,
           color: event.foregroundColor,
         }}
         onMouseDown={this.handleStartDragging}

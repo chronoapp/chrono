@@ -123,6 +123,7 @@ function Calendar() {
           justifyContent: 'space-between',
           paddingRight: '2rem',
           paddingBottom: '0.5rem',
+          paddingTop: '0.5rem',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center' }}>

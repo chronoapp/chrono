@@ -118,7 +118,7 @@ class Trends extends React.Component<Props, State> {
   render() {
     return (
       <Layout>
-        <div className="container">
+        <div className="container mt-2">
           <div className="level">
             <div className="level-left"></div>
             <div className="level-right">{this.renderTimePeriodSelections()}</div>

@@ -56,7 +56,6 @@ code {
 }
 
 .app-content {
-  padding-top: 0.5rem;
   height: calc(100vh - 4rem);
   width: 100%;
   display: flex;
@@ -69,6 +68,8 @@ code {
   flex-direction: column;
   padding-right: 10px;
   padding-left: 10px;
+  margin-right: 0.5rem;
+  background-color: whitesmoke
 }
 
 /* MISC: TODO: move these */

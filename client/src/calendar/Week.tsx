@@ -10,8 +10,9 @@ interface IProps {
 
 function Week(props: IProps) {
   const range = getWeekRange(props.date)
+  const now = new Date()
 
-  return <TimeGrid events={props.events} range={range} />
+  return <TimeGrid now={now} events={props.events} range={range} />
 }
 
 Week.getTitle = function (date: Date): string {

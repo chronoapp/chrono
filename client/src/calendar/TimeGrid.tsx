@@ -19,6 +19,7 @@ interface IProps {
   min: Date
   max: Date
   events: Event[]
+  now: Date
 }
 
 interface IState {
@@ -32,6 +33,7 @@ class TimeGrid extends React.Component<IProps, IState> {
   private slotMetrics: SlotMetrics
   private gutterRef
   private contentRef
+  private scrollTopRatio?: number = null
 
   static defaultProps = {
     step: 15,
@@ -52,6 +54,10 @@ class TimeGrid extends React.Component<IProps, IState> {
     }
   }
 
+  UNSAFE_componentWillMount() {
+    this.calculateTopScroll(this.props.events)
+  }
+
   componentDidMount() {
     if (this.gutterRef) {
       const { current } = this.gutterRef
@@ -59,18 +65,18 @@ class TimeGrid extends React.Component<IProps, IState> {
       this.setState({ gutterWidth: width, scrollbarSize: scrollbarSize() })
     }
 
-    this.updateScrollTop(this.props.events)
+    this.applyTopScroll()
   }
 
   componentDidUpdate() {
-    this.updateScrollTop(this.props.events)
+    this.applyTopScroll()
   }
 
   /**
    * Makes sure the content is centered at a reasonable place.
    * TODO: Maintain the original position after first load?
    */
-  private updateScrollTop(events: Event[]) {
+  private calculateTopScroll(events: Event[]) {
     const { min, max } = this.props
 
     if (!events || !events.length) {
@@ -91,9 +97,19 @@ class TimeGrid extends React.Component<IProps, IState> {
       avgFromTop += scrollTop
     }
 
-    const content = this.contentRef.current
-    const scrollTop = content.scrollHeight * avgFromTop
-    content.scrollTop = scrollTop
+    this.scrollTopRatio = avgFromTop
+  }
+
+  /**
+   * Only adjust scroll once so it doesn't jump around.
+   */
+  private applyTopScroll() {
+    if (this.scrollTopRatio) {
+      const content = this.contentRef.current
+      const scrollTop = content.scrollHeight * this.scrollTopRatio
+      content.scrollTop = scrollTop
+      this.scrollTopRatio = null
+    }
   }
 
   private renderDays(range: Date[]) {
@@ -111,6 +127,7 @@ class TimeGrid extends React.Component<IProps, IState> {
           timeslots={this.props.timeslots}
           min={dates.merge(date, this.props.min)}
           max={dates.merge(date, this.props.max)}
+          isCurrentDay={dates.eq(date, this.props.now, 'day')}
         />
       )
     })
