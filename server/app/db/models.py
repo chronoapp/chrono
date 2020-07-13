@@ -8,6 +8,8 @@ from sqlalchemy.orm import relationship, backref, Session
 from app.db.base_class import Base
 from app.db.session import engine
 
+DEFAULT_TAG_COLOR = '#cecece'
+
 
 class User(Base):
     __tablename__ = 'user'
@@ -177,7 +179,7 @@ class Label(Base):
     def __init__(self, title: str, key: str):
         self.title = title
         self.key = key
-        self.color_hex = '#f5f5f5'
+        self.color_hex = DEFAULT_TAG_COLOR
 
     def __repr__(self):
         return f'<Label {self.key} {self.title}/>'
