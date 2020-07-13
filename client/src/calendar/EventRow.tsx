@@ -56,7 +56,7 @@ export default function EventRow(props: IProps) {
         const gap = segment.left - lastEnd
 
         const content = renderEvent(segment.event)
-        if (gap) {
+        if (gap > 0) {
           row.push(renderSpan(numSlots, gap, `gap_${key}`, null))
         }
         row.push(renderSpan(numSlots, segment.span, key, content))
