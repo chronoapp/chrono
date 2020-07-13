@@ -74,24 +74,22 @@ class TimeGrid extends React.Component<IProps, IState> {
     const { min, max } = this.props
 
     if (!events || !events.length) {
-      return 0
+      return
     }
     const totalMillis = dates.diff(max, min)
-
     const sampleSize = Math.min(events.length, 3)
-    const avgFromTop =
-      events
-        .splice(0, sampleSize)
-        .map((e) => {
-          const scrollToTime = e.start
-          const diffMillis = dates.subtract(
-            scrollToTime,
-            dates.startOf(scrollToTime, 'day'),
-            'milliseconds'
-          )
-          return diffMillis / totalMillis
-        })
-        .reduce((a, b) => a + b, 0) / sampleSize
+
+    let avgFromTop = 0
+    for (let i = 0; i < sampleSize; i++) {
+      const scrollToTime = events[i].start
+      const diffMillis = dates.subtract(
+        scrollToTime,
+        dates.startOf(scrollToTime, 'day'),
+        'milliseconds'
+      )
+      const scrollTop = diffMillis / totalMillis
+      avgFromTop += scrollTop
+    }
 
     const content = this.contentRef.current
     const scrollTop = content.scrollHeight * avgFromTop

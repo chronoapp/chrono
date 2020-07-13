@@ -92,12 +92,14 @@ export async function getEvents(
   authToken: string,
   title: string = '',
   startDate?: string,
-  endDate?: string
+  endDate?: string,
+  limit: number = 250
 ): Promise<CalendarEvent[]> {
   const params = {
-    title: title,
+    title,
     start_date: startDate,
     end_date: endDate,
+    limit,
   }
   var queryString = Object.keys(params)
     .filter((key) => params[key])

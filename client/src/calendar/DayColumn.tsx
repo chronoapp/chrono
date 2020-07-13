@@ -106,7 +106,7 @@ class DayColumn extends React.Component<IProps, IState> {
             content={this.renderEventDialog}
             isOpen={true}
             position={['right', 'left']}
-            onClickOutside={this.context?.onCancelSelection}
+            onClickOutside={() => this.context?.eventDispatch({ type: 'CANCEL_SELECT' })}
             padding={5}
           >
             <TimeGridEvent event={event} label={label} style={style} isPreview={false} />
@@ -200,7 +200,10 @@ class DayColumn extends React.Component<IProps, IState> {
           if (this.state.selectRange) {
             console.log('Handle Select Event')
             const { startDate, endDate } = this.state.selectRange
-            this.context?.onSelectNewEvent(startDate, endDate)
+            this.context?.eventDispatch({
+              type: 'NEW_EVENT',
+              payload: { start: startDate, end: endDate },
+            })
           }
         }
       })
@@ -211,7 +214,7 @@ class DayColumn extends React.Component<IProps, IState> {
       })
 
       selection.on('reset', () => {
-        this.context?.onCancelSelection()
+        this.context?.eventDispatch({ type: 'CANCEL_SELECT' })
         this.setState({ selecting: false })
       })
     }

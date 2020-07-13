@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import clsx from 'clsx'
 
 import Week from './Week'
@@ -12,13 +12,7 @@ import { getAuthToken, getEvents } from '../util/Api'
 import Icon from '@mdi/react'
 import { mdiChevronDown, mdiChevronLeft, mdiChevronRight } from '@mdi/js'
 
-import {
-  EventActionContext,
-  EventActionContextType,
-  DragDropAction,
-  Action,
-  Direction,
-} from './EventActionContext'
+import { EventActionContext, EventActionContextType } from './EventActionContext'
 
 type Display = 'Week' | 'Month'
 
@@ -29,16 +23,13 @@ function Calendar() {
   // TODO: Store startDate and endDate to prevent unnecessary refreshes.
 
   const [selectedDate, setSelectedDate] = useState<Date>(today)
-  const [events, setEvents] = useState<Event[]>([])
   const [display, setDisplay] = useState<Display>('Week')
   const [displayToggleActive, setDisplayToggleActive] = useState<boolean>(false)
 
-  // Handles Drag & Drop Events.
-  const [dragDropAction, setDragDropAction] = useState<DragDropAction | undefined>(undefined)
+  const eventActionContext = useContext<EventActionContextType>(EventActionContext)
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyboardShortcuts)
-
     return function cleanup() {
       document.removeEventListener('keydown', handleKeyboardShortcuts)
     }
@@ -48,19 +39,9 @@ function Calendar() {
     loadCurrentViewEvents()
   }, [display, selectedDate])
 
-  const defaultContext: EventActionContextType = {
-    onStart: handleInteractionStart,
-    onEnd: handleInteractionEnd,
-    dragAndDropAction: dragDropAction,
-    onBeginAction: handleBeginAction,
-
-    onSelectNewEvent,
-    onCancelSelection,
-  }
-
   function handleKeyboardShortcuts(e: KeyboardEvent) {
     if (e.key === 'Escape') {
-      onCancelSelection()
+      eventActionContext.eventDispatch({ type: 'CANCEL_SELECT' })
       setDisplayToggleActive(false)
     }
 
@@ -73,45 +54,6 @@ function Calendar() {
     }
   }
 
-  function handleInteractionStart() {
-    if (dragDropAction) {
-      setDragDropAction({ ...dragDropAction, interacting: true })
-    }
-  }
-
-  function handleBeginAction(event: Event, action: Action, direction?: Direction) {
-    const interacting = dragDropAction ? dragDropAction.interacting : false
-    setDragDropAction({ event, action, direction, interacting })
-  }
-
-  function handleInteractionEnd(event?: Event) {
-    if (event) {
-      const nextEvents = events.map((existingEvent) => {
-        return existingEvent.id === event.id ? event : existingEvent
-      })
-      setEvents(nextEvents)
-    }
-
-    setDragDropAction(undefined)
-  }
-
-  function onSelectNewEvent(startDate: Date, endDate: Date) {
-    const event = new Event(-1, null, startDate, endDate, true, false, '#7986CB', '#fff')
-    const nextEvents = events.map((e) => e).filter((e) => e.id !== -1)
-    nextEvents.push(event)
-    setEvents(nextEvents)
-  }
-
-  function onCancelSelection() {
-    const nextEvents = events
-      .map((e) => {
-        e.creating = false
-        return e
-      })
-      .filter((e) => e.id !== -1)
-    setEvents(nextEvents)
-  }
-
   function selectDisplay(display: Display) {
     setDisplay(display)
     setDisplayToggleActive(false)
@@ -119,8 +61,11 @@ function Calendar() {
 
   async function loadCurrentViewEvents() {
     if (display == 'Week') {
-      const start = dates.startOf(selectedDate, 'week', firstOfWeek)
-      const end = dates.endOf(selectedDate, 'week', firstOfWeek)
+      const lastWeek = dates.subtract(selectedDate, 1, 'week')
+      const nextWeek = dates.add(selectedDate, 1, 'week')
+
+      const start = dates.startOf(lastWeek, 'week', firstOfWeek)
+      const end = dates.endOf(nextWeek, 'week', firstOfWeek)
       loadEvents(start, end)
     }
 
@@ -157,7 +102,7 @@ function Calendar() {
       )
     })
 
-    setEvents(results)
+    eventActionContext.eventDispatch({ type: 'INIT', payload: results })
   }
 
   function renderDisplaySelectionHeader() {
@@ -256,6 +201,7 @@ function Calendar() {
   }
 
   function renderCalendar() {
+    const events = eventActionContext.eventState.events
     if (display == 'Week') {
       return <Week date={selectedDate} events={events} />
     } else if (display == 'Month') {
@@ -266,9 +212,7 @@ function Calendar() {
   return (
     <div className="cal-calendar">
       {renderDisplaySelectionHeader()}
-      <EventActionContext.Provider value={defaultContext}>
-        {renderCalendar()}
-      </EventActionContext.Provider>
+      {renderCalendar()}
     </div>
   )
 }
