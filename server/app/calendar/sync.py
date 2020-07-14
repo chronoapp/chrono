@@ -1,4 +1,5 @@
 import logging
+
 from datetime import datetime, timedelta
 
 from google.oauth2.credentials import Credentials
@@ -39,21 +40,20 @@ def syncGoogleCalendar(userId: int, startDaysAgo: int = 30, endDaysAgo: int = 0)
         service = build('calendar', 'v3', credentials=credentials, cache_discovery=False)
         calendarList = service.calendarList().list().execute()
 
-        newEvents = 0
-        updatedEvents = 0
         for calendar in calendarList.get('items'):
             calId = calendar.get('id')
+            calSummary = calendar.get('summary')
 
             prev = (datetime.utcnow() - timedelta(days=startDaysAgo)).isoformat() + 'Z'
             end = (datetime.utcnow() - timedelta(days=endDaysAgo)).isoformat() + 'Z'
 
-            print(f'Update Calendar: {calId}')
+            print(f'Update Calendar: {calId}: {calSummary}')
             backgroundColor = mapGoogleColor(calendar.get('backgroundColor'))
 
             userCalendar = user.calendars.filter_by(id=calId).first()
             if userCalendar:
                 userCalendar.timezone = calendar.get('timeZone')
-                userCalendar.summary = calendar.get('summary')
+                userCalendar.summary = calSummary
                 userCalendar.description = calendar.get('description')
                 userCalendar.background_color = backgroundColor
                 userCalendar.foreground_color = calendar.get('foregroundColor')
@@ -62,50 +62,71 @@ def syncGoogleCalendar(userId: int, startDaysAgo: int = 30, endDaysAgo: int = 0)
                 userCalendar.primary = calendar.get('primary')
                 userCalendar.deleted = calendar.get('deleted')
             else:
-                userCalendar = Calendar(calId, calendar.get('timeZone'), calendar.get('summary'),
+                userCalendar = Calendar(calId, calendar.get('timeZone'), calSummary,
                                         calendar.get('description'), backgroundColor,
                                         calendar.get('foregroundColor'), calendar.get('selected'),
                                         calendar.get('accessRole'), calendar.get('primary'),
                                         calendar.get('deleted'))
                 user.calendars.append(userCalendar)
 
-            eventsResult = service.events().list(calendarId=calId,
-                                                 timeMax=end,
-                                                 timeMin=prev,
-                                                 maxResults=250,
-                                                 singleEvents=True,
-                                                 orderBy='startTime').execute()
-            events = eventsResult.get('items', [])
+            nextPageToken = None
+            while True:
+                eventsResult = service.events().list(calendarId=calId,
+                                                     timeMax=end,
+                                                     timeMin=prev,
+                                                     maxResults=250,
+                                                     singleEvents=True,
+                                                     pageToken=nextPageToken,
+                                                     orderBy='startTime').execute()
 
-            for event in events:
-                eventId = event['id']
-                eventStart = event['start'].get('dateTime', event['start'].get('date'))
-                eventEnd = event['end'].get('dateTime', event['end'].get('date'))
+                events = eventsResult.get('items', [])
+                nextPageToken = eventsResult.get('nextPageToken')
 
-                eventSummary = event.get('summary')
-                eventDescription = event.get('description')
+                print(f'Token: {nextPageToken}')
+                putEvents(userCalendar, events)
+                session.commit()
 
-                event = user.events.filter(Event.g_id == eventId).first()
-                if not event:
-                    # New event
-                    newEvents += 1
-                    event = Event(eventId, eventSummary, eventDescription, eventStart, eventEnd,
-                                  userCalendar.id)
-                    user.events.append(event)
-                else:
-                    # Update Event
-                    updatedEvents += 1
-                    event.title = eventSummary
-                    event.description = eventDescription
-                    event.start_time = eventStart
-                    event.end_time = eventEnd
+                if not nextPageToken:
+                    break
 
-                # Auto Labelling
-                if event.title:
-                    labelRules = user.label_rules.filter(LabelRule.text.ilike(event.title))
-                    for rule in labelRules:
-                        if not rule.label in event.labels:
-                            event.labels.append(rule.label)
 
-        logger.info(f'Updated {updatedEvents} events.')
-        logger.info(f'Added {newEvents} events.')
+def putEvents(calendar: Calendar, eventItems):
+    newEvents = 0
+    updatedEvents = 0
+
+    for event in eventItems:
+        eventId = event['id']
+        eventStart = datetime.fromisoformat(event['start'].get('dateTime',
+                                                               event['start'].get('date')))
+        eventEnd = datetime.fromisoformat(event['end'].get('dateTime', event['end'].get('date')))
+        eventSummary = event.get('summary')
+        eventDescription = event.get('description')
+
+        timeZone = event['start'].get('timeZone')
+
+        user = calendar.user
+        event = user.events.filter(Event.g_id == eventId).first()
+        if not event:
+            # New event
+            newEvents += 1
+            event = Event(eventId, eventSummary, eventDescription, eventStart, eventEnd,
+                          calendar.id)
+            user.events.append(event)
+        else:
+            # Update Event
+            updatedEvents += 1
+            event.title = eventSummary
+            event.description = eventDescription
+            event.start = eventStart
+            event.end = eventEnd
+            event.time_zone = timeZone
+
+        # Auto Labelling
+        if event.title:
+            labelRules = user.label_rules.filter(LabelRule.text.ilike(event.title))
+            for rule in labelRules:
+                if rule.label not in event.labels:
+                    event.labels.append(rule.label)
+
+    logger.info(f'Updated {updatedEvents} events.')
+    logger.info(f'Added {newEvents} events.')

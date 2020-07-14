@@ -51,26 +51,26 @@ def getTrendsDataResult(userId: int, label: str, startTime: datetime, endTime: d
         query = """
             with filtered_events as (
                     SELECT
-                        event.start_time,
-                        event.end_time as end_time,
+                        event.start,
+                        event.end as end,
                         label.key as label
                     FROM event
                     INNER JOIN event_label ON event_label.event_id = event.id
                     INNER JOIN label ON label.id = event_label.label_id
                     WHERE label.key = :label\
-                    AND event.start_time >= :start_time\
-                    AND event.end_time <= :end_time\
+                    AND event.start >= :start_time\
+                    AND event.end <= :end_time\
                     AND event.user_id = :userId\
                 )
             SELECT starting,
-                coalesce(sum(EXTRACT(EPOCH FROM (e.end_time - e.start_time))), 0),
-                count(e.start_time) AS event_count
+                coalesce(sum(EXTRACT(EPOCH FROM (e.end - e.start))), 0),
+                count(e.start) AS event_count
             FROM generate_series(date_trunc('TIME_PERIOD', :start_time)
                                 , :end_time
                                 , interval '1 TIME_PERIOD') g(starting)
             LEFT JOIN filtered_events e
-                ON e.start_time > g.starting
-                AND e.start_time <  g.starting + interval '1 TIME_PERIOD'
+                ON e.start > g.starting
+                AND e.start <  g.starting + interval '1 TIME_PERIOD'
             GROUP BY starting
             ORDER BY starting;
         """.replace('TIME_PERIOD', timePeriodValue)

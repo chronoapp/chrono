@@ -104,7 +104,6 @@ class DayColumn extends React.Component<IProps, IState> {
   }
 
   clearTimeIndicatorInterval() {
-    console.log('clearTimeIndicatorInterval')
     this.intervalTriggered = false
     window.clearTimeout(this.timeIndicatorTimeout)
   }
@@ -126,7 +125,6 @@ class DayColumn extends React.Component<IProps, IState> {
     const current = new Date()
 
     if (current >= min && current <= max) {
-      console.log('updatePositionTimeIndicator' + current)
       const top = this.slotMetrics.getCurrentTimePosition(current)
       this.intervalTriggered = true
       this.setState({ timeIndicatorPosition: top })

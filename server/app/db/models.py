@@ -117,8 +117,11 @@ class Event(Base):
 
     title = Column(String(255), index=True)
     description = Column(Text())
-    start_time = Column(DateTime())
-    end_time = Column(DateTime())
+
+    start = Column(DateTime(timezone=True))
+    end = Column(DateTime(timezone=True))
+    time_zone = Column(String(255))
+
     labels = relationship('Label', lazy='joined', secondary=event_label_association_table)
 
     @classmethod
@@ -126,8 +129,7 @@ class Event(Base):
         sqlQuery = """
             SELECT id FROM (
                 SELECT event.*,
-                    setweight(to_tsvector('
-                SELECT event.*,english', event.title), 'A') ||
+                    setweight(to_tsvector('english', event.title), 'A') ||
                     setweight(to_tsvector('english', coalesce(event.description, '')), 'B') as doc
                 FROM event
                 WHERE event.user_id = :userId
@@ -149,19 +151,27 @@ class Event(Base):
         return self.calendar.background_color
 
     @property
+    def start_time(self):
+        return self.start
+
+    @property
+    def end_time(self):
+        return self.end
+
+    @property
     def all_day(self):
         def isDayEvent(date):
             return date.hour == 0 and date.minute == 0 and date.second == 0
 
-        return isDayEvent(self.start_time) and isDayEvent(self.end_time)
+        return isDayEvent(self.start) and isDayEvent(self.end)
 
-    def __init__(self, g_id: str, title: str, description: str, start_time: datetime,
-                 end_time: datetime, calendar_id: str):
+    def __init__(self, g_id: str, title: str, description: str, start: datetime, end: datetime,
+                 calendar_id: str):
         self.g_id = g_id
         self.title = title
         self.description = description
-        self.start_time = start_time
-        self.end_time = end_time
+        self.start = start
+        self.end = end
         self.calendar_id = calendar_id
 
 

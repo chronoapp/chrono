@@ -53,14 +53,14 @@ async def getEvents(title: str = "",
     logger.info(f'limit:{limit}')
 
     if title:
-        return user.events.filter(and_(Event.start_time <= datetime.now(),
+        return user.events.filter(and_(Event.start <= datetime.now(),
                                        Event.title.ilike(title))).all()
     elif query:
         tsQuery = ' & '.join(query.split())
         return Event.search(session, user.id, tsQuery)
     else:
-        return user.events.filter(and_(Event.start_time >= startFilter, Event.start_time <= endFilter))\
-            .order_by(desc(Event.start_time))\
+        return user.events.filter(and_(Event.start >= startFilter, Event.start <= endFilter))\
+            .order_by(desc(Event.start))\
             .limit(limit).all()
 
 

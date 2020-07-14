@@ -54,7 +54,7 @@ def classifyEvents(userId: int, startDaysAgo=365):
 
         unlabelledEvents = user.events.filter(
             and_(~Event.labels.any(), Event.title != None,
-                 Event.start_time > datetime.utcnow() - timedelta(days=startDaysAgo)))
+                 Event.start > datetime.utcnow() - timedelta(days=startDaysAgo)))
         eventTitles = [e.title for e in unlabelledEvents]
         predicted = mlb.inverse_transform(classifier.predict(eventTitles))
 
