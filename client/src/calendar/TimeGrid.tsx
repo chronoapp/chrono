@@ -74,17 +74,21 @@ class TimeGrid extends React.Component<IProps, IState> {
 
   /**
    * Makes sure the content is centered at a reasonable place.
-   * TODO: Maintain the original position after first load?
    */
   private calculateTopScroll(events: Event[]) {
-    const { min, max } = this.props
+    const { min, max, now, range } = this.props
+    const totalMillis = dates.diff(max, min)
+
+    if (now >= range[0] && now <= range[range.length - 1]) {
+      const diffMillis = dates.subtract(now, dates.startOf(now, 'day'), 'milliseconds')
+      this.scrollTopRatio = diffMillis / totalMillis
+    }
 
     if (!events || !events.length) {
       return
     }
-    const totalMillis = dates.diff(max, min)
-    const sampleSize = Math.min(events.length, 3)
 
+    const sampleSize = Math.min(events.length, 3)
     let avgFromTop = 0
     for (let i = 0; i < sampleSize; i++) {
       const scrollToTime = events[i].start
