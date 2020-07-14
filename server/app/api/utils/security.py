@@ -26,13 +26,10 @@ def get_current_user(session=Depends(get_db), authorization: str = Header(None))
             raise HTTPException(status_code=HTTP_403_FORBIDDEN,
                                 detail="Could not validate credentials")
 
-        accessToken = tokenData.get('token')
-        credentials = session.query(UserCredential).filter(
-            UserCredential.token == accessToken).first()
+        userId = tokenData.get('user_id')
+        user = session.query(User).filter_by(id=userId).first()
 
-        if credentials:
-            user = credentials.user
-            if user:
-                return user
+        if user:
+            return user
 
     raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="User not found")

@@ -1,6 +1,7 @@
 import logging
 import jwt
 import requests
+from datetime import datetime
 from urllib.parse import unquote
 
 from google_auth_oauthlib.flow import Flow
@@ -93,8 +94,11 @@ def googleAuthCallback(authData: AuthData, session: Session = Depends(get_db)):
         session.commit()
 
         authToken = jwt.encode({
-            'token': token
-        }, config.TOKEN_SECRET, algorithm='HS256').decode('utf-8')
+            'user_id': user.id,
+            'iat': datetime.utcnow()
+        },
+                               config.TOKEN_SECRET,
+                               algorithm='HS256').decode('utf-8')
 
         return {'token': str(authToken)}
 
