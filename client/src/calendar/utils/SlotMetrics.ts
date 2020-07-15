@@ -109,7 +109,7 @@ export default class SlotMetrics {
   }
 
   public closestSlotToPosition(percent) {
-    const slot = Math.min(this.slots.length - 1, Math.max(0, Math.floor(percent * this.numSlots)))
+    const slot = Math.min(this.slots.length - 1, Math.max(0, Math.round(percent * this.numSlots)))
     return this.slots[slot]
   }
 
