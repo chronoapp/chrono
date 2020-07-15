@@ -32,16 +32,19 @@ async def getLabels(user=Depends(get_current_user), session=Depends(get_db)):
 
 
 @router.put('/labels/{label_key}', response_model=LabelInDbVM)
-async def putLabel(label: LabelVM,
-                   label_key: str,
-                   user: User = Depends(get_current_user),
-                   session: Session = Depends(get_db)):
+async def putLabel(
+    label: LabelVM,
+    label_key: str,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_db)
+) -> Label:
 
     logger.info(label)
     labelDb = user.labels.filter_by(key=label_key).first()
 
     if not labelDb:
-        labelDb = Label(label.title, label.key, label.color_hex)
+        labelDb = Label(label.title, label.key)
+        labelDb.color_hex = label.color_hex
     else:
         labelDb.title = label.title
         labelDb.color_hex = label.color_hex

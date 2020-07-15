@@ -9,7 +9,7 @@ from app.db.models import User, UserCredential
 from app.core import config
 
 
-def get_current_user(session=Depends(get_db), authorization: str = Header(None)):
+def get_current_user(session=Depends(get_db), authorization: str = Header(None)) -> User:
     """Gets the current user from the authorization header.
     """
     # Debug Only

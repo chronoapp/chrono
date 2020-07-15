@@ -1,65 +1,31 @@
 import { Label } from './Label'
+import { hexToHSL } from '../calendar/utils/Colors'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-export class CalendarEvent {
-  id: number
-  title: string
-  description: string
-  startTime: Date
-  endTime: Date
-  labels: Label[]
-  dayDisplay: string
-  allDay: boolean
-  backgroundColor: string
+const today = new Date()
 
-  static fromJson(eventJson): CalendarEvent {
-    return new CalendarEvent(
-      eventJson.id,
-      eventJson.title,
-      eventJson.description,
-      new Date(eventJson.start_time),
-      new Date(eventJson.end_time),
-      eventJson.labels.map((labelJson) => Label.fromJson(labelJson)),
-      eventJson.all_day,
-      eventJson.background_color
-    )
-  }
+export default class Event {
+  public id: number
+  public calendar_id: string
 
-  constructor(
-    id: number,
-    title: string,
-    description: string,
-    startTime: Date,
-    endTime: Date,
-    labels: Label[],
-    allDay: boolean,
-    backgroundColor: string
-  ) {
-    this.id = id
-    this.title = title
-    this.description = description
-    this.startTime = startTime
-    this.endTime = endTime
-    this.labels = labels
-    this.dayDisplay = `${MONTHS[this.startTime.getMonth()]} ${this.startTime.getDate()}`
-    this.allDay = allDay
-    this.backgroundColor = backgroundColor
-  }
+  public title: string
+  public start: Date
+  public end: Date
+  public creating: boolean
+  public description: string
+  public labels: Label[]
 
-  public toDict() {
-    return {
-      id: this.id,
-      title: this.title,
-      description: this.description,
-      start_time: this.startTime,
-      end_time: this.endTime,
-      labels: this.labels,
-    }
+  public isAllDay: boolean
+  public backgroundColor: string
+  public foregroundColor: string
+
+  get dayDisplay() {
+    return `${MONTHS[this.start.getMonth()]} ${this.start.getDate()}`
   }
 
   public getDuration(): string {
-    const milliseconds = this.endTime.getTime() - this.startTime.getTime()
+    const milliseconds = this.end.getTime() - this.start.getTime()
     const minutes = milliseconds / 1000 / 60
 
     if (minutes < 60) {
@@ -70,38 +36,65 @@ export class CalendarEvent {
       return min > 0 ? `${hours}h ${min}m` : `${hours}h`
     }
   }
-}
 
-/**
- * TODO: Merge with CalendarEvent
- */
-export default class Event {
-  public id: number
-  public title: string
-  public start: Date
-  public end: Date
-  public creating: boolean
-  public isAllDay: boolean
-  public backgroundColor: string
-  public foregroundColor: string
+  static foregroundColor(end: Date, foregroundColor: string) {
+    return end < today ? 'hsl(0, 0%, 40%)' : foregroundColor
+  }
+
+  static backgroundColor(end: Date, backgroundColor: string) {
+    if (end < today) {
+      const { h, s } = hexToHSL(backgroundColor)
+      const hsl = `hsl(${h}, ${s}%, 85%)`
+      return hsl
+    } else {
+      return backgroundColor
+    }
+  }
+
+  static fromJson(eventJson): Event {
+    return new Event(
+      eventJson.id,
+      eventJson.calendar_id,
+      eventJson.title,
+      eventJson.description,
+      new Date(eventJson.start),
+      new Date(eventJson.end),
+      false,
+      eventJson.labels.map((labelJson) => Label.fromJson(labelJson)),
+      eventJson.all_day,
+      eventJson.background_color,
+      eventJson.foreground_color
+    )
+  }
+
+  static newDefaultEvent(start: Date, end: Date): Event {
+    return new Event(-1, '', '', null, start, end, true, [], false, '#7986CB', '#fff')
+  }
 
   constructor(
     id: number,
+    calendar_id: string,
     title: string,
+    description: string,
     start: Date,
     end: Date,
     creating: boolean,
+    labels: Label[],
     isAllDay: boolean,
     backgroundColor: string,
     foregroundColor: string
   ) {
     this.id = id
-    this.title = title || '(No title)'
+    this.calendar_id = calendar_id
+    this.title = title // ? title : '(No title)'
     this.start = start
     this.end = end
     this.creating = creating
+    this.description = description
+    this.labels = labels
     this.isAllDay = isAllDay
-    this.backgroundColor = backgroundColor
-    this.foregroundColor = foregroundColor
+
+    this.backgroundColor = Event.backgroundColor(end, backgroundColor)
+    this.foregroundColor = Event.foregroundColor(end, foregroundColor)
   }
 }

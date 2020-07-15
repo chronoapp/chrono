@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react'
+import React, { useContext, useEffect } from 'react'
 import { CalendarsContext, CalendarsContextType } from './CalendarsContext'
 import { getAuthToken, getCalendars } from '../util/Api'
 

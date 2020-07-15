@@ -10,7 +10,7 @@ import {
   syncCalendar,
   auth,
 } from '../util/Api'
-import { CalendarEvent } from '../models/Event'
+import Event from '../models/Event'
 import { Label } from '../models/Label'
 import { LabelRule } from '../models/LabelRule'
 import Layout from '../components/Layout'
@@ -26,7 +26,7 @@ interface Props {
 interface LabelRuleState {
   addLabelRuleModalActive: boolean
   numEvents: number
-  event: CalendarEvent
+  event: Event
   label: Label
   applyAll: boolean
 }
@@ -34,7 +34,7 @@ interface LabelRuleState {
 interface State {
   dropdownEventId: number
   searchValue: string
-  events: CalendarEvent[]
+  events: Event[]
   labels: Label[]
 
   // Label Rule

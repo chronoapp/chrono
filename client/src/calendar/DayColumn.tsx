@@ -12,7 +12,7 @@ import { Selection, SelectRect, EventData, getBoundsForNode, isEvent } from '../
 
 import TimeSlotGroup from './TimeSlotGroup'
 import TimeGridEvent from './TimeGridEvent'
-import EventModal from './EventModal'
+import EventPopover from './EventPopover'
 import Event from '../models/Event'
 
 import DragDropEventContainer from './DragDropEventContainer'
@@ -133,8 +133,8 @@ class DayColumn extends React.Component<IProps, IState> {
     }
   }
 
-  renderEventDialog(args: PopoverInfo) {
-    return <EventModal />
+  renderEventDialog(event: Event) {
+    return <EventPopover event={event} />
   }
 
   renderEvents(slotMetrics) {
@@ -153,7 +153,7 @@ class DayColumn extends React.Component<IProps, IState> {
           <Popover
             key={`evt_${idx}`}
             containerClassName={'cal-event-modal-container'}
-            content={this.renderEventDialog}
+            content={(args) => this.renderEventDialog(event)}
             isOpen={true}
             position={['right', 'left']}
             onClickOutside={() => this.context?.eventDispatch({ type: 'CANCEL_SELECT' })}

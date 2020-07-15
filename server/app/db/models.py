@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from google.oauth2.credentials import Credentials
 
 from sqlalchemy import Boolean, Column, Integer,\
@@ -144,19 +145,11 @@ class Event(Base):
         rowIds = [r[0] for r in rows]
 
         return session.query(Event).filter(Event.id.in_(rowIds))\
-            .order_by(desc(Event.end_time)).all()
+            .order_by(desc(Event.end)).all()
 
     @property
     def background_color(self):
         return self.calendar.background_color
-
-    @property
-    def start_time(self):
-        return self.start
-
-    @property
-    def end_time(self):
-        return self.end
 
     @property
     def all_day(self):
@@ -165,8 +158,8 @@ class Event(Base):
 
         return isDayEvent(self.start) and isDayEvent(self.end)
 
-    def __init__(self, g_id: str, title: str, description: str, start: datetime, end: datetime,
-                 calendar_id: str):
+    def __init__(self, g_id: Optional[str], title: Optional[str], description: Optional[str],
+                 start: datetime, end: datetime, calendar_id: str):
         self.g_id = g_id
         self.title = title
         self.description = description
@@ -186,7 +179,7 @@ class Label(Base):
     key = Column(String(50), index=True)
     color_hex = Column(String(50), nullable=False)
 
-    def __init__(self, title: str, key: str):
+    def __init__(self, title: str, key: str) -> None:
         self.title = title
         self.key = key
         self.color_hex = DEFAULT_TAG_COLOR

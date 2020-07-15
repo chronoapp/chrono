@@ -1,5 +1,6 @@
 import { createContext, useReducer, useState } from 'react'
 import Event from '../models/Event'
+import { createEvent, getAuthToken } from '../util/Api'
 
 export type Action = 'MOVE' | 'RESIZE'
 export type Direction = 'UP' | 'DOWN'
@@ -11,7 +12,7 @@ export interface DragDropAction {
   direction: Direction | undefined
 }
 
-export interface EventActionContextType {
+interface EventActionContextType {
   onStart: () => void
   onEnd: (Event?) => void
   onBeginAction: (event: Event, action: Action, direction?: Direction) => void
@@ -37,8 +38,9 @@ type ActionType =
   | { type: 'START_LOAD' }
   | { type: 'INIT'; payload: Event[] }
   | { type: 'NEW_EVENT'; payload: { start: Date; end: Date } }
+  | { type: 'CREATE_EVENT'; payload: Event }
   | { type: 'CANCEL_SELECT' }
-  | { type: 'UPDATE_EVENT'; payload: { event: Event } }
+  | { type: 'UPDATE_EVENT'; payload: Event }
 
 function eventReducer({ events, loading }: EventState, action: ActionType) {
   switch (action.type) {
@@ -48,6 +50,7 @@ function eventReducer({ events, loading }: EventState, action: ActionType) {
         loading: true,
         events: events || [],
       }
+
     case 'INIT':
       console.log(`INIT: ${action.payload.length} events.`)
       return {
@@ -57,32 +60,49 @@ function eventReducer({ events, loading }: EventState, action: ActionType) {
 
     case 'NEW_EVENT':
       console.log('NEW_EVENT')
-      const event = new Event(
-        -1,
-        null,
-        action.payload.start,
-        action.payload.end,
-        true,
-        false,
-        '#7986CB',
-        '#fff'
-      )
+      const event = Event.newDefaultEvent(action.payload.start, action.payload.end)
       return {
         events: [...events, event],
+        loading,
       }
+
     case 'UPDATE_EVENT':
       console.log('UPDATE_EVENT')
-      const e = action.payload.event
+      const e = action.payload
       const nextEvents = events.map((existingEvent) => {
         return existingEvent.id === e.id ? e : existingEvent
       })
       return {
         events: nextEvents,
+        loading,
+      }
+
+    case 'CREATE_EVENT':
+      // TODO: Normalize the data
+      const updated = events.map((e) => {
+        if (action.payload.id === e.id) {
+          action.payload.creating = false
+          return action.payload
+        } else {
+          return e
+        }
+      })
+
+      const token = getAuthToken()
+      createEvent(token, action.payload).then((r) => {
+        console.log('RESULT')
+        console.log(r)
+      })
+
+      return {
+        events: updated,
+        loading,
       }
 
     case 'CANCEL_SELECT':
       return {
         events: events.filter((e) => e.id !== -1),
+        loading,
       }
     default:
       throw new Error('Unknown action')
@@ -107,7 +127,7 @@ export function EventActionProvider(props: any) {
   function handleInteractionEnd(event?: Event) {
     console.log('handleInteractionEnd')
     if (event) {
-      eventDispatch({ type: 'UPDATE_EVENT', payload: { event } })
+      eventDispatch({ type: 'UPDATE_EVENT', payload: event })
     }
 
     setDragDropAction(undefined)
@@ -116,7 +136,8 @@ export function EventActionProvider(props: any) {
   function handleBeginAction(event: Event, action: Action, direction?: Direction) {
     console.log('handleBeginAction')
     const interacting = dragDropAction ? dragDropAction.interacting : false
-    setDragDropAction({ event, action, direction, interacting })
+    const e = Object.assign({}, event)
+    setDragDropAction({ event: e, action, direction, interacting })
   }
 
   const defaultContext: EventActionContextType = {

@@ -258,7 +258,6 @@ class Popover extends React.Component<PopoverProps, PopoverState> {
         const { transitionDuration } = this.props
         this.popoverDiv = this.createContainer()
         this.popoverDiv.style.opacity = '0'
-        this.popoverDiv.style.zIndex = '2'
         this.popoverDiv.style.transition = `opacity ${transitionDuration}s`
       }
       window.addEventListener('resize', this.onResize)

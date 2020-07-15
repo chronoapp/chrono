@@ -3,16 +3,14 @@ import clsx from 'clsx'
 
 import Week from './Week'
 import Month from './Month'
-import Event from '../models/Event'
 import * as dates from '../util/dates'
 import { startOfWeek, formatDateTime } from '../util/localizer'
-import { hexToHSL } from './utils/Colors'
 import { getAuthToken, getEvents } from '../util/Api'
 
 import Icon from '@mdi/react'
 import { mdiChevronDown, mdiChevronLeft, mdiChevronRight } from '@mdi/js'
 
-import { EventActionContext, EventActionContextType } from './EventActionContext'
+import { EventActionContext } from './EventActionContext'
 
 type Display = 'Week' | 'Month'
 
@@ -26,7 +24,7 @@ function Calendar() {
   const [display, setDisplay] = useState<Display>('Week')
   const [displayToggleActive, setDisplayToggleActive] = useState<boolean>(false)
 
-  const eventActionContext = useContext<EventActionContextType>(EventActionContext)
+  const eventActionContext = useContext(EventActionContext)
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyboardShortcuts)
@@ -88,28 +86,7 @@ function Calendar() {
     const authToken = getAuthToken()
     const events = await getEvents(authToken, '', formatDateTime(start), formatDateTime(end))
 
-    const results = events.map((event) => {
-      // TODO: Figure out a better color scheme for past event colors.
-      let bgColor = event.backgroundColor
-      if (event.endTime < today) {
-        const { h, s } = hexToHSL(event.backgroundColor)
-        const hsl = `hsl(${h}, ${s}%, 85%)`
-        bgColor = hsl
-      }
-
-      return new Event(
-        event.id,
-        event.title,
-        event.startTime,
-        event.endTime,
-        false,
-        event.allDay,
-        bgColor,
-        event.endTime < today ? 'hsl(0, 0%, 40%)' : '#fff'
-      )
-    })
-
-    eventActionContext.eventDispatch({ type: 'INIT', payload: results })
+    eventActionContext.eventDispatch({ type: 'INIT', payload: events })
   }
 
   function renderDisplaySelectionHeader() {

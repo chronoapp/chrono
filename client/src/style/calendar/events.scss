@@ -67,10 +67,10 @@
     background-color: white;
     border-radius: $event-border-radius;
     box-shadow: $event-shadow;
+    z-index: 10;
 }
 
 .cal-event-modal {
-    min-height: 250px;
-    width: 300px;
-    padding: 25px;
+    width: 400px;
+    padding: 20px 20px 10px 20px;
 }

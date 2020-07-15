@@ -21,11 +21,12 @@ class EventBaseVM(BaseModel):
     """
     title: Optional[str]
     description: Optional[str] = None
-    start_time: Optional[datetime]
-    end_time: Optional[datetime]
+    start: datetime
+    end: datetime
     labels: List[LabelVM] = []
     all_day: Optional[bool]
     background_color: Optional[str]
+    calendar_id: str
 
     class Config:
         orm_mode = True
@@ -64,6 +65,17 @@ async def getEvents(title: str = "",
             .limit(limit).all()
 
 
+@router.post('/events/', response_model=EventInDBVM)
+async def createEvent(event: EventBaseVM,
+                      user: User = Depends(get_current_user),
+                      session: Session = Depends(get_db)):
+    eventDb = Event(None, event.title, event.description, event.start, event.end, event.calendar_id)
+    user.events.append(eventDb)
+    session.commit()
+
+    return eventDb
+
+
 @router.get('/events/{event_id}', response_model=EventInDBVM)
 async def getEvent(event_id: int,
                    user: User = Depends(get_current_user),
@@ -73,14 +85,16 @@ async def getEvent(event_id: int,
 
 
 @router.put('/events/{event_id}', response_model=EventInDBVM)
-async def updateEvent(event: EventBaseVM,
-                      event_id: int,
-                      user: User = Depends(get_current_user),
-                      session: Session = Depends(get_db)):
+async def updateEvent(
+    event: EventBaseVM,
+    event_id: int,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_db)) -> Event:
 
     eventDb = user.events.filter_by(id=event_id).first()
     if not eventDb:
-        eventDb = Event(None, event.title, event.description, event.start_time, event.end_time)
+        eventDb = Event(None, event.title, event.description, event.start, event.end,
+                        event.calendar_id)
     else:
         if event.title:
             eventDb.title = event.title

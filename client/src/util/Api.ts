@@ -1,6 +1,6 @@
 import Router from 'next/router'
 import Cookies from 'universal-cookie'
-import { CalendarEvent } from '../models/Event'
+import Event from '../models/Event'
 import { Label, TimePeriod } from '../models/Label'
 import { LabelRule } from '../models/LabelRule'
 import Calendar from '../models/Calendar'
@@ -94,7 +94,7 @@ export async function getEvents(
   startDate?: string,
   endDate?: string,
   limit: number = 250
-): Promise<CalendarEvent[]> {
+): Promise<Event[]> {
   const params = {
     title,
     start_date: startDate,
@@ -111,27 +111,37 @@ export async function getEvents(
   })
     .then(handleErrors)
     .then((resp) => {
-      return resp.map((eventJson: any) => CalendarEvent.fromJson(eventJson))
+      return resp.map((eventJson: any) => Event.fromJson(eventJson))
     })
 }
 
-export async function updateEvent(authToken: string, event: CalendarEvent): Promise<CalendarEvent> {
+export async function createEvent(authToken: string, event: Event): Promise<Event> {
+  return fetch(`${API_URL}/events/`, {
+    method: 'POST',
+    headers: { Authorization: authToken },
+    body: JSON.stringify(event),
+  })
+    .then(handleErrors)
+    .then((resp) => Event.fromJson(resp))
+}
+
+export async function updateEvent(authToken: string, event: Event): Promise<Event> {
   return fetch(`${API_URL}/events/${event.id}`, {
     method: 'PUT',
     headers: { Authorization: authToken },
     body: JSON.stringify(event),
   })
     .then(handleErrors)
-    .then((resp) => CalendarEvent.fromJson(resp))
+    .then((resp) => Event.fromJson(resp))
 }
 
-export async function searchEvents(authToken: string, query: string): Promise<CalendarEvent[]> {
+export async function searchEvents(authToken: string, query: string): Promise<Event[]> {
   return fetch(`${API_URL}/events/?query=${query}`, {
     headers: { Authorization: authToken },
   })
     .then(handleErrors)
     .then((resp) => {
-      return resp.map((eventJson: any) => CalendarEvent.fromJson(eventJson))
+      return resp.map((eventJson: any) => Event.fromJson(eventJson))
     })
 }
 
