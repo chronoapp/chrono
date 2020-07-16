@@ -54,3 +54,16 @@ export function getWeekRange(date: Date) {
 
   return dates.range(start, end)
 }
+
+export function getDurationDisplay(start: Date, end: Date): string {
+  const milliseconds = end.getTime() - start.getTime()
+  const minutes = milliseconds / 1000 / 60
+
+  if (minutes < 60) {
+    return `${minutes}m`
+  } else {
+    const hours = Math.floor(minutes / 60)
+    const min = minutes % 60
+    return min > 0 ? `${hours}h ${min}m` : `${hours}h`
+  }
+}

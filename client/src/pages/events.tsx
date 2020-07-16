@@ -1,5 +1,7 @@
 import React, { Component } from 'react'
 import tinycolor from 'tinycolor2'
+
+import { format, getDurationDisplay } from '../util/localizer'
 import {
   getEvents,
   getLabels,
@@ -294,8 +296,8 @@ class EventList extends Component<Props, State> {
           {events.map((event) => {
             return (
               <tr key={`event-${event.id}`}>
-                <td>{event.dayDisplay}</td>
-                <td>{event.getDuration()}</td>
+                <td>{format(event.start, 'MMMM DD')}</td>
+                <td>{getDurationDisplay(event.start, event.end)}</td>
                 <td>{event.title}</td>
                 <td>
                   {event.labels.map((label) => {

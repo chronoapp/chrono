@@ -35,22 +35,15 @@ export interface EventState {
 }
 
 type ActionType =
-  | { type: 'START_LOAD' }
   | { type: 'INIT'; payload: Event[] }
   | { type: 'NEW_EVENT'; payload: { start: Date; end: Date } }
+  | { type: 'EDIT_EVENT'; payload: Event }
   | { type: 'CREATE_EVENT'; payload: Event }
   | { type: 'CANCEL_SELECT' }
   | { type: 'UPDATE_EVENT'; payload: Event }
 
 function eventReducer({ events, loading }: EventState, action: ActionType) {
   switch (action.type) {
-    case 'START_LOAD':
-      console.log('START_LOAD')
-      return {
-        loading: true,
-        events: events || [],
-      }
-
     case 'INIT':
       console.log(`INIT: ${action.payload.length} events.`)
       return {
@@ -59,10 +52,17 @@ function eventReducer({ events, loading }: EventState, action: ActionType) {
       }
 
     case 'NEW_EVENT':
-      console.log('NEW_EVENT')
       const event = Event.newDefaultEvent(action.payload.start, action.payload.end)
       return {
         events: [...events, event],
+        loading,
+      }
+
+    case 'EDIT_EVENT':
+      console.log('EDIT_EVENT')
+      action.payload.creating = true
+      return {
+        events: events,
         loading,
       }
 
@@ -81,13 +81,13 @@ function eventReducer({ events, loading }: EventState, action: ActionType) {
       // TODO: Normalize the data
       const updated = events.map((e) => {
         if (action.payload.id === e.id) {
-          action.payload.creating = false
-          return action.payload
+          return { ...e, creating: false }
         } else {
           return e
         }
       })
 
+      // TODO: Keep this pure!
       const token = getAuthToken()
       createEvent(token, action.payload).then((r) => {
         console.log('RESULT')
@@ -101,7 +101,11 @@ function eventReducer({ events, loading }: EventState, action: ActionType) {
 
     case 'CANCEL_SELECT':
       return {
-        events: events.filter((e) => e.id !== -1),
+        events: events
+          .filter((e) => e.id != -1)
+          .map((e) => {
+            return { ...e, creating: false }
+          }),
         loading,
       }
     default:
@@ -114,7 +118,7 @@ export function EventActionProvider(props: any) {
   const [dragDropAction, setDragDropAction] = useState<DragDropAction | undefined>(undefined)
   const [eventState, eventDispatch] = useReducer(eventReducer, {
     events: [],
-    loading: false,
+    loading: true,
   })
 
   function handleInteractionStart() {

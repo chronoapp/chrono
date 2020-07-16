@@ -63,8 +63,6 @@ function Calendar() {
   }
 
   async function loadCurrentViewEvents() {
-    eventActionContext.eventDispatch({ type: 'START_LOAD' })
-
     if (display == 'Week') {
       const lastWeek = dates.subtract(selectedDate, 1, 'week')
       const nextWeek = dates.add(selectedDate, 1, 'week')

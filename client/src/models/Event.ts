@@ -19,23 +19,7 @@ export default class Event {
   public isAllDay: boolean
   public backgroundColor: string
   public foregroundColor: string
-
-  get dayDisplay() {
-    return `${MONTHS[this.start.getMonth()]} ${this.start.getDate()}`
-  }
-
-  public getDuration(): string {
-    const milliseconds = this.end.getTime() - this.start.getTime()
-    const minutes = milliseconds / 1000 / 60
-
-    if (minutes < 60) {
-      return `${minutes}m`
-    } else {
-      const hours = Math.floor(minutes / 60)
-      const min = minutes % 60
-      return min > 0 ? `${hours}h ${min}m` : `${hours}h`
-    }
-  }
+  public displayTitle: string
 
   static foregroundColor(end: Date, foregroundColor: string) {
     return end < today ? 'hsl(0, 0%, 40%)' : foregroundColor
@@ -94,6 +78,7 @@ export default class Event {
     this.labels = labels
     this.isAllDay = isAllDay
 
+    this.displayTitle = title ? title : '(No title)'
     this.backgroundColor = Event.backgroundColor(end, backgroundColor)
     this.foregroundColor = Event.foregroundColor(end, foregroundColor)
   }
