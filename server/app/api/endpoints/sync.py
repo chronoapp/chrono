@@ -8,7 +8,7 @@ from app.calendar.sync import syncGoogleCalendar
 router = APIRouter()
 
 
-@router.post('/sync/', response_model={})
+@router.post('/sync/')
 async def syncUser(user=Depends(get_current_user), session=Depends(get_db)):
     logging.info(f'Sync calendar for {user.id}')
 
