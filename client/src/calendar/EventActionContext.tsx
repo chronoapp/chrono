@@ -1,6 +1,7 @@
 import { createContext, useReducer, useState } from 'react'
+import update from 'immutability-helper'
+
 import Event from '../models/Event'
-import { createEvent, getAuthToken } from '../util/Api'
 
 export type Action = 'MOVE' | 'RESIZE'
 export type Direction = 'UP' | 'DOWN'
@@ -30,83 +31,100 @@ export const EventActionContext = createContext<EventActionContextType>(undefine
  */
 
 export interface EventState {
-  events: Event[]
   loading: boolean
+  eventsById: Record<number, Event>
+  editingEventId: number | null
 }
 
 type ActionType =
   | { type: 'INIT'; payload: Event[] }
-  | { type: 'NEW_EVENT'; payload: { start: Date; end: Date } }
+  | { type: 'EDIT_NEW_EVENT'; payload: { start: Date; end: Date } }
   | { type: 'EDIT_EVENT'; payload: Event }
   | { type: 'CREATE_EVENT'; payload: Event }
+  | { type: 'DELETE_EVENT'; payload: { eventId: number } }
   | { type: 'CANCEL_SELECT' }
   | { type: 'UPDATE_EVENT'; payload: Event }
 
-function eventReducer({ events, loading }: EventState, action: ActionType) {
+function normalizeArr(arr, key) {
+  const initialValue = {}
+  return arr.reduce((obj, item) => {
+    return {
+      ...obj,
+      [item[key]]: item,
+    }
+  }, initialValue)
+}
+
+function eventReducer(state: EventState, action: ActionType) {
+  const { eventsById, editingEventId } = state
+
   switch (action.type) {
     case 'INIT':
       console.log(`INIT: ${action.payload.length} events.`)
+
       return {
-        events: action.payload,
+        ...state,
         loading: false,
+        eventsById: normalizeArr(action.payload, 'id'),
       }
 
-    case 'NEW_EVENT':
+    case 'EDIT_NEW_EVENT':
+      console.log('EDIT_NEW_EVENT')
       const event = Event.newDefaultEvent(action.payload.start, action.payload.end)
       return {
-        events: [...events, event],
-        loading,
+        ...state,
+        eventsById: { ...state.eventsById, [event.id]: event },
       }
 
     case 'EDIT_EVENT':
       console.log('EDIT_EVENT')
-      action.payload.creating = true
       return {
-        events: events,
-        loading,
+        ...state,
+        eventsById: { ...eventsById, [action.payload.id]: { ...action.payload, creating: true } },
+        editingEventId: action.payload.id,
       }
 
     case 'UPDATE_EVENT':
       console.log('UPDATE_EVENT')
       const e = action.payload
-      const nextEvents = events.map((existingEvent) => {
-        return existingEvent.id === e.id ? e : existingEvent
-      })
+
       return {
-        events: nextEvents,
-        loading,
+        ...state,
+        eventsById: update(eventsById, { [e.id]: { $set: e } }),
       }
 
     case 'CREATE_EVENT':
-      // TODO: Normalize the data
-      const updated = events.map((e) => {
-        if (action.payload.id === e.id) {
-          return { ...e, creating: false }
-        } else {
-          return e
-        }
-      })
+      console.log('CREATE_EVENT')
+      console.log(action.payload)
 
-      // TODO: Keep this pure!
-      const token = getAuthToken()
-      createEvent(token, action.payload).then((r) => {
-        console.log('RESULT')
-        console.log(r)
+      const eventsWithNew = update(eventsById, {
+        [action.payload.id]: { $set: { ...action.payload, creating: false } },
       })
 
       return {
-        events: updated,
-        loading,
+        ...state,
+        eventsById: eventsWithNew,
+      }
+
+    case 'DELETE_EVENT':
+      const delEventId = action.payload.eventId
+      return {
+        ...state,
+        eventsById: update(eventsById, { $unset: [delEventId] }),
       }
 
     case 'CANCEL_SELECT':
+      let eventsUnselected = update(eventsById, { $unset: [-1] })
+      if (editingEventId && editingEventId in eventsUnselected) {
+        eventsUnselected = update(eventsUnselected, {
+          [editingEventId]: { $merge: { creating: false } },
+        })
+      }
+
       return {
-        events: events
-          .filter((e) => e.id != -1)
-          .map((e) => {
-            return { ...e, creating: false }
-          }),
-        loading,
+        ...state,
+        eventsById: eventsUnselected,
+        editingEventId: null,
       }
     default:
       throw new Error('Unknown action')
@@ -117,8 +135,9 @@ export function EventActionProvider(props: any) {
   // Handles Drag & Drop Events.
   const [dragDropAction, setDragDropAction] = useState<DragDropAction | undefined>(undefined)
   const [eventState, eventDispatch] = useReducer(eventReducer, {
-    events: [],
     loading: true,
+    eventsById: {},
+    editingEventId: null,
   })
 
   function handleInteractionStart() {
@@ -140,8 +159,7 @@ export function EventActionProvider(props: any) {
   function handleBeginAction(event: Event, action: Action, direction?: Direction) {
     console.log('handleBeginAction')
     const interacting = dragDropAction ? dragDropAction.interacting : false
-    const e = Object.assign({}, event)
-    setDragDropAction({ event: e, action, direction, interacting })
+    setDragDropAction({ event, action, direction, interacting })
   }
 
   const defaultContext: EventActionContextType = {

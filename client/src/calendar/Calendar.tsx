@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react'
 import clsx from 'clsx'
+import Icon from '@mdi/react'
+import { mdiChevronDown, mdiChevronLeft, mdiChevronRight } from '@mdi/js'
 
 import Week from './Week'
 import Month from './Month'
@@ -7,10 +9,8 @@ import * as dates from '../util/dates'
 import { startOfWeek, formatDateTime } from '../util/localizer'
 import { getAuthToken, getEvents } from '../util/Api'
 
-import Icon from '@mdi/react'
-import { mdiChevronDown, mdiChevronLeft, mdiChevronRight } from '@mdi/js'
-
 import { EventActionContext } from './EventActionContext'
+import Event from '../models/Event'
 
 type Display = 'Week' | 'Month'
 
@@ -187,7 +187,9 @@ function Calendar() {
   }
 
   function renderCalendar() {
-    const { events, loading } = eventActionContext.eventState
+    const { loading, eventsById } = eventActionContext.eventState
+    const events = Object.values(eventsById)
+
     if (display == 'Week') {
       return <Week date={selectedDate} events={events} />
     } else if (display == 'Month') {

@@ -63,6 +63,7 @@ class TimeGridEvent extends React.Component<IProps> {
     const { event } = this.props
 
     const diffMin = (event.end.getTime() - event.start.getTime()) / 60000
+    const displayTitle = event.title ? event.title : '(No title)'
 
     let inner
     if (diffMin <= 30) {
@@ -71,7 +72,7 @@ class TimeGridEvent extends React.Component<IProps> {
           className={clsx('cal-event-content', diffMin <= 15 && 'cal-small-event')}
           style={{ display: 'flex' }}
         >
-          <span>{event.displayTitle}</span>
+          <span>{displayTitle}</span>
           <span className="cal-ellipsis" style={{ fontSize: '90%', flex: 1 }}>
             {`, ${timeFormatShort(event.start)}`}
           </span>
@@ -80,7 +81,7 @@ class TimeGridEvent extends React.Component<IProps> {
     } else {
       inner = [
         <div key="1" className="cal-event-content" style={{ paddingTop: '3px' }}>
-          {event.displayTitle}
+          {displayTitle}
         </div>,
         <div key="2" className="cal-event-label">
           {this.props.label}

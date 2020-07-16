@@ -1,8 +1,6 @@
 import { Label } from './Label'
 import { hexToHSL } from '../calendar/utils/Colors'
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
 const today = new Date()
 
 export default class Event {
@@ -19,7 +17,6 @@ export default class Event {
   public isAllDay: boolean
   public backgroundColor: string
   public foregroundColor: string
-  public displayTitle: string
 
   static foregroundColor(end: Date, foregroundColor: string) {
     return end < today ? 'hsl(0, 0%, 40%)' : foregroundColor
@@ -78,7 +75,6 @@ export default class Event {
     this.labels = labels
     this.isAllDay = isAllDay
 
-    this.displayTitle = title ? title : '(No title)'
     this.backgroundColor = Event.backgroundColor(end, backgroundColor)
     this.foregroundColor = Event.foregroundColor(end, foregroundColor)
   }
