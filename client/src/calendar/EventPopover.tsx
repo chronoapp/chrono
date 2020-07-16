@@ -3,7 +3,7 @@ import React, { useContext, useState } from 'react'
 import Icon from '@mdi/react'
 import { mdiTextSubject, mdiClockOutline, mdiCalendar, mdiDeleteOutline } from '@mdi/js'
 
-import { createEvent, getAuthToken } from '../util/Api'
+import { createEvent, getAuthToken, deleteEvent } from '../util/Api'
 import Event from '../models/Event'
 import { EventActionContext } from './EventActionContext'
 import { CalendarsContext } from '../components/CalendarsContext'
@@ -19,8 +19,7 @@ function EventPopover(props: { event: Event }) {
   const [end, setEnd] = useState(props.event.end)
   const [calendarId, setCalendarId] = useState(getPrimaryId())
 
-  function onCreateEvent() {
-    const event = props.event
+  function onCreateEvent(event: Event) {
     event.title = title
     event.description = description
     event.start = start
@@ -28,12 +27,21 @@ function EventPopover(props: { event: Event }) {
     event.calendar_id = calendarId
 
     eventActions.eventDispatch({ type: 'CREATE_EVENT', payload: event })
+    const token = getAuthToken()
+    createEvent(token, event).then((event) => {
+      console.log(`Created event in db: ${event.id}`)
+      eventActions.eventDispatch({ type: 'UPDATE_EVENT', payload: { event, replaceEventId: -1 } })
+    })
+  }
 
-    // const token = getAuthToken()
-    // createEvent(token, event).then((r) => {
-    //   console.log('RESULT')
-    //   console.log(r)
-    // })
+  function onDeleteEvent(eventId: number) {
+    eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
+    eventActions.eventDispatch({
+      type: 'DELETE_EVENT',
+      payload: { eventId: props.event.id },
+    })
+    const token = getAuthToken()
+    deleteEvent(token, eventId)
   }
 
   function getPrimaryId() {
@@ -92,21 +100,12 @@ function EventPopover(props: { event: Event }) {
       </div>
 
       <div className="mt-4" style={{ display: 'flex' }}>
-        <button className="button is-primary" onClick={onCreateEvent}>
+        <button className="button is-primary" onClick={() => onCreateEvent(props.event)}>
           Save
         </button>
 
         {isExistingEvent ? (
-          <button
-            className="button is-light ml-2"
-            onClick={() => {
-              eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
-              eventActions.eventDispatch({
-                type: 'DELETE_EVENT',
-                payload: { eventId: props.event.id },
-              })
-            }}
-          >
+          <button className="button is-light ml-2" onClick={() => onDeleteEvent(props.event.id)}>
             <Icon className="mr-1" path={mdiDeleteOutline} size={1} />
             Delete{' '}
           </button>

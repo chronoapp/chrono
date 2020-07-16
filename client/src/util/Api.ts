@@ -135,6 +135,14 @@ export async function updateEvent(authToken: string, event: Event): Promise<Even
     .then((resp) => Event.fromJson(resp))
 }
 
+export async function deleteEvent(authToken: string, eventId: number): Promise<{}> {
+  return fetch(`${API_URL}/events/${eventId}`, {
+    method: 'DELETE',
+    headers: { Authorization: authToken },
+    body: JSON.stringify(event),
+  }).then(handleErrors)
+}
+
 export async function searchEvents(authToken: string, query: string): Promise<Event[]> {
   return fetch(`${API_URL}/events/?query=${query}`, {
     headers: { Authorization: authToken },

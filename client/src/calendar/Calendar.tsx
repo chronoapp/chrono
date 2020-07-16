@@ -10,7 +10,6 @@ import { startOfWeek, formatDateTime } from '../util/localizer'
 import { getAuthToken, getEvents } from '../util/Api'
 
 import { EventActionContext } from './EventActionContext'
-import Event from '../models/Event'
 
 type Display = 'Week' | 'Month'
 

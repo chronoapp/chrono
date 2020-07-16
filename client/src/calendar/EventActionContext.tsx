@@ -38,12 +38,12 @@ export interface EventState {
 
 type ActionType =
   | { type: 'INIT'; payload: Event[] }
-  | { type: 'EDIT_NEW_EVENT'; payload: { start: Date; end: Date } }
-  | { type: 'EDIT_EVENT'; payload: Event }
+  | { type: 'INIT_EDIT_NEW_EVENT'; payload: { start: Date; end: Date } }
+  | { type: 'INIT_EDIT_EVENT'; payload: Event }
   | { type: 'CREATE_EVENT'; payload: Event }
   | { type: 'DELETE_EVENT'; payload: { eventId: number } }
   | { type: 'CANCEL_SELECT' }
-  | { type: 'UPDATE_EVENT'; payload: Event }
+  | { type: 'UPDATE_EVENT'; payload: { event: Event; replaceEventId: number } }
 
 function normalizeArr(arr, key) {
   const initialValue = {}
@@ -68,29 +68,32 @@ function eventReducer(state: EventState, action: ActionType) {
         eventsById: normalizeArr(action.payload, 'id'),
       }
 
-    case 'EDIT_NEW_EVENT':
-      console.log('EDIT_NEW_EVENT')
+    case 'INIT_EDIT_NEW_EVENT':
+      console.log('INIT_EDIT_NEW_EVENT')
       const event = Event.newDefaultEvent(action.payload.start, action.payload.end)
       return {
         ...state,
         eventsById: { ...state.eventsById, [event.id]: event },
       }
 
-    case 'EDIT_EVENT':
-      console.log('EDIT_EVENT')
+    case 'INIT_EDIT_EVENT':
+      console.log('INIT_EDIT_EVENT')
       return {
         ...state,
         eventsById: { ...eventsById, [action.payload.id]: { ...action.payload, creating: true } },
         editingEventId: action.payload.id,
       }
 
+    /**
+     * Overrides an existing event. I.e. When the user create an event, we write a temporary event,
+     * then override it when the server returns a successful response.
+     */
     case 'UPDATE_EVENT':
-      console.log('UPDATE_EVENT')
-      const e = action.payload
-
       return {
         ...state,
-        eventsById: update(eventsById, { [e.id]: { $set: e } }),
+        eventsById: update(update(eventsById, { $unset: [action.payload.replaceEventId] }), {
+          [action.payload.event.id]: { $set: action.payload.event },
+        }),
       }
 
     case 'CREATE_EVENT':
@@ -150,7 +153,7 @@ export function EventActionProvider(props: any) {
   function handleInteractionEnd(event?: Event) {
     console.log('handleInteractionEnd')
     if (event) {
-      eventDispatch({ type: 'UPDATE_EVENT', payload: event })
+      eventDispatch({ type: 'UPDATE_EVENT', payload: { event, replaceEventId: event.id } })
     }
 
     setDragDropAction(undefined)

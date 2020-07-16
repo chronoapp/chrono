@@ -251,7 +251,7 @@ class DayColumn extends React.Component<IProps, IState> {
             console.log('Handle Select Event')
             const { startDate, endDate } = this.state.selectRange
             this.context?.eventDispatch({
-              type: 'EDIT_NEW_EVENT',
+              type: 'INIT_EDIT_NEW_EVENT',
               payload: { start: startDate, end: endDate },
             })
           }

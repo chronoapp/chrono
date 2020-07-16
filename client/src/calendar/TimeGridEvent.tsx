@@ -46,7 +46,7 @@ class TimeGridEvent extends React.Component<IProps> {
 
   private handleClickEvent(e) {
     if (!this.props.event.creating) {
-      this.context?.eventDispatch({ type: 'EDIT_EVENT', payload: this.props.event })
+      this.context?.eventDispatch({ type: 'INIT_EDIT_EVENT', payload: this.props.event })
     }
   }
 

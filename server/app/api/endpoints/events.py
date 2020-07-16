@@ -109,3 +109,16 @@ async def updateEvent(
     session.refresh(eventDb)
 
     return eventDb
+
+
+@router.delete('/events/{eventId}')
+async def deleteEvent(eventId: int,
+                      user: User = Depends(get_current_user),
+                      session: Session = Depends(get_db)):
+    logger.info(f'Delete Event {eventId}')
+    event = user.events.filter_by(id=eventId).first()
+    if event:
+        session.delete(event)
+        session.commit()
+
+    return {}
