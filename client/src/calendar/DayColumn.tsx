@@ -270,6 +270,18 @@ class DayColumn extends React.Component<IProps, IState> {
     }
   }
 
+  renderSelection(selectRange: SelectRange) {
+    const diffMinutes = (selectRange.endDate.getTime() - selectRange.startDate.getTime()) / 60000
+    return (
+      <div
+        className={clsx('cal-slot-selection', diffMinutes <= 15 && 'cal-small-event')}
+        style={{ top: `${selectRange.top}%`, height: `${selectRange.height}%` }}
+      >
+        <span>{timeRangeFormat(selectRange.startDate, selectRange.endDate)}</span>
+      </div>
+    )
+  }
+
   render() {
     const { selecting, selectRange } = this.state
 
@@ -283,14 +295,7 @@ class DayColumn extends React.Component<IProps, IState> {
           <div className="cal-events-container">{this.renderEvents(this.slotMetrics)}</div>
         </DragDropEventContainer>
 
-        {selecting && selectRange && (
-          <div
-            className="cal-slot-selection"
-            style={{ top: `${selectRange.top}%`, height: `${selectRange.height}%` }}
-          >
-            <span>{timeRangeFormat(selectRange.startDate, selectRange.endDate)}</span>
-          </div>
-        )}
+        {selecting && selectRange && this.renderSelection(selectRange)}
         {this.props.isCurrentDay && this.intervalTriggered && (
           <div
             className="cal-current-time-indicator"

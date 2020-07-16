@@ -2,6 +2,7 @@ import React from 'react'
 
 import clsx from 'clsx'
 import Event from '../models/Event'
+import { timeFormatShort } from '../util/localizer'
 
 import { Direction, EventActionContext } from './EventActionContext'
 
@@ -26,6 +27,7 @@ class TimeGridEvent extends React.Component<IProps> {
     this.handleResize = this.handleResize.bind(this)
     this.handleStartDragging = this.handleStartDragging.bind(this)
     this.renderAnchor = this.renderAnchor.bind(this)
+    this.handleClickEvent = this.handleClickEvent.bind(this)
   }
 
   private handleResize(e, direction: Direction) {
@@ -42,6 +44,12 @@ class TimeGridEvent extends React.Component<IProps> {
     }
   }
 
+  private handleClickEvent(e) {
+    if (!this.props.event.creating) {
+      this.context?.eventDispatch({ type: 'EDIT_EVENT', payload: this.props.event })
+    }
+  }
+
   private renderAnchor(direction: Direction) {
     return (
       <div
@@ -53,14 +61,32 @@ class TimeGridEvent extends React.Component<IProps> {
 
   public render() {
     const { event } = this.props
-    const inner = [
-      <div key="1" className="cal-event-content" style={{ paddingTop: '3px' }}>
-        {event.title}
-      </div>,
-      <div key="2" className="cal-event-label">
-        {this.props.label}
-      </div>,
-    ]
+
+    const diffMin = (event.end.getTime() - event.start.getTime()) / 60000
+
+    let inner
+    if (diffMin <= 30) {
+      inner = (
+        <div
+          className={clsx('cal-event-content', diffMin <= 15 && 'cal-small-event')}
+          style={{ display: 'flex' }}
+        >
+          <span>{event.displayTitle}</span>
+          <span className="cal-ellipsis" style={{ fontSize: '90%', flex: 1 }}>
+            {`, ${timeFormatShort(event.start)}`}
+          </span>
+        </div>
+      )
+    } else {
+      inner = [
+        <div key="1" className="cal-event-content" style={{ paddingTop: '3px' }}>
+          {event.displayTitle}
+        </div>,
+        <div key="2" className="cal-event-label">
+          {this.props.label}
+        </div>,
+      ]
+    }
 
     const dnd = this.context?.dragAndDropAction
     const isInteracting =
@@ -88,8 +114,8 @@ class TimeGridEvent extends React.Component<IProps> {
         }}
         onMouseDown={this.handleStartDragging}
         onTouchStart={this.handleStartDragging}
+        onClick={this.handleClickEvent}
       >
-        {this.renderAnchor('UP')}
         {inner}
         {this.renderAnchor('DOWN')}
       </div>

@@ -10,6 +10,11 @@
     padding: 3px;
     box-shadow: $event-shadow;
     border-radius: $event-border-radius;
+
+    &.cal-small-event {
+        font-size: 0.7rem;
+        padding: 0;
+    }
 }
 
 .cal-time-view {
