@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import desc, and_
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from googleapiclient.errors import HttpError
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -143,8 +144,11 @@ async def deleteEvent(eventId: int,
     logger.info(f'Delete Event {eventId}')
     event = user.events.filter_by(id=eventId).one_or_none()
     if event:
-        if user.syncWithGoogle():
-            deleteGoogleEvent(user, event)
+        if event.g_id:
+            try:
+                deleteGoogleEvent(user, event)
+            except HttpError as e:
+                logger.error(e)
 
         session.delete(event)
         session.commit()

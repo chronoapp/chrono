@@ -19,7 +19,7 @@ export default class Event {
   public foregroundColor: string
 
   static foregroundColor(end: Date, foregroundColor: string) {
-    return end < today ? 'hsl(0, 0%, 40%)' : foregroundColor
+    return end < today ? 'hsl(0, 0%, 45%)' : foregroundColor
   }
 
   static backgroundColor(end: Date, backgroundColor: string) {

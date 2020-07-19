@@ -77,6 +77,7 @@ function eventReducer(state: EventState, action: ActionType) {
       return {
         ...state,
         eventsById: { ...state.eventsById, [event.id]: event },
+        editingEventId: event.id,
       }
 
     case 'INIT_EDIT_EVENT':

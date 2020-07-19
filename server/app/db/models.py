@@ -91,6 +91,8 @@ class Calendar(Base):
     primary = Column(Boolean)
     deleted = Column(Boolean)
 
+    sync_token = Column(String())
+
     def __init__(self, id: str, timezone: str, summary: str, description: str,
                  background_color: str, foreground_color: str, selected: bool, access_role: str,
                  primary: bool, deleted: bool):

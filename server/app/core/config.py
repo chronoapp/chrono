@@ -4,6 +4,8 @@ PROJECT_ID = 'timecouncil'
 API_V1_STR = "/api/v1"
 
 APP_URL = os.environ.get('APP_URL')
+API_URL = os.environ.get('API_URL')
+
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
 GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
 TOKEN_SECRET = os.environ.get('TOKEN_SECRET', '')

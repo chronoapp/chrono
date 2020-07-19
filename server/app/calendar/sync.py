@@ -1,5 +1,8 @@
 import logging
+
+from uuid import uuid4
 from typing import Optional
+from sqlalchemy.orm import Session
 
 from datetime import datetime, timedelta
 from backports.zoneinfo import ZoneInfo
@@ -10,6 +13,7 @@ from googleapiclient.discovery import build
 from app.db.session import scoped_session
 from app.db.models import User, Event, LabelRule, Calendar
 from app.core.logger import logger
+from app.core import config
 """
 Adapter to sync to and from google calendar.
 """
@@ -50,22 +54,17 @@ def getService(user: User):
     return service
 
 
-def syncGoogleCalendar(userId: int, startDaysAgo: int = 30, endDaysAgo: int = 0):
+def syncGoogleCalendar(userId: int):
     """Syncs events from google calendar.
     """
     with scoped_session() as session:
         user = session.query(User).filter(User.id == userId).first()
-
-        credentials = Credentials(**user.credentials.toDict())
-        service = build('calendar', 'v3', credentials=credentials, cache_discovery=False)
+        service = getService(user)
         calendarList = service.calendarList().list().execute()
 
         for calendar in calendarList.get('items'):
             calId = calendar.get('id')
             calSummary = calendar.get('summary')
-
-            prev = (datetime.utcnow() - timedelta(days=startDaysAgo)).isoformat() + 'Z'
-            end = (datetime.utcnow() - timedelta(days=endDaysAgo)).isoformat() + 'Z'
 
             print(f'Update Calendar: {calId}: {calSummary}')
             backgroundColor = mapGoogleColor(calendar.get('backgroundColor'))
@@ -89,43 +88,64 @@ def syncGoogleCalendar(userId: int, startDaysAgo: int = 30, endDaysAgo: int = 0)
                                         calendar.get('deleted'))
                 user.calendars.append(userCalendar)
 
-            nextPageToken = None
-            while True:
-                eventsResult = service.events().list(calendarId=calId,
-                                                     timeMax=end,
-                                                     timeMin=prev,
-                                                     maxResults=250,
-                                                     singleEvents=True,
-                                                     pageToken=nextPageToken,
-                                                     orderBy='startTime').execute()
-
-                events = eventsResult.get('items', [])
-                nextPageToken = eventsResult.get('nextPageToken')
-
-                print(f'Token: {nextPageToken}')
-                syncEventsToDb(userCalendar, events)
-                session.commit()
-
-                if not nextPageToken:
-                    break
+            syncCalendar(calendar, service, session)
 
 
-def syncEventsToDb(calendar: Calendar, eventItems):
+def syncCalendar(calendar: Calendar, service, session):
+    end = (datetime.utcnow() + timedelta(days=30)).isoformat() + 'Z'
+
+    nextPageToken = None
+    while True:
+        eventsResult = service.events().list(calendarId=calendar.id,
+                                             timeMax=None if calendar.sync_token else end,
+                                             maxResults=250,
+                                             singleEvents=True,
+                                             syncToken=calendar.sync_token,
+                                             pageToken=nextPageToken).execute()
+
+        events = eventsResult.get('items', [])
+        nextPageToken = eventsResult.get('nextPageToken')
+        nextSyncToken = eventsResult.get('nextSyncToken')
+
+        print(eventsResult)
+
+        print(f'Token: {nextPageToken}')
+        print(f'Sync Token: {nextSyncToken}')
+
+        syncEventsToDb(calendar, events, session)
+        session.commit()
+
+        if not nextPageToken:
+            break
+
+    calendar.sync_token = nextSyncToken
+    session.commit()
+
+
+def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
     newEvents = 0
     updatedEvents = 0
+    deletedEvents = 0
 
-    for event in eventItems:
-        eventId = event['id']
-        eventStart = datetime.fromisoformat(event['start'].get('dateTime',
-                                                               event['start'].get('date')))
-        eventEnd = datetime.fromisoformat(event['end'].get('dateTime', event['end'].get('date')))
-        eventSummary = event.get('summary')
-        eventDescription = event.get('description')
-
-        timeZone = event['start'].get('timeZone')
-
+    for eventItem in eventItems:
+        eventId = eventItem['id']
         user = calendar.user
-        event = user.events.filter(Event.g_id == eventId).first()
+        event: Event = user.events.filter(Event.g_id == eventId).first()
+
+        if eventItem['status'] == 'cancelled':
+            if event:
+                deletedEvents += 1
+                session.delete(event)
+            continue
+
+        eventItemStart = eventItem['start'].get('dateTime', eventItem['start'].get('date'))
+        eventStart = datetime.fromisoformat(eventItemStart)
+        eventItemEnd = eventItem['end'].get('dateTime', eventItem['end'].get('date'))
+        eventEnd = datetime.fromisoformat(eventItemEnd)
+        eventSummary = eventItem.get('summary')
+        eventDescription = eventItem.get('description')
+        timeZone = eventItem['start'].get('timeZone')
+
         if not event:
             # New event
             newEvents += 1
@@ -149,6 +169,7 @@ def syncEventsToDb(calendar: Calendar, eventItems):
                     event.labels.append(rule.label)
 
     logger.info(f'Updated {updatedEvents} events.')
+    logger.info(f'Deleted {deletedEvents} events.')
     logger.info(f'Added {newEvents} events.')
 
 
@@ -168,10 +189,32 @@ def updateGoogleEvent(user: User, event: Event):
 
 
 def deleteGoogleEvent(user: User, event: Event):
-    credentials = Credentials(**user.credentials.toDict())
-    service = build('calendar', 'v3', credentials=credentials, cache_discovery=False)
+    return getService(user).events().delete(calendarId=event.calendar_id,
+                                            eventId=event.g_id).execute()
 
-    return service.events().delete(calendarId=event.calendar_id, eventId=event.g_id).execute()
+
+def addWebhooks(user: User, calendarId: str):
+    """Watches for event updates.
+    TODO: for all calendars.
+    """
+    if not config.API_URL:
+        logger.info(f'No API URL specified.')
+        return
+
+    uniqueId = uuid4().hex
+    baseApiUrl = config.API_URL + config.API_V1_STR
+    webhookUrl = f'{baseApiUrl}/webhooks/google_events'
+
+    body = {'id': uniqueId, 'address': webhookUrl, 'type': 'web_hook'}
+    logger.info(body)
+
+    resp = getService(user).events().watch(calendarId=calendarId, body=body).execute()
+    logger.info(resp)
+
+
+def cancelWebhook():
+    # TODO: Store webhooks, delete
+    pass
 
 
 def getEventBody(event: Event, timeZone: str):
