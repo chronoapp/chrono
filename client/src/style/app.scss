@@ -89,17 +89,8 @@ code {
   }
 }
 
-.radio-list {
-  .radio {
-    display: block;
-
-    &+.radio {
-      margin-left: 0;
-      margin-top: 0.5em;
-    }
-
-    & span {
-      margin-left: 0.5em;
-    }
+.has-icon-grey {
+  svg {
+    fill: $grey;
   }
 }
