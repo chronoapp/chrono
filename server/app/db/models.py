@@ -40,6 +40,13 @@ class User(Base):
         return self.credentials and self.credentials.token
 
 
+# TODO: Store Timezone
+# class UserSettings(Base):
+#     user_id = Column(Integer, ForeignKey('user.id'), primary_key=True)
+#     locale = Column(String(25))
+#     timezone = Column(String(255))
+
+
 class UserCredential(Base):
     __tablename__ = 'user_credentials'
     user_id = Column(Integer, ForeignKey('user.id'), primary_key=True)
@@ -93,6 +100,8 @@ class Calendar(Base):
 
     sync_token = Column(String())
 
+    webhook = relationship("Webhook", uselist=False, back_populates="calendar")
+
     def __init__(self, id: str, timezone: str, summary: str, description: str,
                  background_color: str, foreground_color: str, selected: bool, access_role: str,
                  primary: bool, deleted: bool):
@@ -106,6 +115,27 @@ class Calendar(Base):
         self.access_role = access_role
         self.primary = primary
         self.deleted = deleted
+
+
+class Webhook(Base):
+    """Google webhook to track calendar updates
+    """
+    __tablename__ = 'webhook'
+    id = Column(String, primary_key=True, nullable=False)
+
+    calendar_id = Column(String(255), ForeignKey('calendar.id'), nullable=False)
+    calendar = relationship('Calendar', back_populates='webhook')
+
+    resource_id = Column(String())
+    resource_uri = Column(String())
+
+    def __repr__(self):
+        return f'<Webhook {self.id} {self.calendar_id}>'
+
+    def __init__(self, id: str, resourceId: str, resourceUri: str):
+        self.id = id
+        self.resource_id = resourceId
+        self.resource_uri = resourceUri
 
 
 class Event(Base):

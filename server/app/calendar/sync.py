@@ -9,9 +9,10 @@ from backports.zoneinfo import ZoneInfo
 
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 
 from app.db.session import scoped_session
-from app.db.models import User, Event, LabelRule, Calendar
+from app.db.models import User, Event, LabelRule, Calendar, Webhook
 from app.core.logger import logger
 from app.core import config
 """
@@ -54,7 +55,7 @@ def getService(user: User):
     return service
 
 
-def syncGoogleCalendar(userId: int):
+def syncAllEvents(userId: int):
     """Syncs events from google calendar.
     """
     with scoped_session() as session:
@@ -88,13 +89,16 @@ def syncGoogleCalendar(userId: int):
                                         calendar.get('deleted'))
                 user.calendars.append(userCalendar)
 
-            syncCalendar(calendar, service, session)
+            syncCalendar(userCalendar, session)
 
 
-def syncCalendar(calendar: Calendar, service, session):
+def syncCalendar(calendar: Calendar, session: Session) -> None:
+    service = getService(calendar.user)
+    createWebhook(calendar)
+
     end = (datetime.utcnow() + timedelta(days=30)).isoformat() + 'Z'
-
     nextPageToken = None
+
     while True:
         eventsResult = service.events().list(calendarId=calendar.id,
                                              timeMax=None if calendar.sync_token else end,
@@ -107,13 +111,7 @@ def syncCalendar(calendar: Calendar, service, session):
         nextPageToken = eventsResult.get('nextPageToken')
         nextSyncToken = eventsResult.get('nextSyncToken')
 
-        print(eventsResult)
-
-        print(f'Token: {nextPageToken}')
-        print(f'Sync Token: {nextSyncToken}')
-
         syncEventsToDb(calendar, events, session)
-        session.commit()
 
         if not nextPageToken:
             break
@@ -193,12 +191,18 @@ def deleteGoogleEvent(user: User, event: Event):
                                             eventId=event.g_id).execute()
 
 
-def addWebhooks(user: User, calendarId: str):
-    """Watches for event updates.
-    TODO: for all calendars.
+def createWebhook(calendar: Calendar) -> None:
+    """Create a webhook for the calendar to watche for event updates.
     """
     if not config.API_URL:
         logger.info(f'No API URL specified.')
+        return
+
+    # Only one webhook per calendar
+    if calendar.webhook:
+        return
+
+    if calendar.access_role != 'owner':
         return
 
     uniqueId = uuid4().hex
@@ -206,15 +210,15 @@ def addWebhooks(user: User, calendarId: str):
     webhookUrl = f'{baseApiUrl}/webhooks/google_events'
 
     body = {'id': uniqueId, 'address': webhookUrl, 'type': 'web_hook'}
-    logger.info(body)
+    resp = getService(calendar.user).events().watch(calendarId=calendar.id, body=body).execute()
+    webhook = Webhook(resp.get('id'), resp.get('resourceId'), resp.get('resourceUri'))
+    webhook.calendar = calendar
 
-    resp = getService(user).events().watch(calendarId=calendarId, body=body).execute()
-    logger.info(resp)
 
-
-def cancelWebhook():
-    # TODO: Store webhooks, delete
-    pass
+def cancelWebhook(user: User, webhook: Webhook):
+    body = {'resourceId': webhook.resource_id, 'id': webhook.id}
+    resp = getService(user).channels().stop(body=body).execute()
+    print(resp)
 
 
 def getEventBody(event: Event, timeZone: str):

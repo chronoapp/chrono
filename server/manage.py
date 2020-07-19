@@ -41,8 +41,8 @@ def add_labels(userid):
 @main.command()
 @click.argument('userid')
 def sync_cal(userid):
-    from app.calendar.sync import syncGoogleCalendar
-    syncGoogleCalendar(userid, 30)
+    from app.calendar.sync import syncAllEvents
+    syncAllEvents(userid)
 
 
 @main.command()
