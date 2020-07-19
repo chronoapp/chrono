@@ -14,6 +14,7 @@ import { timeRangeFormat } from '../util/localizer'
 import { EventActionContext, DragDropAction } from './EventActionContext'
 import Event from '../models/Event'
 import SlotMetrics from './utils/SlotMetrics'
+import { updateEvent as updateEventReq, getAuthToken } from '../util/Api'
 
 interface IProps {
   slotMetrics: SlotMetrics
@@ -172,7 +173,15 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
 
         const { event } = this.state
         this.reset()
+
         this.context.onEnd(event)
+        updateEventReq(getAuthToken(), event).then((newEvent) => {
+          console.log('Updated Server Event. TODO: Display banner.')
+          this.context.eventDispatch({
+            type: 'UPDATE_EVENT',
+            payload: { event: newEvent, replaceEventId: event.id },
+          })
+        })
       })
 
       selection.on('click', () => {

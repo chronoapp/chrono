@@ -45,6 +45,9 @@ type ActionType =
   | { type: 'CANCEL_SELECT' }
   | { type: 'UPDATE_EVENT'; payload: { event: Event; replaceEventId: number } }
 
+/**
+ * TODO: Use normalizr for state normalization?
+ */
 function normalizeArr(arr, key) {
   const initialValue = {}
   return arr.reduce((obj, item) => {

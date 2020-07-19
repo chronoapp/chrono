@@ -1,6 +1,8 @@
 import logging
+from typing import Optional
 
 from datetime import datetime, timedelta
+from backports.zoneinfo import ZoneInfo
 
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -8,6 +10,9 @@ from googleapiclient.discovery import build
 from app.db.session import scoped_session
 from app.db.models import User, Event, LabelRule, Calendar
 from app.core.logger import logger
+"""
+Adapter to sync to and from google calendar.
+"""
 
 OLD_COLORS = [
     '#ac725e', '#d06b64', '#f83a22', '#fa573c', '#ff7537', '#ffad46', '#42d692', '#16a765',
@@ -21,6 +26,14 @@ NEW_COLORS = [
 ]
 
 
+def convertToLocalTime(dateTime: datetime, timeZone: Optional[str]):
+    if not timeZone:
+        return dateTime
+
+    localAware = dateTime.astimezone(ZoneInfo(timeZone))  # convert
+    return localAware
+
+
 def mapGoogleColor(color: str) -> str:
     # Google maps to their material colors. TODO: combine map.
 
@@ -28,6 +41,13 @@ def mapGoogleColor(color: str) -> str:
         return NEW_COLORS[OLD_COLORS.index(color)]
     else:
         return color
+
+
+def getService(user: User):
+    credentials = Credentials(**user.credentials.toDict())
+    service = build('calendar', 'v3', credentials=credentials, cache_discovery=False)
+
+    return service
 
 
 def syncGoogleCalendar(userId: int, startDaysAgo: int = 30, endDaysAgo: int = 0):
@@ -83,14 +103,14 @@ def syncGoogleCalendar(userId: int, startDaysAgo: int = 30, endDaysAgo: int = 0)
                 nextPageToken = eventsResult.get('nextPageToken')
 
                 print(f'Token: {nextPageToken}')
-                putEvents(userCalendar, events)
+                syncEventsToDb(userCalendar, events)
                 session.commit()
 
                 if not nextPageToken:
                     break
 
 
-def putEvents(calendar: Calendar, eventItems):
+def syncEventsToDb(calendar: Calendar, eventItems):
     newEvents = 0
     updatedEvents = 0
 
@@ -130,3 +150,40 @@ def putEvents(calendar: Calendar, eventItems):
 
     logger.info(f'Updated {updatedEvents} events.')
     logger.info(f'Added {newEvents} events.')
+
+
+def insertGoogleEvent(user: User, event: Event):
+    timeZone = event.calendar.timezone
+    eventBody = getEventBody(event, timeZone)
+
+    return getService(user).events().insert(calendarId=event.calendar_id, body=eventBody).execute()
+
+
+def updateGoogleEvent(user: User, event: Event):
+    timeZone = event.calendar.timezone
+    eventBody = getEventBody(event, timeZone)
+    return getService(user).events().patch(calendarId=event.calendar_id,
+                                           eventId=event.g_id,
+                                           body=eventBody).execute()
+
+
+def deleteGoogleEvent(user: User, event: Event):
+    credentials = Credentials(**user.credentials.toDict())
+    service = build('calendar', 'v3', credentials=credentials, cache_discovery=False)
+
+    return service.events().delete(calendarId=event.calendar_id, eventId=event.g_id).execute()
+
+
+def getEventBody(event: Event, timeZone: str):
+    eventBody = {
+        'summary': event.title,
+        'description': event.description,
+        'start': {
+            'dateTime': convertToLocalTime(event.start, timeZone).isoformat(),
+        },
+        'end': {
+            'dateTime': convertToLocalTime(event.end, timeZone).isoformat(),
+        },
+    }
+
+    return eventBody

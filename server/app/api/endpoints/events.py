@@ -4,14 +4,16 @@ from sqlalchemy import desc, and_
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from starlette.status import HTTP_400_BAD_REQUEST
 
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
 from app.api.endpoints.labels import LabelVM
 from app.core.logger import logger
 from app.db.models import Event, User
+from app.calendar.sync import insertGoogleEvent, deleteGoogleEvent, updateGoogleEvent
 
 router = APIRouter()
 
@@ -69,11 +71,28 @@ async def getEvents(title: str = "",
 async def createEvent(event: EventBaseVM,
                       user: User = Depends(get_current_user),
                       session: Session = Depends(get_db)):
-    eventDb = Event(None, event.title, event.description, event.start, event.end, event.calendar_id)
-    user.events.append(eventDb)
-    session.commit()
 
-    return eventDb
+    try:
+        calendarDb = user.calendars.filter_by(id=event.calendar_id).one_or_none()
+        eventDb = Event(None, event.title, event.description, event.start, event.end,
+                        event.calendar_id)
+        eventDb.calendar = calendarDb
+        user.events.append(eventDb)
+
+        if user.syncWithGoogle():
+            resp = insertGoogleEvent(user, eventDb)
+            logger.info(resp.get('start'))
+            logger.info(resp.get('id'))
+            eventDb.g_id = resp.get('id')
+
+        session.add(eventDb)
+        session.commit()
+
+        return eventDb
+
+    except Exception as e:
+        logger.error(e)
+        raise HTTPException(HTTP_400_BAD_REQUEST)
 
 
 @router.get('/events/{event_id}', response_model=EventInDBVM)
@@ -98,12 +117,18 @@ async def updateEvent(
     else:
         if event.title:
             eventDb.title = event.title
+            eventDb.description = event.description
+            eventDb.start = event.start
+            eventDb.end = event.end
             # TODO: Update other fields.
 
     eventDb.labels.clear()
     for label in event.labels:
         label = user.labels.filter_by(key=label.key).first()
         eventDb.labels.append(label)
+
+    if user.syncWithGoogle():
+        updateGoogleEvent(user, eventDb)
 
     session.commit()
     session.refresh(eventDb)
@@ -116,8 +141,11 @@ async def deleteEvent(eventId: int,
                       user: User = Depends(get_current_user),
                       session: Session = Depends(get_db)):
     logger.info(f'Delete Event {eventId}')
-    event = user.events.filter_by(id=eventId).first()
+    event = user.events.filter_by(id=eventId).one_or_none()
     if event:
+        if user.syncWithGoogle():
+            deleteGoogleEvent(user, event)
+
         session.delete(event)
         session.commit()
 

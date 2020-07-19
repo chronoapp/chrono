@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState, useEffect, createRef } from 'react'
 
 import Icon from '@mdi/react'
 import { mdiTextSubject, mdiClockOutline, mdiCalendar, mdiDeleteOutline } from '@mdi/js'
@@ -18,20 +18,30 @@ function EventPopover(props: { event: Event }) {
   const [start, setStart] = useState(props.event.start)
   const [end, setEnd] = useState(props.event.end)
   const [calendarId, setCalendarId] = useState(getPrimaryId())
+  const isExistingEvent = props.event.id !== -1
 
-  function onCreateEvent(event: Event) {
+  const titleInputRef = createRef<HTMLInputElement>()
+  useEffect(() => {
+    titleInputRef.current.focus()
+  }, [])
+
+  function onCreateOrUpdateEvent(event: Event) {
     event.title = title
     event.description = description
     event.start = start
     event.end = end
     event.calendar_id = calendarId
 
-    eventActions.eventDispatch({ type: 'CREATE_EVENT', payload: event })
-    const token = getAuthToken()
-    createEvent(token, event).then((event) => {
-      console.log(`Created event in db: ${event.id}`)
-      eventActions.eventDispatch({ type: 'UPDATE_EVENT', payload: { event, replaceEventId: -1 } })
-    })
+    if (isExistingEvent) {
+      console.log('TODO: Update Existing')
+    } else {
+      eventActions.eventDispatch({ type: 'CREATE_EVENT', payload: event })
+      const token = getAuthToken()
+      createEvent(token, event).then((event) => {
+        console.log(`Created event in db: ${event.id}`)
+        eventActions.eventDispatch({ type: 'UPDATE_EVENT', payload: { event, replaceEventId: -1 } })
+      })
+    }
   }
 
   function onDeleteEvent(eventId: number) {
@@ -51,8 +61,6 @@ function EventPopover(props: { event: Event }) {
     }
   }
 
-  const isExistingEvent = props.event.id !== -1
-
   return (
     <div className="cal-event-modal" style={{ display: 'flex', flexDirection: 'column' }}>
       <div>
@@ -60,6 +68,7 @@ function EventPopover(props: { event: Event }) {
           type="text"
           placeholder="title"
           value={title}
+          ref={titleInputRef}
           onChange={(e) => setTitle(e.target.value)}
           style={{ width: '100%' }}
         ></input>
@@ -100,7 +109,7 @@ function EventPopover(props: { event: Event }) {
       </div>
 
       <div className="mt-4" style={{ display: 'flex' }}>
-        <button className="button is-primary" onClick={() => onCreateEvent(props.event)}>
+        <button className="button is-primary" onClick={() => onCreateOrUpdateEvent(props.event)}>
           Save
         </button>
 

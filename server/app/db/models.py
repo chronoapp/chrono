@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Optional
-from google.oauth2.credentials import Credentials
 
 from sqlalchemy import Boolean, Column, Integer,\
     String, Column, ForeignKey, BigInteger, Table, Text, DateTime, text, desc
@@ -35,6 +34,10 @@ class User(Base):
 
     def getClassifierPath(self):
         return f'/var/lib/model_data/{self.username}.pkl'
+
+    def syncWithGoogle(self) -> bool:
+        # TODO: store sync settings
+        return self.credentials and self.credentials.token
 
 
 class UserCredential(Base):
