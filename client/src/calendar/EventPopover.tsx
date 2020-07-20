@@ -70,14 +70,16 @@ function EventPopover(props: IProps) {
   }
 
   function getSelectedCalendar(): Calendar {
-    const calendars = calendarContext.calendars.filter((calendar) => {
+    const originalCalendars = Object.values(calendarContext.calendarsById)
+
+    const calendars = originalCalendars.filter((calendar) => {
       calendar.id == props.event.calendar_id
     })
     if (calendars.length === 1) {
       return calendars[0]
     }
 
-    const primaryCalendar = calendarContext.calendars.filter((c) => c.primary)
+    const primaryCalendar = originalCalendars.filter((c) => c.primary)
     if (primaryCalendar.length === 1) {
       return primaryCalendar[0]
     }
@@ -117,9 +119,9 @@ function EventPopover(props: IProps) {
           </div>
 
           {props.event.description && (
-            <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
+            <div className="mt-2" style={{ display: 'flex', alignItems: 'flex-start' }}>
               <Icon className="mr-2" path={mdiTextSubject} size={1} />
-              <span>{props.event.description}</span>
+              <div dangerouslySetInnerHTML={{ __html: props.event.description }}></div>
             </div>
           )}
 
@@ -198,7 +200,7 @@ function EventPopover(props: IProps) {
             <Icon className="mr-2" path={mdiCalendar} size={1} />
             <div className="select">
               <select value={calendarId} onChange={(e) => setCalendarId(e.target.value)}>
-                {calendarContext.calendars.map((calendar) => {
+                {Object.values(calendarContext.calendarsById).map((calendar) => {
                   return (
                     <option key={calendar.id} value={calendar.id}>
                       {calendar.summary}

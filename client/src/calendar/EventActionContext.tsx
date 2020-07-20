@@ -1,5 +1,6 @@
 import { createContext, useReducer, useState } from 'react'
 import update from 'immutability-helper'
+import { normalizeArr } from '../util/normalizer'
 
 import Event from '../models/Event'
 
@@ -44,19 +45,6 @@ type ActionType =
   | { type: 'DELETE_EVENT'; payload: { eventId: number } }
   | { type: 'CANCEL_SELECT' }
   | { type: 'UPDATE_EVENT'; payload: { event: Event; replaceEventId: number } }
-
-/**
- * TODO: Use normalizr for state normalization?
- */
-function normalizeArr(arr, key) {
-  const initialValue = {}
-  return arr.reduce((obj, item) => {
-    return {
-      ...obj,
-      [item[key]]: item,
-    }
-  }, initialValue)
-}
 
 function eventReducer(state: EventState, action: ActionType) {
   const { eventsById, editingEventId } = state

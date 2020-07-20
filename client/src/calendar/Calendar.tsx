@@ -9,6 +9,7 @@ import * as dates from '../util/dates'
 import { startOfWeek, formatDateTime } from '../util/localizer'
 import { getAuthToken, getEvents } from '../util/Api'
 
+import { CalendarsContext } from '../components/CalendarsContext'
 import { EventActionContext } from './EventActionContext'
 
 type Display = 'Week' | 'Month'
@@ -23,6 +24,7 @@ function Calendar() {
   const [display, setDisplay] = useState<Display>('Week')
   const [displayToggleActive, setDisplayToggleActive] = useState<boolean>(false)
 
+  const calendarContext = useContext(CalendarsContext)
   const eventActionContext = useContext(EventActionContext)
 
   useEffect(() => {
@@ -42,13 +44,15 @@ function Calendar() {
       setDisplayToggleActive(false)
     }
 
-    if (e.key === 'w') {
-      selectDisplay('Week')
-    }
+    // if (eventActionContext.eventState.editingEventId === null) {
+    //   if (e.key === 'w') {
+    //     selectDisplay('Week')
+    //   }
 
-    if (e.key === 'm') {
-      selectDisplay('Month')
-    }
+    //   if (e.key === 'm') {
+    //     selectDisplay('Month')
+    //   }
+    // }
   }
 
   function selectDisplay(display: Display) {
@@ -187,7 +191,13 @@ function Calendar() {
 
   function renderCalendar() {
     const { loading, eventsById } = eventActionContext.eventState
-    const events = Object.values(eventsById)
+
+    const selectedCalendarIds = Object.values(calendarContext.calendarsById)
+      .filter((cal) => cal.selected)
+      .map((cal) => cal.id)
+    const events = Object.values(eventsById).filter((event) =>
+      selectedCalendarIds.includes(event.calendar_id)
+    )
 
     if (display == 'Week') {
       return <Week date={selectedDate} events={events} />

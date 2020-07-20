@@ -80,7 +80,7 @@ class TimeGrid extends React.Component<IProps, IState> {
     const totalMillis = dates.diff(max, min)
 
     if (now >= range[0] && now <= range[range.length - 1]) {
-      const diffMillis = dates.subtract(now, dates.startOf(now, 'day'), 'milliseconds')
+      const diffMillis = (now.getTime() - dates.startOf(now, 'day').getTime()) / 1.1
       this.scrollTopRatio = diffMillis / totalMillis
     }
 
@@ -92,11 +92,7 @@ class TimeGrid extends React.Component<IProps, IState> {
     let avgFromTop = 0
     for (let i = 0; i < sampleSize; i++) {
       const scrollToTime = events[i].start
-      const diffMillis = dates.subtract(
-        scrollToTime,
-        dates.startOf(scrollToTime, 'day'),
-        'milliseconds'
-      )
+      const diffMillis = scrollToTime.getTime() - dates.startOf(scrollToTime, 'day').getTime()
       const scrollTop = diffMillis / totalMillis
       avgFromTop += scrollTop
     }

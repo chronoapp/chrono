@@ -6,9 +6,10 @@ import { getAuthToken, getCalendars } from '../util/Api'
  * Displays list of calendars.
  * TODO: Order by primary
  * TODO: Use calendar color, not event color.
+ * TODO: Update selected calendars to server.
  */
 export default function CalendarsPanel() {
-  const { calendars, loadCalendars, updateCalendarSelect } = useContext<CalendarsContextType>(
+  const { calendarsById, loadCalendars, updateCalendarSelect } = useContext<CalendarsContextType>(
     CalendarsContext
   )
 
@@ -24,7 +25,7 @@ export default function CalendarsPanel() {
   return (
     <>
       <span className="has-text-left has-text-weight-medium mt-3">Calendars</span>
-      {calendars.map((calendar, idx) => {
+      {Object.values(calendarsById).map((calendar, idx) => {
         return (
           <label key={idx} className="cal-checkbox-container has-text-left tag-block">
             <input

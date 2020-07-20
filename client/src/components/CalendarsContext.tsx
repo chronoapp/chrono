@@ -1,9 +1,11 @@
 import React, { createContext, useState } from 'react'
+import update from 'immutability-helper'
+import { normalizeArr } from '../util/normalizer'
 
 import Calendar from '../models/Calendar'
 
 export interface CalendarsContextType {
-  calendars: Calendar[]
+  calendarsById: Record<number, Calendar>
   loadCalendars: (calendars: Calendar[]) => void
   updateCalendarSelect: (calendarId: string, selected: boolean) => void
 }
@@ -11,23 +13,18 @@ export interface CalendarsContextType {
 export const CalendarsContext = createContext<CalendarsContextType>(undefined)
 
 export function CalendarsContextProvider(props: any) {
-  const [calendars, setCalendars] = useState<Calendar[]>([])
+  const [calendarsById, setCalendarsById] = useState<Record<number, Calendar>>({})
 
   const defaultContext: CalendarsContextType = {
-    calendars: calendars,
+    calendarsById: calendarsById,
     loadCalendars: (calendars: Calendar[]) => {
-      setCalendars(calendars)
+      setCalendarsById(normalizeArr(calendars, 'id'))
     },
     updateCalendarSelect: (calendarId: string, selected: boolean) => {
-      const updatedCalendars = calendars.map((cal) => {
-        if (cal.id === calendarId) {
-          cal.selected = selected
-          return cal
-        } else {
-          return cal
-        }
+      const updatedCalendars = update(calendarsById, {
+        [calendarId]: { $merge: { selected: selected } },
       })
-      setCalendars(updatedCalendars)
+      setCalendarsById(updatedCalendars)
     },
   }
 
