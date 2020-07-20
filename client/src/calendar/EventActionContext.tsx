@@ -52,7 +52,6 @@ function eventReducer(state: EventState, action: ActionType) {
   switch (action.type) {
     case 'INIT':
       console.log(`INIT: ${action.payload.length} events.`)
-
       return {
         ...state,
         loading: false,
@@ -60,8 +59,8 @@ function eventReducer(state: EventState, action: ActionType) {
       }
 
     case 'INIT_EDIT_NEW_EVENT':
-      console.log('INIT_EDIT_NEW_EVENT')
       const event = Event.newDefaultEvent(action.payload.start, action.payload.end)
+
       return {
         ...state,
         eventsById: { ...state.eventsById, [event.id]: event },
@@ -69,7 +68,6 @@ function eventReducer(state: EventState, action: ActionType) {
       }
 
     case 'INIT_EDIT_EVENT':
-      console.log('INIT_EDIT_EVENT')
       return {
         ...state,
         eventsById: { ...eventsById, [action.payload.id]: { ...action.payload, creating: true } },
@@ -89,9 +87,6 @@ function eventReducer(state: EventState, action: ActionType) {
       }
 
     case 'CREATE_EVENT':
-      console.log('CREATE_EVENT')
-      console.log(action.payload)
-
       const eventsWithNew = update(eventsById, {
         [action.payload.id]: { $set: { ...action.payload, creating: false } },
       })

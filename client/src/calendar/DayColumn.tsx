@@ -9,6 +9,7 @@ import getStyledEvents from './utils/DayEventLayout'
 import { timeRangeFormat } from '../util/localizer'
 import * as dates from '../util/dates'
 import { Selection, SelectRect, EventData, getBoundsForNode, isEvent } from '../util/Selection'
+import { updateEvent, getAuthToken } from '../util/Api'
 
 import TimeSlotGroup from './TimeSlotGroup'
 import TimeGridEvent from './TimeGridEvent'
@@ -17,6 +18,7 @@ import Event from '../models/Event'
 
 import DragDropEventContainer from './DragDropEventContainer'
 import { EventActionContext } from './EventActionContext'
+import { AlertsContext, AlertsContextType } from '../components/AlertsContext'
 
 interface IProps {
   date: Date
@@ -46,7 +48,8 @@ class SelectRange {
 }
 
 /**
- * Renders the day column and handles click & drag to create a new event.
+ * 1) Renders the day column
+ * 2) Handles click & drag to create a new event.
  */
 class DayColumn extends React.Component<IProps, IState> {
   private dayRef
@@ -227,6 +230,19 @@ class DayColumn extends React.Component<IProps, IState> {
     }
   }
 
+  onEventUpdated(event: Event, alertContext: AlertsContextType) {
+    updateEvent(getAuthToken(), event)
+      .then((newEvent) => {
+        this.context.eventDispatch({
+          type: 'UPDATE_EVENT',
+          payload: { event: newEvent, replaceEventId: event.id },
+        })
+      })
+      .then(() => {
+        alertContext.addAlert('UPDATED_EVENT')
+      })
+  }
+
   initSelection() {
     const { current } = this.dayRef
 
@@ -291,9 +307,16 @@ class DayColumn extends React.Component<IProps, IState> {
           <TimeSlotGroup key={`timeslot-${idx}`} group={group} />
         ))}
 
-        <DragDropEventContainer slotMetrics={this.slotMetrics}>
-          <div className="cal-events-container">{this.renderEvents(this.slotMetrics)}</div>
-        </DragDropEventContainer>
+        <AlertsContext.Consumer>
+          {(alertContext) => (
+            <DragDropEventContainer
+              onEventUpdated={(event) => this.onEventUpdated(event, alertContext)}
+              slotMetrics={this.slotMetrics}
+            >
+              <div className="cal-events-container">{this.renderEvents(this.slotMetrics)}</div>
+            </DragDropEventContainer>
+          )}
+        </AlertsContext.Consumer>
 
         {selecting && selectRange && this.renderSelection(selectRange)}
         {this.props.isCurrentDay && this.intervalTriggered && (

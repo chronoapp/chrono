@@ -121,7 +121,7 @@ function Calendar() {
             }}
           >
             <span className="icon">
-              <Icon path={mdiChevronLeft} />
+              <Icon path={mdiChevronLeft} size={1} />
             </span>
           </button>
           <button
@@ -136,7 +136,7 @@ function Calendar() {
             }}
           >
             <span className="icon icon-button">
-              <Icon path={mdiChevronRight} />
+              <Icon path={mdiChevronRight} size={1} />
             </span>
           </button>
           <div
@@ -195,8 +195,8 @@ function Calendar() {
     const selectedCalendarIds = Object.values(calendarContext.calendarsById)
       .filter((cal) => cal.selected)
       .map((cal) => cal.id)
-    const events = Object.values(eventsById).filter((event) =>
-      selectedCalendarIds.includes(event.calendar_id)
+    const events = Object.values(eventsById).filter(
+      (event) => !event.calendar_id || selectedCalendarIds.includes(event.calendar_id)
     )
 
     if (display == 'Week') {

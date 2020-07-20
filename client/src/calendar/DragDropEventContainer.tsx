@@ -14,11 +14,11 @@ import { timeRangeFormat } from '../util/localizer'
 import { EventActionContext, DragDropAction } from './EventActionContext'
 import Event from '../models/Event'
 import SlotMetrics from './utils/SlotMetrics'
-import { updateEvent as updateEventReq, getAuthToken } from '../util/Api'
 
 interface IProps {
   slotMetrics: SlotMetrics
   children: any
+  onEventUpdated: (event: Event) => void
 }
 
 interface IState {
@@ -31,6 +31,9 @@ function pointInColumn(bounds: Rect, x: number, y: number): boolean {
   return x < bounds.right + 10 && x > bounds.left && y > bounds.top
 }
 
+/**
+ * Handles drag & drop and resizing of existing events.
+ */
 class DragDropEventContainer extends React.Component<IProps, IState> {
   private containerRef
   private selection?: Selection
@@ -175,13 +178,7 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
         this.reset()
 
         this.context.onEnd(event)
-        updateEventReq(getAuthToken(), event).then((newEvent) => {
-          console.log('Updated Server Event. TODO: Display banner.')
-          this.context.eventDispatch({
-            type: 'UPDATE_EVENT',
-            payload: { event: newEvent, replaceEventId: event.id },
-          })
-        })
+        this.props.onEventUpdated(event)
       })
 
       selection.on('click', () => {

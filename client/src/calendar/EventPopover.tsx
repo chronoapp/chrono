@@ -8,6 +8,7 @@ import Event from '../models/Event'
 import Calendar from '../models/Calendar'
 import { EventActionContext } from './EventActionContext'
 import { CalendarsContext } from '../components/CalendarsContext'
+import { AlertsContext } from '../components/AlertsContext'
 import { format } from '../util/localizer'
 
 interface IProps {
@@ -17,6 +18,7 @@ interface IProps {
 function EventPopover(props: IProps) {
   const eventActions = useContext(EventActionContext)
   const calendarContext = useContext(CalendarsContext)
+  const alertsContext = useContext(AlertsContext)
 
   const [title, setTitle] = useState(props.event.title)
   const [description, setDescription] = useState(props.event.description)
@@ -55,6 +57,7 @@ function EventPopover(props: IProps) {
       createEvent(token, event).then((event) => {
         console.log(`Created event in db: ${event.id}`)
         eventActions.eventDispatch({ type: 'UPDATE_EVENT', payload: { event, replaceEventId: -1 } })
+        alertsContext.addAlert('CREATED_EVENT')
       })
     }
   }
@@ -66,7 +69,9 @@ function EventPopover(props: IProps) {
       payload: { eventId: props.event.id },
     })
     const token = getAuthToken()
-    deleteEvent(token, eventId)
+    deleteEvent(token, eventId).then(() => {
+      alertsContext.addAlert('DELETED_EVENT')
+    })
   }
 
   function getSelectedCalendar(): Calendar {
@@ -91,7 +96,7 @@ function EventPopover(props: IProps) {
     return (
       <div className="has-icon-grey">
         <div className="cal-event-modal-header has-background-white-ter">
-          <div
+          <span
             className="mr-2"
             style={{ height: '100%', display: 'flex', alignItems: 'center' }}
             onClick={(e) => {
@@ -104,7 +109,7 @@ function EventPopover(props: IProps) {
               className="has-text-grey-light"
               style={{ cursor: 'pointer' }}
             />
-          </div>
+          </span>
         </div>
 
         <div className="cal-event-modal" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -168,6 +173,7 @@ function EventPopover(props: IProps) {
         <div className="cal-event-modal" style={{ display: 'flex', flexDirection: 'column' }}>
           <div>
             <input
+              className="input"
               type="text"
               placeholder="title"
               value={title}
@@ -180,18 +186,22 @@ function EventPopover(props: IProps) {
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
             <Icon className="mr-2" path={mdiClockOutline} size={1} />
             <input
+              className="input is-small"
               type="date"
               value={format(start, 'YYYY-MM-DD')}
               onChange={(e) => console.log(e.target.value)}
             />
-            <span>{format(start, 'hh:mm')}</span> to <span>{format(end, 'HH:mm')}</span>
+            <span>{format(start, 'hh:mm')}</span>
+            <span>{format(end, 'HH:mm')}</span>
           </div>
 
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
             <Icon className="mr-2" path={mdiTextSubject} size={1} />
             <input
+              className="input"
               type="textarea"
               name="description"
+              value={props.event.description || ''}
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
