@@ -6,6 +6,7 @@ type SelectEvent = 'selecting' | 'beforeSelect' | 'selectStart' | 'reset' | 'sel
 
 const clickTolerance = 5
 // const clickInterval = 250
+const longClickInterval = 600
 
 export class EventData {
   public isTouch: boolean
@@ -220,6 +221,7 @@ export class Selection {
     }
 
     const result = this.emit('beforeSelect', (this.initialEventData = eventData))
+    this.lastClickTime = new Date().getTime()
 
     if (result === false) return
 
@@ -243,18 +245,20 @@ export class Selection {
 
     const inRoot = contains(this.container, e.target)
     const click = this.isClick(x, y)
+    const longClick = this.isLongClick()
 
     this.initialEventData = undefined
+    this.lastClickTime = undefined
 
     if (e.key === 'Escape') {
       return this.emit('reset')
     }
 
-    if (click && inRoot) {
+    if (click && inRoot && !longClick) {
       return this.handleClickEvent(e)
     }
 
-    if (!click) {
+    if (!click || longClick) {
       return this.emit('select', this.selectRect)
     }
   }
@@ -297,6 +301,16 @@ export class Selection {
     }
 
     e.preventDefault()
+  }
+
+  private isLongClick() {
+    let clickDurationExceeded = false
+    const curTime = new Date().getTime()
+    if (this.lastClickTime) {
+      const diff = curTime - this.lastClickTime
+      clickDurationExceeded = diff > longClickInterval
+    }
+    return clickDurationExceeded
   }
 
   private isClick(pageX, pageY) {
