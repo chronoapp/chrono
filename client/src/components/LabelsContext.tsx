@@ -25,12 +25,14 @@ interface LabelContextType {
 /**
  * TODO: Type this.
  */
-export const LabelContext = createContext<LabelContextType>(undefined)
+export const LabelContext = createContext<LabelContextType>(undefined!)
 
-function labelReducer({ labels }: LabelState, action: ActionType) {
+function labelReducer(labelState: LabelState, action: ActionType) {
+  const { labels } = labelState
   switch (action.type) {
     case 'START':
       return {
+        ...labelState,
         loading: true,
       }
     case 'INIT':
@@ -41,6 +43,7 @@ function labelReducer({ labels }: LabelState, action: ActionType) {
     case 'UPDATE':
       const label = action.payload
       return {
+        ...labelState,
         labels: labels.map((l) => {
           if (label.key == l.key) {
             return label
@@ -55,7 +58,7 @@ function labelReducer({ labels }: LabelState, action: ActionType) {
 }
 
 export function LabelsContextProvider(props: any) {
-  const [labelState, dispatch] = useReducer(labelReducer, initialState)
+  const [labelState, dispatch] = useReducer(labelReducer, { labels: [], loading: false })
   return (
     <LabelContext.Provider value={{ labelState, dispatch }}>{props.children}</LabelContext.Provider>
   )

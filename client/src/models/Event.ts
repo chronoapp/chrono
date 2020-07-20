@@ -49,7 +49,7 @@ export default class Event {
   }
 
   static newDefaultEvent(start: Date, end: Date): Event {
-    return new Event(-1, '', '', null, start, end, true, [], false, '#7986CB', '#fff')
+    return new Event(-1, '', '', '', start, end, true, [], false, '#7986CB', '#fff')
   }
 
   constructor(

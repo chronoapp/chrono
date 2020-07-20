@@ -10,7 +10,7 @@ export interface AlertsContextType {
   alert: Alert
 }
 
-export const AlertsContext = createContext<AlertsContextType>(undefined)
+export const AlertsContext = createContext<AlertsContextType>(undefined!)
 
 /**
  * Global event notifications.
@@ -23,7 +23,7 @@ export function AlertsContextProvider(props: any) {
   const [alert, setAlert] = useState<Alert>()
 
   function removeAlert() {
-    setAlert(null)
+    setAlert(undefined)
   }
 
   const defaultContext = {

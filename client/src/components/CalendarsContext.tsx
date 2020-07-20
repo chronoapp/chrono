@@ -10,7 +10,7 @@ export interface CalendarsContextType {
   updateCalendarSelect: (calendarId: string, selected: boolean) => void
 }
 
-export const CalendarsContext = createContext<CalendarsContextType>(undefined)
+export const CalendarsContext = createContext<CalendarsContextType>(undefined!)
 
 export function CalendarsContextProvider(props: any) {
   const [calendarsById, setCalendarsById] = useState<Record<number, Calendar>>({})
