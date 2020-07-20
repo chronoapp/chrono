@@ -17,10 +17,15 @@ const initialState: LabelState = {
   loading: false,
 }
 
+interface LabelContextType {
+  labelState: LabelState
+  dispatch: React.Dispatch<ActionType>
+}
+
 /**
  * TODO: Type this.
  */
-export const LabelContext = createContext(undefined)
+export const LabelContext = createContext<LabelContextType>(undefined)
 
 function labelReducer({ labels }: LabelState, action: ActionType) {
   switch (action.type) {

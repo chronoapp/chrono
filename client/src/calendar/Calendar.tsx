@@ -9,7 +9,7 @@ import * as dates from '../util/dates'
 import { startOfWeek, formatDateTime } from '../util/localizer'
 import { getAuthToken, getEvents } from '../util/Api'
 
-import { CalendarsContext } from '../components/CalendarsContext'
+import { CalendarsContext, CalendarsContextType } from '../components/CalendarsContext'
 import { EventActionContext } from './EventActionContext'
 
 type Display = 'Week' | 'Month'
@@ -24,7 +24,7 @@ function Calendar() {
   const [display, setDisplay] = useState<Display>('Week')
   const [displayToggleActive, setDisplayToggleActive] = useState<boolean>(false)
 
-  const calendarContext = useContext(CalendarsContext)
+  const calendarContext = useContext<CalendarsContextType>(CalendarsContext)
   const eventActionContext = useContext(EventActionContext)
 
   useEffect(() => {

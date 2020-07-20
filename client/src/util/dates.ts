@@ -39,22 +39,22 @@ export function monthsInYear(year) {
   return MONTHS.map((i) => dates.month(date, i))
 }
 
-export function firstVisibleDay(date, startOfWeek) {
+export function firstVisibleDay(date: Date, startOfWeek: number) {
   let firstOfMonth = dates.startOf(date, 'month')
 
   return dates.startOf(firstOfMonth, 'week', startOfWeek)
 }
 
-export function lastVisibleDay(date, startOfWeek) {
+export function lastVisibleDay(date: Date, startOfWeek: number) {
   let endOfMonth = dates.endOf(date, 'month')
 
   return dates.endOf(endOfMonth, 'week', startOfWeek)
 }
 
-export function visibleDays(date, startOfWeek) {
+export function visibleDays(date: Date, startOfWeek: number) {
   let current = firstVisibleDay(date, startOfWeek),
-    last = lastVisibleDay(date, startOfWeek),
-    days = []
+    last = lastVisibleDay(date, startOfWeek)
+  const days: Date[] = []
 
   while (dates.lte(current, last, 'day')) {
     days.push(current)
@@ -70,9 +70,9 @@ export function ceil(date, unit) {
   return dates.eq(floor, date) ? floor : dates.add(floor, 1, unit)
 }
 
-export function range(start, end, unit = 'day') {
-  let current = start,
-    days = []
+export function range(start: Date, end: Date, unit = 'day') {
+  let current = start
+  const days: Date[] = []
 
   while (dates.lte(current, end, unit)) {
     days.push(current)

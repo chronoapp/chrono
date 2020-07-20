@@ -2,7 +2,8 @@
   "scripts": {
     "dev": "next",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "type-check": "tsc"
   },
   "dependencies": {
     "@atlaskit/tree": "^7.1.2",
@@ -24,7 +25,7 @@
     "react": "^16.13.1",
     "react-chartjs-2": "^2.9.0",
     "react-dom": "^16.13.1",
-    "styled-components": "^5.1.0",
+    "styled-components": "^5.1.1",
     "tinycolor2": "^1.4.1",
     "universal-cookie": "^3.0.7"
   },
