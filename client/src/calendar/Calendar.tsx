@@ -146,7 +146,7 @@ function Calendar() {
             {title}
           </div>
         </div>
-        <div>
+        <div className="calendar-dropdown">
           <div className="dropdown-trigger">
             <button
               className="button is-small"

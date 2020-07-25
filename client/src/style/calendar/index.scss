@@ -48,6 +48,12 @@
     margin-right: auto;
 }
 
+.calendar-dropdown {
+    .dropdown-menu {
+        top: auto;
+    }
+}
+
 @import 'time-grid.scss';
 @import 'time-column.scss';
 @import 'events.scss';
