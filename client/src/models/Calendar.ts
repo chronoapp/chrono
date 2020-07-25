@@ -3,6 +3,7 @@ export default class Calendar {
   public summary: string
   public description: string
   public backgroundColor: string
+  public foregroundColor: string
   public selected: boolean
   public primary: boolean
 
@@ -12,6 +13,7 @@ export default class Calendar {
       json.summary,
       json.description,
       json.background_color,
+      json.foreground_color,
       json.selected,
       json.primary
     )
@@ -22,6 +24,7 @@ export default class Calendar {
     summary: string,
     description: string,
     backgroundColor: string,
+    foregroundColor: string,
     selected: boolean,
     primary: boolean
   ) {
@@ -29,6 +32,7 @@ export default class Calendar {
     this.summary = summary
     this.description = description
     this.backgroundColor = backgroundColor
+    this.foregroundColor = foregroundColor
     this.selected = selected
     this.primary = primary
   }

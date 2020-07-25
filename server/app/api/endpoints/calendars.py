@@ -15,6 +15,7 @@ class CalendarVM(BaseModel):
     summary: str
     description: Optional[str]
     background_color: str
+    foreground_color: str
     selected: bool
     primary: Optional[bool]
 

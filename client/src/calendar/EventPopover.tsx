@@ -3,7 +3,7 @@ import React, { useContext, useState, useEffect, createRef } from 'react'
 import Icon from '@mdi/react'
 import { mdiTextSubject, mdiClockOutline, mdiCalendar, mdiDeleteOutline, mdiClose } from '@mdi/js'
 
-import { createEvent, getAuthToken, deleteEvent } from '../util/Api'
+import { getAuthToken, createEvent, updateEvent, deleteEvent } from '../util/Api'
 import Event from '../models/Event'
 import Calendar from '../models/Calendar'
 import { EventActionContext } from './EventActionContext'
@@ -28,11 +28,12 @@ function EventPopover(props: IProps) {
   const isExistingEvent = props.event.id !== -1
 
   const [readonly, setReadonly] = useState(isExistingEvent)
+  const calendar = calendarContext.calendarsById[calendarId]
 
   const titleInputRef = createRef<HTMLInputElement>()
   useEffect(() => {
     if (!readonly) {
-      titleInputRef.current.focus()
+      titleInputRef.current?.focus()
     }
   }, [])
 
@@ -48,12 +49,21 @@ function EventPopover(props: IProps) {
     event.start = start
     event.end = end
     event.calendar_id = calendarId
+    event.creating = false
+
+    const token = getAuthToken()
 
     if (isExistingEvent) {
-      console.log('TODO: Update Existing')
+      eventActions.eventDispatch({
+        type: 'UPDATE_EVENT',
+        payload: { event: event, replaceEventId: event.id },
+      })
+      updateEvent(token, event).then((event) => {
+        eventActions.eventDispatch({ type: 'UPDATE_EVENT', payload: { event, replaceEventId: -1 } })
+        alertsContext.addAlert('UPDATED_EVENT')
+      })
     } else {
       eventActions.eventDispatch({ type: 'CREATE_EVENT', payload: event })
-      const token = getAuthToken()
       createEvent(token, event).then((event) => {
         console.log(`Created event in db: ${event.id}`)
         eventActions.eventDispatch({ type: 'UPDATE_EVENT', payload: { event, replaceEventId: -1 } })
@@ -75,21 +85,12 @@ function EventPopover(props: IProps) {
   }
 
   function getSelectedCalendar(): Calendar {
-    const originalCalendars = Object.values(calendarContext.calendarsById)
-
-    const calendars = originalCalendars.filter((calendar) => {
-      calendar.id == props.event.calendar_id
-    })
-    if (calendars.length === 1) {
-      return calendars[0]
+    const calendar = calendarContext.calendarsById[props.event.calendar_id]
+    if (calendar) {
+      return calendar
+    } else {
+      return calendarContext.getPrimaryCalendar()
     }
-
-    const primaryCalendar = originalCalendars.filter((c) => c.primary)
-    if (primaryCalendar.length === 1) {
-      return primaryCalendar[0]
-    }
-
-    throw new Error('No calendar.')
   }
 
   function renderReadOnlyView() {
@@ -132,7 +133,7 @@ function EventPopover(props: IProps) {
 
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
             <Icon className="mr-2" path={mdiCalendar} size={1} />
-            <span>{calendarId}</span>
+            <span>{calendar.summary}</span>
           </div>
 
           <div className="mt-4" style={{ display: 'flex' }}>

@@ -33,7 +33,7 @@ class TimeGrid extends React.Component<IProps, IState> {
   private slotMetrics: SlotMetrics
   private gutterRef
   private contentRef
-  private scrollTopRatio?: number = null
+  private scrollTopRatio?: number = undefined
 
   static defaultProps = {
     step: 15,
@@ -108,7 +108,7 @@ class TimeGrid extends React.Component<IProps, IState> {
       const content = this.contentRef.current
       const scrollTop = content.scrollHeight * this.scrollTopRatio
       content.scrollTop = scrollTop
-      this.scrollTopRatio = null
+      this.scrollTopRatio = undefined
     }
   }
 

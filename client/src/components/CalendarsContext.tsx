@@ -8,6 +8,7 @@ export interface CalendarsContextType {
   calendarsById: Record<number, Calendar>
   loadCalendars: (calendars: Calendar[]) => void
   updateCalendarSelect: (calendarId: string, selected: boolean) => void
+  getPrimaryCalendar: () => Calendar
 }
 
 export const CalendarsContext = createContext<CalendarsContextType>(undefined!)
@@ -25,6 +26,10 @@ export function CalendarsContextProvider(props: any) {
         [calendarId]: { $merge: { selected: selected } },
       })
       setCalendarsById(updatedCalendars)
+    },
+    getPrimaryCalendar: () => {
+      const k = Object.keys(calendarsById).find((key) => calendarsById[key].primary == true)
+      return calendarsById[k!]
     },
   }
 
