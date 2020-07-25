@@ -1,3 +1,5 @@
+type AccessRole = 'reader' | 'writer' | 'owner' | 'freeBusyReader'
+
 export default class Calendar {
   public id: string
   public summary: string
@@ -15,7 +17,8 @@ export default class Calendar {
       json.background_color,
       json.foreground_color,
       json.selected,
-      json.primary
+      json.primary,
+      json.access_role
     )
   }
 
@@ -26,7 +29,8 @@ export default class Calendar {
     backgroundColor: string,
     foregroundColor: string,
     selected: boolean,
-    primary: boolean
+    primary: boolean,
+    readonly accessRole: AccessRole
   ) {
     this.id = id
     this.summary = summary
@@ -35,5 +39,10 @@ export default class Calendar {
     this.foregroundColor = foregroundColor
     this.selected = selected
     this.primary = primary
+    this.accessRole = accessRole
+  }
+
+  public isWritable(): boolean {
+    return this.accessRole == 'writer' || this.accessRole == 'owner'
   }
 }

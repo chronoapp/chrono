@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect, createRef } from 'react'
+import update from 'immutability-helper'
 
 import Icon from '@mdi/react'
 import { mdiTextSubject, mdiClockOutline, mdiCalendar, mdiDeleteOutline, mdiClose } from '@mdi/js'
@@ -43,14 +44,8 @@ function EventPopover(props: IProps) {
     return renderEditView()
   }
 
-  function onCreateOrUpdateEvent(event: Event) {
-    event.title = title
-    event.description = description
-    event.start = start
-    event.end = end
-    event.calendar_id = calendarId
-    event.creating = false
-
+  function onSaveEvent(e: Event) {
+    const event = { ...e, title, description, start, end, calendar_id: calendarId, creating: false }
     const token = getAuthToken()
 
     if (isExistingEvent) {
@@ -58,15 +53,23 @@ function EventPopover(props: IProps) {
         type: 'UPDATE_EVENT',
         payload: { event: event, replaceEventId: event.id },
       })
+
       updateEvent(token, event).then((event) => {
-        eventActions.eventDispatch({ type: 'UPDATE_EVENT', payload: { event, replaceEventId: -1 } })
+        eventActions.eventDispatch({
+          type: 'UPDATE_EVENT',
+          payload: { event, replaceEventId: -1 },
+        })
         alertsContext.addAlert('UPDATED_EVENT')
       })
     } else {
       eventActions.eventDispatch({ type: 'CREATE_EVENT', payload: event })
+
       createEvent(token, event).then((event) => {
         console.log(`Created event in db: ${event.id}`)
-        eventActions.eventDispatch({ type: 'UPDATE_EVENT', payload: { event, replaceEventId: -1 } })
+        eventActions.eventDispatch({
+          type: 'UPDATE_EVENT',
+          payload: { event, replaceEventId: -1 },
+        })
         alertsContext.addAlert('CREATED_EVENT')
       })
     }
@@ -210,23 +213,33 @@ function EventPopover(props: IProps) {
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
             <Icon className="mr-2" path={mdiCalendar} size={1} />
             <div className="select">
-              <select value={calendarId} onChange={(e) => setCalendarId(e.target.value)}>
-                {Object.values(calendarContext.calendarsById).map((calendar) => {
-                  return (
-                    <option key={calendar.id} value={calendar.id}>
-                      {calendar.summary}
-                    </option>
-                  )
-                })}
+              <select
+                value={calendarId}
+                onChange={(e) => {
+                  // Forces a color change without an API request.
+                  setCalendarId(e.target.value)
+                  const event = { ...props.event, calendar_id: e.target.value }
+                  eventActions.eventDispatch({
+                    type: 'UPDATE_EVENT',
+                    payload: { event: event, replaceEventId: event.id },
+                  })
+                }}
+              >
+                {Object.values(calendarContext.calendarsById)
+                  .filter((cal) => cal.isWritable())
+                  .map((calendar) => {
+                    return (
+                      <option key={calendar.id} value={calendar.id}>
+                        {calendar.summary}
+                      </option>
+                    )
+                  })}
               </select>
             </div>
           </div>
 
           <div className="mt-4" style={{ display: 'flex' }}>
-            <button
-              className="button is-primary"
-              onClick={() => onCreateOrUpdateEvent(props.event)}
-            >
+            <button className="button is-primary" onClick={() => onSaveEvent(props.event)}>
               Save
             </button>
 

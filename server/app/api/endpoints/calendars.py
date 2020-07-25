@@ -18,6 +18,7 @@ class CalendarVM(BaseModel):
     foreground_color: str
     selected: bool
     primary: Optional[bool]
+    access_role: str
 
     class Config:
         orm_mode = True
