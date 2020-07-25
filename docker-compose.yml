@@ -28,7 +28,7 @@ services:
     volumes:
       - postgres_db_data:/var/lib/postgresql
     ports:
-      - '6432:5432'
+      - '7432:5432'
     environment:
       DB_USER: ${DATABASE_USER}
       DB_PASS: ${DATABASE_PASS}
