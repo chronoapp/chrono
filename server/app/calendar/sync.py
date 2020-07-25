@@ -100,12 +100,19 @@ def syncCalendar(calendar: Calendar, session: Session) -> None:
     nextPageToken = None
 
     while True:
-        eventsResult = service.events().list(calendarId=calendar.id,
-                                             timeMax=None if calendar.sync_token else end,
-                                             maxResults=250,
-                                             singleEvents=True,
-                                             syncToken=calendar.sync_token,
-                                             pageToken=nextPageToken).execute()
+        if calendar.sync_token:
+            eventsResult = service.events().list(calendarId=calendar.id,
+                                                 timeMax=None if calendar.sync_token else end,
+                                                 maxResults=250,
+                                                 singleEvents=True,
+                                                 syncToken=calendar.sync_token,
+                                                 pageToken=nextPageToken).execute()
+        else:
+            eventsResult = service.events().list(calendarId=calendar.id,
+                                                 timeMax=end,
+                                                 maxResults=250,
+                                                 singleEvents=True,
+                                                 pageToken=nextPageToken).execute()
 
         events = eventsResult.get('items', [])
         nextPageToken = eventsResult.get('nextPageToken')
