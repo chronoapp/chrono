@@ -199,6 +199,7 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
   public render() {
     const events = this.props.children.props.children
     const { event, top, height } = this.state
+    const today = new Date()
 
     return React.cloneElement(this.props.children, {
       ref: this.containerRef,
@@ -207,6 +208,7 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
           {events}
           {event && (
             <TimeGridEvent
+              today={today}
               event={event}
               label={timeRangeFormat(event.start, event.end)}
               style={{ top, height, width: 100, xOffset: 0, border: 'none' }}

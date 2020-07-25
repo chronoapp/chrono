@@ -39,7 +39,7 @@ export interface EventState {
 
 type ActionType =
   | { type: 'INIT'; payload: Event[] }
-  | { type: 'INIT_EDIT_NEW_EVENT'; payload: { start: Date; end: Date } }
+  | { type: 'INIT_EDIT_NEW_EVENT'; payload: Event }
   | { type: 'INIT_EDIT_EVENT'; payload: Event }
   | { type: 'CREATE_EVENT'; payload: Event }
   | { type: 'DELETE_EVENT'; payload: { eventId: number } }
@@ -59,12 +59,10 @@ function eventReducer(state: EventState, action: ActionType) {
       }
 
     case 'INIT_EDIT_NEW_EVENT':
-      const event = Event.newDefaultEvent(action.payload.start, action.payload.end)
-
       return {
         ...state,
-        eventsById: { ...state.eventsById, [event.id]: event },
-        editingEventId: event.id,
+        eventsById: { ...eventsById, [action.payload.id]: action.payload },
+        editingEventId: action.payload.id,
       }
 
     case 'INIT_EDIT_EVENT':

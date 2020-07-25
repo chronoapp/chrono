@@ -18,20 +18,6 @@ export default class Event {
   public backgroundColor: string
   public foregroundColor: string
 
-  static foregroundColor(end: Date, foregroundColor: string) {
-    return end < today ? 'hsl(0, 0%, 45%)' : foregroundColor
-  }
-
-  static backgroundColor(end: Date, backgroundColor: string) {
-    if (end < today) {
-      const { h, s } = hexToHSL(backgroundColor)
-      const hsl = `hsl(${h}, ${s}%, 85%)`
-      return hsl
-    } else {
-      return backgroundColor
-    }
-  }
-
   static fromJson(eventJson): Event {
     return new Event(
       eventJson.id,
@@ -46,10 +32,6 @@ export default class Event {
       eventJson.background_color,
       eventJson.foreground_color
     )
-  }
-
-  static newDefaultEvent(start: Date, end: Date): Event {
-    return new Event(-1, '', '', '', start, end, true, [], false, '#7986CB', '#fff')
   }
 
   constructor(
@@ -75,7 +57,7 @@ export default class Event {
     this.labels = labels
     this.isAllDay = isAllDay
 
-    this.backgroundColor = Event.backgroundColor(end, backgroundColor)
-    this.foregroundColor = Event.foregroundColor(end, foregroundColor)
+    this.backgroundColor = backgroundColor
+    this.foregroundColor = foregroundColor
   }
 }

@@ -128,6 +128,7 @@ class TimeGrid extends React.Component<IProps, IState> {
           min={dates.merge(date, this.props.min)}
           max={dates.merge(date, this.props.max)}
           isCurrentDay={dates.eq(date, this.props.now, 'day')}
+          now={this.props.now}
         />
       )
     })

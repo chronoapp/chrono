@@ -28,6 +28,7 @@ interface IProps {
   max: Date
   events: Event[]
   isCurrentDay: boolean
+  now: Date
 }
 
 interface IState {
@@ -141,7 +142,7 @@ class DayColumn extends React.Component<IProps, IState> {
   }
 
   renderEvents(slotMetrics) {
-    const { events, step, timeslots } = this.props
+    const { events, step, timeslots, now } = this.props
 
     // TODO: Drag & Drop Container
     const styledEvents = getStyledEvents(events, Math.ceil((step * timeslots) / 2), slotMetrics)
@@ -162,13 +163,14 @@ class DayColumn extends React.Component<IProps, IState> {
             onClickOutside={() => this.context?.eventDispatch({ type: 'CANCEL_SELECT' })}
             padding={5}
           >
-            <TimeGridEvent event={event} label={label} style={style} isPreview={false} />
+            <TimeGridEvent now={now} event={event} label={label} style={style} isPreview={false} />
           </Popover>
         )
       } else {
         return (
           <TimeGridEvent
             key={`evt_${idx}`}
+            now={now}
             event={event}
             label={label}
             style={style}
@@ -266,9 +268,11 @@ class DayColumn extends React.Component<IProps, IState> {
           if (this.state.selectRange) {
             console.log('Handle Select Event')
             const { startDate, endDate } = this.state.selectRange
+            const event = new Event(-1, '', '', '', startDate, endDate, true, [], false, '', '#fff')
+
             this.context?.eventDispatch({
               type: 'INIT_EDIT_NEW_EVENT',
-              payload: { start: startDate, end: endDate },
+              payload: event,
             })
           }
         }
