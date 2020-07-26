@@ -120,7 +120,7 @@ function TimeGridEvent(props: IProps) {
       className={clsx({
         'cal-event': true,
         'cal-dnd-interacting': isInteracting,
-        'cal-editing': event.creating,
+        'cal-has-shadow': event.creating || props.isPreview,
       })}
       style={{
         backgroundColor: backgroundColor(),

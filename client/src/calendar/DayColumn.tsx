@@ -142,10 +142,9 @@ class DayColumn extends React.Component<IProps, IState> {
   }
 
   renderEvents(slotMetrics) {
-    const { events, step, timeslots, now } = this.props
+    const { events, step, now } = this.props
 
-    // TODO: Drag & Drop Container
-    const styledEvents = getStyledEvents(events, Math.ceil((step * timeslots) / 2), slotMetrics)
+    const styledEvents = getStyledEvents(events, step, slotMetrics)
 
     const dnd = this.context?.dragAndDropAction
     return styledEvents.map(({ event, style }, idx) => {

@@ -208,7 +208,7 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
           {events}
           {event && (
             <TimeGridEvent
-              today={today}
+              now={today}
               event={event}
               label={timeRangeFormat(event.start, event.end)}
               style={{ top, height, width: 100, xOffset: 0, border: 'none' }}

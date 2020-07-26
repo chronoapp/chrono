@@ -25,10 +25,6 @@
     &:focus {
         outline: 5px auto $event-outline;
     }
-
-    &.cal-editing {
-        box-shadow: $event-shadow;
-    }
 }
 
 .cal-event-label {

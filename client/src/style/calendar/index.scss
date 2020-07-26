@@ -54,6 +54,10 @@
     }
 }
 
+.cal-has-shadow {
+    box-shadow: $event-shadow !important
+}
+
 @import 'time-grid.scss';
 @import 'time-column.scss';
 @import 'events.scss';
