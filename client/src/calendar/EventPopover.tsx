@@ -16,27 +16,50 @@ interface IProps {
   event: Event
 }
 
+/**
+ * Editable fields in event.
+ */
+class EventFields {
+  public constructor(
+    readonly title: string,
+    readonly description: string,
+    readonly start: Date,
+    readonly end: Date,
+    readonly calendarId: string
+  ) {}
+}
+
 function EventPopover(props: IProps) {
   const eventActions = useContext(EventActionContext)
   const calendarContext = useContext(CalendarsContext)
   const alertsContext = useContext(AlertsContext)
 
-  const [title, setTitle] = useState(props.event.title)
-  const [description, setDescription] = useState(props.event.description)
-  const [start, setStart] = useState(props.event.start)
-  const [end, setEnd] = useState(props.event.end)
-  const [calendarId, setCalendarId] = useState(getSelectedCalendar().id)
+  const [eventFields, setEventFields] = useState(
+    new EventFields(
+      props.event.title,
+      props.event.description,
+      props.event.start,
+      props.event.end,
+      getSelectedCalendar(props.event.calendar_id).id
+    )
+  )
+
   const isExistingEvent = props.event.id !== -1
-
   const [readonly, setReadonly] = useState(isExistingEvent)
-  const calendar = calendarContext.calendarsById[calendarId]
-
   const titleInputRef = createRef<HTMLInputElement>()
+
   useEffect(() => {
     if (!readonly) {
       titleInputRef.current?.focus()
     }
   }, [])
+
+  useEffect(() => {
+    document.addEventListener('keydown', keyboardEvents)
+    return function cleanup() {
+      document.removeEventListener('keydown', keyboardEvents)
+    }
+  }, [eventFields])
 
   if (readonly) {
     return renderReadOnlyView()
@@ -44,8 +67,22 @@ function EventPopover(props: IProps) {
     return renderEditView()
   }
 
+  function keyboardEvents(e: KeyboardEvent) {
+    if (e.key === 'Enter') {
+      onSaveEvent(props.event)
+    }
+  }
+
   function onSaveEvent(e: Event) {
-    const event = { ...e, title, description, start, end, calendar_id: calendarId, creating: false }
+    const event = {
+      ...e,
+      title: eventFields.title,
+      description: eventFields.description,
+      start: eventFields.start,
+      end: eventFields.end,
+      calendar_id: eventFields.calendarId,
+      creating: false,
+    }
     const token = getAuthToken()
 
     if (isExistingEvent) {
@@ -87,8 +124,8 @@ function EventPopover(props: IProps) {
     })
   }
 
-  function getSelectedCalendar(): Calendar {
-    const calendar = calendarContext.calendarsById[props.event.calendar_id]
+  function getSelectedCalendar(calendarId: string): Calendar {
+    const calendar = calendarContext.calendarsById[calendarId]
     if (calendar) {
       return calendar
     } else {
@@ -117,13 +154,14 @@ function EventPopover(props: IProps) {
         </div>
 
         <div className="cal-event-modal" style={{ display: 'flex', flexDirection: 'column' }}>
-          <div className="has-text-grey-darker is-size-5">{title}</div>
+          <div className="has-text-grey-darker is-size-5">{eventFields.title}</div>
 
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
             <Icon className="mr-2" path={mdiClockOutline} size={1} />
             <span>
-              {format(start, 'YYYY-MM-DD')} {format(start, 'hh:mm')} - {format(end, 'hh:mm')}
-              {format(end, 'A')}
+              {format(eventFields.start, 'YYYY-MM-DD')} {format(eventFields.start, 'hh:mm')} -{' '}
+              {format(eventFields.end, 'hh:mm')}
+              {format(eventFields.end, 'A')}
             </span>
           </div>
 
@@ -136,7 +174,7 @@ function EventPopover(props: IProps) {
 
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
             <Icon className="mr-2" path={mdiCalendar} size={1} />
-            <span>{calendar.summary}</span>
+            <span>{getSelectedCalendar(eventFields.calendarId).summary}</span>
           </div>
 
           <div className="mt-4" style={{ display: 'flex' }}>
@@ -180,9 +218,12 @@ function EventPopover(props: IProps) {
               className="input"
               type="text"
               placeholder="title"
-              value={title}
+              value={eventFields.title}
               ref={titleInputRef}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setEventFields({ ...eventFields, title: e.target.value })
+                // setTitle(e.target.value)
+              }}
               style={{ width: '100%' }}
             ></input>
           </div>
@@ -192,11 +233,11 @@ function EventPopover(props: IProps) {
             <input
               className="input is-small"
               type="date"
-              value={format(start, 'YYYY-MM-DD')}
+              value={format(eventFields.start, 'YYYY-MM-DD')}
               onChange={(e) => console.log(e.target.value)}
             />
-            <span>{format(start, 'hh:mm')}</span>
-            <span>{format(end, 'HH:mm')}</span>
+            <span>{format(eventFields.start, 'hh:mm')}</span>
+            <span>{format(eventFields.end, 'HH:mm')}</span>
           </div>
 
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
@@ -205,8 +246,8 @@ function EventPopover(props: IProps) {
               className="input"
               type="textarea"
               name="description"
-              value={props.event.description || ''}
-              onChange={(e) => setDescription(e.target.value)}
+              value={eventFields.description}
+              onChange={(e) => setEventFields({ ...eventFields, description: e.target.value })}
             />
           </div>
 
@@ -214,10 +255,10 @@ function EventPopover(props: IProps) {
             <Icon className="mr-2" path={mdiCalendar} size={1} />
             <div className="select">
               <select
-                value={calendarId}
+                value={eventFields.calendarId}
                 onChange={(e) => {
                   // Forces a color change without an API request.
-                  setCalendarId(e.target.value)
+                  setEventFields({ ...eventFields, calendarId: e.target.value })
                   const event = { ...props.event, calendar_id: e.target.value }
                   eventActions.eventDispatch({
                     type: 'UPDATE_EVENT',
