@@ -1,6 +1,6 @@
 import React, { createContext, useState } from 'react'
 import update from 'immutability-helper'
-import { normalizeArr } from '../util/normalizer'
+import { normalizeArr } from '../lib/normalizer'
 
 import Calendar from '../models/Calendar'
 

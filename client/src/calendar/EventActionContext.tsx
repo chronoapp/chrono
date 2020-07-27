@@ -1,6 +1,6 @@
 import { createContext, useReducer, useState } from 'react'
 import update from 'immutability-helper'
-import { normalizeArr } from '../util/normalizer'
+import { normalizeArr } from '../lib/normalizer'
 
 import Event from '../models/Event'
 
