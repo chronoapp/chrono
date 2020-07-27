@@ -1,6 +1,10 @@
 import * as dates from './dates'
 import moment from 'moment'
 
+/**
+ * TODO: Replace moment with luxon.
+ */
+
 export function timeFormatShort(date: Date, space: boolean = false) {
   const m = moment(date)
   const hour = m.format('h')

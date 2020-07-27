@@ -1,10 +1,12 @@
 import React, { createContext, useReducer } from 'react'
 
+import update from 'immutability-helper'
 import { Label } from '../models/Label'
+import { normalizeArr } from '../lib/normalizer'
 
 export interface LabelState {
-  labels: Label[]
   loading: boolean
+  labelsById: Record<number, Label>
 }
 
 type ActionType =
@@ -12,12 +14,7 @@ type ActionType =
   | { type: 'INIT'; payload: Label[] }
   | { type: 'UPDATE'; payload: Label }
 
-const initialState: LabelState = {
-  labels: [],
-  loading: false,
-}
-
-interface LabelContextType {
+export interface LabelContextType {
   labelState: LabelState
   dispatch: React.Dispatch<ActionType>
 }
@@ -28,7 +25,6 @@ interface LabelContextType {
 export const LabelContext = createContext<LabelContextType>(undefined!)
 
 function labelReducer(labelState: LabelState, action: ActionType) {
-  const { labels } = labelState
   switch (action.type) {
     case 'START':
       return {
@@ -37,20 +33,15 @@ function labelReducer(labelState: LabelState, action: ActionType) {
       }
     case 'INIT':
       return {
+        ...labelState,
         loading: false,
-        labels: action.payload,
+        labelsById: normalizeArr(action.payload, 'id'),
       }
     case 'UPDATE':
       const label = action.payload
       return {
         ...labelState,
-        labels: labels.map((l) => {
-          if (label.key == l.key) {
-            return label
-          } else {
-            return l
-          }
-        }),
+        labelsById: update(labelState.labelsById, { [label.id]: { $set: label } }),
       }
     default:
       throw new Error('Unknown action')
@@ -58,7 +49,11 @@ function labelReducer(labelState: LabelState, action: ActionType) {
 }
 
 export function LabelsContextProvider(props: any) {
-  const [labelState, dispatch] = useReducer(labelReducer, { labels: [], loading: false })
+  const [labelState, dispatch] = useReducer(labelReducer, {
+    loading: false,
+    labelsById: {},
+  })
+
   return (
     <LabelContext.Provider value={{ labelState, dispatch }}>{props.children}</LabelContext.Provider>
   )

@@ -4,23 +4,22 @@ import { getAuthToken, getLabels, putLabel } from '../util/Api'
 import Icon from '@mdi/react'
 import { mdiDotsHorizontal, mdiPlus } from '@mdi/js'
 
-import Hoverable from '../lib/Hoverable'
 import ColorPicker from './ColorPicker'
 import { Label } from '../models/Label'
 import { LABEL_COLORS } from '../models/LabelColors'
-import { LabelContext } from './LabelsContext'
+import { LabelContext, LabelContextType } from './LabelsContext'
+import LabelTree from './LabelTree'
 
 interface LabelModalState {
   active: boolean
-  label: Label
+  label?: Label
 }
 
 /**
  * Panel with a list of labels.
  */
 function LabelPanel() {
-  const [selectedLabelKeyColor, setSelectedLabelKeyColor] = useState('')
-  const { labelState, dispatch } = useContext<any>(LabelContext)
+  const { labelState, dispatch } = useContext<LabelContextType>(LabelContext)
 
   const [newLabelModal, setNewLabelModal] = useState<LabelModalState>({
     active: false,
@@ -40,70 +39,6 @@ function LabelPanel() {
 
     loadLabels()
   }, [])
-
-  async function updateLabel(label: Label) {
-    const authToken = getAuthToken()
-    const updatedLabel = await putLabel(label, authToken)
-    dispatch({
-      type: 'UPDATE',
-      payload: updatedLabel,
-    })
-  }
-
-  function toggleLabelKeyColor(labelKey: string) {
-    if (labelKey == selectedLabelKeyColor) {
-      setSelectedLabelKeyColor('')
-    } else {
-      setSelectedLabelKeyColor(labelKey)
-    }
-  }
-
-  function onClickLabelColor(labelColor: string) {
-    const selectedLabel = labelState.labels.find(
-      (label: Label) => label.key == selectedLabelKeyColor
-    )
-    if (selectedLabel) {
-      selectedLabel.color_hex = labelColor
-      updateLabel(selectedLabel)
-    }
-    setSelectedLabelKeyColor('')
-  }
-
-  function getLabel(label: Label) {
-    return (
-      <Hoverable key={label.id}>
-        {(isMouseInside: boolean, mouseEnter: any, mouseLeave: any) => (
-          <a
-            onMouseEnter={mouseEnter}
-            onMouseLeave={mouseLeave}
-            key={label.key}
-            className={`tag-block`}
-          >
-            <div className={`dropdown ${label.key === selectedLabelKeyColor ? 'is-active' : ''}`}>
-              <div
-                onClick={(_) => toggleLabelKeyColor(label.key)}
-                style={{ backgroundColor: label.color_hex }}
-                className="event-label event-label--hoverable dropdown-trigger"
-              ></div>
-              {label.key === selectedLabelKeyColor ? (
-                <ColorPicker onSelectLabelColor={onClickLabelColor} />
-              ) : null}
-            </div>
-            <span style={{ marginLeft: 10 }}>{label.title}</span>
-            {isMouseInside ? (
-              <Icon
-                path={mdiDotsHorizontal}
-                style={{ marginLeft: 'auto' }}
-                size={1}
-                horizontal
-                vertical
-              />
-            ) : null}
-          </a>
-        )}
-      </Hoverable>
-    )
-  }
 
   function renderProjectLabelModal() {
     return (
@@ -125,7 +60,7 @@ function LabelPanel() {
                 <label className="label">Color</label>
                 <div
                   onClick={(_) => {}}
-                  style={{ backgroundColor: newLabelModal.label.color_hex }}
+                  style={{ backgroundColor: newLabelModal.label?.color_hex }}
                   className="event-label event-label--hoverable dropdown-trigger"
                 ></div>
                 <ColorPicker
@@ -165,7 +100,7 @@ function LabelPanel() {
     <>
       {newLabelModal.active && renderProjectLabelModal()}
       <span className="has-text-left has-text-weight-medium mt-3">Tags</span>
-      {labelState.labels.map(getLabel)}
+      <LabelTree />
 
       <button
         className="button is-text"
