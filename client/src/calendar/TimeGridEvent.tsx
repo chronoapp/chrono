@@ -64,7 +64,7 @@ function TimeGridEvent(props: IProps) {
   }
 
   function handleClickEvent(e) {
-    if (!props.event.creating) {
+    if (props.event.id !== eventActionContext.eventState.editingEventId) {
       eventActionContext?.eventDispatch({ type: 'INIT_EDIT_EVENT', payload: props.event })
     }
   }
@@ -113,6 +113,7 @@ function TimeGridEvent(props: IProps) {
 
   // Tiny gap to separate events.
   const finalHeight = props.style.height - 0.15
+  const isEditing = eventActionContext?.eventState.editingEventId === event.id
 
   return (
     <div
@@ -120,7 +121,7 @@ function TimeGridEvent(props: IProps) {
       className={clsx({
         'cal-event': true,
         'cal-dnd-interacting': isInteracting,
-        'cal-has-shadow': event.creating || props.isPreview,
+        'cal-has-shadow': isEditing || props.isPreview,
       })}
       style={{
         backgroundColor: backgroundColor(),

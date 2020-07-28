@@ -50,7 +50,7 @@ type ActionType =
   | { type: 'UPDATE_EVENT'; payload: { event: Event; replaceEventId: number } }
 
 function eventReducer(state: EventState, action: ActionType) {
-  const { eventsById, editingEventId } = state
+  const { eventsById } = state
 
   switch (action.type) {
     case 'INIT':
@@ -62,6 +62,7 @@ function eventReducer(state: EventState, action: ActionType) {
       }
 
     case 'INIT_EDIT_NEW_EVENT':
+      console.log(action.payload)
       return {
         ...state,
         eventsById: { ...eventsById, [action.payload.id]: action.payload },
@@ -71,7 +72,7 @@ function eventReducer(state: EventState, action: ActionType) {
     case 'INIT_EDIT_EVENT':
       return {
         ...state,
-        eventsById: { ...eventsById, [action.payload.id]: { ...action.payload, creating: true } },
+        eventsById: { ...eventsById, [action.payload.id]: action.payload },
         editingEventId: action.payload.id,
       }
 
@@ -89,7 +90,7 @@ function eventReducer(state: EventState, action: ActionType) {
 
     case 'CREATE_EVENT':
       const eventsWithNew = update(eventsById, {
-        [action.payload.id]: { $set: { ...action.payload, creating: false } },
+        [action.payload.id]: { $set: { ...action.payload } },
       })
 
       return {
@@ -106,11 +107,6 @@ function eventReducer(state: EventState, action: ActionType) {
 
     case 'CANCEL_SELECT':
       let eventsUnselected = update(eventsById, { $unset: [-1] })
-      if (editingEventId && editingEventId in eventsUnselected) {
-        eventsUnselected = update(eventsUnselected, {
-          [editingEventId]: { $merge: { creating: false } },
-        })
-      }
 
       return {
         ...state,

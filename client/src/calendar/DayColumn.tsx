@@ -147,11 +147,14 @@ class DayColumn extends React.Component<IProps, IState> {
     const styledEvents = getStyledEvents(events, step, slotMetrics)
 
     const dnd = this.context?.dragAndDropAction
+    const editingEventId = this.context?.eventState.editingEventId
+
     return styledEvents.map(({ event, style }, idx) => {
       const label = timeRangeFormat(event.start, event.end)
       const isInteracting = dnd && dnd.interacting && dnd.event.id === event.id
+      const isCreating = editingEventId === event.id
 
-      if (event.creating && !isInteracting) {
+      if (isCreating && !isInteracting) {
         return (
           <Popover
             key={`evt_${idx}`}
@@ -267,7 +270,7 @@ class DayColumn extends React.Component<IProps, IState> {
           if (this.state.selectRange) {
             console.log('Handle Select Event')
             const { startDate, endDate } = this.state.selectRange
-            const event = new Event(-1, '', '', '', startDate, endDate, true, [], false, '', '#fff')
+            const event = new Event(-1, '', '', '', startDate, endDate, [], false, '', '#fff')
 
             this.context?.eventDispatch({
               type: 'INIT_EDIT_NEW_EVENT',

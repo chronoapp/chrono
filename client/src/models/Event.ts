@@ -10,7 +10,6 @@ export default class Event {
   public title: string
   public start: Date
   public end: Date
-  public creating: boolean
   public description: string
   public labels: Label[]
 
@@ -26,7 +25,6 @@ export default class Event {
       eventJson.description,
       new Date(eventJson.start),
       new Date(eventJson.end),
-      false,
       eventJson.labels.map((labelJson) => Label.fromJson(labelJson)),
       eventJson.all_day,
       eventJson.background_color,
@@ -41,7 +39,6 @@ export default class Event {
     description: string,
     start: Date,
     end: Date,
-    creating: boolean,
     labels: Label[],
     isAllDay: boolean,
     backgroundColor: string,
@@ -52,7 +49,6 @@ export default class Event {
     this.title = title // ? title : '(No title)'
     this.start = start
     this.end = end
-    this.creating = creating
     this.description = description
     this.labels = labels
     this.isAllDay = isAllDay
