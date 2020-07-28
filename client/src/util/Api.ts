@@ -172,13 +172,23 @@ export async function getLabels(authToken: string, title: string = ''): Promise<
 }
 
 export async function putLabel(label: Label, authToken: string): Promise<Label> {
-  return fetch(`${API_URL}/labels/${label.key}`, {
+  return fetch(`${API_URL}/labels/${label.id}`, {
     method: 'PUT',
     body: JSON.stringify(label),
     headers: { Authorization: authToken },
   })
     .then(handleErrors)
     .then(Label.fromJson)
+}
+
+export async function putLabels(labels: Label[], authToken: string): Promise<Label[]> {
+  return fetch(`${API_URL}/labels/`, {
+    method: 'PUT',
+    body: JSON.stringify(labels),
+    headers: { Authorization: authToken },
+  })
+    .then(handleErrors)
+    .then((labels) => labels.map((label) => Label.fromJson(label)))
 }
 
 // Label Rules

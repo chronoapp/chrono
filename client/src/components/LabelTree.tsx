@@ -8,7 +8,7 @@ import { LabelContext, LabelContextType } from './LabelsContext'
 import { Label } from '../models/Label'
 import ColorPicker from './ColorPicker'
 
-import { getAuthToken, putLabel } from '../util/Api'
+import { getAuthToken, putLabel, putLabels } from '../util/Api'
 
 class TreeItem {
   constructor(
@@ -67,13 +67,13 @@ function LabelTree() {
 
     // Label Id to Position
     let draggedFrom!: TreeItem
-    const positionUpdates: Record<number, number> = {}
+    const tagUpdates: Record<number, Label> = {}
     findLabelData(labelItems, dragKey, function (item, index, arr) {
       arr.splice(index, 1)
       draggedFrom = item
 
       arr.forEach((item, idx) => {
-        positionUpdates[item.key] = idx
+        tagUpdates[item.label.id] = { ...item.label, position: idx }
       })
     })
 
@@ -86,37 +86,41 @@ function LabelTree() {
           parent_id: parseInt(dropKey),
           position: item.children.length,
         }
-        dispatch({ type: 'UPDATE', payload: updatedLabel })
+        tagUpdates[updatedLabel.id] = updatedLabel
+        // dispatch({ type: 'UPDATE', payload: updatedLabel })
       })
     } else {
       // Dragged beside a node (top or bottom).
-      let updatedLabel!: Label
+      let droppedToItem!: TreeItem
       findLabelData(labelItems, dropKey, (item, index, arr) => {
-        updatedLabel = { ...draggedFrom.label, parent_id: item.label.parent_id }
+        droppedToItem = item
 
         if (dropPosition === -1) {
           // Dragged to top of node
           arr.splice(index, 0, draggedFrom)
           arr.forEach((item, idx) => {
-            positionUpdates[item.key] = idx
+            tagUpdates[item.label.id] = { ...item.label, position: idx }
           })
         } else {
           // Dragged to bottom of node
           arr.splice(index + 1, 0, draggedFrom)
           arr.forEach((item, idx) => {
-            positionUpdates[item.key] = idx
+            tagUpdates[item.label.id] = { ...item.label, position: idx }
           })
         }
       })
 
-      if (updatedLabel) {
-        dispatch({ type: 'UPDATE', payload: updatedLabel })
+      const fromId = draggedFrom.label.id
+      if (tagUpdates[fromId]) {
+        tagUpdates[fromId] = {
+          ...tagUpdates[fromId],
+          parent_id: droppedToItem.label.parent_id,
+        }
       }
     }
 
-    dispatch({ type: 'UPDATE_POSITIONS', payload: positionUpdates })
-
-    // TODO: API Request to update positions
+    dispatch({ type: 'UPDATE_MULTI', payload: tagUpdates })
+    putLabels(Object.values(tagUpdates), getAuthToken())
   }
 
   function onExpand(expandedKeys) {

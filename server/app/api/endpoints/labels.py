@@ -26,30 +26,44 @@ class LabelInDbVM(LabelVM):
     id: int
 
 
+def createOrUpdateLabel(user: User, labelId: int, label: LabelVM) -> Label:
+    labelDb = user.labels.filter_by(id=labelId).one_or_none()
+    if not labelDb:
+        labelDb = Label(label.title, label.key)
+
+    labelDb.title = label.title
+    labelDb.color_hex = label.color_hex
+    labelDb.position = label.position
+    labelDb.parent_id = label.parent_id
+
+    return labelDb
+
+
 @router.get('/labels/', response_model=List[LabelInDbVM])
 async def getLabels(user=Depends(get_current_user), session=Depends(get_db)):
-
     return user.labels.order_by(Label.title).all()
 
 
-@router.put('/labels/{label_key}', response_model=LabelInDbVM)
+@router.put('/labels/', response_model=List[LabelInDbVM])
+async def putLabels(labels: List[LabelInDbVM],
+                    user=Depends(get_current_user),
+                    session=Depends(get_db)):
+    """TODO: Bulk update with one query.
+    """
+    updatedLabels = [createOrUpdateLabel(user, label.id, label) for label in labels]
+    session.commit()
+
+    return updatedLabels
+
+
+@router.put('/labels/{labelId}', response_model=LabelInDbVM)
 async def putLabel(
-    label: LabelVM,
-    label_key: str,
+    label: LabelInDbVM,
+    labelId: int,
     user: User = Depends(get_current_user),
-    session: Session = Depends(get_db)
-) -> Label:
+    session: Session = Depends(get_db)) -> Label:
 
-    logger.info(label)
-    labelDb = user.labels.filter_by(key=label_key).first()
-
-    if not labelDb:
-        labelDb = Label(label.title, label.key)
-        labelDb.color_hex = label.color_hex
-    else:
-        labelDb.title = label.title
-        labelDb.color_hex = label.color_hex
-
+    labelDb = createOrUpdateLabel(user, labelId, label)
     session.commit()
     session.refresh(labelDb)
 

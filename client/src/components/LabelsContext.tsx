@@ -13,7 +13,7 @@ type ActionType =
   | { type: 'START' }
   | { type: 'INIT'; payload: Label[] }
   | { type: 'UPDATE'; payload: Label }
-  | { type: 'UPDATE_POSITIONS'; payload: Record<number, number> }
+  | { type: 'UPDATE_MULTI'; payload: Record<number, Label> }
 
 export interface LabelContextType {
   labelState: LabelState
@@ -44,12 +44,12 @@ function labelReducer(labelState: LabelState, action: ActionType) {
         ...labelState,
         labelsById: update(labelState.labelsById, { [label.id]: { $set: label } }),
       }
-    case 'UPDATE_POSITIONS':
-      const labelIdToPositions = action.payload
+    case 'UPDATE_MULTI':
+      const labelMap = action.payload
 
       const updates = {}
-      for (let labelId in labelIdToPositions) {
-        updates[labelId] = { $merge: { position: labelIdToPositions[labelId] } }
+      for (let labelId in labelMap) {
+        updates[labelId] = { $set: labelMap[labelId] }
       }
       const updatedLabels = update(labelState.labelsById, updates)
 
