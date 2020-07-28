@@ -51,7 +51,7 @@ export function lastVisibleDay(date: Date, startOfWeek: number) {
   return dates.endOf(endOfMonth, 'week', startOfWeek)
 }
 
-export function visibleDays(date: Date, startOfWeek: number) {
+export function visibleDays(date: Date, startOfWeek: number, fillDates: boolean = false) {
   let current = firstVisibleDay(date, startOfWeek),
     last = lastVisibleDay(date, startOfWeek)
   const days: Date[] = []
@@ -59,6 +59,13 @@ export function visibleDays(date: Date, startOfWeek: number) {
   while (dates.lte(current, last, 'day')) {
     days.push(current)
     current = dates.add(current, 1, 'day')
+  }
+
+  if (fillDates) {
+    while (days.length < 6 * 7) {
+      days.push(current)
+      current = dates.add(current, 1, 'day')
+    }
   }
 
   return days

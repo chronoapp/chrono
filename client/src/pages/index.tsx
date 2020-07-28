@@ -2,7 +2,6 @@ import React from 'react'
 import Layout from '../components/Layout'
 import { auth } from '../util/Api'
 import Calendar from '../calendar/Calendar'
-import { EventActionProvider } from '../calendar/EventActionContext'
 
 interface Props {
   authToken: string
@@ -18,9 +17,7 @@ class Home extends React.Component<Props, State> {
   render() {
     return (
       <Layout>
-        <EventActionProvider>
-          <Calendar />
-        </EventActionProvider>
+        <Calendar />
       </Layout>
     )
   }

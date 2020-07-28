@@ -109,6 +109,15 @@ code {
   }
 }
 
+.icon-button {
+  &:hover {
+    svg {
+      background-color: $grey-lightest;
+      border-radius: 2px;
+    }
+  }
+}
+
 .global-alert {
   position: fixed;
   top: 0.4rem;

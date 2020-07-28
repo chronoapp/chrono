@@ -14,7 +14,7 @@ export interface DragDropAction {
   direction: Direction | undefined
 }
 
-interface EventActionContextType {
+export interface EventActionContextType {
   onStart: () => void
   onEnd: (Event?) => void
   onBeginAction: (event: Event, action: Action, direction?: Direction) => void
@@ -22,12 +22,15 @@ interface EventActionContextType {
 
   eventState: EventState
   eventDispatch: React.Dispatch<ActionType>
+
+  selectedDate: Date
+  setSelectedDate: (date: Date) => void
 }
 
 export const EventActionContext = createContext<EventActionContextType>(undefined!)
 
 /**
- * Handles CRUD actions on events.
+ * Handles events and CRUD actions on events.
  * TODO: Optimizations with caching and normalization.
  */
 
@@ -121,6 +124,7 @@ function eventReducer(state: EventState, action: ActionType) {
 
 export function EventActionProvider(props: any) {
   // Handles Drag & Drop Events.
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [dragDropAction, setDragDropAction] = useState<DragDropAction | undefined>(undefined)
   const [eventState, eventDispatch] = useReducer(eventReducer, {
     loading: true,
@@ -156,6 +160,8 @@ export function EventActionProvider(props: any) {
     dragAndDropAction: dragDropAction,
     onBeginAction: handleBeginAction,
 
+    selectedDate,
+    setSelectedDate,
     eventState,
     eventDispatch,
   }

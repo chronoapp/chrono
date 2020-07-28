@@ -20,12 +20,11 @@ function Calendar() {
 
   // TODO: Store startDate and endDate to prevent unnecessary refreshes.
 
-  const [selectedDate, setSelectedDate] = useState<Date>(today)
   const [display, setDisplay] = useState<Display>('Week')
   const [displayToggleActive, setDisplayToggleActive] = useState<boolean>(false)
 
   const calendarContext = useContext<CalendarsContextType>(CalendarsContext)
-  const eventActionContext = useContext(EventActionContext)
+  const eventsContext = useContext(EventActionContext)
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyboardShortcuts)
@@ -36,15 +35,15 @@ function Calendar() {
 
   useEffect(() => {
     loadCurrentViewEvents()
-  }, [display, selectedDate])
+  }, [display, eventsContext.selectedDate])
 
   function handleKeyboardShortcuts(e: KeyboardEvent) {
     if (e.key === 'Escape') {
-      eventActionContext.eventDispatch({ type: 'CANCEL_SELECT' })
+      eventsContext.eventDispatch({ type: 'CANCEL_SELECT' })
       setDisplayToggleActive(false)
     }
 
-    // if (eventActionContext.eventState.editingEventId === null) {
+    // if (eventsContext.eventState.editingEventId === null) {
     //   if (e.key === 'w') {
     //     selectDisplay('Week')
     //   }
@@ -58,7 +57,7 @@ function Calendar() {
   function selectDisplay(display: Display) {
     if (display === 'Month') {
       // HACK: Prevents flicker when switching months
-      eventActionContext.eventDispatch({ type: 'INIT', payload: [] })
+      eventsContext.eventDispatch({ type: 'INIT', payload: [] })
     }
 
     setDisplay(display)
@@ -67,8 +66,8 @@ function Calendar() {
 
   async function loadCurrentViewEvents() {
     if (display == 'Week') {
-      const lastWeek = dates.subtract(selectedDate, 1, 'week')
-      const nextWeek = dates.add(selectedDate, 1, 'week')
+      const lastWeek = dates.subtract(eventsContext.selectedDate, 1, 'week')
+      const nextWeek = dates.add(eventsContext.selectedDate, 1, 'week')
 
       const start = dates.startOf(lastWeek, 'week', firstOfWeek)
       const end = dates.endOf(nextWeek, 'week', firstOfWeek)
@@ -76,7 +75,7 @@ function Calendar() {
     }
 
     if (display == 'Month') {
-      const month = dates.visibleDays(selectedDate, firstOfWeek)
+      const month = dates.visibleDays(eventsContext.selectedDate, firstOfWeek)
       const start = month[0]
       const end = month[month.length - 1]
       loadEvents(start, end)
@@ -87,7 +86,7 @@ function Calendar() {
     const authToken = getAuthToken()
     const events = await getEvents(authToken, '', formatDateTime(start), formatDateTime(end))
 
-    eventActionContext.eventDispatch({ type: 'INIT', payload: events })
+    eventsContext.eventDispatch({ type: 'INIT', payload: events })
   }
 
   function renderDisplaySelectionHeader() {
@@ -105,18 +104,23 @@ function Calendar() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div className="button is-small is-light" onClick={() => setSelectedDate(today)}>
+          <div
+            className="button is-small is-light"
+            onClick={() => eventsContext.setSelectedDate(today)}
+          >
             Today
           </div>
           <button
             className="button is-text is-small is-size-6"
             onClick={() => {
               if (display == 'Week') {
-                setSelectedDate(dates.subtract(selectedDate, 7, 'day'))
+                eventsContext.setSelectedDate(dates.subtract(eventsContext.selectedDate, 7, 'day'))
               } else if (display == 'Month') {
                 // HACK: Prevents flicker when switching months
-                eventActionContext.eventDispatch({ type: 'INIT', payload: [] })
-                setSelectedDate(dates.subtract(selectedDate, 1, 'month'))
+                eventsContext.eventDispatch({ type: 'INIT', payload: [] })
+                eventsContext.setSelectedDate(
+                  dates.subtract(eventsContext.selectedDate, 1, 'month')
+                )
               }
             }}
           >
@@ -128,10 +132,10 @@ function Calendar() {
             className="button is-text is-small is-size-6"
             onClick={() => {
               if (display == 'Week') {
-                setSelectedDate(dates.add(selectedDate, 7, 'day'))
+                eventsContext.setSelectedDate(dates.add(eventsContext.selectedDate, 7, 'day'))
               } else if (display == 'Month') {
-                eventActionContext.eventDispatch({ type: 'INIT', payload: [] })
-                setSelectedDate(dates.add(selectedDate, 1, 'month'))
+                eventsContext.eventDispatch({ type: 'INIT', payload: [] })
+                eventsContext.setSelectedDate(dates.add(eventsContext.selectedDate, 1, 'month'))
               }
             }}
           >
@@ -183,14 +187,14 @@ function Calendar() {
 
   function getViewTitle() {
     if (display == 'Week') {
-      return Week.getTitle(selectedDate)
+      return Week.getTitle(eventsContext.selectedDate)
     } else if (display == 'Month') {
-      return Month.getTitle(selectedDate)
+      return Month.getTitle(eventsContext.selectedDate)
     }
   }
 
   function renderCalendar() {
-    const { loading, eventsById } = eventActionContext.eventState
+    const { loading, eventsById } = eventsContext.eventState
 
     const selectedCalendarIds = Object.values(calendarContext.calendarsById)
       .filter((cal) => cal.selected)
@@ -200,9 +204,9 @@ function Calendar() {
     )
 
     if (display == 'Week') {
-      return <Week date={selectedDate} events={events} />
+      return <Week date={eventsContext.selectedDate} events={events} />
     } else if (display == 'Month') {
-      return <Month loading={loading} date={selectedDate} events={events} />
+      return <Month loading={loading} date={eventsContext.selectedDate} events={events} />
     }
   }
 

@@ -17,7 +17,7 @@ function Week(props: IProps) {
 
 Week.getTitle = function (date: Date): string {
   const [start, ...rest] = getWeekRange(date)
-  return weekRangeFormat(start, rest.pop())
+  return weekRangeFormat(start, rest.pop()!)
 }
 
 export default Week

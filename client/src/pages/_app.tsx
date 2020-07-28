@@ -3,6 +3,7 @@ import App from 'next/app'
 import { LabelsContextProvider } from '../components/LabelsContext'
 import { CalendarsContextProvider } from '../components/CalendarsContext'
 import { AlertsContextProvider } from '../components/AlertsContext'
+import { EventActionProvider } from '../calendar/EventActionContext'
 import { Alerts } from '../components/Alerts'
 
 /**
@@ -17,11 +18,13 @@ class MyApp extends App {
       <AlertsContextProvider>
         <Alerts />
 
-        <LabelsContextProvider>
-          <CalendarsContextProvider>
-            <Component {...pageProps} />
-          </CalendarsContextProvider>
-        </LabelsContextProvider>
+        <EventActionProvider>
+          <LabelsContextProvider>
+            <CalendarsContextProvider>
+              <Component {...pageProps} />
+            </CalendarsContextProvider>
+          </LabelsContextProvider>
+        </EventActionProvider>
       </AlertsContextProvider>
     )
   }
