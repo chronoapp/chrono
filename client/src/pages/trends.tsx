@@ -1,5 +1,9 @@
-import * as React from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { Bar } from 'react-chartjs-2'
+import clsx from 'clsx'
+
+import Icon from '@mdi/react'
+import { mdiChevronDown } from '@mdi/js'
 
 import Layout from '../components/Layout'
 import { getTrends, getAuthToken, auth } from '../util/Api'
@@ -7,76 +11,49 @@ import { Label, TimePeriod } from '../models/Label'
 
 import { LabelContext } from '../components/LabelsContext'
 
-interface Props {
+interface IProps {
   authToken: string
-  label: Label
-}
-
-interface State {
-  timespanDropdownActive: boolean
-  labelDropdownActive: boolean
-  selectedLabel: Label | null
-  trends: any
-
-  selectedTimePeriod: TimePeriod
 }
 
 /**
  * List of trends.
  */
-class Trends extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props)
-    this.state = {
-      timespanDropdownActive: false,
-      labelDropdownActive: false,
-      selectedLabel: null,
-      trends: {},
+function Trends(props: IProps) {
+  const [timespanDropdownActive, setTimespanDropdownActive] = useState(false)
+  const [labelDropdownActive, setLabelDropdownActive] = useState(false)
+  const [selectedLabel, setSelectedLabel] = useState<Label | null>(null)
+  const [trends, setTrends] = useState<any>({})
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState<TimePeriod>('WEEK')
 
-      selectedTimePeriod: 'WEEK',
+  useEffect(() => {
+    updateTrendsData()
+  }, [])
+
+  useEffect(() => {
+    updateTrendsData()
+  }, [selectedTimePeriod, selectedLabel])
+
+  async function updateTrendsData() {
+    const authToken = getAuthToken()
+    console.log(`Get Trends`)
+    console.log(selectedLabel)
+
+    if (selectedLabel) {
+      const trends = await getTrends(selectedLabel.id, authToken, selectedTimePeriod)
+      setTrends(trends)
     }
-
-    this.toggleDropdown = this.toggleDropdown.bind(this)
-    this.onTimePeriodSelected = this.onTimePeriodSelected.bind(this)
   }
 
-  static async getInitialProps(ctx) {
-    const authToken = auth(ctx)
-    return { authToken }
-  }
-
-  async componentDidMount() {
-    const trends = await getTrends(this.props.authToken, this.state.selectedTimePeriod)
-
-    this.setState({
-      trends,
-    })
-  }
-
-  toggleDropdown() {
-    const timespanDropdownActive = !this.state.timespanDropdownActive
-    this.setState({ timespanDropdownActive: timespanDropdownActive })
-  }
-
-  onTimePeriodSelected(timePeriod: TimePeriod) {
-    this.setState({ selectedTimePeriod: timePeriod })
-
-    getTrends(this.props.authToken, timePeriod).then((trends) => {
-      this.setState({ trends })
-    })
-  }
-
-  renderDropdown() {
+  function renderTimePeriodDropdown() {
     return (
-      <div
-        className={`dropdown is-hoverable ${this.state.timespanDropdownActive ? 'is-active' : ''}`}
-      >
-        <div onClick={this.toggleDropdown} className="dropdown-trigger">
+      <div className={clsx('ml-1 dropdown', 'is-hoverable', timespanDropdownActive && 'is-active')}>
+        <div
+          onClick={() => setTimespanDropdownActive(!timespanDropdownActive)}
+          className="dropdown-trigger"
+        >
           <button className="button" aria-haspopup="true" aria-controls="dropdown-menu">
             <span>Last 7 days</span>
-            <span className="icon is-small">
-              <i className="fa fa-angle-down" aria-hidden="true"></i>
-            </span>
+            <Icon path={mdiChevronDown} size={1}></Icon>
           </button>
         </div>
         <div className="dropdown-menu" id="dropdown-menu" role="menu">
@@ -89,24 +66,73 @@ class Trends extends React.Component<Props, State> {
     )
   }
 
-  renderTimePeriodSelections() {
-    const { selectedTimePeriod } = this.state
+  function renderTagDropdown(labelsById: Record<number, Label>) {
+    const allLabels = Object.values(labelsById)
+    const label = selectedLabel ? selectedLabel : allLabels[0]
+
+    if (!label) {
+      return
+    }
+
     return (
-      <div className="field has-addons">
+      <div
+        className={clsx(
+          'ml-2 mr-2 dropdown',
+          'is-hoverable',
+          timespanDropdownActive && 'is-active'
+        )}
+      >
+        <div onClick={() => console.log('dropdown')} className="dropdown-trigger">
+          <button className="button" aria-haspopup="true" aria-controls="dropdown-menu">
+            <span
+              className="event-label"
+              style={{ backgroundColor: label.color_hex, display: 'inline-block' }}
+            ></span>
+            <span className="ml-1">{label.title}</span>
+            <Icon path={mdiChevronDown} size={1}></Icon>
+          </button>
+        </div>
+        <div className="dropdown-menu" id="dropdown-menu" role="menu">
+          <div className="dropdown-content">
+            {allLabels.map((l) => {
+              return (
+                <a
+                  key={l.id}
+                  className="dropdown-item"
+                  style={{ textAlign: 'left' }}
+                  onClick={() => setSelectedLabel(l)}
+                >
+                  <span
+                    className="event-label"
+                    style={{ backgroundColor: l.color_hex, display: 'inline-block' }}
+                  ></span>
+                  <span className="ml-1">{l.title}</span>
+                </a>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  function renderTimePeriodSelections() {
+    return (
+      <div className="ml-2 field has-addons">
         <button
-          onClick={() => this.onTimePeriodSelected('DAY')}
+          onClick={() => setSelectedTimePeriod('DAY')}
           className={`button is-small ${selectedTimePeriod === 'DAY' ? 'is-active' : ''}`}
         >
           Day
         </button>
         <button
-          onClick={() => this.onTimePeriodSelected('WEEK')}
+          onClick={() => setSelectedTimePeriod('WEEK')}
           className={`button is-small ${selectedTimePeriod === 'WEEK' ? 'is-active' : ''}`}
         >
           Week
         </button>
         <button
-          onClick={() => this.onTimePeriodSelected('MONTH')}
+          onClick={() => setSelectedTimePeriod('MONTH')}
           className={`button is-small ${selectedTimePeriod === 'MONTH' ? 'is-active' : ''}`}
         >
           Month
@@ -115,34 +141,7 @@ class Trends extends React.Component<Props, State> {
     )
   }
 
-  render() {
-    return (
-      <Layout>
-        <div className="container mt-2">
-          <div className="level">
-            <div className="level-left"></div>
-            <div className="level-right">{this.renderTimePeriodSelections()}</div>
-          </div>
-
-          <div>
-            <p className="card-header-title">
-              Time spent on &nbsp;
-              <span className="tag is-light">Work</span>&nbsp; per week
-            </p>
-          </div>
-          <LabelContext.Consumer>
-            {({ labelState: { labelsById } }) => (
-              <div className="card-content">{this.renderChart(labelsById)}</div>
-            )}
-          </LabelContext.Consumer>
-        </div>
-      </Layout>
-    )
-  }
-
-  renderChart(labels: Record<number, Label>) {
-    const { trends } = this.state
-
+  function renderChart(labels: Record<number, Label>) {
     const options = {
       title: {
         text: 'Work over Time',
@@ -174,9 +173,8 @@ class Trends extends React.Component<Props, State> {
       },
     }
 
-    // TODO: Select label.
-    const workLabel = Object.values(labels)[2]
-    const colorHex = workLabel ? workLabel.color_hex : 'white'
+    const label = selectedLabel ? selectedLabel : Object.values(labels)[0]
+    const colorHex = label ? label.color_hex : 'white'
     const data = {
       labels: trends.labels,
       datasets: [
@@ -191,6 +189,54 @@ class Trends extends React.Component<Props, State> {
     }
     return <Bar data={data} options={options} />
   }
+
+  function renderEmpty() {
+    return (
+      <div className="columns is-vcentered" style={{ width: '80%', height: '80%' }}>
+        <div className="column">
+          <h1 className="title">No labels</h1>
+          <h1 className="subtitle">Add labels to your events to view trends!</h1>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <Layout>
+      <LabelContext.Consumer>
+        {({ labelState: { labelsById, loading } }) => {
+          if (!loading && Object.keys(labelsById).length == 0) {
+            return renderEmpty()
+          } else {
+            return (
+              <div className="container mt-2">
+                <span className="card-header-title">
+                  <div className="level">
+                    <div className="level-left">
+                      Time spent on {renderTagDropdown(labelsById)} per{' '}
+                      {renderTimePeriodSelections()}
+                    </div>
+                  </div>
+                </span>
+                <div className="card-content">{renderChart(labelsById)}</div>
+              </div>
+            )
+          }
+        }}
+      </LabelContext.Consumer>
+    </Layout>
+  )
 }
 
-export default Trends
+class TrendsPage extends React.Component<{ authToken: string }, {}> {
+  static async getInitialProps(ctx) {
+    const authToken = auth(ctx)
+    return { authToken }
+  }
+
+  render() {
+    return <Trends authToken={this.props.authToken} />
+  }
+}
+
+export default TrendsPage

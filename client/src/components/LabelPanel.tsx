@@ -28,6 +28,9 @@ function LabelPanel() {
 
   useEffect(() => {
     async function loadLabels() {
+      dispatch({
+        type: 'START',
+      })
       const authToken = getAuthToken()
       const labels = await getLabels(authToken)
 

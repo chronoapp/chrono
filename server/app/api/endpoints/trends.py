@@ -19,10 +19,10 @@ class TimePeriod(enum.Enum):
     MONTH = 'MONTH'
 
 
-@router.get('/trends/{label_key}')
-def getUserTrends(label_key: str, time_period: str = "WEEK", user=Depends(get_current_user)):
+@router.get('/trends/{labelId}')
+def getUserTrends(labelId: int, time_period: str = "WEEK", user=Depends(get_current_user)):
     userId = user.id
-    logger.info(f'{userId, time_period}')
+    logger.info(f'{userId} {time_period}')
 
     timePeriod = TimePeriod[time_period]
     endTime = datetime.now()
@@ -34,12 +34,12 @@ def getUserTrends(label_key: str, time_period: str = "WEEK", user=Depends(get_cu
         diff = timedelta(days=12 * 7)
 
     startTime = endTime - diff
-    labels, durations = getTrendsDataResult(userId, label_key, startTime, endTime, timePeriod)
+    labels, durations = getTrendsDataResult(userId, labelId, startTime, endTime, timePeriod)
 
     return {'labels': labels, 'values': durations}
 
 
-def getTrendsDataResult(userId: int, label: str, startTime: datetime, endTime: datetime,
+def getTrendsDataResult(userId: int, labelId: int, startTime: datetime, endTime: datetime,
                         timePeriod: TimePeriod):
     """Executes the DB query for time spent on the activity label,
     grouped by TimePeriod.
@@ -57,7 +57,7 @@ def getTrendsDataResult(userId: int, label: str, startTime: datetime, endTime: d
                     FROM event
                     INNER JOIN event_label ON event_label.event_id = event.id
                     INNER JOIN label ON label.id = event_label.label_id
-                    WHERE label.key = :label\
+                    WHERE label.id = :labelId\
                     AND event.start >= :start_time\
                     AND event.end <= :end_time\
                     AND event.user_id = :userId\
@@ -79,7 +79,7 @@ def getTrendsDataResult(userId: int, label: str, startTime: datetime, endTime: d
             'userId': userId,
             'start_time': startTime,
             'end_time': endTime,
-            'label': label
+            'labelId': labelId
         })
 
         for row in result:

@@ -155,8 +155,8 @@ export async function searchEvents(authToken: string, query: string): Promise<Ev
 
 // ================== Trends and Stats ==================
 
-export async function getTrends(authToken: string, timePeriod: TimePeriod) {
-  return fetch(`${API_URL}/trends/work?time_period=${timePeriod}`, {
+export async function getTrends(labelId: number, authToken: string, timePeriod: TimePeriod) {
+  return fetch(`${API_URL}/trends/${labelId}?time_period=${timePeriod}`, {
     headers: { Authorization: authToken },
   }).then(handleErrors)
 }
