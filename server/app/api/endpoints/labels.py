@@ -16,6 +16,7 @@ class LabelVM(BaseModel):
     title: str
     color_hex: str
     parent_id: Optional[int]
+    position: int
 
     class Config:
         orm_mode = True

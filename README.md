@@ -16,12 +16,10 @@ Ssh into api: `docker-compose run --rm web bash`
 
 ### Database Migrations
 
-```
-# Make Revision
-alembic revision -m "table changes" --autogenerate
+**Make Revision**
+`alembic revision -m "table changes" --autogenerate`
 
-# Upgrade Database
-alembic upgrade head
-```
+**Upgrade Database**
+`alembic upgrade head`
 
 To test webhooks, add a tunnel `tunnelto --port 8888 --subdomain mydemoapp`

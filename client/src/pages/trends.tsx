@@ -131,8 +131,8 @@ class Trends extends React.Component<Props, State> {
             </p>
           </div>
           <LabelContext.Consumer>
-            {({ labelState: { labels } }) => (
-              <div className="card-content">{this.renderChart(labels)}</div>
+            {({ labelState: { labelsById } }) => (
+              <div className="card-content">{this.renderChart(labelsById)}</div>
             )}
           </LabelContext.Consumer>
         </div>
@@ -140,7 +140,7 @@ class Trends extends React.Component<Props, State> {
     )
   }
 
-  renderChart(labels: Label[]) {
+  renderChart(labels: Record<number, Label>) {
     const { trends } = this.state
 
     const options = {
@@ -174,7 +174,8 @@ class Trends extends React.Component<Props, State> {
       },
     }
 
-    const workLabel = labels.find((label) => label.key === 'work')
+    // TODO: Select label.
+    const workLabel = Object.values(labels)[2]
     const colorHex = workLabel ? workLabel.color_hex : 'white'
     const data = {
       labels: trends.labels,

@@ -1,27 +1,23 @@
 export type TimePeriod = 'DAY' | 'WEEK' | 'MONTH'
 
 export class Label {
-  id: number
-  parent_id?: number
-  title: string
-  key: string
-  color_hex: string
-
   static fromJson(labelJson: any) {
     return new Label(
       labelJson.id,
-      labelJson.parent_id,
       labelJson.title,
       labelJson.key,
-      labelJson.color_hex
+      labelJson.color_hex,
+      labelJson.position,
+      labelJson.parent_id
     )
   }
 
-  constructor(id: number, parent_id: number, title: string, key: string, color_hex: string) {
-    this.id = id
-    this.parent_id = parent_id
-    this.title = title
-    this.key = key
-    this.color_hex = color_hex
-  }
+  constructor(
+    readonly id: number,
+    readonly title: string,
+    readonly key: string,
+    readonly color_hex: string,
+    readonly position: number,
+    readonly parent_id?: number
+  ) {}
 }

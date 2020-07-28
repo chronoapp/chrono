@@ -16,6 +16,7 @@ class TreeItem {
     readonly key: number,
     readonly label: Label,
     readonly children: TreeItem[],
+    readonly position: number,
     readonly level = 0
   ) {}
 }
@@ -28,6 +29,7 @@ function LabelTree() {
   const [selectedLabelIdForColor, setSelectedLabelIdForColor] = useState<number | undefined>(
     undefined
   )
+  const labelItems = getOrderedLabels()
 
   function onDragStart(info) {
     console.log('start', info)
@@ -39,27 +41,82 @@ function LabelTree() {
   }
 
   function onDrop(info) {
-    console.log('drop', info)
-    const dropKey = info.node.props.eventKey
+    console.log('---onDrop---')
+    console.log(info)
+
     const dragKey = info.dragNode.props.eventKey
+    const dropKey = info.node.props.eventKey
     const dropPos = info.node.props.pos.split('-')
     const dropPosition = info.dropPosition - Number(dropPos[dropPos.length - 1])
 
-    console.log(`dragKey: ${dragKey}`)
-    console.log(`dropKey: ${dropKey}`)
-    console.log(`dropPosition: ${dropPosition}`)
-    console.log(`dropToGap: ${info.dropToGap}`)
-    console.log(`expanded: ${info.node.props.expanded}`)
-    console.log(`numChildren: ${info.node.props.children ? info.node.props.children.length : 0}`)
+    const findLabelData = (
+      data: TreeItem[],
+      key: string,
+      callback: (item: TreeItem, idx: number, arr: TreeItem[]) => void
+    ) => {
+      data.forEach((item, index, arr) => {
+        if (item.key === parseInt(key)) {
+          callback(item, index, arr)
+          return
+        }
+        if (item.children) {
+          findLabelData(item.children, key, callback)
+        }
+      })
+    }
+
+    // Label Id to Position
+    let draggedFrom!: TreeItem
+    const positionUpdates: Record<number, number> = {}
+    findLabelData(labelItems, dragKey, function (item, index, arr) {
+      arr.splice(index, 1)
+      draggedFrom = item
+
+      arr.forEach((item, idx) => {
+        positionUpdates[item.key] = idx
+      })
+    })
 
     if (!info.dropToGap) {
       // Dropped onto a TreeItem.
       console.log(`dropped`)
-      const droppedFromLabel = labelState.labelsById[parseInt(dragKey)]
-      const droppedToLabel = labelState.labelsById[parseInt(dropKey)]
-      const updatedLabel = { ...droppedFromLabel, parent_id: droppedToLabel.id }
-      dispatch({ type: 'UPDATE', payload: updatedLabel })
+      findLabelData(labelItems, dropKey, (item, idx, arr) => {
+        const updatedLabel = {
+          ...draggedFrom.label,
+          parent_id: parseInt(dropKey),
+          position: item.children.length,
+        }
+        dispatch({ type: 'UPDATE', payload: updatedLabel })
+      })
+    } else {
+      // Dragged beside a node (top or bottom).
+      let updatedLabel!: Label
+      findLabelData(labelItems, dropKey, (item, index, arr) => {
+        updatedLabel = { ...draggedFrom.label, parent_id: item.label.parent_id }
+
+        if (dropPosition === -1) {
+          // Dragged to top of node
+          arr.splice(index, 0, draggedFrom)
+          arr.forEach((item, idx) => {
+            positionUpdates[item.key] = idx
+          })
+        } else {
+          // Dragged to bottom of node
+          arr.splice(index + 1, 0, draggedFrom)
+          arr.forEach((item, idx) => {
+            positionUpdates[item.key] = idx
+          })
+        }
+      })
+
+      if (updatedLabel) {
+        dispatch({ type: 'UPDATE', payload: updatedLabel })
+      }
     }
+
+    dispatch({ type: 'UPDATE_POSITIONS', payload: positionUpdates })
+
+    // TODO: API Request to update positions
   }
 
   function onExpand(expandedKeys) {
@@ -107,15 +164,15 @@ function LabelTree() {
     }
   }
 
-  const Switcher = (props: EventDataNode) => {
-    if (props.expanded) {
-      return <KeyboardArrowDownIcon className="icon-button" />
-    } else {
-      return <ChevronRightIcon className="icon-button" />
-    }
-  }
-
   function treeData(data: TreeItem[]) {
+    const Switcher = (props: EventDataNode) => {
+      if (props.expanded) {
+        return <KeyboardArrowDownIcon />
+      } else {
+        return <ChevronRightIcon />
+      }
+    }
+
     return data.map((item) => {
       if (item.children && item.children.length) {
         const Title = () => <span>{item.title}</span>
@@ -129,12 +186,25 @@ function LabelTree() {
     })
   }
 
-  function getLabelItems(): TreeItem[] {
+  function orderTree(treeItems: TreeItem[]) {
+    const orderedLabels = treeItems.sort((a, b) => a.position - b.position)
+    orderedLabels.map((item) => {
+      if (item.children && item.children.length > 0) {
+        return { ...item, children: orderTree(item.children) }
+      } else {
+        return item
+      }
+    })
+    return orderedLabels
+  }
+
+  function getOrderedLabels(): TreeItem[] {
     const allItems: Record<number, TreeItem> = {}
     const labels: Label[] = Object.values(labelState.labelsById)
 
+    // Create a Tree structure
     labels.map((label) => {
-      allItems[label.id] = new TreeItem(label.title, label.id, label, [])
+      allItems[label.id] = new TreeItem(label.title, label.id, label, [], label.position)
     })
 
     labels.map((label) => {
@@ -145,10 +215,10 @@ function LabelTree() {
       }
     })
 
-    return Object.values(allItems).filter((item) => item.level == 0)
+    // Create ordered albels array based on positioning
+    const rootItems = Object.values(allItems).filter((item) => item.level == 0)
+    return orderTree(rootItems)
   }
-
-  const labelItems = getLabelItems()
 
   return (
     <Tree

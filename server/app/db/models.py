@@ -214,13 +214,16 @@ class Label(Base):
     key = Column(String(50), index=True)
     color_hex = Column(String(50), nullable=False)
 
+    # Position within parent node.
+    position = Column(Integer, default=0)
+
     def __init__(self, title: str, key: str) -> None:
         self.title = title
         self.key = key
         self.color_hex = DEFAULT_TAG_COLOR
 
     def __repr__(self):
-        return f'<Label {self.key} {self.title}/>'
+        return f'<Label {self.id} {self.title}/>'
 
 
 class LabelRule(Base):
