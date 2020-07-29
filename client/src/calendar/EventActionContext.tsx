@@ -106,11 +106,8 @@ function eventReducer(state: EventState, action: ActionType) {
       }
 
     case 'CANCEL_SELECT':
-      let eventsUnselected = update(eventsById, { $unset: [-1] })
-
       return {
         ...state,
-        eventsById: eventsUnselected,
         editingEventId: null,
       }
     default:

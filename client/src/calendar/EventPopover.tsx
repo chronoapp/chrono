@@ -85,6 +85,7 @@ function EventPopover(props: IProps) {
     }
     const token = getAuthToken()
 
+    eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
     if (isExistingEvent) {
       eventActions.eventDispatch({
         type: 'UPDATE_EVENT',

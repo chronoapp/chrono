@@ -127,13 +127,13 @@ function Trends(props: IProps) {
         </button>
         <button
           onClick={() => setSelectedTimePeriod('WEEK')}
-          className={`button is-small ${selectedTimePeriod === 'WEEK' ? 'is-active' : ''}`}
+          className={`button ml-1 is-small ${selectedTimePeriod === 'WEEK' ? 'is-active' : ''}`}
         >
           Week
         </button>
         <button
           onClick={() => setSelectedTimePeriod('MONTH')}
-          className={`button is-small ${selectedTimePeriod === 'MONTH' ? 'is-active' : ''}`}
+          className={`button ml-1 is-small ${selectedTimePeriod === 'MONTH' ? 'is-active' : ''}`}
         >
           Month
         </button>
