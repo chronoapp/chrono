@@ -69,10 +69,11 @@ function TimeGridEvent(props: IProps) {
     }
   }
 
-  function renderAnchor(direction: Direction) {
+  function renderAnchor(direction: Direction, resizing: boolean) {
     return (
       <div
         className={`cal-dnd-resize-ns-anchor`}
+        style={resizing ? { maxHeight: '20px', bottom: '-10px' } : {}}
         onMouseDown={(e) => handleResize(e, direction)}
       ></div>
     )
@@ -138,7 +139,7 @@ function TimeGridEvent(props: IProps) {
       onClick={handleClickEvent}
     >
       {inner}
-      {renderAnchor('DOWN')}
+      {renderAnchor('DOWN', dnd?.action == 'RESIZE' && props.isPreview)}
     </div>
   )
 }
