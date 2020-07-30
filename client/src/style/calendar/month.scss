@@ -1,155 +1,164 @@
 .cal-month-view {
-    display: flex;
-    flex-direction: column;
-    flex: 1 0 0;
-    width: 100%;
-    height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 0;
+  width: 100%;
+  height: 100%;
 }
 
 .cal-month-row {
-    display: flex;
-    position: relative;
-    flex-direction: column;
-    flex: 1 0 0;
-    overflow: hidden;
-    height: 100%; // ie-fix
-    border-top: 1px solid $cell-border;
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  flex: 1 0 0;
+  overflow: hidden;
+  height: 100%; // ie-fix
+  border-top: 1px solid $cell-border;
 }
 
 .cal-row-bg {
-    @extend .cal-abs-full;
-    display: flex;
-    flex-direction: row;
-    flex: 1 0 0;
-    overflow: hidden;
+  @extend .cal-abs-full;
+  display: flex;
+  flex-direction: row;
+  flex: 1 0 0;
+  overflow: hidden;
 }
 
 .cal-day-bg {
-    flex: 1 0 0%;
-    border-left: 1px solid $cell-border;
+  flex: 1 0 0%;
+  border-left: 1px solid $cell-border;
 }
 
 .cal-row-content {
-    z-index: 1;
+  z-index: 1;
 }
 
 .cal-row {
-    display: flex;
-    flex-direction: row;
+  display: flex;
+  flex-direction: row;
 }
 
 .cal-date-cell {
-    text-align: center;
-    flex: 1 0 0;
-    padding: 5px 0 5px 0;
-    font-size: 0.8em;
+  text-align: center;
+  flex: 1 0 0;
+  padding: 5px 0 5px 0;
+  font-size: 0.8em;
 }
 
 .cal-off-range {
-    color: #999999;
+  color: #999999;
 }
 
 .cal-today-bg-month {
-    @extend .cal-today-bg;
-    width: 30px;
+  @extend .cal-today-bg;
+  width: 30px;
 }
 
 .cal-row-segment {
-    padding: 0 3px 1px 1px;
+  padding: 0 3px 1px 1px;
 
-    .cal-event-content {
-        @extend .cal-ellipsis;
-        font-weight: 500;
-        padding-left: 3px;
-        flex: 1;
-        min-width: 0;
-    }
+  .cal-event-content {
+    @extend .cal-ellipsis;
+    font-weight: 500;
+    padding-left: 3px;
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 .cal-event-row {
-    box-sizing: border-box;
-    box-shadow: none;
-    text-align: left;
-    font-size: 75%;
-    width: 100%;
-    padding: $event-padding;
-    border-radius: $event-border-radius;
-    cursor: pointer;
+  box-sizing: border-box;
+  box-shadow: none;
+  text-align: left;
+  font-size: 75%;
+  width: 100%;
+  padding: $event-padding;
+  border-radius: $event-border-radius;
+  cursor: pointer;
 
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 
-    &:hover {
-        background-color: $light;
-    }
+  &:hover {
+    background-color: $light;
+  }
 }
 
 .cal-label-circle {
-    background-color: $cal-primary;
-    height: 8px;
-    width: 8px;
-    border-radius: 50%;
-    margin-right: 3px;
+  background-color: $cal-primary;
+  height: 8px;
+  width: 8px;
+  border-radius: 50%;
+  margin-right: 3px;
 }
 
 // Mini Calendar
 .cal-mini-month-header {
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
 }
 
 .cal-mini-month-row {
-    display: flex;
-    position: relative;
-    overflow: hidden;
-    width: 100%;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
 }
 
 .cal-mini-month-day {
-    text-align: center;
-    flex: 1;
-    font-size: $size-7;
-    padding: 0.25em;
+  text-align: center;
+  flex: 1;
+  font-size: $size-7;
+  padding: 0.25em;
+  border-radius: 5px;
+
+  &:hover {
+    @extend .cal-mini-month-day-selected;
+  }
+}
+
+.cal-mini-month-day-selected {
+  cursor: pointer;
+  background-color: $grey-lighter;
 }
 
 .cal-mini-month-today-bg {
-    @extend .cal-today-bg;
-    width: 15px;
+  @extend .cal-today-bg;
+  width: 15px;
 }
 
-
 .animate-bottom {
-    position: relative;
-    animation-name: animatebottom;
-    animation-duration: 0.2s;
+  position: relative;
+  animation-name: animatebottom;
+  animation-duration: 0.2s;
 }
 
 @keyframes animatebottom {
-    from {
-        bottom: -3rem;
-        opacity: 0;
-    }
+  from {
+    bottom: -3rem;
+    opacity: 0;
+  }
 
-    to {
-        bottom: 0;
-        opacity: 1;
-    }
+  to {
+    bottom: 0;
+    opacity: 1;
+  }
 }
 
 .animate-top {
-    position: relative;
-    animation-name: top;
-    animation-duration: 0.2s;
+  position: relative;
+  animation-name: top;
+  animation-duration: 0.2s;
 }
 
 @keyframes top {
-    from {
-        bottom: 3rem;
-        opacity: 0;
-    }
+  from {
+    bottom: 3rem;
+    opacity: 0;
+  }
 
-    to {
-        bottom: 0;
-        opacity: 1;
-    }
+  to {
+    bottom: 0;
+    opacity: 1;
+  }
 }

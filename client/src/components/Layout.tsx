@@ -103,7 +103,7 @@ function Layout(props: Props) {
 
       <div className="app-content">
         <div className="left-section">
-          <MiniCalendar selectedDate={new Date()} />
+          <MiniCalendar />
           <LabelPanel />
           <CalendarsPanel />
         </div>
