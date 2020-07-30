@@ -202,11 +202,12 @@ def createWebhook(calendar: Calendar) -> None:
     """Create a webhook for the calendar to watche for event updates.
     """
     if not config.API_URL:
-        logger.info(f'No API URL specified.')
+        logger.debug(f'No API URL specified.')
         return
 
     # Only one webhook per calendar
     if calendar.webhook:
+        logger.debug(f'Webhook exists.')
         return
 
     if calendar.access_role != 'owner':
@@ -222,10 +223,15 @@ def createWebhook(calendar: Calendar) -> None:
     webhook.calendar = calendar
 
 
-def cancelWebhook(user: User, webhook: Webhook):
+def cancelWebhook(user: User, webhook: Webhook, session: Session):
     body = {'resourceId': webhook.resource_id, 'id': webhook.id}
-    resp = getService(user).channels().stop(body=body).execute()
-    print(resp)
+
+    try:
+        resp = getService(user).channels().stop(body=body).execute()
+    except HttpError as e:
+        logger.error(e)
+
+    session.delete(webhook)
 
 
 def getEventBody(event: Event, timeZone: str):

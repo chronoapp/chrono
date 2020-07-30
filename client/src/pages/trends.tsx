@@ -35,8 +35,6 @@ function Trends(props: IProps) {
 
   async function updateTrendsData() {
     const authToken = getAuthToken()
-    console.log(`Get Trends`)
-    console.log(selectedLabel)
 
     if (selectedLabel) {
       const trends = await getTrends(selectedLabel.id, authToken, selectedTimePeriod)

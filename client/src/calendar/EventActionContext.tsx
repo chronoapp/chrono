@@ -62,7 +62,6 @@ function eventReducer(state: EventState, action: ActionType) {
       }
 
     case 'INIT_EDIT_NEW_EVENT':
-      console.log(action.payload)
       return {
         ...state,
         eventsById: { ...eventsById, [action.payload.id]: action.payload },
@@ -106,8 +105,11 @@ function eventReducer(state: EventState, action: ActionType) {
       }
 
     case 'CANCEL_SELECT':
+      let eventsUnselected = update(eventsById, { $unset: [-1] })
+
       return {
         ...state,
+        eventsById: eventsUnselected,
         editingEventId: null,
       }
     default:

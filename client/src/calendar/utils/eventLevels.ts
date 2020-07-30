@@ -36,11 +36,11 @@ export function eventLevels(
   rowSegments: EventSegment[],
   limit: number = Infinity
 ): { levels: EventSegment[][]; extra: EventSegment[] } {
-  let i,
-    j,
-    seg,
-    levels = [],
-    extra = []
+  let i
+  let j
+  let seg: EventSegment
+  let levels: EventSegment[][] = []
+  let extra: EventSegment[] = []
 
   for (i = 0; i < rowSegments.length; i++) {
     seg = rowSegments[i]

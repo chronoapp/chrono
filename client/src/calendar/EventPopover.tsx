@@ -37,7 +37,7 @@ function EventPopover(props: IProps) {
   const [eventFields, setEventFields] = useState(
     new EventFields(
       props.event.title,
-      props.event.description,
+      props.event.description || '',
       props.event.start,
       props.event.end,
       getSelectedCalendar(props.event.calendar_id).id

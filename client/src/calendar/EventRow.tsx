@@ -12,6 +12,9 @@ interface IProps {
   slotMetrics: DateSlotMetrics
 }
 
+/**
+ * An event row which can span multiple days.
+ */
 export default function EventRow(props: IProps) {
   function renderSpan(slots: number, len: number, key: string, content?: React.ReactElement) {
     const flexBasis = (Math.abs(len) / slots) * 100 + '%'
@@ -51,13 +54,13 @@ export default function EventRow(props: IProps) {
 
   return (
     <div className="cal-row">
-      {props.segments.reduce((row, segment, idx) => {
+      {props.segments.reduce((row: React.ReactElement[], segment, idx) => {
         const key = '_lvl_' + idx
         const gap = segment.left - lastEnd
 
         const content = renderEvent(segment.event)
         if (gap > 0) {
-          row.push(renderSpan(numSlots, gap, `gap_${key}`, null))
+          row.push(renderSpan(numSlots, gap, `gap_${key}`))
         }
         row.push(renderSpan(numSlots, segment.span, key, content))
 

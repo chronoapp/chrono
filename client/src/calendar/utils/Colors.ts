@@ -2,7 +2,7 @@ export function hexToHSL(hex: string) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
 
   if (!result) {
-    throw new Error('invalid hex')
+    throw new Error(`Invalid Hex string: ${hex}`)
   }
 
   let r = parseInt(result[1], 16)
@@ -12,9 +12,9 @@ export function hexToHSL(hex: string) {
   ;(r /= 255), (g /= 255), (b /= 255)
   const max = Math.max(r, g, b)
   const min = Math.min(r, g, b)
-  let h: number,
-    s: number,
-    l = (max + min) / 2
+  let h: number = 0
+  let s: number = 0
+  let l = (max + min) / 2
 
   if (max == min) {
     h = s = 0 // achromatic

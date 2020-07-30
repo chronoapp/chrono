@@ -94,7 +94,7 @@ function LabelPanel() {
     const labelHex = LABEL_COLORS[0].hex
     const newLabelModal = {
       active: true,
-      label: new Label(-1, 0, '', '', labelHex),
+      label: new Label(-1, '', '', labelHex, 0, undefined),
     }
     setNewLabelModal(newLabelModal)
   }

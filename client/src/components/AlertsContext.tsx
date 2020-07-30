@@ -20,10 +20,10 @@ export const AlertsContext = createContext<AlertsContextType>(undefined!)
  *
  */
 export function AlertsContextProvider(props: any) {
-  const [alert, setAlert] = useState<Alert>()
+  const [alert, setAlert] = useState<Alert>(undefined!)
 
   function removeAlert() {
-    setAlert(undefined)
+    setAlert(undefined!)
   }
 
   const defaultContext = {
