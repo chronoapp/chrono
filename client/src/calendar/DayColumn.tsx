@@ -298,7 +298,11 @@ class DayColumn extends React.Component<IProps, IState> {
     const diffMinutes = (selectRange.endDate.getTime() - selectRange.startDate.getTime()) / 60000
     return (
       <div
-        className={clsx('cal-slot-selection', diffMinutes <= 15 && 'cal-small-event')}
+        className={clsx(
+          'cal-slot-selection',
+          'is-dragging',
+          diffMinutes <= 15 && 'cal-small-event'
+        )}
         style={{ top: `${selectRange.top}%`, height: `${selectRange.height}%` }}
       >
         <span>{timeRangeFormat(selectRange.startDate, selectRange.endDate)}</span>
