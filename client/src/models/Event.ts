@@ -3,19 +3,22 @@ import { hexToHSL } from '../calendar/utils/Colors'
 
 const today = new Date()
 
+/**
+ * Fields only because it is copied for drag & drop.
+ */
 export default class Event {
-  public id: number
-  public calendar_id: string
-
-  public title: string
-  public start: Date
-  public end: Date
-  public description: string
-  public labels: Label[]
-
-  public isAllDay: boolean
-  public backgroundColor: string
-  public foregroundColor: string
+  constructor(
+    readonly id: number,
+    readonly calendar_id: string,
+    readonly title: string,
+    readonly description: string,
+    readonly start: Date,
+    readonly end: Date,
+    readonly labels: Label[],
+    readonly isAllDay: boolean,
+    readonly backgroundColor: string,
+    readonly foregroundColor: string
+  ) {}
 
   static fromJson(eventJson): Event {
     return new Event(
@@ -32,28 +35,7 @@ export default class Event {
     )
   }
 
-  constructor(
-    id: number,
-    calendar_id: string,
-    title: string,
-    description: string,
-    start: Date,
-    end: Date,
-    labels: Label[],
-    isAllDay: boolean,
-    backgroundColor: string,
-    foregroundColor: string
-  ) {
-    this.id = id
-    this.calendar_id = calendar_id
-    this.title = title // ? title : '(No title)'
-    this.start = start
-    this.end = end
-    this.description = description
-    this.labels = labels
-    this.isAllDay = isAllDay
-
-    this.backgroundColor = backgroundColor
-    this.foregroundColor = foregroundColor
+  static isNewEvent(event: Event) {
+    return event.id == -1
   }
 }

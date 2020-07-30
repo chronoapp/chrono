@@ -118,11 +118,12 @@ function TimeGridEvent(props: IProps) {
   return (
     <div
       ref={props.innerRef}
-      className={clsx({
-        'cal-event': true,
-        'cal-dnd-interacting': isInteracting,
-        'cal-has-shadow': isEditing || props.isPreview,
-      })}
+      className={clsx(
+        'cal-event',
+        isInteracting && 'cal-dnd-interacting',
+        (isEditing || props.isPreview) && 'cal-has-shadow',
+        props.isPreview && 'is-dragging'
+      )}
       style={{
         backgroundColor: backgroundColor(),
         top: stringifyPercent(props.style.top),

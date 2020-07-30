@@ -235,16 +235,18 @@ class DayColumn extends React.Component<IProps, IState> {
   }
 
   onEventUpdated(event: Event, alertContext: AlertsContextType) {
-    updateEvent(getAuthToken(), event)
-      .then((newEvent) => {
-        this.context.eventDispatch({
-          type: 'UPDATE_EVENT',
-          payload: { event: newEvent, replaceEventId: event.id },
+    if (!Event.isNewEvent(event)) {
+      updateEvent(getAuthToken(), event)
+        .then((newEvent) => {
+          this.context.eventDispatch({
+            type: 'UPDATE_EVENT',
+            payload: { event: newEvent, replaceEventId: event.id },
+          })
         })
-      })
-      .then(() => {
-        alertContext.addAlert('UPDATED_EVENT')
-      })
+        .then(() => {
+          alertContext.addAlert('UPDATED_EVENT')
+        })
+    }
   }
 
   initSelection() {

@@ -79,7 +79,7 @@ code {
   .radio {
     display: block;
 
-    &+.radio {
+    & + .radio {
       margin-left: 0;
       margin-top: 0.5em;
     }
@@ -132,4 +132,10 @@ code {
     display: flex;
     justify-content: space-between;
   }
+}
+
+// TODO: helper class
+
+.is-dragging {
+  cursor: grabbing !important;
 }
