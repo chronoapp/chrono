@@ -1,11 +1,13 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import clsx from 'clsx'
-
 import * as dates from '../util/dates'
-import Event from '../models/Event'
+
 import { EventSegment } from './utils/eventLevels'
 import DateSlotMetrics from './utils/DateSlotMetrics'
 import { timeFormatShort } from '../util/localizer'
+
+import Event from '../models/Event'
+import { CalendarsContext } from '../components/CalendarsContext'
 
 interface IProps {
   segments: EventSegment[]
@@ -16,6 +18,8 @@ interface IProps {
  * An event row which can span multiple days.
  */
 export default function EventRow(props: IProps) {
+  const calendarsContext = useContext(CalendarsContext)
+
   function renderSpan(slots: number, len: number, key: string, content?: React.ReactElement) {
     const flexBasis = (Math.abs(len) / slots) * 100 + '%'
     return (
@@ -31,8 +35,16 @@ export default function EventRow(props: IProps) {
 
   function renderEvent(event: Event) {
     if (event.isAllDay) {
+      let color: string = calendarsContext.getCalendarColor(event.calendar_id)
+
       return (
-        <div className="cal-event">
+        <div
+          className="cal-event"
+          style={{
+            backgroundColor: Event.getBackgroundColor(event, color),
+            color: Event.getForegroundColor(event),
+          }}
+        >
           <div className="cal-event-content">{event.title}</div>
         </div>
       )

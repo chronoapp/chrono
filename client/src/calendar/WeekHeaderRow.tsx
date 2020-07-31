@@ -1,9 +1,8 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import clsx from 'clsx'
 import DateSlotMetrics from './utils/DateSlotMetrics'
 
 import EventRow from './EventRow'
-import { EventActionContext } from './EventActionContext'
 import Event from '../models/Event'
 
 interface IProps {
@@ -16,7 +15,7 @@ interface IProps {
  * Merge with WeekRow?
  */
 function WeekHeaderRow(props: IProps) {
-  const dayMetrics = new DateSlotMetrics(props.range, props.events, 4, 1)
+  const dayMetrics = new DateSlotMetrics(props.range, props.events, 8, 1)
 
   function renderBackgroundCells() {
     return (

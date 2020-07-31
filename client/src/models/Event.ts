@@ -38,4 +38,18 @@ export default class Event {
   static isNewEvent(event: Event) {
     return event.id == -1
   }
+
+  static getBackgroundColor(event: Event, defaultColor: string) {
+    if (event.end < today) {
+      const { h, s } = hexToHSL(defaultColor)
+      const hsl = `hsl(${h}, ${s}%, 85%)`
+      return hsl
+    } else {
+      return defaultColor
+    }
+  }
+
+  static getForegroundColor(event: Event) {
+    return event.end < today ? 'hsl(0, 0%, 45%)' : event.foregroundColor
+  }
 }

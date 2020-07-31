@@ -9,6 +9,7 @@ export interface CalendarsContextType {
   loadCalendars: (calendars: Calendar[]) => void
   updateCalendarSelect: (calendarId: string, selected: boolean) => void
   getPrimaryCalendar: () => Calendar
+  getCalendarColor: (calendarId: string) => string
 }
 
 export const CalendarsContext = createContext<CalendarsContextType>(undefined!)
@@ -30,6 +31,16 @@ export function CalendarsContextProvider(props: any) {
     getPrimaryCalendar: () => {
       const k = Object.keys(calendarsById).find((key) => calendarsById[key].primary == true)
       return calendarsById[k!]
+    },
+    getCalendarColor: (calendarId: string) => {
+      let color
+      if (calendarId) {
+        const calendar = calendarsById[calendarId]
+        color = calendar ? calendar.backgroundColor : '#fff'
+      } else {
+        color = defaultContext.getPrimaryCalendar().backgroundColor
+      }
+      return color
     },
   }
 
