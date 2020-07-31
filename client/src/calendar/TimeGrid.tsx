@@ -7,6 +7,7 @@ import DayColumn from './DayColumn'
 import TimeGridHeader from './TimeGridHeader'
 import SlotMetrics from './utils/SlotMetrics'
 import { timeFormatShort } from '../util/localizer'
+import { inRange, sortEvents } from './utils/eventLevels'
 
 function remToPixels(rem) {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
@@ -160,9 +161,16 @@ class TimeGrid extends React.Component<IProps, IState> {
   public render() {
     const { gutterWidth, scrollbarSize } = this.state
 
+    const start = this.props.range[0]
+    const end = this.props.range[this.props.range.length - 1]
+    const allDayEvents = this.props.events
+      .filter((event) => event.isAllDay && inRange(event, start, end))
+      .sort((a, b) => sortEvents(a, b))
+
     return (
       <div className="cal-time-view">
         <TimeGridHeader
+          events={allDayEvents}
           range={this.props.range}
           leftPad={gutterWidth}
           marginRight={scrollbarSize}

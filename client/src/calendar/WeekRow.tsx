@@ -20,6 +20,7 @@ const MAX_ROWS = 5
 
 /**
  * Row used for month and full day events in the week view.
+ * TODO: Handle Show More.
  */
 function WeekRow(props: IProps) {
   function renderBackgroundCells() {
