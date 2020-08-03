@@ -88,6 +88,18 @@ export async function getCalendars(authToken: string): Promise<Calendar[]> {
     })
 }
 
+export async function putCalendar(calendar: Calendar, authToken: string): Promise<Calendar> {
+  return fetch(`${API_URL}/calendars/${calendar.id}`, {
+    method: 'PUT',
+    body: JSON.stringify(calendar),
+    headers: { Authorization: authToken },
+  })
+    .then(handleErrors)
+    .then((resp) => {
+      return Calendar.fromJson(resp)
+    })
+}
+
 export async function getEvents(
   authToken: string,
   title: string = '',

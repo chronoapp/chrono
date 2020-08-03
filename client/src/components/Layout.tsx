@@ -25,7 +25,7 @@ function Layout(props: Props) {
     const router = useRouter()
 
     return (
-      <div id="navbarBasicExample" className="navbar-menu">
+      <div id="navbar" className="navbar-menu">
         <div className="navbar-start">
           <Link href="/">
             <a
@@ -79,7 +79,7 @@ function Layout(props: Props) {
         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
       </Head>
 
-      <nav className="navbar is-light" role="navigation" aria-label="main navigation">
+      <nav className="navbar is-dark" role="navigation" aria-label="main navigation">
         <div className="navbar-brand">
           <a className="navbar-item" href="#">
             <span className="primary">timecouncil</span>
@@ -90,7 +90,7 @@ function Layout(props: Props) {
             className="navbar-burger burger"
             aria-label="menu"
             aria-expanded="false"
-            data-target="navbarBasicExample"
+            data-target="navbar"
           >
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>

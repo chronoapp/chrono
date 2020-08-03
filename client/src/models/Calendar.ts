@@ -14,11 +14,11 @@ export default class Calendar {
       json.id,
       json.summary,
       json.description,
-      json.background_color,
-      json.foreground_color,
+      json.backgroundColor,
+      json.foregroundColor,
       json.selected,
       json.primary,
-      json.access_role
+      json.accessRole
     )
   }
 
