@@ -28,12 +28,7 @@ function Layout(props: Props) {
       <div id="navbar" className="navbar-menu">
         <div className="navbar-start">
           <Link href="/">
-            <a
-              className={clsx({
-                'navbar-item': true,
-                'is-active': router.pathname == '/',
-              })}
-            >
+            <a className={clsx('pl-0', 'navbar-item', router.pathname == '/' && 'is-active')}>
               Calendar
             </a>
           </Link>
@@ -77,12 +72,14 @@ function Layout(props: Props) {
         <title>{props.title}</title>
         <meta charSet="utf-8" />
         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+        <link rel="shortcut icon" href="/favicon-128.ico" type="image/x-icon" />
+        <link rel="icon" href="/favicon-128.ico" type="image/x-icon" />
       </Head>
 
-      <nav className="navbar is-dark" role="navigation" aria-label="main navigation">
+      <nav className="navbar" role="navigation" aria-label="main navigation">
         <div className="navbar-brand">
-          <a className="navbar-item" href="#">
-            <span className="primary">timecouncil</span>
+          <a className="navbar-item pr-0" href="#">
+            <img src={'./timecouncil-symbol.png'} style={{ maxHeight: '100%' }} />
           </a>
 
           <a
