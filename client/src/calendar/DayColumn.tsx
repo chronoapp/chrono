@@ -60,6 +60,7 @@ class DayColumn extends React.Component<IProps, IState> {
 
   private timeIndicatorTimeout
   private intervalTriggered: boolean = false
+  private hasJustCancelledEventCreate: boolean = false
 
   static contextType = EventActionContext
 
@@ -162,7 +163,6 @@ class DayColumn extends React.Component<IProps, IState> {
             content={(args) => this.renderEventDialog(event)}
             isOpen={true}
             position={['right', 'left']}
-            onClickOutside={() => this.context?.eventDispatch({ type: 'CANCEL_SELECT' })}
             padding={5}
           >
             <TimeGridEvent now={now} event={event} label={label} style={style} isPreview={false} />
@@ -222,6 +222,7 @@ class DayColumn extends React.Component<IProps, IState> {
   handleSelectProgress(rect: SelectRect) {
     const state = this.selectionState(rect)
     const { selecting, selectRange } = this.state
+    console.log(selectRange)
     if (state) {
       if (
         !selectRange ||
@@ -260,7 +261,13 @@ class DayColumn extends React.Component<IProps, IState> {
 
       selection.on('beforeSelect', (point: EventData) => {
         if (this.context?.dragAndDropAction) {
+          console.log('dragDropAction')
           return false
+        }
+
+        if (this.context?.eventState.editingEventId) {
+          this.context?.eventDispatch({ type: 'CANCEL_SELECT' })
+          this.hasJustCancelledEventCreate = true
         }
 
         return !isEvent(current, point.clientX, point.clientY)
@@ -269,6 +276,7 @@ class DayColumn extends React.Component<IProps, IState> {
       selection.on('select', () => {
         if (this.state.selecting) {
           this.setState({ selecting: false })
+
           if (this.state.selectRange) {
             console.log('Handle Select Event')
             const { startDate, endDate } = this.state.selectRange
@@ -283,7 +291,30 @@ class DayColumn extends React.Component<IProps, IState> {
       })
 
       selection.on('click', (clickEvent: EventData) => {
-        console.log('Handle click!')
+        if (this.hasJustCancelledEventCreate) {
+          // Makes sure we don't create an event immediately after cancelling.
+          this.hasJustCancelledEventCreate = false
+          this.setState({ selecting: false })
+          return
+        }
+
+        const { current } = this.dayRef
+        if (!current) {
+          return
+        }
+
+        console.log('handle new event')
+        const startDate = this.slotMetrics.closestSlotFromPoint(
+          clickEvent.y,
+          getBoundsForNode(current)
+        )
+        const endDate = dates.add(startDate, 60, 'minutes')
+        const event = new Event(-1, '', '', '', startDate, endDate, [], false, '', '#fff')
+        this.context?.eventDispatch({
+          type: 'INIT_EDIT_NEW_EVENT',
+          payload: event,
+        })
+
         this.setState({ selecting: false })
       })
 
