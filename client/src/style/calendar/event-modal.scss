@@ -1,0 +1,31 @@
+/* Create New Event */
+
+.cal-event-modal-container {
+  background-color: white;
+  border-radius: $event-border-radius;
+  box-shadow: $event-shadow;
+  z-index: 10;
+  overflow: visible !important;
+}
+
+.cal-event-modal {
+  width: 420px;
+  padding: 20px 20px 10px 20px;
+}
+
+.cal-event-modal-header {
+  height: 32px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.cal-time-select-wrapper {
+  display: flex;
+  flex: 2;
+}
+
+.cal-date-select {
+  flex: 1;
+}

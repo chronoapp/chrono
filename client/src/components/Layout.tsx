@@ -78,8 +78,8 @@ function Layout(props: Props) {
 
       <nav className="navbar" role="navigation" aria-label="main navigation">
         <div className="navbar-brand">
-          <a className="navbar-item pr-0" href="#">
-            <img src={'./timecouncil-symbol.png'} style={{ maxHeight: '100%' }} />
+          <a className="navbar-item" href="#">
+            <img src={'./timecouncil-symbol.png'} style={{ maxHeight: '2.5rem' }} />
           </a>
 
           <a
