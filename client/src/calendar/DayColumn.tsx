@@ -13,7 +13,7 @@ import { updateEvent, getAuthToken } from '../util/Api'
 
 import TimeSlotGroup from './TimeSlotGroup'
 import TimeGridEvent from './TimeGridEvent'
-import EventPopover from './EventPopover'
+import EventPopover from './event-edit/EventPopover'
 import Event from '../models/Event'
 
 import DragDropEventContainer from './DragDropEventContainer'

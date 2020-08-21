@@ -7,6 +7,8 @@ const today = new Date()
  * Fields only because it is copied for drag & drop.
  */
 export default class Event {
+  public labels: Label[]
+
   constructor(
     readonly id: number,
     readonly calendar_id: string,
@@ -14,11 +16,13 @@ export default class Event {
     readonly description: string,
     readonly start: Date,
     readonly end: Date,
-    readonly labels: Label[],
+    labels: Label[],
     readonly isAllDay: boolean,
     readonly backgroundColor: string,
     readonly foregroundColor: string
-  ) {}
+  ) {
+    this.labels = labels
+  }
 
   static fromJson(eventJson): Event {
     return new Event(

@@ -1,16 +1,19 @@
 import React, { useContext, useState, useEffect, createRef } from 'react'
-import update from 'immutability-helper'
+import Select from 'react-select'
 
+import * as dates from '../../util/dates'
 import Icon from '@mdi/react'
 import { mdiTextSubject, mdiClockOutline, mdiCalendar, mdiDeleteOutline, mdiClose } from '@mdi/js'
 
-import { getAuthToken, createEvent, updateEvent, deleteEvent } from '../util/Api'
-import Event from '../models/Event'
-import Calendar from '../models/Calendar'
-import { EventActionContext } from './EventActionContext'
-import { CalendarsContext } from '../components/CalendarsContext'
-import { AlertsContext } from '../components/AlertsContext'
-import { format } from '../util/localizer'
+import { getAuthToken, createEvent, updateEvent, deleteEvent } from '../../util/Api'
+import Event from '../../models/Event'
+import Calendar from '../../models/Calendar'
+import { EventActionContext } from '../EventActionContext'
+import { CalendarsContext } from '../../components/CalendarsContext'
+import { AlertsContext } from '../../components/AlertsContext'
+import { format } from '../../util/localizer'
+
+import TimeSelect from './TimeSelect'
 
 interface IProps {
   event: Event
@@ -40,7 +43,7 @@ function EventPopover(props: IProps) {
       props.event.description || '',
       props.event.start,
       props.event.end,
-      getSelectedCalendar(props.event.calendar_id).id
+      getSelectedCalendar(props.event.calendar_id)?.id
     )
   )
 
@@ -230,15 +233,34 @@ function EventPopover(props: IProps) {
           </div>
 
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
-            <Icon className="mr-2" path={mdiClockOutline} size={1} />
+            <Icon className="mr-2" path={mdiClockOutline} size={1} style={{ flex: 'none' }} />
             <input
               className="input is-small"
               type="date"
               value={format(eventFields.start, 'YYYY-MM-DD')}
               onChange={(e) => console.log(e.target.value)}
+              style={{ flex: 1 }}
             />
-            <span>{format(eventFields.start, 'hh:mm')}</span>
-            <span>{format(eventFields.end, 'HH:mm')}</span>
+            <TimeSelect
+              start={eventFields.start}
+              end={eventFields.end}
+              onSelectStartDate={(date) => {
+                setEventFields({ ...eventFields, start: date })
+                const event = { ...props.event, start: date }
+                eventActions.eventDispatch({
+                  type: 'UPDATE_EVENT',
+                  payload: { event: event, replaceEventId: event.id },
+                })
+              }}
+              onSelectEndDate={(date) => {
+                setEventFields({ ...eventFields, end: date })
+                const event = { ...props.event, end: date }
+                eventActions.eventDispatch({
+                  type: 'UPDATE_EVENT',
+                  payload: { event: event, replaceEventId: event.id },
+                })
+              }}
+            />
           </div>
 
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
@@ -253,7 +275,7 @@ function EventPopover(props: IProps) {
           </div>
 
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
-            <Icon className="mr-2" path={mdiCalendar} size={1} />
+            <Icon className="mr-2" path={mdiCalendar} size={1} style={{ flex: 'none' }} />
             <div className="select">
               <select
                 value={eventFields.calendarId}

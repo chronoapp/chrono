@@ -330,7 +330,7 @@ class EventList extends Component<Props, State> {
 
   renderSearchBar() {
     return (
-      <div className="field has-addons">
+      <div className="field has-addons mt-3">
         <div className="control is-expanded">
           <input
             className="input"

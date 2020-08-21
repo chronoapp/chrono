@@ -30,16 +30,17 @@ export function CalendarsContextProvider(props: any) {
     },
     getPrimaryCalendar: () => {
       const k = Object.keys(calendarsById).find((key) => calendarsById[key].primary == true)
-      return calendarsById[k!]
+      return k ? calendarsById[k!] : null
     },
     getCalendarColor: (calendarId: string) => {
       let color
       if (calendarId) {
         const calendar = calendarsById[calendarId]
-        color = calendar ? calendar.backgroundColor : '#fff'
+        color = calendar?.backgroundColor
       } else {
-        color = defaultContext.getPrimaryCalendar().backgroundColor
+        color = defaultContext.getPrimaryCalendar()?.backgroundColor
       }
+
       return color
     },
   }
