@@ -222,7 +222,7 @@ class DayColumn extends React.Component<IProps, IState> {
   handleSelectProgress(rect: SelectRect) {
     const state = this.selectionState(rect)
     const { selecting, selectRange } = this.state
-    console.log(selectRange)
+
     if (state) {
       if (
         !selectRange ||
@@ -303,7 +303,6 @@ class DayColumn extends React.Component<IProps, IState> {
           return
         }
 
-        console.log('handle new event')
         const startDate = this.slotMetrics.closestSlotFromPoint(
           clickEvent.y,
           getBoundsForNode(current)
