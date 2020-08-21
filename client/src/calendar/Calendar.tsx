@@ -206,7 +206,9 @@ function Calendar() {
     if (display == 'Week') {
       return <Week date={eventsContext.selectedDate} events={events} />
     } else if (display == 'Month') {
-      return <Month loading={loading} date={eventsContext.selectedDate} events={events} />
+      return (
+        <Month today={today} loading={loading} date={eventsContext.selectedDate} events={events} />
+      )
     }
   }
 

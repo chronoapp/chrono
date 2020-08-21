@@ -9,6 +9,7 @@ import EventRow from './EventRow'
 
 interface IProps {
   key: number
+  today: Date
   date: Date
   range: Date[]
   events: Event[]
@@ -39,11 +40,11 @@ function WeekRow(props: IProps) {
   function renderHeadingCell(date: Date, index: number) {
     const label = format(date, 'DD')
     const isOffRange = dates.month(props.date) !== dates.month(date)
-    let isCurrent = dates.eq(date, props.date, 'day')
+    let isCurrent = dates.eq(date, props.today, 'day')
 
     return (
       <div key={`header_${index}`} className={clsx('cal-date-cell', isOffRange && 'cal-off-range')}>
-        <div className={clsx(isCurrent && 'cal-current-day-bg-month')}>{label}</div>
+        <div className={clsx(isCurrent && 'cal-today-bg-month')}>{label}</div>
       </div>
     )
   }
