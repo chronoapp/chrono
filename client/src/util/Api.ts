@@ -4,6 +4,7 @@ import Event from '../models/Event'
 import { Label, TimePeriod } from '../models/Label'
 import { LabelRule } from '../models/LabelRule'
 import Calendar from '../models/Calendar'
+import { formatDateTime } from '../util/localizer'
 
 const API_URL = 'http://localhost:8888/api/v1'
 
@@ -167,10 +168,21 @@ export async function searchEvents(authToken: string, query: string): Promise<Ev
 
 // ================== Trends and Stats ==================
 
-export async function getTrends(labelId: number, authToken: string, timePeriod: TimePeriod) {
-  return fetch(`${API_URL}/trends/${labelId}?time_period=${timePeriod}`, {
-    headers: { Authorization: authToken },
-  }).then(handleErrors)
+export async function getTrends(
+  labelId: number,
+  authToken: string,
+  timePeriod: TimePeriod,
+  start: Date,
+  end: Date
+) {
+  return fetch(
+    `${API_URL}/trends/${labelId}?time_period=${timePeriod}&start=${formatDateTime(
+      start
+    )}&end=${formatDateTime(end)}`,
+    {
+      headers: { Authorization: authToken },
+    }
+  ).then(handleErrors)
 }
 
 // Labels

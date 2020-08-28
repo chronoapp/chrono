@@ -1,4 +1,5 @@
 import enum
+
 from sqlalchemy import text
 from fastapi import APIRouter, Depends
 from datetime import datetime, timedelta
@@ -20,20 +21,20 @@ class TimePeriod(enum.Enum):
 
 
 @router.get('/trends/{labelId}')
-def getUserTrends(labelId: int, time_period: str = "WEEK", user=Depends(get_current_user)):
+def getUserTrends(labelId: int,
+                  start: str,
+                  end: str,
+                  time_period: str = "WEEK",
+                  user=Depends(get_current_user)):
+    """TODO: start time, end time as 
+    """
     userId = user.id
     logger.info(f'{userId} {time_period}')
 
     timePeriod = TimePeriod[time_period]
-    endTime = datetime.now()
+    startTime = datetime.fromisoformat(start)
+    endTime = datetime.fromisoformat(end)
 
-    # TODO: Client sends predefined values.
-    if timePeriod == TimePeriod.MONTH:
-        diff = timedelta(days=12 * 365 / 12)
-    else:
-        diff = timedelta(days=12 * 7)
-
-    startTime = endTime - diff
     labels, durations = getTrendsDataResult(userId, labelId, startTime, endTime, timePeriod)
 
     return {'labels': labels, 'values': durations}
@@ -65,22 +66,25 @@ def getTrendsDataResult(userId: int, labelId: int, startTime: datetime, endTime:
             SELECT starting,
                 coalesce(sum(EXTRACT(EPOCH FROM (e.end - e.start))), 0),
                 count(e.start) AS event_count
-            FROM generate_series(date_trunc('TIME_PERIOD', :start_time)
+            FROM generate_series(date_trunc(:time_period, :start_time)
                                 , :end_time
-                                , interval '1 TIME_PERIOD') g(starting)
+                                , interval :time_interval) g(starting)
             LEFT JOIN filtered_events e
                 ON e.start > g.starting
-                AND e.start <  g.starting + interval '1 TIME_PERIOD'
+                AND e.start <  g.starting + interval :time_interval
             GROUP BY starting
             ORDER BY starting;
-        """.replace('TIME_PERIOD', timePeriodValue)
+        """
 
-        result = session.execute(text(query), {
-            'userId': userId,
-            'start_time': startTime,
-            'end_time': endTime,
-            'labelId': labelId
-        })
+        result = session.execute(
+            text(query), {
+                'userId': userId,
+                'start_time': startTime,
+                'end_time': endTime,
+                'labelId': labelId,
+                'time_period': timePeriodValue,
+                'time_interval': f'1 {timePeriodValue}'
+            })
 
         for row in result:
             date, duration, _ = row
