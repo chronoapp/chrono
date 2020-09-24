@@ -17,6 +17,9 @@ from app.core.logger import logger
 from app.core import config
 """
 Adapter to sync to and from google calendar.
+Perhaps separate a common interface, ie.
+- PutEvent: Event -> Result
+- CreateCalendar: (Calendar) -> Result
 """
 
 OLD_COLORS = [
@@ -101,12 +104,20 @@ def syncCalendar(calendar: Calendar, session: Session) -> None:
 
     while True:
         if calendar.sync_token:
-            eventsResult = service.events().list(calendarId=calendar.id,
-                                                 timeMax=None if calendar.sync_token else end,
-                                                 maxResults=250,
-                                                 singleEvents=True,
-                                                 syncToken=calendar.sync_token,
-                                                 pageToken=nextPageToken).execute()
+            try:
+                eventsResult = service.events().list(calendarId=calendar.id,
+                                                    timeMax=None if calendar.sync_token else end,
+                                                    maxResults=250,
+                                                    singleEvents=True,
+                                                    syncToken=calendar.sync_token,
+                                                    pageToken=nextPageToken).execute()
+            except HttpError as e:
+                if e.resp.status == 410:
+                    # Indicates the sync token is invalid => do a full sync.
+                    calendar.sync_token = None
+                    continue
+                else:
+                    raise
         else:
             eventsResult = service.events().list(calendarId=calendar.id,
                                                  timeMax=end,
