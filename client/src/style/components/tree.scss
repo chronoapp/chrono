@@ -1,96 +1,96 @@
 .rc-tree {
-    text-align: left;
+  text-align: left;
 
-    &-indent-unit {
+  &-indent-unit {
+    display: inline-block;
+    padding-left: 1rem;
+  }
+
+  .rc-tree-treenode {
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+    list-style: none;
+    outline: 0;
+
+    .draggable {
+      color: #333;
+      -moz-user-select: none;
+      -khtml-user-select: none;
+      -webkit-user-select: none;
+      user-select: none;
+      /* Required to make elements draggable in old WebKit */
+      -khtml-user-drag: element;
+      -webkit-user-drag: element;
+    }
+
+    // Drag over styles.
+    &.drag-over {
+      > .draggable {
+        color: white;
+        background-color: #316ac5;
+        border: 1px #316ac5 solid;
+        opacity: 0.8;
+        border-radius: 2px;
+      }
+    }
+
+    &.drag-over-gap-top {
+      > .draggable {
+        border-top: 2px $primary solid;
+      }
+    }
+
+    &.drag-over-gap-bottom {
+      > .draggable {
+        border-bottom: 2px $primary solid;
+      }
+    }
+
+    ul {
+      margin: 0;
+      padding: 0 0 0 18px;
+    }
+
+    .rc-tree-node-content-wrapper {
+      display: inline-block;
+      height: 2rem;
+      margin: 0;
+      padding: 2px 2px 0 1px;
+      text-decoration: none;
+      vertical-align: top;
+      cursor: pointer;
+    }
+
+    span {
+      &.rc-tree-switcher {
+        svg {
+          color: $grey-darker;
+        }
+
+        :hover {
+          color: $grey;
+        }
+      }
+
+      &.rc-tree-switcher,
+      &.rc-tree-checkbox,
+      &.rc-tree-iconEle {
         display: inline-block;
-        padding-left: 1rem;
+        width: 22px;
+        height: 22px;
+        margin-right: 2px;
+        // line-height: 16px;
+        vertical-align: middle;
+        color: black;
+        border: 0 none;
+        outline: none;
+        cursor: pointer;
+
+        &.rc-tree-icon__customize {
+          background-image: none;
+        }
+      }
     }
-
-    .rc-tree-treenode {
-        margin: 0;
-        padding: 0;
-        white-space: nowrap;
-        list-style: none;
-        outline: 0;
-
-        .draggable {
-            color: #333;
-            -moz-user-select: none;
-            -khtml-user-select: none;
-            -webkit-user-select: none;
-            user-select: none;
-            /* Required to make elements draggable in old WebKit */
-            -khtml-user-drag: element;
-            -webkit-user-drag: element;
-        }
-
-        // Drag over styles.
-        &.drag-over {
-            >.draggable {
-                color: white;
-                background-color: #316ac5;
-                border: 1px #316ac5 solid;
-                opacity: 0.8;
-                border-radius: 2px;
-            }
-        }
-
-        &.drag-over-gap-top {
-            >.draggable {
-                border-top: 2px $primary solid;
-            }
-        }
-
-        &.drag-over-gap-bottom {
-            >.draggable {
-                border-bottom: 2px $primary solid;
-            }
-        }
-
-        ul {
-            margin: 0;
-            padding: 0 0 0 18px;
-        }
-
-        .rc-tree-node-content-wrapper {
-            display: inline-block;
-            height: 2rem;
-            margin: 0;
-            padding: 2px 2px 0 1px;
-            text-decoration: none;
-            vertical-align: top;
-            cursor: pointer;
-        }
-
-        span {
-            &.rc-tree-switcher {
-                svg {
-                    color: $grey-darker;
-                }
-
-                :hover {
-                    color: $grey
-                }
-            }
-
-            &.rc-tree-switcher,
-            &.rc-tree-checkbox,
-            &.rc-tree-iconEle {
-                display: inline-block;
-                width: 22px;
-                height: 22px;
-                margin-right: 2px;
-                // line-height: 16px;
-                vertical-align: middle;
-                color: black;
-                border: 0 none;
-                outline: none;
-                cursor: pointer;
-
-                &.rc-tree-icon__customize {
-                    background-image: none;
-                }
-            }
-        }
-    }
+  }
 }

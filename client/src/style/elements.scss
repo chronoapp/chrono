@@ -2,66 +2,76 @@
 // unwieldly. Switch to custom elements built with TailwindCSS in the long term.
 
 .tag-block {
-    align-items: center;
-    color: #363636;
-    display: flex;
-    justify-content: flex-start;
-    padding: 0.35em 0.75em;
+  align-items: center;
+  color: #363636;
+  display: flex;
+  justify-content: flex-start;
+  padding: 0.35em 0.75em;
 
-    cursor: pointer;
+  cursor: pointer;
 }
 
 /** Checkbox **/
 
 .cal-checkbox {
-    background: #fff;
-    color: #333;
-    content: "\2713";
-    text-align: center;
+  background: #fff;
+  color: #333;
+  content: '\2713';
+  text-align: center;
 }
 
 /* Hide the browser's default checkbox */
 .cal-checkbox-container input {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-    height: 0;
-    width: 0;
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
 }
 
 /* Create a custom checkbox */
 .cal-checkmark {
-    top: 0;
-    left: 0;
-    height: 1.25em;
-    width: 1.25em;
-    background-color: #eee;
-    border-radius: 5px;
+  top: 0;
+  left: 0;
+  height: 1.25em;
+  width: 1.25em;
+  background-color: #eee;
+  border-radius: 5px;
 }
 
 /* Background when checked */
-.cal-checkbox-container input:checked~.cal-checkmark {
-    background-color: #2196F3;
+.cal-checkbox-container input:checked ~ .cal-checkmark {
+  background-color: #2196f3;
 }
 
 .cal-checkmark:after {
-    content: "";
-    display: none;
+  content: '';
+  display: none;
 }
 
-.cal-checkbox-container input:checked~.cal-checkmark:after {
-    display: block;
+.cal-checkbox-container input:checked ~ .cal-checkmark:after {
+  display: block;
 }
 
 .cal-checkbox-container .cal-checkmark:after {
-    height: 0.7em;
-    width: 0.4em;
-    margin-left: 0.4em;
-    margin-top: 0.2em;
+  height: 0.7em;
+  width: 0.4em;
+  margin-left: 0.4em;
+  margin-top: 0.2em;
 
-    border: solid white;
-    border-width: 0 3px 3px 0;
-    -webkit-transform: rotate(45deg);
-    -ms-transform: rotate(45deg);
-    transform: rotate(45deg);
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  -webkit-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+
+// Modal Scroll
+
+.modal .modal-card {
+  overflow: visible;
+
+  .modal-card-body {
+    overflow: visible;
+  }
 }
