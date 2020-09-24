@@ -11,7 +11,7 @@ from starlette.status import HTTP_400_BAD_REQUEST
 
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
-from app.api.endpoints.labels import LabelVM
+from app.api.endpoints.labels import LabelVM, LabelInDbVM
 from app.core.logger import logger
 from app.db.models import Event, User
 from app.calendar.sync import insertGoogleEvent, deleteGoogleEvent, updateGoogleEvent
@@ -26,7 +26,7 @@ class EventBaseVM(BaseModel):
     description: Optional[str] = None
     start: datetime
     end: datetime
-    labels: List[LabelVM] = []
+    labels: List[LabelInDbVM] = []
     all_day: Optional[bool]
     background_color: Optional[str]
     calendar_id: str
@@ -125,7 +125,7 @@ async def updateEvent(
 
     eventDb.labels.clear()
     for label in event.labels:
-        label = user.labels.filter_by(key=label.key).first()
+        label = user.labels.filter_by(id=label.id).first()
         eventDb.labels.append(label)
 
     if user.syncWithGoogle():

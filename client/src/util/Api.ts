@@ -195,6 +195,26 @@ export async function getLabels(authToken: string, title: string = ''): Promise<
     .then((resp) => resp.map((label: any) => Label.fromJson(label)))
 }
 
+export async function createLabel(
+  title: string,
+  colorHex: string,
+  authToken: string
+): Promise<Label> {
+  const label = {
+    title: title,
+    color_hex: colorHex,
+    position: 0,
+  }
+
+  return fetch(`${API_URL}/labels/`, {
+    method: 'POST',
+    body: JSON.stringify(label),
+    headers: { Authorization: authToken },
+  })
+    .then(handleErrors)
+    .then(Label.fromJson)
+}
+
 export async function putLabel(label: Label, authToken: string): Promise<Label> {
   return fetch(`${API_URL}/labels/${label.id}`, {
     method: 'PUT',

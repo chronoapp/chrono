@@ -89,16 +89,16 @@ class EventList extends Component<Props, State> {
     }
   }
 
-  async addLabel(eventId: number, labelKey: string) {
+  async addLabel(eventId: number, labelId: number) {
     const event = this.state.events.find((e) => e.id == eventId)
     if (!event) return
-    if (event.labels.find((l) => l.key === labelKey)) {
+    if (event.labels.find((l) => l.id === labelId)) {
       this.toggleAddLabelDropdown(eventId)
       return
     }
 
     const { authToken } = this.props
-    const label = this.state.labels.find((l) => l.key == labelKey)
+    const label = this.state.labels.find((l) => l.id == labelId)
     if (!label) return
 
     // If labelRule doesn't exist, add to add to all labels?
@@ -149,10 +149,10 @@ class EventList extends Component<Props, State> {
     this.setState({ isRefreshing: false })
   }
 
-  removeLabel(eventId: number, labelKey: string) {
+  removeLabel(eventId: number, labelId: number) {
     const event = this.state.events.find((e) => e.id == eventId)
     if (event) {
-      const remainingLabels = event.labels.filter((l) => l.key !== labelKey)
+      const remainingLabels = event.labels.filter((l) => l.id !== labelId)
       event.labels = remainingLabels
       updateEvent(this.props.authToken, event)
       this.setState({ events: this.state.events })
@@ -191,8 +191,8 @@ class EventList extends Component<Props, State> {
             <div className="dropdown-content">
               {labels.map((label) => (
                 <a
-                  onClick={(_evt) => this.addLabel(eventId, label.key)}
-                  key={label.key}
+                  onClick={(_evt) => this.addLabel(eventId, label.id)}
+                  key={label.id}
                   className="dropdown-item "
                 >
                   <div
@@ -309,8 +309,8 @@ class EventList extends Component<Props, State> {
 
                     return (
                       <span
-                        onClick={() => this.removeLabel(event.id, label.key)}
-                        key={label.key}
+                        onClick={() => this.removeLabel(event.id, label.id)}
+                        key={`${event.id}-${label.id}`}
                         style={labelStyle}
                         className="tag"
                       >

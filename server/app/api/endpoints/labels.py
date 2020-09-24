@@ -12,9 +12,9 @@ router = APIRouter()
 
 
 class LabelVM(BaseModel):
-    key: str
     title: str
     color_hex: str
+    key: Optional[str]
     parent_id: Optional[int]
     position: int
 
@@ -26,13 +26,17 @@ class LabelInDbVM(LabelVM):
     id: int
 
 
-def createOrUpdateLabel(user: User, labelId: int, label: LabelVM) -> Label:
-    labelDb = user.labels.filter_by(id=labelId).one_or_none()
-    if not labelDb:
-        labelDb = Label(label.title, label.key)
+def createOrUpdateLabel(user: User, labelId: Optional[int], label: LabelVM) -> Label:
+    labelDb = None
+    if labelId:
+        labelDb = user.labels.filter_by(id=labelId).one_or_none()
 
-    labelDb.title = label.title
+    if not labelDb:
+        labelDb = Label(label.title, label.color_hex)
+        user.labels.append(labelDb)
+
     labelDb.color_hex = label.color_hex
+    labelDb.title = label.title
     labelDb.position = label.position
     labelDb.parent_id = label.parent_id
 
@@ -42,6 +46,16 @@ def createOrUpdateLabel(user: User, labelId: int, label: LabelVM) -> Label:
 @router.get('/labels/', response_model=List[LabelInDbVM])
 async def getLabels(user=Depends(get_current_user), session=Depends(get_db)):
     return user.labels.order_by(Label.title).all()
+
+
+@router.post('/labels/', response_model=LabelInDbVM)
+async def createLabel(
+    label: LabelVM, user=Depends(get_current_user), session=Depends(get_db)) -> Label:
+    labelDb = Label(label.title, label.color_hex)
+    user.labels.append(labelDb)
+    session.commit()
+
+    return labelDb
 
 
 @router.put('/labels/', response_model=List[LabelInDbVM])

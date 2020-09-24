@@ -217,10 +217,10 @@ class Label(Base):
     # Position within parent node.
     position = Column(Integer, default=0)
 
-    def __init__(self, title: str, key: str) -> None:
+    def __init__(self, title: str, color_hex: str = DEFAULT_TAG_COLOR) -> None:
         self.title = title
-        self.key = key
-        self.color_hex = DEFAULT_TAG_COLOR
+        self.color_hex = color_hex
+        self.position = 0
 
     def __repr__(self):
         return f'<Label {self.id} {self.title}/>'

@@ -1,6 +1,6 @@
 import tinycolor from 'tinycolor2'
 
-class LabelColor {
+export class LabelColor {
   title: string
   hex: string
 

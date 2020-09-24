@@ -5,6 +5,7 @@ import { mdiCheck, mdiDelete } from '@mdi/js'
 type AlertType = 'UPDATED_EVENT' | 'DELETED_EVENT' | 'CREATED_EVENT'
 
 export interface AlertsContextType {
+  addMessage: (message: string) => void
   addAlert: (alertType: AlertType) => void
   removeAlert: () => void
   alert: Alert
@@ -27,6 +28,10 @@ export function AlertsContextProvider(props: any) {
   }
 
   const defaultContext = {
+    addMessage: function (message: string) {
+      setAlert(new Alert(message, undefined))
+      setTimeout(removeAlert, 3000)
+    },
     addAlert: function (alertType: AlertType) {
       switch (alertType) {
         case 'UPDATED_EVENT':
