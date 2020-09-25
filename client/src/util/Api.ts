@@ -225,6 +225,15 @@ export async function putLabel(label: Label, authToken: string): Promise<Label> 
     .then(Label.fromJson)
 }
 
+export async function deleteLabel(labelId: number, authToken: string): Promise<Label> {
+  return fetch(`${API_URL}/labels/${labelId}`, {
+    method: 'DELETE',
+    headers: { Authorization: authToken },
+  })
+    .then(handleErrors)
+    .then(Label.fromJson)
+}
+
 export async function putLabels(labels: Label[], authToken: string): Promise<Label[]> {
   return fetch(`${API_URL}/labels/`, {
     method: 'PUT',

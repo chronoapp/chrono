@@ -1,14 +1,19 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState, useEffect, useRef } from 'react'
 import Tree, { TreeNode } from 'rc-tree'
 import { EventDataNode } from 'rc-tree/lib/interface'
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown'
 import ChevronRightIcon from '@material-ui/icons/ChevronRight'
+import Icon from '@mdi/react'
+import { mdiDotsHorizontal, mdiDeleteOutline, mdiPencilOutline } from '@mdi/js'
+import clsx from 'clsx'
 
+import { AlertsContext } from '../components/AlertsContext'
+import Hoverable from '../lib/Hoverable'
 import { LabelContext, LabelContextType } from './LabelsContext'
 import { Label } from '../models/Label'
 import ColorPicker from './ColorPicker'
 
-import { getAuthToken, putLabel, putLabels } from '../util/Api'
+import { getAuthToken, putLabel, putLabels, deleteLabel } from '../util/Api'
 
 class TreeItem {
   constructor(
@@ -22,9 +27,26 @@ class TreeItem {
 }
 
 function LabelTree() {
+  const alertsContext = useContext(AlertsContext)
   const { labelState, dispatch } = useContext<LabelContextType>(LabelContext)
   const [expandedKeys, setExpandedKeys] = useState([])
   const [autoExpandParent, setAutoExpandParent] = useState(false)
+
+  const labelOptionsRef = useRef<HTMLDivElement>(null)
+  const [labelIdOptionExpanded, setLabelIdOptionExpanded] = useState<number | undefined>(undefined)
+
+  function handleClickOutside(event) {
+    if (labelOptionsRef.current && !labelOptionsRef.current?.contains(event.target)) {
+      setLabelIdOptionExpanded(undefined)
+    }
+  }
+
+  useEffect(() => {
+    document.addEventListener('click', handleClickOutside)
+    return () => {
+      document.removeEventListener('click', handleClickOutside)
+    }
+  })
 
   const [selectedLabelIdForColor, setSelectedLabelIdForColor] = useState<number | undefined>(
     undefined
@@ -178,15 +200,71 @@ function LabelTree() {
     }
 
     return data.map((item) => {
+      const menuExpanded = labelIdOptionExpanded == item.key
+
+      const Title = () => (
+        <Hoverable>
+          {(isMouseInside, onMouseEnter, onMouseLeave) => (
+            <div
+              onMouseEnter={onMouseEnter}
+              onMouseLeave={onMouseLeave}
+              style={{ display: 'flex', justifyContent: 'space-between' }}
+            >
+              <span>{item.title}</span>
+              {(isMouseInside || menuExpanded) && (
+                <div className={clsx('dropdown', menuExpanded && 'is-active')}>
+                  <div
+                    className="dropdown-trigger"
+                    onClick={(e) => {
+                      // HACK: In react 17, use e.stopPropagation()
+                      document.removeEventListener('click', handleClickOutside)
+                      setLabelIdOptionExpanded(item.key)
+                      document.addEventListener('click', handleClickOutside)
+                    }}
+                  >
+                    <Icon path={mdiDotsHorizontal} size={1} />
+                  </div>
+                  {menuExpanded && (
+                    <div
+                      ref={labelOptionsRef}
+                      className="dropdown-menu"
+                      role="menu"
+                      style={{ marginTop: '-0.5rem' }}
+                    >
+                      <div className="dropdown-content">
+                        <a className="dropdown-item" style={{ display: 'flex' }}>
+                          <Icon path={mdiPencilOutline} size={0.8} className="mr-1" /> Edit
+                        </a>
+                        <a
+                          className="dropdown-item"
+                          style={{ display: 'flex' }}
+                          onClick={() => {
+                            dispatch({ type: 'DELETE', payload: item.key })
+                            deleteLabel(item.key, getAuthToken()).then((r) => {
+                              alertsContext.addMessage(`Tag ${item.title} deleted.`)
+                            })
+                          }}
+                        >
+                          <Icon path={mdiDeleteOutline} size={0.8} className="mr-1" /> Delete
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </Hoverable>
+      )
+
       if (item.children && item.children.length) {
-        const Title = () => <span>{item.title}</span>
         return (
           <TreeNode switcherIcon={Switcher} key={item.key} icon={Label(item.label)} title={Title}>
             {treeData(item.children)}
           </TreeNode>
         )
       }
-      return <TreeNode key={item.key} icon={Label(item.label)} title={item.title}></TreeNode>
+      return <TreeNode key={item.key} icon={Label(item.label)} title={Title}></TreeNode>
     })
   }
 
@@ -219,7 +297,7 @@ function LabelTree() {
       }
     })
 
-    // Create ordered albels array based on positioning
+    // Create ordered labels array based on positioning
     const rootItems = Object.values(allItems).filter((item) => item.level == 0)
     return orderTree(rootItems)
   }

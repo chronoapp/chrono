@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from sqlalchemy.orm import Session
@@ -82,3 +82,17 @@ async def putLabel(
     session.refresh(labelDb)
 
     return labelDb
+
+
+@router.delete('/labels/{labelId}', response_model=LabelInDbVM)
+async def deleteLabel(
+    labelId: int, user: User = Depends(get_current_user),
+    session: Session = Depends(get_db)) -> Label:
+
+    label = session.query(Label).filter_by(id=labelId).one_or_none()
+    if not label:
+        raise HTTPException(status_code=404, detail="Label not found.")
+    else:
+        session.delete(label)
+        session.commit()
+        return label

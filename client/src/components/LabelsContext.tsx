@@ -13,6 +13,7 @@ type ActionType =
   | { type: 'START' }
   | { type: 'INIT'; payload: Label[] }
   | { type: 'UPDATE'; payload: Label }
+  | { type: 'DELETE'; payload: number }
   | { type: 'UPDATE_MULTI'; payload: Record<number, Label> }
 
 export interface LabelContextType {
@@ -51,11 +52,15 @@ function labelReducer(labelState: LabelState, action: ActionType) {
       for (let labelId in labelMap) {
         updates[labelId] = { $set: labelMap[labelId] }
       }
-      const updatedLabels = update(labelState.labelsById, updates)
-
       return {
         ...labelState,
-        labelsById: updatedLabels,
+        labelsById: update(labelState.labelsById, updates),
+      }
+    case 'DELETE':
+      const labelId = action.payload
+      return {
+        ...labelState,
+        labelsById: update(labelState.labelsById, { $unset: [labelId] }),
       }
     default:
       throw new Error('Unknown action')

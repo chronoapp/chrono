@@ -12,6 +12,7 @@
     white-space: nowrap;
     list-style: none;
     outline: 0;
+    display: flex;
 
     .draggable {
       color: #333;
@@ -53,7 +54,8 @@
     }
 
     .rc-tree-node-content-wrapper {
-      display: inline-block;
+      flex: 1;
+      display: flex;
       height: 2rem;
       margin: 0;
       padding: 2px 2px 0 1px;
@@ -71,6 +73,10 @@
         :hover {
           color: $grey;
         }
+      }
+
+      &.rc-tree-title {
+        flex: 1;
       }
 
       &.rc-tree-switcher,

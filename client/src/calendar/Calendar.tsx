@@ -160,7 +160,7 @@ function Calendar() {
             >
               <span>{display}</span>
               <span className="icon is-small">
-                <Icon path={mdiChevronDown} />
+                <Icon path={mdiChevronDown} size={1} />
               </span>
             </button>
           </div>
