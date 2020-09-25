@@ -33,11 +33,11 @@ function LabelTree() {
   const [autoExpandParent, setAutoExpandParent] = useState(false)
 
   const labelOptionsRef = useRef<HTMLDivElement>(null)
-  const [labelIdOptionExpanded, setLabelIdOptionExpanded] = useState<number | undefined>(undefined)
+  const [selectedLabelId, setSelectedLabelId] = useState<number | undefined>(undefined)
 
   function handleClickOutside(event) {
     if (labelOptionsRef.current && !labelOptionsRef.current?.contains(event.target)) {
-      setLabelIdOptionExpanded(undefined)
+      setSelectedLabelId(undefined)
     }
   }
 
@@ -200,7 +200,7 @@ function LabelTree() {
     }
 
     return data.map((item) => {
-      const menuExpanded = labelIdOptionExpanded == item.key
+      const curMenuExpanded = selectedLabelId == item.key
 
       const Title = () => (
         <Hoverable>
@@ -211,20 +211,24 @@ function LabelTree() {
               style={{ display: 'flex', justifyContent: 'space-between' }}
             >
               <span>{item.title}</span>
-              {(isMouseInside || menuExpanded) && (
-                <div className={clsx('dropdown', menuExpanded && 'is-active')}>
+              {(isMouseInside || curMenuExpanded) && (
+                <div className={clsx('dropdown', curMenuExpanded && 'is-active')}>
                   <div
                     className="dropdown-trigger"
                     onClick={(e) => {
                       // HACK: In react 17, use e.stopPropagation()
                       document.removeEventListener('click', handleClickOutside)
-                      setLabelIdOptionExpanded(item.key)
+                      if (curMenuExpanded) {
+                        setSelectedLabelId(undefined)
+                      } else {
+                        setSelectedLabelId(item.key)
+                      }
                       document.addEventListener('click', handleClickOutside)
                     }}
                   >
                     <Icon path={mdiDotsHorizontal} size={1} />
                   </div>
-                  {menuExpanded && (
+                  {curMenuExpanded && (
                     <div
                       ref={labelOptionsRef}
                       className="dropdown-menu"
