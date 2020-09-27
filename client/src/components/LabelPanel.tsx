@@ -10,25 +10,12 @@ import { AlertsContext } from '../components/AlertsContext'
 import { LabelContext, LabelContextType } from './LabelsContext'
 import LabelTree from './LabelTree'
 
-interface LabelModalState {
-  active: boolean
-  colorPickerActive: boolean
-  labelTitle: string
-  color?: LabelColor
-}
-
 /**
  * Panel with a list of labels.
  */
 function LabelPanel() {
   const { labelState, dispatch } = useContext<LabelContextType>(LabelContext)
   const alertsContext = useContext(AlertsContext)
-
-  const [newLabelModal, setNewLabelModal] = useState<LabelModalState>({
-    active: false,
-    colorPickerActive: false,
-    labelTitle: '',
-  })
 
   useEffect(() => {
     async function loadLabels() {
@@ -61,6 +48,7 @@ function LabelPanel() {
 
   function renderProjectLabelModal() {
     const allColors = getSortedLabelColors()
+    const newLabelModal = labelState.editingLabel
     const selectedColor = newLabelModal.color ? newLabelModal.color : allColors[0]
 
     return (
@@ -80,7 +68,10 @@ function LabelPanel() {
                   placeholder=""
                   value={newLabelModal.labelTitle}
                   onChange={(e) => {
-                    setNewLabelModal({ ...newLabelModal, labelTitle: e.target.value })
+                    dispatch({
+                      type: 'UPDATE_EDIT_LABEL',
+                      payload: { ...newLabelModal, labelTitle: e.target.value },
+                    })
                   }}
                 />
               </div>
@@ -97,9 +88,12 @@ function LabelPanel() {
                         aria-haspopup="true"
                         aria-controls="dropdown-menu"
                         onClick={() => {
-                          setNewLabelModal({
-                            ...newLabelModal,
-                            colorPickerActive: !newLabelModal.colorPickerActive,
+                          dispatch({
+                            type: 'UPDATE_EDIT_LABEL',
+                            payload: {
+                              ...newLabelModal,
+                              colorPickerActive: !newLabelModal.colorPickerActive,
+                            },
                           })
                         }}
                       >
@@ -120,10 +114,13 @@ function LabelPanel() {
                               key={color.hex}
                               className="dropdown-item"
                               onClick={() => {
-                                setNewLabelModal({
-                                  ...newLabelModal,
-                                  colorPickerActive: false,
-                                  color,
+                                dispatch({
+                                  type: 'UPDATE_EDIT_LABEL',
+                                  payload: {
+                                    ...newLabelModal,
+                                    colorPickerActive: false,
+                                    color,
+                                  },
                                 })
                               }}
                             >
@@ -144,7 +141,10 @@ function LabelPanel() {
               onClick={() => {
                 createLabel(newLabelModal.labelTitle, selectedColor.hex, getAuthToken()).then(
                   (label) => {
-                    setNewLabelModal({ ...newLabelModal, active: false, labelTitle: '' })
+                    dispatch({
+                      type: 'UPDATE_EDIT_LABEL',
+                      payload: { ...newLabelModal, active: false, labelTitle: '' },
+                    })
                     dispatch({ type: 'UPDATE', payload: label })
                     alertsContext.addMessage(`Created new tag ${label.title}.`)
                   }
@@ -156,7 +156,10 @@ function LabelPanel() {
             <button
               className="button"
               onClick={() => {
-                setNewLabelModal({ ...newLabelModal, active: false, labelTitle: '' })
+                dispatch({
+                  type: 'UPDATE_EDIT_LABEL',
+                  payload: { ...newLabelModal, active: false, labelTitle: '' },
+                })
               }}
             >
               Cancel
@@ -168,15 +171,18 @@ function LabelPanel() {
   }
 
   function onClickAddProject() {
-    setNewLabelModal({
-      ...newLabelModal,
-      active: true,
+    dispatch({
+      type: 'UPDATE_EDIT_LABEL',
+      payload: {
+        ...labelState.editingLabel,
+        active: true,
+      },
     })
   }
 
   return (
     <>
-      {newLabelModal.active && renderProjectLabelModal()}
+      {labelState.editingLabel.active && renderProjectLabelModal()}
       <span className="has-text-left has-text-weight-medium mt-3">Tags</span>
       <LabelTree />
 

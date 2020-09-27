@@ -3,10 +3,20 @@ import React, { createContext, useReducer } from 'react'
 import update from 'immutability-helper'
 import { Label } from '../models/Label'
 import { normalizeArr } from '../lib/normalizer'
+import { LabelColor } from '../models/LabelColors'
 
 export interface LabelState {
   loading: boolean
   labelsById: Record<number, Label>
+  editingLabel: LabelModalState
+}
+
+export interface LabelModalState {
+  active: boolean
+  colorPickerActive: boolean
+  labelTitle: string
+  color?: LabelColor
+  labelId?: number
 }
 
 type ActionType =
@@ -15,6 +25,7 @@ type ActionType =
   | { type: 'UPDATE'; payload: Label }
   | { type: 'DELETE'; payload: number }
   | { type: 'UPDATE_MULTI'; payload: Record<number, Label> }
+  | { type: 'UPDATE_EDIT_LABEL'; payload: LabelModalState }
 
 export interface LabelContextType {
   labelState: LabelState
@@ -62,6 +73,11 @@ function labelReducer(labelState: LabelState, action: ActionType) {
         ...labelState,
         labelsById: update(labelState.labelsById, { $unset: [labelId] }),
       }
+    case 'UPDATE_EDIT_LABEL':
+      return {
+        ...labelState,
+        editingLabel: action.payload,
+      }
     default:
       throw new Error('Unknown action')
   }
@@ -71,6 +87,7 @@ export function LabelsContextProvider(props: any) {
   const [labelState, dispatch] = useReducer(labelReducer, {
     loading: false,
     labelsById: {},
+    editingLabel: { active: false, colorPickerActive: false, labelTitle: '' },
   })
 
   return (
