@@ -12,7 +12,7 @@ function EditLabelModal() {
 
   const allColors = getSortedLabelColors()
   const newLabelModal = labelState.editingLabel
-  const selectedColor = newLabelModal.color ? newLabelModal.color : allColors[0]
+  const selectedColor = newLabelModal.labelColor ? newLabelModal.labelColor : allColors[0]
 
   function ColorLabel(color: LabelColor) {
     return (
@@ -118,7 +118,7 @@ function EditLabelModal() {
                                 payload: {
                                   ...newLabelModal,
                                   colorPickerActive: false,
-                                  color,
+                                  labelColor: color,
                                 },
                               })
                             }}
@@ -141,14 +141,21 @@ function EditLabelModal() {
               onClickSaveLabel(newLabelModal, selectedColor)
             }}
           >
-            Add
+            Save
           </button>
           <button
             className="button"
             onClick={() => {
               dispatch({
                 type: 'UPDATE_EDIT_LABEL',
-                payload: { ...newLabelModal, active: false, labelTitle: '', labelId: undefined },
+                payload: {
+                  ...newLabelModal,
+                  active: false,
+                  colorPickerActive: false,
+                  labelTitle: '',
+                  labelId: undefined,
+                  labelColor: undefined,
+                },
               })
             }}
           >

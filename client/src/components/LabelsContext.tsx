@@ -15,7 +15,7 @@ export interface LabelModalState {
   active: boolean
   colorPickerActive: boolean
   labelTitle: string
-  color?: LabelColor
+  labelColor?: LabelColor
   labelId?: number
 }
 

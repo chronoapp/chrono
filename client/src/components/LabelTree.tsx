@@ -7,6 +7,7 @@ import Icon from '@mdi/react'
 import { mdiDotsHorizontal, mdiDeleteOutline, mdiPencilOutline } from '@mdi/js'
 import clsx from 'clsx'
 
+import { LABEL_COLORS } from '../models/LabelColors'
 import { AlertsContext } from '../components/AlertsContext'
 import Hoverable from '../lib/Hoverable'
 import { LabelContext, LabelContextType } from './LabelsContext'
@@ -32,12 +33,21 @@ function LabelTree() {
   const [expandedKeys, setExpandedKeys] = useState([])
   const [autoExpandParent, setAutoExpandParent] = useState(false)
 
+  const colorPickerRef = useRef<HTMLDivElement>(null)
   const labelOptionsRef = useRef<HTMLDivElement>(null)
   const [selectedLabelId, setSelectedLabelId] = useState<number | undefined>(undefined)
+  const [selectedLabelIdForColor, setSelectedLabelIdForColor] = useState<number | undefined>(
+    undefined
+  )
+  const labelItems = getOrderedLabels()
 
   function handleClickOutside(event) {
     if (labelOptionsRef.current && !labelOptionsRef.current?.contains(event.target)) {
       setSelectedLabelId(undefined)
+    }
+
+    if (colorPickerRef.current && !colorPickerRef.current?.contains(event.target)) {
+      setSelectedLabelIdForColor(undefined)
     }
   }
 
@@ -47,11 +57,6 @@ function LabelTree() {
       document.removeEventListener('click', handleClickOutside)
     }
   })
-
-  const [selectedLabelIdForColor, setSelectedLabelIdForColor] = useState<number | undefined>(
-    undefined
-  )
-  const labelItems = getOrderedLabels()
 
   function onDragStart(info) {
     console.log('start', info)
@@ -163,7 +168,9 @@ function LabelTree() {
     if (labelId == selectedLabelIdForColor) {
       setSelectedLabelIdForColor(undefined)
     } else {
+      document.removeEventListener('click', handleClickOutside)
       setSelectedLabelIdForColor(labelId)
+      document.addEventListener('click', handleClickOutside)
     }
   }
 
@@ -182,9 +189,12 @@ function LabelTree() {
             style={{ backgroundColor: label.color_hex }}
             className="event-label event-label--hoverable dropdown-trigger"
           ></div>
-          {label.id === selectedLabelIdForColor ? (
-            <ColorPicker onSelectLabelColor={(color) => onSelectLabelColor(color, label)} />
-          ) : null}
+          {label.id === selectedLabelIdForColor && (
+            <ColorPicker
+              ref={colorPickerRef}
+              onSelectLabelColor={(color) => onSelectLabelColor(color, label)}
+            />
+          )}
         </div>
       )
     }
@@ -236,7 +246,25 @@ function LabelTree() {
                       style={{ marginTop: '-0.5rem' }}
                     >
                       <div className="dropdown-content">
-                        <a className="dropdown-item" style={{ display: 'flex' }}>
+                        <a
+                          className="dropdown-item"
+                          style={{ display: 'flex' }}
+                          onClick={() => {
+                            const labelColor = LABEL_COLORS.find(
+                              (color) => color.hex == item.label.color_hex
+                            )
+                            dispatch({
+                              type: 'UPDATE_EDIT_LABEL',
+                              payload: {
+                                ...labelState.editingLabel,
+                                active: true,
+                                labelId: item.key,
+                                labelTitle: item.title,
+                                labelColor: labelColor,
+                              },
+                            })
+                          }}
+                        >
                           <Icon path={mdiPencilOutline} size={0.8} className="mr-1" /> Edit
                         </a>
                         <a
