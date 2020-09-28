@@ -13,6 +13,7 @@ import { getTrends, getAuthToken } from '../util/Api'
 
 interface IProps {
   setSelectedView: (v: TrendView) => void
+  selectedLabel?: Label
 }
 
 function HabitGraph(props: IProps) {
@@ -24,17 +25,19 @@ function HabitGraph(props: IProps) {
   const month = dates.visibleDays(viewDate, startOfWeek(), true)
   const weeks = chunk(month, 7)
 
-  const [selectedLabel, setSelectedLabel] = useState<Label>(getSelectedLabel())
-
   useEffect(() => {
     updateTrendsData()
-  }, [])
+  }, [props.selectedLabel])
 
   async function updateTrendsData() {
+    if (!props.selectedLabel) {
+      return
+    }
+
     const authToken = getAuthToken()
     const start = dates.firstVisibleDay(viewDate, startOfWeek())
     const end = dates.lastVisibleDay(viewDate, startOfWeek())
-    const trends = await getTrends(selectedLabel.id, authToken, 'DAY', start, end)
+    const trends = await getTrends(props.selectedLabel.id, authToken, 'DAY', start, end)
 
     const trendMap = new Map<string, number>()
     for (let i = 0; i < trends.labels.length; i++) {
@@ -44,10 +47,6 @@ function HabitGraph(props: IProps) {
     console.log(maxDuration)
     setMaxDuration(maxDuration)
     setTrendMap(trendMap)
-  }
-
-  function getSelectedLabel() {
-    return labelsContext.labelState.labelsById[16]
   }
 
   function renderHeader() {
@@ -60,7 +59,7 @@ function HabitGraph(props: IProps) {
   }
 
   function renderWeek(week: Date[], idx: number) {
-    const { h, s, l } = hexToHSL(selectedLabel.color_hex)
+    const { h, s, l } = hexToHSL(props.selectedLabel!.color_hex)
 
     return (
       <div key={idx} className="cal-mini-month-row">
@@ -98,7 +97,7 @@ function HabitGraph(props: IProps) {
   }
 
   function renderGraph() {
-    if (!trendMap) {
+    if (!trendMap || !props.selectedLabel) {
       return
     }
 

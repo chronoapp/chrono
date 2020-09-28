@@ -14,6 +14,8 @@ import ViewSelector, { TrendView } from './ViewSelector'
 interface IProps {
   authToken: string
   setSelectedView: (view: TrendView) => void
+  selectedLabel?: Label
+  setSelectedLabel: (label: Label) => void
 }
 
 /**
@@ -21,7 +23,6 @@ interface IProps {
  */
 function TrendChart(props: IProps) {
   const [timespanDropdownActive, setTimespanDropdownActive] = useState(false)
-  const [selectedLabel, setSelectedLabel] = useState<Label | null>(null)
   const [trends, setTrends] = useState<any>({})
   const [selectedTimePeriod, setSelectedTimePeriod] = useState<TimePeriod>('WEEK')
 
@@ -31,12 +32,12 @@ function TrendChart(props: IProps) {
 
   useEffect(() => {
     updateTrendsData()
-  }, [selectedTimePeriod, selectedLabel])
+  }, [selectedTimePeriod, props.selectedLabel])
 
   async function updateTrendsData() {
     const authToken = getAuthToken()
 
-    if (selectedLabel) {
+    if (props.selectedLabel) {
       const end = new Date()
       let start
 
@@ -48,17 +49,20 @@ function TrendChart(props: IProps) {
         start = dates.subtract(end, 30, 'day')
       }
 
-      console.log(start)
-      console.log(end)
-
-      const trends = await getTrends(selectedLabel.id, authToken, selectedTimePeriod, start, end)
+      const trends = await getTrends(
+        props.selectedLabel.id,
+        authToken,
+        selectedTimePeriod,
+        start,
+        end
+      )
       setTrends(trends)
     }
   }
 
   function renderTagDropdown(labelsById: Record<number, Label>) {
     const allLabels = Object.values(labelsById)
-    const label = selectedLabel ? selectedLabel : allLabels[0]
+    const label = props.selectedLabel ? props.selectedLabel : allLabels[0]
 
     if (!label) {
       return
@@ -90,7 +94,7 @@ function TrendChart(props: IProps) {
                   key={l.id}
                   className="dropdown-item"
                   style={{ textAlign: 'left' }}
-                  onClick={() => setSelectedLabel(l)}
+                  onClick={() => props.setSelectedLabel(l)}
                 >
                   <span
                     className="event-label"
@@ -173,7 +177,7 @@ function TrendChart(props: IProps) {
       },
     }
 
-    const label = selectedLabel ? selectedLabel : Object.values(labels)[0]
+    const label = props.selectedLabel ? props.selectedLabel : Object.values(labels)[0]
     const colorHex = label ? label.color_hex : 'white'
     const data = {
       labels: trends.labels,
