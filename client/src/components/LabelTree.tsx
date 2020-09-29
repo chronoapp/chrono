@@ -16,6 +16,11 @@ import ColorPicker from './ColorPicker'
 
 import { getAuthToken, putLabel, putLabels, deleteLabel } from '../util/Api'
 
+interface IProps {
+  allowEdit: boolean
+  onSelect?: (label: Label) => void
+}
+
 class TreeItem {
   constructor(
     readonly title: string,
@@ -27,7 +32,7 @@ class TreeItem {
   ) {}
 }
 
-function LabelTree() {
+function LabelTree(props: IProps) {
   const alertsContext = useContext(AlertsContext)
   const { labelState, dispatch } = useContext<LabelContextType>(LabelContext)
   const [expandedKeys, setExpandedKeys] = useState([])
@@ -39,7 +44,7 @@ function LabelTree() {
   const [selectedLabelIdForColor, setSelectedLabelIdForColor] = useState<number | undefined>(
     undefined
   )
-  const labelItems = getOrderedLabels()
+  const labelItems = getOrderedLabels(labelState.labelsById)
 
   function handleClickOutside(event) {
     if (labelOptionsRef.current && !labelOptionsRef.current?.contains(event.target)) {
@@ -180,14 +185,24 @@ function LabelTree() {
     setSelectedLabelIdForColor(undefined)
   }
 
-  function Label(label: Label) {
+  function Label(label: Label, allowEdit: boolean) {
     return () => {
       return (
         <div className={`dropdown ${label.id === selectedLabelIdForColor ? 'is-active' : ''}`}>
           <div
-            onClick={(_) => toggleSelectedLabelId(label.id)}
+            onClick={() => {
+              if (allowEdit) {
+                toggleSelectedLabelId(label.id)
+              } else {
+                props.onSelect && props.onSelect(label)
+              }
+            }}
             style={{ backgroundColor: label.color_hex }}
-            className="event-label event-label--hoverable dropdown-trigger"
+            className={clsx(
+              'event-label',
+              allowEdit && 'event-label--hoverable',
+              'dropdown-trigger'
+            )}
           ></div>
           {label.id === selectedLabelIdForColor && (
             <ColorPicker
@@ -200,7 +215,39 @@ function LabelTree() {
     }
   }
 
-  function treeData(data: TreeItem[]): DataNode[] {
+  function onDeleteLabel(item: TreeItem) {
+    dispatch({ type: 'DELETE', payload: item.key })
+    deleteLabel(item.key, getAuthToken()).then((r) => {
+      alertsContext.addMessage(`Tag ${item.title} deleted.`)
+    })
+  }
+
+  function onClickEditLabel(item: TreeItem) {
+    const labelColor = LABEL_COLORS.find((color) => color.hex == item.label.color_hex)
+    dispatch({
+      type: 'UPDATE_EDIT_LABEL',
+      payload: {
+        ...labelState.editingLabel,
+        active: true,
+        labelId: item.key,
+        labelTitle: item.title,
+        labelColor: labelColor,
+      },
+    })
+  }
+
+  function onClickDropdown(curMenuExpanded: boolean, item: TreeItem) {
+    // HACK: In react 17, use e.stopPropagation()
+    document.removeEventListener('click', handleClickOutside)
+    if (curMenuExpanded) {
+      setSelectedLabelId(undefined)
+    } else {
+      setSelectedLabelId(item.key)
+    }
+    document.addEventListener('click', handleClickOutside)
+  }
+
+  function treeData(data: TreeItem[], allowEdit: boolean): DataNode[] {
     const Switcher = (props: EventDataNode) => {
       if (props.expanded) {
         return <KeyboardArrowDownIcon />
@@ -212,95 +259,81 @@ function LabelTree() {
     return data.map((item) => {
       const curMenuExpanded = selectedLabelId == item.key
 
-      const Title = () => (
-        <Hoverable>
-          {(isMouseInside, onMouseEnter, onMouseLeave) => (
-            <div
-              onMouseEnter={onMouseEnter}
-              onMouseLeave={onMouseLeave}
-              style={{ display: 'flex', justifyContent: 'space-between' }}
-            >
-              <span>{item.title}</span>
-              {(isMouseInside || curMenuExpanded) && (
-                <div className={clsx('dropdown', curMenuExpanded && 'is-active')}>
-                  <div
-                    className="dropdown-trigger"
-                    onClick={(e) => {
-                      // HACK: In react 17, use e.stopPropagation()
-                      document.removeEventListener('click', handleClickOutside)
-                      if (curMenuExpanded) {
-                        setSelectedLabelId(undefined)
-                      } else {
-                        setSelectedLabelId(item.key)
-                      }
-                      document.addEventListener('click', handleClickOutside)
-                    }}
-                  >
-                    <Icon path={mdiDotsHorizontal} size={1} />
-                  </div>
-                  {curMenuExpanded && (
-                    <div
-                      ref={labelOptionsRef}
-                      className="dropdown-menu"
-                      role="menu"
-                      style={{ marginTop: '-0.5rem' }}
-                    >
-                      <div className="dropdown-content">
-                        <a
-                          className="dropdown-item"
-                          style={{ display: 'flex' }}
-                          onClick={() => {
-                            const labelColor = LABEL_COLORS.find(
-                              (color) => color.hex == item.label.color_hex
-                            )
-                            dispatch({
-                              type: 'UPDATE_EDIT_LABEL',
-                              payload: {
-                                ...labelState.editingLabel,
-                                active: true,
-                                labelId: item.key,
-                                labelTitle: item.title,
-                                labelColor: labelColor,
-                              },
-                            })
-                          }}
-                        >
-                          <Icon path={mdiPencilOutline} size={0.8} className="mr-1" /> Edit
-                        </a>
-                        <a
-                          className="dropdown-item"
-                          style={{ display: 'flex' }}
-                          onClick={() => {
-                            dispatch({ type: 'DELETE', payload: item.key })
-                            deleteLabel(item.key, getAuthToken()).then((r) => {
-                              alertsContext.addMessage(`Tag ${item.title} deleted.`)
-                            })
-                          }}
-                        >
-                          <Icon path={mdiDeleteOutline} size={0.8} className="mr-1" /> Delete
-                        </a>
+      const Title = () => {
+        if (allowEdit) {
+          return (
+            <Hoverable>
+              {(isMouseInside, onMouseEnter, onMouseLeave) => (
+                <div
+                  onMouseEnter={onMouseEnter}
+                  onMouseLeave={onMouseLeave}
+                  style={{ display: 'flex', justifyContent: 'space-between' }}
+                >
+                  <span>{item.title}</span>
+                  {(isMouseInside || curMenuExpanded) && (
+                    <div className={clsx('dropdown', curMenuExpanded && 'is-active')}>
+                      <div
+                        className="dropdown-trigger"
+                        onClick={(e) => onClickDropdown(curMenuExpanded, item)}
+                      >
+                        <Icon path={mdiDotsHorizontal} size={1} />
                       </div>
+                      {curMenuExpanded && (
+                        <div
+                          ref={labelOptionsRef}
+                          className="dropdown-menu"
+                          role="menu"
+                          style={{ marginTop: '-0.5rem' }}
+                        >
+                          <div className="dropdown-content">
+                            <a
+                              className="dropdown-item"
+                              style={{ display: 'flex' }}
+                              onClick={() => onClickEditLabel(item)}
+                            >
+                              <Icon path={mdiPencilOutline} size={0.8} className="mr-1" /> Edit
+                            </a>
+                            <a
+                              className="dropdown-item"
+                              style={{ display: 'flex' }}
+                              onClick={() => onDeleteLabel(item)}
+                            >
+                              <Icon path={mdiDeleteOutline} size={0.8} className="mr-1" /> Delete
+                            </a>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               )}
-            </div>
-          )}
-        </Hoverable>
-      )
+            </Hoverable>
+          )
+        } else {
+          return (
+            <span
+              style={{ display: 'inline-block' }}
+              className="pl-1"
+              onClick={() => props.onSelect && props.onSelect(item.label)}
+            >
+              {item.title}
+            </span>
+          )
+        }
+      }
 
       if (item.children && item.children.length) {
         return {
           switcherIcon: Switcher,
           key: item.key,
-          icon: Label(item.label),
+          icon: Label(item.label, allowEdit),
           title: Title,
-          children: treeData(item.children),
+          children: treeData(item.children, allowEdit),
         }
       }
       return {
         key: item.key,
-        icon: Label(item.label),
+        icon: Label(item.label, allowEdit),
         title: Title,
       }
     })
@@ -318,9 +351,9 @@ function LabelTree() {
     return orderedLabels
   }
 
-  function getOrderedLabels(): TreeItem[] {
+  function getOrderedLabels(labelsById: Record<number, Label>): TreeItem[] {
     const allItems: Record<number, TreeItem> = {}
-    const labels: Label[] = Object.values(labelState.labelsById)
+    const labels: Label[] = Object.values(labelsById)
 
     // Create a Tree structure
     labels.map((label) => {
@@ -349,7 +382,7 @@ function LabelTree() {
       onDragStart={onDragStart}
       onDragEnter={onDragEnter}
       onDrop={onDrop}
-      treeData={treeData(labelItems)}
+      treeData={treeData(labelItems, props.allowEdit)}
     />
   )
 }

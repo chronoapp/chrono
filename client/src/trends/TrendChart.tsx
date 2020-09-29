@@ -10,6 +10,7 @@ import { getTrends, getAuthToken } from '../util/Api'
 import { Label, TimePeriod } from '../models/Label'
 import { LabelContext } from '../components/LabelsContext'
 import ViewSelector, { TrendView } from './ViewSelector'
+import LabelTree from '../components/LabelTree'
 
 interface IProps {
   authToken: string
@@ -22,9 +23,9 @@ interface IProps {
  * List of trends.
  */
 function TrendChart(props: IProps) {
-  const [timespanDropdownActive, setTimespanDropdownActive] = useState(false)
   const [trends, setTrends] = useState<any>({})
   const [selectedTimePeriod, setSelectedTimePeriod] = useState<TimePeriod>('WEEK')
+  const [labelTreeExpanded, setLabelTreeExpanded] = useState<boolean>(false)
 
   useEffect(() => {
     updateTrendsData()
@@ -69,14 +70,8 @@ function TrendChart(props: IProps) {
     }
 
     return (
-      <div
-        className={clsx(
-          'ml-2 mr-2 dropdown',
-          'is-hoverable',
-          timespanDropdownActive && 'is-active'
-        )}
-      >
-        <div onClick={() => console.log('dropdown')} className="dropdown-trigger">
+      <div className={clsx('ml-2 mr-2 dropdown', labelTreeExpanded && 'is-active')}>
+        <div onClick={() => setLabelTreeExpanded(!labelTreeExpanded)} className="dropdown-trigger">
           <button className="button" aria-haspopup="true" aria-controls="dropdown-menu">
             <span
               className="event-label"
@@ -88,22 +83,13 @@ function TrendChart(props: IProps) {
         </div>
         <div className="dropdown-menu" id="dropdown-menu" role="menu">
           <div className="dropdown-content">
-            {allLabels.map((l) => {
-              return (
-                <a
-                  key={l.id}
-                  className="dropdown-item"
-                  style={{ textAlign: 'left' }}
-                  onClick={() => props.setSelectedLabel(l)}
-                >
-                  <span
-                    className="event-label"
-                    style={{ backgroundColor: l.color_hex, display: 'inline-block' }}
-                  ></span>
-                  <span className="ml-1">{l.title}</span>
-                </a>
-              )
-            })}
+            <LabelTree
+              allowEdit={false}
+              onSelect={(label) => {
+                props.setSelectedLabel(label)
+                setLabelTreeExpanded(false)
+              }}
+            />
           </div>
         </div>
       </div>
@@ -213,7 +199,7 @@ function TrendChart(props: IProps) {
         } else {
           return (
             <div className="container mt-2">
-              <div className="has-text-weight-semibold">
+              <div>
                 <div className="level">
                   <div className="level-left">
                     Time spent on {renderTagDropdown(labelsById)} per {renderTimePeriodSelections()}

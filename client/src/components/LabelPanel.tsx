@@ -44,7 +44,7 @@ function LabelPanel() {
     <>
       {labelState.editingLabel.active && <LabelEditModal />}
       <span className="has-text-left has-text-weight-medium mt-3">Tags</span>
-      <LabelTree />
+      <LabelTree allowEdit={true} />
 
       <button
         className="button is-text"
