@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useRef } from 'react'
-import Tree, { TreeNode } from 'rc-tree'
-import { EventDataNode } from 'rc-tree/lib/interface'
+import Tree from 'rc-tree'
+import { EventDataNode, DataNode } from 'rc-tree/lib/interface'
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown'
 import ChevronRightIcon from '@material-ui/icons/ChevronRight'
 import Icon from '@mdi/react'
@@ -200,7 +200,7 @@ function LabelTree() {
     }
   }
 
-  function treeData(data: TreeItem[]) {
+  function treeData(data: TreeItem[]): DataNode[] {
     const Switcher = (props: EventDataNode) => {
       if (props.expanded) {
         return <KeyboardArrowDownIcon />
@@ -290,13 +290,19 @@ function LabelTree() {
       )
 
       if (item.children && item.children.length) {
-        return (
-          <TreeNode switcherIcon={Switcher} key={item.key} icon={Label(item.label)} title={Title}>
-            {treeData(item.children)}
-          </TreeNode>
-        )
+        return {
+          switcherIcon: Switcher,
+          key: item.key,
+          icon: Label(item.label),
+          title: Title,
+          children: treeData(item.children),
+        }
       }
-      return <TreeNode key={item.key} icon={Label(item.label)} title={Title}></TreeNode>
+      return {
+        key: item.key,
+        icon: Label(item.label),
+        title: Title,
+      }
     })
   }
 
@@ -343,9 +349,8 @@ function LabelTree() {
       onDragStart={onDragStart}
       onDragEnter={onDragEnter}
       onDrop={onDrop}
-    >
-      {treeData(labelItems)}
-    </Tree>
+      treeData={treeData(labelItems)}
+    />
   )
 }
 
