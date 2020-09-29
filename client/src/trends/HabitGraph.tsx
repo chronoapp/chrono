@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react'
 import chunk from 'lodash/chunk'
 import clsx from 'clsx'
+import Icon from '@mdi/react'
+import { mdiChevronLeft, mdiChevronRight } from '@mdi/js'
 
 import ViewSelector, { TrendView } from './ViewSelector'
 import { Label, TimePeriod } from '../models/Label'
@@ -21,13 +23,13 @@ function HabitGraph(props: IProps) {
   const [maxDuration, setMaxDuration] = useState(0)
 
   const labelsContext = useContext(LabelContext)
-  const viewDate = new Date()
+  const [viewDate, setViewDate] = useState(new Date())
   const month = dates.visibleDays(viewDate, startOfWeek(), true)
   const weeks = chunk(month, 7)
 
   useEffect(() => {
     updateTrendsData()
-  }, [props.selectedLabel])
+  }, [props.selectedLabel, viewDate])
 
   async function updateTrendsData() {
     if (!props.selectedLabel) {
@@ -111,9 +113,28 @@ function HabitGraph(props: IProps) {
 
   return (
     <div className="container mt-2">
-      <div className="has-text-weight-semibold">
+      <div>
         <div className="level">
-          <div className="level-left">Habit Chart</div>
+          <div className="level-left">
+            <span className="mr-2">Habit Chart</span>
+            <button
+              className="button is-text is-small is-size-6"
+              onClick={() => setViewDate(dates.subtract(viewDate, 1, 'month'))}
+            >
+              <span className="icon">
+                <Icon path={mdiChevronLeft} size={1} />
+              </span>
+            </button>
+            <button
+              className="button is-text is-small is-size-6"
+              onClick={() => setViewDate(dates.add(viewDate, 1, 'month'))}
+            >
+              <span className="icon">
+                <Icon path={mdiChevronRight} size={1} />
+              </span>
+            </button>
+            <span className="ml-2">{format(viewDate, 'MMMM YYYY')}</span>
+          </div>
           <ViewSelector setSelectedView={props.setSelectedView} selectedView={'HABIT_GRAPH'} />
         </div>
       </div>
