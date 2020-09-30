@@ -246,8 +246,12 @@ export async function putLabels(labels: Label[], authToken: string): Promise<Lab
 
 // Label Rules
 
-export async function getLabelRules(labelText: string, authToken: string): Promise<LabelRule[]> {
-  return fetch(`${API_URL}/label_rules/?text=${labelText}`, {
+export async function getLabelRules(
+  labelText: string,
+  labelId: number,
+  authToken: string
+): Promise<LabelRule[]> {
+  return fetch(`${API_URL}/label_rules/?text=${labelText}&label_id=${labelId}`, {
     headers: { Authorization: authToken },
   })
     .then(handleErrors)

@@ -16,6 +16,7 @@ import Event from '../models/Event'
 import { Label } from '../models/Label'
 import { LabelRule } from '../models/LabelRule'
 import Layout from '../components/Layout'
+import LabelTree from '../components/LabelTree'
 
 interface Props {
   authToken: string
@@ -99,11 +100,13 @@ class EventList extends Component<Props, State> {
 
     const { authToken } = this.props
     const label = this.state.labels.find((l) => l.id == labelId)
-    if (!label) return
+    if (!label) {
+      return
+    }
 
     // If labelRule doesn't exist, add to add to all labels?
     // TODO: rethink the UI or make it more performant
-    const labelRules = await getLabelRules(event.title, authToken)
+    const labelRules = await getLabelRules(event.title, label.id, authToken)
     const labelRuleState = {
       event: event,
       label: label,
@@ -189,23 +192,12 @@ class EventList extends Component<Props, State> {
         {eventId === this.state.dropdownEventId ? (
           <div className="dropdown-menu" id="dropdown-menu" role="menu">
             <div className="dropdown-content">
-              {labels.map((label) => (
-                <a
-                  onClick={(_evt) => this.addLabel(eventId, label.id)}
-                  key={label.id}
-                  className="dropdown-item "
-                >
-                  <div
-                    style={{
-                      backgroundColor: label.color_hex,
-                      display: 'inline-block',
-                      verticalAlign: 'middle',
-                    }}
-                    className="event-label"
-                  ></div>
-                  <span style={{ marginLeft: '.5em' }}>{label.title}</span>
-                </a>
-              ))}
+              <LabelTree
+                allowEdit={false}
+                onSelect={(label) => {
+                  this.addLabel(eventId, label.id)
+                }}
+              />
             </div>
           </div>
         ) : null}
@@ -296,7 +288,7 @@ class EventList extends Component<Props, State> {
           {events.map((event) => {
             return (
               <tr key={`event-${event.id}`}>
-                <td>{format(event.start, 'MMMM DD')}</td>
+                <td>{format(event.start, 'MMM DD')}</td>
                 <td>{getDurationDisplay(event.start, event.end)}</td>
                 <td>{event.title}</td>
                 <td>

@@ -1,6 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
+from sqlalchemy import and_
 
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
@@ -26,10 +27,12 @@ class LabelRuleInDBVM(LabelRuleVM):
 
 
 @router.get('/label_rules/', response_model=List[LabelRuleInDBVM])
-async def getLabelRules(text: str = '', user=Depends(get_current_user), session=Depends(get_db)):
-
+async def getLabelRules(label_id: int,
+                        text: str = '',
+                        user=Depends(get_current_user),
+                        session=Depends(get_db)):
     if text:
-        return user.label_rules.filter(LabelRule.text == text).all()
+        return user.label_rules.filter(and_(LabelRule.text == text, LabelRule.id == label_id)).all()
     else:
         return user.label_rules.all()
 
