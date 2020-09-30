@@ -9,7 +9,6 @@ import {
   searchEvents,
   getLabelRules,
   putLabelRule,
-  syncCalendar,
   auth,
 } from '../util/Api'
 import Event from '../models/Event'
@@ -63,7 +62,6 @@ class EventList extends Component<Props, State> {
     this.onSearchChange = this.onSearchChange.bind(this)
     this.refreshEvents = this.refreshEvents.bind(this)
     this.applyLabelToEvent = this.applyLabelToEvent.bind(this)
-    this.refreshCalendar = this.refreshCalendar.bind(this)
   }
 
   static async getInitialProps(ctx) {
@@ -143,13 +141,6 @@ class EventList extends Component<Props, State> {
     }
 
     this.setState({ labelRuleState: null })
-  }
-
-  async refreshCalendar() {
-    this.setState({ isRefreshing: true })
-    await syncCalendar(this.props.authToken)
-    await this.refreshEvents()
-    this.setState({ isRefreshing: false })
   }
 
   removeLabel(eventId: number, labelId: number) {
@@ -270,86 +261,81 @@ class EventList extends Component<Props, State> {
 
   renderTable() {
     const { events } = this.state
-    if (events.length == 0) {
-      return <div />
-    }
 
     return (
-      <table className="table has-text-left">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Duration</th>
-            <th>Event</th>
-            <th>Label</th>
-          </tr>
-        </thead>
-        <tbody>
-          {events.map((event) => {
-            return (
-              <tr key={`event-${event.id}`}>
-                <td>{format(event.start, 'MMM DD')}</td>
-                <td>{getDurationDisplay(event.start, event.end)}</td>
-                <td>{event.title}</td>
-                <td>
-                  {event.labels.map((label) => {
-                    const labelStyle = {
-                      backgroundColor: label.color_hex,
-                      marginRight: 5,
-                      color: tinycolor(label.color_hex).getLuminance() < 0.5 ? 'white' : '#4a4a4a',
-                    }
+      events.length > 0 && (
+        <table className="table has-text-left">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Duration</th>
+              <th>Event</th>
+              <th>Label</th>
+            </tr>
+          </thead>
+          <tbody>
+            {events.map((event) => {
+              return (
+                <tr key={`event-${event.id}`}>
+                  <td>{format(event.start, 'MMM DD')}</td>
+                  <td>{getDurationDisplay(event.start, event.end)}</td>
+                  <td>{event.title}</td>
+                  <td>
+                    {event.labels.map((label) => {
+                      const labelStyle = {
+                        backgroundColor: label.color_hex,
+                        marginRight: 5,
+                        color:
+                          tinycolor(label.color_hex).getLuminance() < 0.5 ? 'white' : '#4a4a4a',
+                      }
 
-                    return (
-                      <span
-                        onClick={() => this.removeLabel(event.id, label.id)}
-                        key={`${event.id}-${label.id}`}
-                        style={labelStyle}
-                        className="tag"
-                      >
-                        {label.title}
-                      </span>
-                    )
-                  })}
-                  {this.renderDropdown(event.id)}
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+                      return (
+                        <span
+                          onClick={() => this.removeLabel(event.id, label.id)}
+                          key={`${event.id}-${label.id}`}
+                          style={labelStyle}
+                          className="tag"
+                        >
+                          {label.title}
+                        </span>
+                      )
+                    })}
+                    {this.renderDropdown(event.id)}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      )
     )
   }
 
   renderSearchBar() {
     return (
-      <div className="field has-addons mt-3">
-        <div className="control is-expanded">
-          <input
-            className="input"
-            type="text"
-            value={this.state.searchValue}
-            onChange={this.onSearchChange}
-            onKeyPress={(event) => {
-              if (event.key == 'Enter') {
-                this.refreshEvents()
-              }
-            }}
-            placeholder="Find an event"
-          />
+      this.state.events.length > 0 && (
+        <div className="field has-addons mt-3">
+          <div className="control is-expanded">
+            <input
+              className="input"
+              type="text"
+              value={this.state.searchValue}
+              onChange={this.onSearchChange}
+              onKeyPress={(event) => {
+                if (event.key == 'Enter') {
+                  this.refreshEvents()
+                }
+              }}
+              placeholder="Find an event"
+            />
+          </div>
+          <div className="control">
+            <a className="button is-info" onClick={this.refreshEvents}>
+              Search
+            </a>
+          </div>
         </div>
-        <div className="control">
-          <a className="button is-info" onClick={this.refreshEvents}>
-            Search
-          </a>
-        </div>
-        <button
-          style={{ marginLeft: '1em' }}
-          onClick={this.refreshCalendar}
-          className={`button is-small is-link ${this.state.isRefreshing ? 'is-loading' : null}`}
-        >
-          Refresh
-        </button>
-      </div>
+      )
     )
   }
 

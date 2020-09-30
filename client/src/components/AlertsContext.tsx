@@ -16,9 +16,7 @@ export const AlertsContext = createContext<AlertsContextType>(undefined!)
 /**
  * Global event notifications.
  * TODO: Display in progress notifications.
- * TODO: Could this use a global pub/sub instead of react context? This prevents the need to
- * include AlertsContext.consumer in all components that need to display a message.
- *
+ * TODO: Use a queue instead.
  */
 export function AlertsContextProvider(props: any) {
   const [alert, setAlert] = useState<Alert>(undefined!)

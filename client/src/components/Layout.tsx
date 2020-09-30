@@ -1,13 +1,16 @@
-import * as React from 'react'
+import React, { useState, useContext } from 'react'
 import clsx from 'clsx'
 import Link from 'next/link'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
+import Icon from '@mdi/react'
+import { mdiDotsHorizontal } from '@mdi/js'
 
-import { signOut } from '../util/Api'
+import { getAuthToken, signOut, syncCalendar } from '../util/Api'
 import MiniCalendar from '../calendar/MiniCalendar'
 import LabelPanel from './LabelPanel'
 import CalendarsPanel from './CalendarsPanel'
+import { AlertsContext } from '../components/AlertsContext'
 
 import '../style/index.scss'
 
@@ -21,6 +24,39 @@ interface Props {
  */
 // export default class Layout extends React.Component<Props, {}> {
 function Layout(props: Props) {
+  const [settingsActive, setSettingsActive] = useState(false)
+  const alertsContext = useContext(AlertsContext)
+
+  async function refreshCalendar() {
+    setSettingsActive(false)
+    alertsContext.addMessage('Updating calendar..')
+    await syncCalendar(getAuthToken())
+    alertsContext.addMessage('Calendar updated.')
+  }
+
+  function Settings() {
+    return (
+      <div className={clsx('dropdown', settingsActive && 'is-active')}>
+        <div className="dropdown-trigger" onClick={() => setSettingsActive(!settingsActive)}>
+          <button className="button is-text">
+            <Icon size={1} path={mdiDotsHorizontal}></Icon>
+          </button>
+        </div>
+        <div className="dropdown-menu" style={{ right: 0, left: 'auto' }}>
+          <div className="dropdown-content has-text-left">
+            <a className="dropdown-item" onClick={refreshCalendar}>
+              Refresh Events
+            </a>
+            <hr style={{ margin: 0 }} />
+            <a className="dropdown-item" onClick={signOut}>
+              Sign Out
+            </a>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   function renderNavItems() {
     const router = useRouter()
 
@@ -30,16 +66,6 @@ function Layout(props: Props) {
           <Link href="/">
             <a className={clsx('pl-0', 'navbar-item', router.pathname == '/' && 'is-active')}>
               Calendar
-            </a>
-          </Link>
-          <Link href="/trends">
-            <a
-              className={clsx({
-                'navbar-item': true,
-                'is-active': router.pathname == '/trends',
-              })}
-            >
-              Trends
             </a>
           </Link>
           <Link href="/events">
@@ -52,14 +78,21 @@ function Layout(props: Props) {
               Events
             </a>
           </Link>
+          <Link href="/trends">
+            <a
+              className={clsx({
+                'navbar-item': true,
+                'is-active': router.pathname == '/trends',
+              })}
+            >
+              Trends
+            </a>
+          </Link>
         </div>
+
         <div className="navbar-end">
           <div className="navbar-item">
-            <div className="buttons">
-              <a onClick={signOut} className="button is-white">
-                Log out
-              </a>
-            </div>
+            <Settings />
           </div>
         </div>
       </div>
@@ -79,7 +112,10 @@ function Layout(props: Props) {
       <nav className="navbar" role="navigation" aria-label="main navigation">
         <div className="navbar-brand">
           <a className="navbar-item" href="#">
-            <img src={'./timecouncil-symbol.png'} style={{ maxHeight: '2.5rem' }} />
+            <img
+              src={'./timecouncil-symbol.png'}
+              style={{ maxHeight: '2.5rem', width: '2.5rem' }}
+            />
           </a>
 
           <a
