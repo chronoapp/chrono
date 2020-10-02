@@ -173,12 +173,10 @@ class EventList extends Component<Props, State> {
   }
 
   renderDropdown(eventId: number) {
-    const { labels } = this.state
-
     return (
       <div className={`dropdown ${eventId == this.state.dropdownEventId ? 'is-active' : ''}`}>
         <div onClick={(_evt) => this.toggleAddLabelDropdown(eventId)} className="dropdown-trigger">
-          <a className="button is-text is-small">add label</a>
+          <a className="button is-text is-small">add tag</a>
         </div>
         {eventId === this.state.dropdownEventId ? (
           <div className="dropdown-menu" id="dropdown-menu" role="menu">
@@ -207,7 +205,7 @@ class EventList extends Component<Props, State> {
         <div className="modal-background"></div>
         <div className="modal-card">
           <header className="modal-card-head">
-            <p className="modal-card-title">Add label to event</p>
+            <p className="modal-card-title">Add tag to event</p>
           </header>
           <section className="modal-card-body">
             <div className="control radio-list">
@@ -270,7 +268,7 @@ class EventList extends Component<Props, State> {
               <th>Date</th>
               <th>Duration</th>
               <th>Event</th>
-              <th>Label</th>
+              <th>Tag</th>
             </tr>
           </thead>
           <tbody>

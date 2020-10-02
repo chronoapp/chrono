@@ -6,10 +6,11 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight'
 import Icon from '@mdi/react'
 import { mdiDotsHorizontal, mdiDeleteOutline, mdiPencilOutline } from '@mdi/js'
 import clsx from 'clsx'
+import Popover from '../lib/popover/Popover'
+import Hoverable from '../lib/Hoverable'
 
 import { LABEL_COLORS } from '../models/LabelColors'
 import { AlertsContext } from '../components/AlertsContext'
-import Hoverable from '../lib/Hoverable'
 import { LabelContext, LabelContextType } from './LabelsContext'
 import { Label } from '../models/Label'
 import ColorPicker from './ColorPicker'
@@ -30,6 +31,14 @@ class TreeItem {
     readonly position: number,
     readonly level = 0
   ) {}
+}
+
+function usePrevious(value) {
+  const ref = useRef()
+  useEffect(() => {
+    ref.current = value
+  })
+  return ref.current
 }
 
 function LabelTree(props: IProps) {
@@ -62,6 +71,13 @@ function LabelTree(props: IProps) {
       document.removeEventListener('click', handleClickOutside)
     }
   })
+
+  const prevEditLabelModalOpen = usePrevious(labelState.editingLabel.active)
+  useEffect(() => {
+    if (prevEditLabelModalOpen && !labelState.editingLabel.active) {
+      setSelectedLabelId(undefined)
+    }
+  }, [labelState.editingLabel.active])
 
   function onDragStart(info) {
     console.log('start', info)
@@ -185,7 +201,7 @@ function LabelTree(props: IProps) {
     setSelectedLabelIdForColor(undefined)
   }
 
-  function Label(label: Label, allowEdit: boolean) {
+  function LabelView(label: Label, allowEdit: boolean) {
     return () => {
       return (
         <div className={`dropdown ${label.id === selectedLabelIdForColor ? 'is-active' : ''}`}>
@@ -247,6 +263,34 @@ function LabelTree(props: IProps) {
     document.addEventListener('click', handleClickOutside)
   }
 
+  function renderDropdownMenu(item: TreeItem) {
+    return (
+      <div
+        ref={labelOptionsRef}
+        className="dropdown-menu"
+        role="menu"
+        style={{ marginTop: '-0.5rem', display: 'block', position: 'unset' }}
+      >
+        <div className="dropdown-content">
+          <a
+            className="dropdown-item"
+            style={{ display: 'flex' }}
+            onClick={() => onClickEditLabel(item)}
+          >
+            <Icon path={mdiPencilOutline} size={0.8} className="mr-1" /> Edit
+          </a>
+          <a
+            className="dropdown-item"
+            style={{ display: 'flex' }}
+            onClick={() => onDeleteLabel(item)}
+          >
+            <Icon path={mdiDeleteOutline} size={0.8} className="mr-1" /> Delete
+          </a>
+        </div>
+      </div>
+    )
+  }
+
   function treeData(data: TreeItem[], allowEdit: boolean): DataNode[] {
     const Switcher = (props: EventDataNode) => {
       if (props.expanded) {
@@ -271,38 +315,22 @@ function LabelTree(props: IProps) {
                 >
                   <span>{item.title}</span>
                   {(isMouseInside || curMenuExpanded) && (
-                    <div className={clsx('dropdown', curMenuExpanded && 'is-active')}>
-                      <div
-                        className="dropdown-trigger"
-                        onClick={(e) => onClickDropdown(curMenuExpanded, item)}
+                    <div className={clsx('dropdown')}>
+                      <Popover
+                        content={() => renderDropdownMenu(item)}
+                        containerClassName={'edit-label-container'}
+                        isOpen={curMenuExpanded}
+                        align={'start'}
+                        padding={-5}
+                        position={['bottom']}
                       >
-                        <Icon path={mdiDotsHorizontal} size={1} />
-                      </div>
-                      {curMenuExpanded && (
                         <div
-                          ref={labelOptionsRef}
-                          className="dropdown-menu"
-                          role="menu"
-                          style={{ marginTop: '-0.5rem' }}
+                          className="dropdown-trigger"
+                          onClick={(e) => onClickDropdown(curMenuExpanded, item)}
                         >
-                          <div className="dropdown-content">
-                            <a
-                              className="dropdown-item"
-                              style={{ display: 'flex' }}
-                              onClick={() => onClickEditLabel(item)}
-                            >
-                              <Icon path={mdiPencilOutline} size={0.8} className="mr-1" /> Edit
-                            </a>
-                            <a
-                              className="dropdown-item"
-                              style={{ display: 'flex' }}
-                              onClick={() => onDeleteLabel(item)}
-                            >
-                              <Icon path={mdiDeleteOutline} size={0.8} className="mr-1" /> Delete
-                            </a>
-                          </div>
+                          <Icon path={mdiDotsHorizontal} size={1} />
                         </div>
-                      )}
+                      </Popover>
                     </div>
                   )}
                 </div>
@@ -326,14 +354,14 @@ function LabelTree(props: IProps) {
         return {
           switcherIcon: Switcher,
           key: item.key,
-          icon: Label(item.label, allowEdit),
+          icon: LabelView(item.label, allowEdit),
           title: Title,
           children: treeData(item.children, allowEdit),
         }
       }
       return {
         key: item.key,
-        icon: Label(item.label, allowEdit),
+        icon: LabelView(item.label, allowEdit),
         title: Title,
       }
     })

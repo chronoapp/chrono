@@ -2,7 +2,6 @@ import React from 'react'
 import clsx from 'clsx'
 
 import Popover from '../lib/popover/Popover'
-import { PopoverInfo } from '../lib/popover/index'
 
 import SlotMetrics from './utils/SlotMetrics'
 import getStyledEvents from './utils/DayEventLayout'
