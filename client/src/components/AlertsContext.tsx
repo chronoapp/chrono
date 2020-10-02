@@ -1,12 +1,9 @@
 import React, { createContext, useState } from 'react'
 import Alert from '../models/Alert'
-import { mdiCheck, mdiDelete } from '@mdi/js'
-
-type AlertType = 'UPDATED_EVENT' | 'DELETED_EVENT' | 'CREATED_EVENT' | 'SAVING_EVENT'
 
 export interface AlertsContextType {
   addMessage: (message: string) => void
-  addAlert: (alertType: AlertType) => void
+  addAlert: (alert: Alert) => void
   removeAlert: () => void
   alert: Alert
 }
@@ -30,23 +27,8 @@ export function AlertsContextProvider(props: any) {
       setAlert(new Alert(message, undefined))
       setTimeout(removeAlert, 3000)
     },
-    addAlert: function (alertType: AlertType) {
-      switch (alertType) {
-        case 'SAVING_EVENT':
-          setAlert(new Alert('Saving Event..', undefined, true))
-          break
-        case 'UPDATED_EVENT':
-          setAlert(new Alert('Event Updated.', mdiCheck))
-          break
-        case 'DELETED_EVENT':
-          setAlert(new Alert('Event Deleted', mdiDelete))
-          break
-        case 'CREATED_EVENT':
-          setAlert(new Alert('Event Created.', mdiCheck))
-          break
-        default:
-          throw new Error('Invalid alert type')
-      }
+    addAlert: function (alert: Alert) {
+      setAlert(alert)
       setTimeout(removeAlert, 3000)
     },
     removeAlert,

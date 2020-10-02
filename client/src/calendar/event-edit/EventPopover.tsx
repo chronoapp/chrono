@@ -5,7 +5,15 @@ import Select from 'react-select'
 
 import * as dates from '../../util/dates'
 import Icon from '@mdi/react'
-import { mdiTextSubject, mdiClockOutline, mdiCalendar, mdiDeleteOutline, mdiClose } from '@mdi/js'
+import {
+  mdiTextSubject,
+  mdiClockOutline,
+  mdiCalendar,
+  mdiDeleteOutline,
+  mdiClose,
+  mdiDelete,
+  mdiCheck,
+} from '@mdi/js'
 
 import { getAuthToken, createEvent, updateEvent, deleteEvent } from '../../util/Api'
 import { format } from '../../util/localizer'
@@ -13,6 +21,7 @@ import { format } from '../../util/localizer'
 import Event from '../../models/Event'
 import Calendar from '../../models/Calendar'
 import { Label } from '../../models/Label'
+import Alert from '../../models/Alert'
 import { EventActionContext } from '../EventActionContext'
 import { CalendarsContext } from '../../components/CalendarsContext'
 import { AlertsContext } from '../../components/AlertsContext'
@@ -99,7 +108,7 @@ function EventPopover(props: IProps) {
     const token = getAuthToken()
 
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
-    alertsContext.addAlert('SAVING_EVENT')
+    alertsContext.addAlert(new Alert('Saving Event..', undefined, true))
     if (isExistingEvent) {
       eventActions.eventDispatch({
         type: 'UPDATE_EVENT',
@@ -111,7 +120,7 @@ function EventPopover(props: IProps) {
           type: 'UPDATE_EVENT',
           payload: { event, replaceEventId: -1 },
         })
-        alertsContext.addAlert('UPDATED_EVENT')
+        alertsContext.addAlert(new Alert('Event Updated.', mdiCheck))
       })
     } else {
       eventActions.eventDispatch({ type: 'CREATE_EVENT', payload: event })
@@ -122,7 +131,7 @@ function EventPopover(props: IProps) {
           type: 'UPDATE_EVENT',
           payload: { event, replaceEventId: -1 },
         })
-        alertsContext.addAlert('CREATED_EVENT')
+        alertsContext.addAlert(new Alert('Event Created.', mdiCheck))
       })
     }
   }
@@ -134,8 +143,9 @@ function EventPopover(props: IProps) {
       payload: { eventId: props.event.id },
     })
     const token = getAuthToken()
+    alertsContext.addAlert(new Alert('Deleting Event..', undefined, true))
     deleteEvent(token, eventId).then(() => {
-      alertsContext.addAlert('DELETED_EVENT')
+      alertsContext.addAlert(new Alert('Event Deleted', mdiDelete))
     })
   }
 
