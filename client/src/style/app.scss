@@ -103,6 +103,12 @@ code {
   }
 }
 
+.event-label-small {
+  @extend .event-label;
+  width: 1em;
+  height: 1em;
+}
+
 .has-icon-grey {
   svg {
     fill: $grey;

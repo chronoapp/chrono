@@ -1,4 +1,6 @@
 import React, { useContext, useState, useEffect, createRef } from 'react'
+import clsx from 'clsx'
+import update from 'immutability-helper'
 import Select from 'react-select'
 
 import * as dates from '../../util/dates'
@@ -6,12 +8,16 @@ import Icon from '@mdi/react'
 import { mdiTextSubject, mdiClockOutline, mdiCalendar, mdiDeleteOutline, mdiClose } from '@mdi/js'
 
 import { getAuthToken, createEvent, updateEvent, deleteEvent } from '../../util/Api'
+import { format } from '../../util/localizer'
+
 import Event from '../../models/Event'
 import Calendar from '../../models/Calendar'
+import { Label } from '../../models/Label'
 import { EventActionContext } from '../EventActionContext'
 import { CalendarsContext } from '../../components/CalendarsContext'
 import { AlertsContext } from '../../components/AlertsContext'
-import { format } from '../../util/localizer'
+import LabelTag from '../../components/LabelTag'
+import LabelTree from '../../components/LabelTree'
 
 import TimeSelect from './TimeSelect'
 
@@ -28,6 +34,7 @@ class EventFields {
     readonly description: string,
     readonly start: Date,
     readonly end: Date,
+    readonly labels: Label[],
     readonly calendarId: string
   ) {}
 }
@@ -43,6 +50,7 @@ function EventPopover(props: IProps) {
       props.event.description || '',
       props.event.start,
       props.event.end,
+      props.event.labels,
       getSelectedCalendar(props.event.calendar_id)?.id
     )
   )
@@ -50,6 +58,7 @@ function EventPopover(props: IProps) {
   const isExistingEvent = props.event.id !== -1
   const [readonly, setReadonly] = useState(isExistingEvent)
   const titleInputRef = createRef<HTMLInputElement>()
+  const [addTagDropdownActive, setAddTagDropdownActive] = useState(false)
 
   useEffect(() => {
     if (!readonly) {
@@ -84,11 +93,13 @@ function EventPopover(props: IProps) {
       start: eventFields.start,
       end: eventFields.end,
       calendar_id: eventFields.calendarId,
+      labels: eventFields.labels,
       creating: false,
     }
     const token = getAuthToken()
 
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
+    alertsContext.addAlert('SAVING_EVENT')
     if (isExistingEvent) {
       eventActions.eventDispatch({
         type: 'UPDATE_EVENT',
@@ -137,6 +148,33 @@ function EventPopover(props: IProps) {
     }
   }
 
+  function renderAddTagDropdown() {
+    return (
+      <div className={clsx('dropdown', addTagDropdownActive && 'is-active')}>
+        <div
+          onClick={() => setAddTagDropdownActive(!addTagDropdownActive)}
+          className="dropdown-trigger"
+        >
+          <a className="button is-text is-small">add tag</a>
+        </div>
+        {addTagDropdownActive ? (
+          <div className="dropdown-menu" id="dropdown-menu" role="menu">
+            <div className="dropdown-content">
+              <LabelTree
+                allowEdit={false}
+                onSelect={(label) => {
+                  setAddTagDropdownActive(false)
+                  const updatedLabels = [...eventFields.labels, label]
+                  setEventFields({ ...eventFields, labels: updatedLabels })
+                }}
+              />
+            </div>
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
   function renderReadOnlyView() {
     return (
       <div className="has-icon-grey">
@@ -159,6 +197,14 @@ function EventPopover(props: IProps) {
 
         <div className="cal-event-modal" style={{ display: 'flex', flexDirection: 'column' }}>
           <div className="has-text-grey-darker is-size-5">{eventFields.title}</div>
+
+          {props.event.labels && (
+            <div className="mt-2" style={{ display: 'flex' }}>
+              {props.event.labels.map((label) => (
+                <LabelTag key={label.id} label={label} allowEdit={false} />
+              ))}
+            </div>
+          )}
 
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
             <Icon className="mr-2" path={mdiClockOutline} size={1} />
@@ -230,6 +276,22 @@ function EventPopover(props: IProps) {
               }}
               style={{ width: '100%' }}
             ></input>
+          </div>
+
+          <div className="mt-2" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+            {eventFields.labels.map((label) => (
+              <LabelTag
+                key={label.id}
+                label={label}
+                allowEdit={true}
+                onClickDelete={(e) => {
+                  const rmIdx = eventFields.labels.indexOf(label)
+                  const updatedLabels = update(eventFields.labels, { $splice: [[rmIdx, 1]] })
+                  setEventFields({ ...eventFields, labels: updatedLabels })
+                }}
+              />
+            ))}
+            {renderAddTagDropdown()}
           </div>
 
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
