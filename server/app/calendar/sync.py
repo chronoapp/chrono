@@ -1,7 +1,7 @@
 import logging
 
 from uuid import uuid4
-from typing import Optional
+from typing import Optional, Dict
 from sqlalchemy.orm import Session
 
 from datetime import datetime, timedelta
@@ -106,11 +106,11 @@ def syncCalendar(calendar: Calendar, session: Session) -> None:
         if calendar.sync_token:
             try:
                 eventsResult = service.events().list(calendarId=calendar.id,
-                                                    timeMax=None if calendar.sync_token else end,
-                                                    maxResults=250,
-                                                    singleEvents=True,
-                                                    syncToken=calendar.sync_token,
-                                                    pageToken=nextPageToken).execute()
+                                                     timeMax=None if calendar.sync_token else end,
+                                                     maxResults=250,
+                                                     singleEvents=True,
+                                                     syncToken=calendar.sync_token,
+                                                     pageToken=nextPageToken).execute()
             except HttpError as e:
                 if e.resp.status == 410:
                     # Indicates the sync token is invalid => do a full sync.
@@ -130,6 +130,7 @@ def syncCalendar(calendar: Calendar, session: Session) -> None:
         nextSyncToken = eventsResult.get('nextSyncToken')
 
         syncEventsToDb(calendar, events, session)
+        session.commit()
 
         if not nextPageToken:
             break
@@ -143,10 +144,18 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
     updatedEvents = 0
     deletedEvents = 0
 
+    # Keep track of added events this session while the models have not been added to the db yet.
+    addedEvents: Dict[int, Event] = {}
+
     for eventItem in eventItems:
         eventId = eventItem['id']
         user = calendar.user
-        event: Event = user.events.filter(Event.g_id == eventId).first()
+
+        event: Event
+        if eventId in addedEvents:
+            event = addedEvents[eventId]
+        else:
+            event = user.events.filter(Event.g_id == eventId).first()
 
         if eventItem['status'] == 'cancelled':
             if event:
@@ -154,6 +163,7 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
                 session.delete(event)
             continue
 
+        # Fix: There's no timezones for all day events..
         eventItemStart = eventItem['start'].get('dateTime', eventItem['start'].get('date'))
         eventStart = datetime.fromisoformat(eventItemStart)
         eventItemEnd = eventItem['end'].get('dateTime', eventItem['end'].get('date'))
@@ -184,6 +194,8 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
                 if rule.label not in event.labels:
                     event.labels.append(rule.label)
 
+        addedEvents[eventId] = event
+
     logger.info(f'Updated {updatedEvents} events.')
     logger.info(f'Deleted {deletedEvents} events.')
     logger.info(f'Added {newEvents} events.')
@@ -207,6 +219,15 @@ def updateGoogleEvent(user: User, event: Event):
 def deleteGoogleEvent(user: User, event: Event):
     return getService(user).events().delete(calendarId=event.calendar_id,
                                             eventId=event.g_id).execute()
+
+
+def updateCalendar(user: User, calendar: Calendar):
+    body = {
+        'selected': calendar.selected or False,
+        'foregroundColor': calendar.foreground_color,
+        'backgroundColor': calendar.background_color
+    }
+    return getService(user).calendarList().patch(calendarId=calendar.id, body=body).execute()
 
 
 def createWebhook(calendar: Calendar) -> None:
