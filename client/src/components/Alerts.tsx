@@ -7,25 +7,22 @@ import { AlertsContext } from '../components/AlertsContext'
 
 export function Alerts() {
   const alertContext = useContext(AlertsContext)
+  const alert = alertContext.getAlert()
 
   return (
     <div className="global-alert">
-      {alertContext.alert && (
+      {alert && (
         <span className="tag is-medium has-background-grey has-text-white-bis">
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            {alertContext.alert.isLoading && (
+            {alert.isLoading && (
               <CircularProgress size={'1rem'} className="mr-1 has-text-white-ter" />
             )}
-            {alertContext.alert.iconType && (
-              <Icon
-                path={alertContext.alert.iconType}
-                size={0.7}
-                className="has-text-grey-light mr-1"
-              />
+            {alert.iconType && (
+              <Icon path={alert.iconType} size={0.7} className="has-text-grey-light mr-1" />
             )}
-            {alertContext.alert.title}
+            {alert.title}
           </div>
-          <div style={{ display: 'flex' }} onClick={alertContext.removeAlert}>
+          <div style={{ display: 'flex' }} onClick={() => alertContext.removeAlert(alert)}>
             <Icon
               path={mdiClose}
               size={1}

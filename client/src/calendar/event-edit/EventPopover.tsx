@@ -108,7 +108,9 @@ function EventPopover(props: IProps) {
     const token = getAuthToken()
 
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
-    alertsContext.addAlert(new Alert('Saving Event..', undefined, true))
+
+    const savingAlert = new Alert({ title: 'Saving Event..', isLoading: true })
+    alertsContext.addAlert(savingAlert)
     if (isExistingEvent) {
       eventActions.eventDispatch({
         type: 'UPDATE_EVENT',
@@ -120,7 +122,14 @@ function EventPopover(props: IProps) {
           type: 'UPDATE_EVENT',
           payload: { event, replaceEventId: -1 },
         })
-        alertsContext.addAlert(new Alert('Event Updated.', mdiCheck))
+        alertsContext.addAlert(
+          new Alert({
+            title: 'Event Updated.',
+            iconType: mdiCheck,
+            autoDismiss: true,
+            removeAlertId: savingAlert.id,
+          })
+        )
       })
     } else {
       eventActions.eventDispatch({ type: 'CREATE_EVENT', payload: event })
@@ -131,7 +140,14 @@ function EventPopover(props: IProps) {
           type: 'UPDATE_EVENT',
           payload: { event, replaceEventId: -1 },
         })
-        alertsContext.addAlert(new Alert('Event Created.', mdiCheck))
+        alertsContext.addAlert(
+          new Alert({
+            title: 'Event Created.',
+            iconType: mdiCheck,
+            autoDismiss: true,
+            removeAlertId: savingAlert.id,
+          })
+        )
       })
     }
   }
@@ -143,9 +159,18 @@ function EventPopover(props: IProps) {
       payload: { eventId: props.event.id },
     })
     const token = getAuthToken()
-    alertsContext.addAlert(new Alert('Deleting Event..', undefined, true))
+
+    const savingAlert = new Alert({ title: 'Deleting Event..', isLoading: true })
+    alertsContext.addAlert(savingAlert)
     deleteEvent(token, eventId).then(() => {
-      alertsContext.addAlert(new Alert('Event Deleted', mdiDelete))
+      alertsContext.addAlert(
+        new Alert({
+          title: 'Event Deleted',
+          iconType: mdiDelete,
+          autoDismiss: true,
+          removeAlertId: savingAlert.id,
+        })
+      )
     })
   }
 

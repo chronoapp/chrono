@@ -1,5 +1,6 @@
 import React from 'react'
 import clsx from 'clsx'
+import { mdiCheck } from '@mdi/js'
 
 import Popover from '../lib/popover/Popover'
 
@@ -14,6 +15,7 @@ import TimeSlotGroup from './TimeSlotGroup'
 import TimeGridEvent from './TimeGridEvent'
 import EventPopover from './event-edit/EventPopover'
 import Event from '../models/Event'
+import Alert from '../models/Alert'
 
 import DragDropEventContainer from './DragDropEventContainer'
 import { EventActionContext } from './EventActionContext'
@@ -234,8 +236,10 @@ class DayColumn extends React.Component<IProps, IState> {
     }
   }
 
-  onEventUpdated(event: Event, alertContext: AlertsContextType) {
+  onEventUpdated(event: Event, alertsContext: AlertsContextType) {
     if (!Event.isNewEvent(event)) {
+      const alert = new Alert({ title: 'Saving Event..', isLoading: true })
+      alertsContext.addAlert(alert)
       updateEvent(getAuthToken(), event)
         .then((newEvent) => {
           this.context.eventDispatch({
@@ -244,7 +248,14 @@ class DayColumn extends React.Component<IProps, IState> {
           })
         })
         .then(() => {
-          alertContext.addAlert('UPDATED_EVENT')
+          alertsContext.addAlert(
+            new Alert({
+              title: 'Event Updated.',
+              iconType: mdiCheck,
+              removeAlertId: alert.id,
+              autoDismiss: true,
+            })
+          )
         })
     }
   }
@@ -349,9 +360,9 @@ class DayColumn extends React.Component<IProps, IState> {
         ))}
 
         <AlertsContext.Consumer>
-          {(alertContext) => (
+          {(alertsContext) => (
             <DragDropEventContainer
-              onEventUpdated={(event) => this.onEventUpdated(event, alertContext)}
+              onEventUpdated={(event) => this.onEventUpdated(event, alertsContext)}
               slotMetrics={this.slotMetrics}
             >
               <div className="cal-events-container">{this.renderEvents(this.slotMetrics)}</div>
