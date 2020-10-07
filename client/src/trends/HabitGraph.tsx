@@ -22,8 +22,9 @@ function HabitGraph(props: IProps) {
   const [trendMap, setTrendMap] = useState<Map<string, number>>(undefined!)
   const [maxDuration, setMaxDuration] = useState(0)
 
+  const curDate = new Date()
   const labelsContext = useContext(LabelContext)
-  const [viewDate, setViewDate] = useState(new Date())
+  const [viewDate, setViewDate] = useState(curDate)
   const month = dates.visibleDays(viewDate, startOfWeek(), true)
   const weeks = chunk(month, 7)
 
@@ -68,7 +69,7 @@ function HabitGraph(props: IProps) {
         {week.map((day: Date, idx: number) => {
           const label = format(day, 'D')
           const dayKey = format(day, 'YYYY-MM-DD')
-          const dayValue = trendMap.get(dayKey)
+          const dayValue = day > curDate ? 0 : trendMap.get(dayKey)
 
           let color
           if (dayValue) {
