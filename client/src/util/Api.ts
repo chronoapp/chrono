@@ -57,8 +57,12 @@ export function getAuthToken(req?: any) {
   return cookies.get('auth_token') || ''
 }
 
-export function getOauthUrl(): string {
+export function getGoogleOauthUrl(): string {
   return `${API_URL}/oauth/google/auth`
+}
+
+export function getMsftOauthUrl(): string {
+  return `${API_URL}/oauth/msft/auth`
 }
 
 export function signOut() {

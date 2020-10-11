@@ -2,43 +2,17 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import Boolean, Column, Integer,\
-    String, Column, ForeignKey, BigInteger, Table, Text, DateTime, text, desc
+    String, ForeignKey, BigInteger, Table, Text, DateTime, text, desc
 from sqlalchemy.orm import relationship, backref, Session
 
 from app.db.base_class import Base
 from app.db.session import engine
 
+from .user import User
+from .user_credentials import *
+from .calendar import Calendar
+
 DEFAULT_TAG_COLOR = '#cecece'
-
-
-class User(Base):
-    __tablename__ = 'user'
-
-    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
-    username = Column(String(255))
-
-    email = Column(String(255))
-    name = Column(String(255))
-    picture_url = Column(String(255))
-
-    google_oauth_state = Column(String(255), nullable=True)
-    credentials = relationship('UserCredential',
-                               cascade='save-update, merge, delete, delete-orphan',
-                               uselist=False,
-                               backref='user')
-
-    def __init__(self, email, name, pictureUrl):
-        self.email = email
-        self.name = name
-        self.picture_url = pictureUrl
-
-    def getClassifierPath(self):
-        return f'/var/lib/model_data/{self.username}.pkl'
-
-    def syncWithGoogle(self) -> bool:
-        # TODO: store sync settings
-        return self.credentials and self.credentials.token
-
 
 # TODO: Store Timezone
 # class UserSettings(Base):
@@ -46,75 +20,9 @@ class User(Base):
 #     locale = Column(String(25))
 #     timezone = Column(String(255))
 
-
-class UserCredential(Base):
-    __tablename__ = 'user_credentials'
-    user_id = Column(Integer, ForeignKey('user.id'), primary_key=True)
-
-    token = Column(String(255), index=True)
-    refresh_token = Column(String(255))
-    token_uri = Column(String(255))
-    client_id = Column(String(255))
-    client_secret = Column(String(255))
-    scopes = Column(String(255))
-
-    def __init__(self, credentials):
-        self.token = credentials.token,
-        self.refresh_token = credentials.refresh_token,
-        self.token_uri = credentials.token_uri,
-        self.client_id = credentials.client_id,
-        self.client_secret = credentials.client_secret,
-        self.scopes = credentials.scopes
-
-    def toDict(self):
-        return {
-            'token': self.token,
-            'refresh_token': self.refresh_token,
-            'token_uri': self.token_uri,
-            'client_id': self.client_id,
-            'client_secret': self.client_secret,
-            'scopes': self.scopes
-        }
-
-
 event_label_association_table = Table('event_label', Base.metadata,
                                       Column('event_id', BigInteger, ForeignKey('event.id')),
                                       Column('label_id', Integer, ForeignKey('label.id')))
-
-
-class Calendar(Base):
-    __tablename__ = 'calendar'
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    user = relationship('User', backref=backref('calendars', lazy='dynamic', cascade='all,delete'))
-
-    id = Column(String(255), unique=True, primary_key=True)
-    timezone = Column(String(255))
-    summary = Column(String(255))
-    description = Column(Text())
-    background_color = Column(String(10))
-    foreground_color = Column(String(10))
-    selected = Column(Boolean)
-    access_role = Column(String(50))
-    primary = Column(Boolean)
-    deleted = Column(Boolean)
-
-    sync_token = Column(String())
-
-    webhook = relationship("Webhook", uselist=False, back_populates="calendar")
-
-    def __init__(self, id: str, timezone: str, summary: str, description: str,
-                 background_color: str, foreground_color: str, selected: bool, access_role: str,
-                 primary: bool, deleted: bool):
-        self.id = id
-        self.timezone = timezone
-        self.summary = summary
-        self.description = description
-        self.background_color = background_color
-        self.foreground_color = foreground_color
-        self.selected = selected
-        self.access_role = access_role
-        self.primary = primary
-        self.deleted = deleted
 
 
 class Webhook(Base):

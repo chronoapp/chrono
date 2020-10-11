@@ -1,6 +1,6 @@
 import * as React from 'react'
 import Link from 'next/link'
-import { getOauthUrl } from '../util/Api'
+import { getGoogleOauthUrl } from '../util/Api'
 
 function Login() {
   return (
@@ -19,7 +19,7 @@ function Login() {
         <br />
 
         <button
-          onClick={() => (window.location.href = getOauthUrl())}
+          onClick={() => (window.location.href = getGoogleOauthUrl())}
           className="button is-size-6"
           style={{ width: '100%' }}
         >

@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from starlette.requests import Request
 from starlette.middleware.cors import CORSMiddleware
@@ -17,6 +18,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1' if config.DEBUG else '0'
 
 
 @app.middleware("http")

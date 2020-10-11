@@ -15,6 +15,8 @@ services:
       - API_URL=${API_URL}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - MSFT_APP_ID=${MSFT_APP_ID}
+      - MSFT_APP_SECRET=${MSFT_APP_SECRET}
       - TOKEN_SECRET=${TOKEN_SECRET}
     logging:
       driver: loki

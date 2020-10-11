@@ -1,20 +1,26 @@
 import logging
 import jwt
 import requests
+
+from typing import Tuple
+from pydantic import BaseModel
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import RedirectResponse
+
 from datetime import datetime
 from urllib.parse import unquote
-
+from requests_oauthlib import OAuth2Session
 from google_auth_oauthlib.flow import Flow
-from pydantic import BaseModel
 
 from sqlalchemy.orm import Session
-from fastapi import APIRouter, Depends
-from starlette.responses import RedirectResponse
+
 from app.core import config
-from app.db.models import UserCredential, User
+from app.db.models import UserCredential, User, ProviderType
 from app.api.utils.db import get_db
 
 router = APIRouter()
+
+# ================================== Google OAuth2 ==================================
 
 
 class AuthData(BaseModel):
@@ -61,16 +67,17 @@ def googleAuth():
                                                       prompt='consent',
                                                       include_granted_scopes='true')
 
-    return RedirectResponse(url=unquote(authorization_url))
+    response = RedirectResponse(url=unquote(authorization_url))
+    response.set_cookie(key='auth_state', value=state)
+
+    return response
 
 
 @router.post('/oauth/google/token')
 def googleAuthCallback(authData: AuthData, session: Session = Depends(get_db)):
     try:
-        authCode = authData.code
-
         flow = getAuthFlow(None)
-        flow.fetch_token(code=authCode)
+        flow.fetch_token(code=authData.code)
 
         token = flow.credentials.token
         resp = requests.get(f'https://www.googleapis.com/oauth2/v2/userinfo?access_token={token}')
@@ -89,8 +96,15 @@ def googleAuthCallback(authData: AuthData, session: Session = Depends(get_db)):
             user.name = name
             user.picture_url = pictureUrl
 
-        credentials = UserCredential(flow.credentials)
-        user.credentials = credentials
+        creds = {
+            'token': flow.credentials.token,
+            'refresh_token': flow.credentials.refresh_token,
+            'token_uri': flow.credentials.token_uri,
+            'client_id': flow.credentials.client_id,
+            'client_secret': flow.credentials.client_secret,
+            'scopes': flow.credentials.scopes
+        }
+        user.credentials = UserCredential(creds, ProviderType.Google)
         session.commit()
 
         authToken = jwt.encode({
@@ -104,3 +118,99 @@ def googleAuthCallback(authData: AuthData, session: Session = Depends(get_db)):
 
     except Exception as e:
         logging.error(e)
+
+
+# ================================== Microsoft Graph OAuth2 ==================================
+
+MSFT_GRAPH_URL = 'https://graph.microsoft.com/v1.0'
+
+
+def getMsftSettings():
+    return {
+        'app_id': config.MSFT_APP_ID,
+        'app_secret': config.MSFT_APP_SECRET,
+        'redirect': "http://localhost:8888/api/v1/oauth/msft/callback",
+        'scopes': 'profile openid User.Read Calendars.Read Calendars.ReadWrite',
+        'authority': "https://login.microsoftonline.com/common",
+        'authorize_endpoint': "/oauth2/v2.0/authorize",
+        'token_endpoint': "/oauth2/v2.0/token",
+    }
+
+
+def getMsftSignInUrl() -> Tuple[str, str]:
+    """Generates a sign in url for microsoft.
+    """
+    settings = getMsftSettings()
+
+    # Initialize the OAuth client
+    session = OAuth2Session(settings['app_id'],
+                            scope=settings['scopes'],
+                            redirect_uri=settings['redirect'])
+
+    authorizeUrl = '{0}{1}'.format(settings['authority'], settings['authorize_endpoint'])
+    signInUrl, state = session.authorization_url(authorizeUrl, prompt='login')
+
+    return signInUrl, state
+
+
+def getMsftUser(token):
+    client = OAuth2Session(token=token)
+    user = client.get('{0}/me'.format(MSFT_GRAPH_URL))
+    return user.json()
+
+
+@router.get('/oauth/msft/auth')
+def msftAuth():
+    url, state = getMsftSignInUrl()
+
+    response = RedirectResponse(url)
+    response.set_cookie(key='auth_state', value=state)
+    logging.info(f'Set State: {state}')
+
+    return response
+
+
+@router.get('/oauth/msft/callback')
+def msftCallback(request: Request, session: Session = Depends(get_db)):
+    expectedState = request.cookies.get('auth_state')
+    settings = getMsftSettings()
+    callbackUrl = f'{request.url.path}?{request.query_params}'
+
+    # 1) Get token from code.
+    oauth = OAuth2Session(settings['app_id'],
+                          state=expectedState,
+                          scope=settings['scopes'],
+                          redirect_uri=settings['redirect'])
+
+    tokenUrl = '{0}{1}'.format(settings['authority'], settings['token_endpoint'])
+    tokenResult = oauth.fetch_token(tokenUrl,
+                                    client_secret=settings['app_secret'],
+                                    authorization_response=callbackUrl)
+
+    userJson = getMsftUser(tokenResult)
+    logging.info(userJson)
+    email = userJson.get('mail')
+    name = userJson.get('displayName')
+
+    user = session.query(User).filter(User.email == email).first()
+    if not user:
+        user = User(email, name, None)
+        session.add(user)
+    else:
+        user.email = email
+        user.name = name
+
+    user.credentials = UserCredential(tokenResult, ProviderType.Microsoft)
+    session.commit()
+
+    authToken = jwt.encode({
+        'user_id': user.id,
+        'iat': datetime.utcnow()
+    },
+                           config.TOKEN_SECRET,
+                           algorithm='HS256').decode('utf-8')
+
+    response = RedirectResponse(config.APP_URL)
+    response.set_cookie(key='auth_token', value=authToken)
+
+    return response

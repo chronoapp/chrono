@@ -52,7 +52,7 @@ def mapGoogleColor(color: str) -> str:
 
 
 def getService(user: User):
-    credentials = Credentials(**user.credentials.toDict())
+    credentials = Credentials(**user.credentials.token_data)
     service = build('calendar', 'v3', credentials=credentials, cache_discovery=False)
 
     return service
