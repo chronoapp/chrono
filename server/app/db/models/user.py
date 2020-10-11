@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
+from app.db.models.user_credentials import ProviderType
 
 
 class User(Base):
@@ -29,5 +30,7 @@ class User(Base):
         return f'/var/lib/model_data/{self.username}.pkl'
 
     def syncWithGoogle(self) -> bool:
-        # TODO: store sync settings
-        return self.credentials and self.credentials.token
+        # TODO: sync on a per-calendar basis.
+        return self.credentials\
+            and self.credentials.provider == ProviderType.Google\
+            and self.credentials.token_data

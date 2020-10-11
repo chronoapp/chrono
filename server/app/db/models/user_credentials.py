@@ -1,9 +1,6 @@
-from typing import Literal
-
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Enum
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, ForeignKey, Enum
 from sqlalchemy.dialects.postgresql import ENUM as pgEnum, JSONB
-from enum import Enum, unique
+from enum import Enum
 
 from app.db.base_class import Base
 

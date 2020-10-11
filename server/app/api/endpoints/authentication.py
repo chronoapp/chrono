@@ -15,8 +15,10 @@ from google_auth_oauthlib.flow import Flow
 from sqlalchemy.orm import Session
 
 from app.core import config
-from app.db.models import UserCredential, User, ProviderType
+from app.db.models.user_credentials import UserCredential, ProviderType
+from app.db.models.user import User
 from app.api.utils.db import get_db
+from app.calendar.microsoft import getMsftUser, getMsftSettings
 
 router = APIRouter()
 
@@ -122,20 +124,6 @@ def googleAuthCallback(authData: AuthData, session: Session = Depends(get_db)):
 
 # ================================== Microsoft Graph OAuth2 ==================================
 
-MSFT_GRAPH_URL = 'https://graph.microsoft.com/v1.0'
-
-
-def getMsftSettings():
-    return {
-        'app_id': config.MSFT_APP_ID,
-        'app_secret': config.MSFT_APP_SECRET,
-        'redirect': "http://localhost:8888/api/v1/oauth/msft/callback",
-        'scopes': 'profile openid User.Read Calendars.Read Calendars.ReadWrite',
-        'authority': "https://login.microsoftonline.com/common",
-        'authorize_endpoint': "/oauth2/v2.0/authorize",
-        'token_endpoint': "/oauth2/v2.0/token",
-    }
-
 
 def getMsftSignInUrl() -> Tuple[str, str]:
     """Generates a sign in url for microsoft.
@@ -151,12 +139,6 @@ def getMsftSignInUrl() -> Tuple[str, str]:
     signInUrl, state = session.authorization_url(authorizeUrl, prompt='login')
 
     return signInUrl, state
-
-
-def getMsftUser(token):
-    client = OAuth2Session(token=token)
-    user = client.get('{0}/me'.format(MSFT_GRAPH_URL))
-    return user.json()
 
 
 @router.get('/oauth/msft/auth')
@@ -188,7 +170,6 @@ def msftCallback(request: Request, session: Session = Depends(get_db)):
                                     authorization_response=callbackUrl)
 
     userJson = getMsftUser(tokenResult)
-    logging.info(userJson)
     email = userJson.get('mail')
     name = userJson.get('displayName')
 
