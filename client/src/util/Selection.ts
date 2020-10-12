@@ -7,6 +7,7 @@ type SelectEvent = 'selecting' | 'beforeSelect' | 'selectStart' | 'reset' | 'sel
 const clickTolerance = 5
 // const clickInterval = 250
 const longClickInterval = 600
+const EVENT_CLASS = '.cal-event'
 
 export class EventData {
   public isTouch: boolean
@@ -63,7 +64,7 @@ function isOverContainer(container, x, y) {
 export function getEventNodeFromPoint(node, clientX, clientY) {
   const target = document.elementFromPoint(clientX, clientY)
   if (target) {
-    return closest(target, '.cal-event', node)
+    return closest(target, EVENT_CLASS, node)
   }
 }
 

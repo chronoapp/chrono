@@ -21,6 +21,7 @@ interface IProps {
   max: Date
   events: Event[]
   now: Date
+  renderHeader: boolean
 }
 
 interface IState {
@@ -41,6 +42,7 @@ class TimeGrid extends React.Component<IProps, IState> {
     timeslots: 4,
     min: dates.startOf(new Date(), 'day'),
     max: dates.endOf(new Date(), 'day'),
+    renderHeader: true,
   }
 
   constructor(props: IProps) {
@@ -169,12 +171,14 @@ class TimeGrid extends React.Component<IProps, IState> {
 
     return (
       <div className="cal-time-view">
-        <TimeGridHeader
-          events={allDayEvents}
-          range={this.props.range}
-          leftPad={gutterWidth}
-          marginRight={scrollbarSize}
-        />
+        {this.props.renderHeader && (
+          <TimeGridHeader
+            events={allDayEvents}
+            range={this.props.range}
+            leftPad={gutterWidth}
+            marginRight={scrollbarSize}
+          />
+        )}
 
         <div ref={this.contentRef} className="cal-time-content">
           <div ref={this.gutterRef} className="cal-time-gutter">

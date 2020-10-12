@@ -3,16 +3,17 @@ import clsx from 'clsx'
 import Icon from '@mdi/react'
 import { mdiChevronDown, mdiChevronLeft, mdiChevronRight } from '@mdi/js'
 
+import TimeGrid from './TimeGrid'
 import Week from './Week'
 import Month from './Month'
 import * as dates from '../util/dates'
-import { startOfWeek, formatDateTime } from '../util/localizer'
+import { startOfWeek, formatDateTime, format } from '../util/localizer'
 import { getAuthToken, getEvents } from '../util/Api'
 
 import { CalendarsContext, CalendarsContextType } from '../components/CalendarsContext'
 import { EventActionContext } from './EventActionContext'
 
-type Display = 'Week' | 'Month'
+type Display = 'Day' | 'Week' | 'Month'
 
 function Calendar() {
   const firstOfWeek = startOfWeek()
@@ -65,6 +66,13 @@ function Calendar() {
   }
 
   async function loadCurrentViewEvents() {
+    if (display == 'Day') {
+      const start = dates.startOf(eventsContext.selectedDate, 'day')
+      const end = dates.endOf(eventsContext.selectedDate, 'day')
+
+      loadEvents(start, end)
+    }
+
     if (display == 'Week') {
       const lastWeek = dates.subtract(eventsContext.selectedDate, 1, 'week')
       const nextWeek = dates.add(eventsContext.selectedDate, 1, 'week')
@@ -113,7 +121,9 @@ function Calendar() {
           <button
             className="button is-text is-small is-size-6"
             onClick={() => {
-              if (display == 'Week') {
+              if (display == 'Day') {
+                eventsContext.setSelectedDate(dates.subtract(eventsContext.selectedDate, 1, 'day'))
+              } else if (display == 'Week') {
                 eventsContext.setSelectedDate(dates.subtract(eventsContext.selectedDate, 7, 'day'))
               } else if (display == 'Month') {
                 // HACK: Prevents flicker when switching months
@@ -131,7 +141,9 @@ function Calendar() {
           <button
             className="button is-text is-small is-size-6"
             onClick={() => {
-              if (display == 'Week') {
+              if (display == 'Day') {
+                eventsContext.setSelectedDate(dates.add(eventsContext.selectedDate, 1, 'day'))
+              } else if (display == 'Week') {
                 eventsContext.setSelectedDate(dates.add(eventsContext.selectedDate, 7, 'day'))
               } else if (display == 'Month') {
                 eventsContext.eventDispatch({ type: 'INIT', payload: [] })
@@ -172,6 +184,9 @@ function Calendar() {
             style={{ left: 'auto', minWidth: '10rem', right: '1em' }}
           >
             <div className="dropdown-content has-text-left">
+              <a onClick={() => selectDisplay('Day')} className="dropdown-item">
+                Day
+              </a>
               <a onClick={() => selectDisplay('Week')} className="dropdown-item">
                 Week
               </a>
@@ -186,7 +201,9 @@ function Calendar() {
   }
 
   function getViewTitle() {
-    if (display == 'Week') {
+    if (display == 'Day') {
+      return format(eventsContext.selectedDate, 'LL')
+    } else if (display == 'Week') {
       return Week.getTitle(eventsContext.selectedDate)
     } else if (display == 'Month') {
       return Month.getTitle(eventsContext.selectedDate)
@@ -203,7 +220,16 @@ function Calendar() {
       (event) => !event.calendar_id || selectedCalendarIds.includes(event.calendar_id)
     )
 
-    if (display == 'Week') {
+    if (display == 'Day') {
+      return (
+        <TimeGrid
+          now={eventsContext.selectedDate}
+          events={events}
+          range={[eventsContext.selectedDate]}
+          renderHeader={false}
+        />
+      )
+    } else if (display == 'Week') {
       return <Week date={eventsContext.selectedDate} events={events} />
     } else if (display == 'Month') {
       return (
