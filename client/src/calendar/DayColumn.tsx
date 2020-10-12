@@ -163,7 +163,7 @@ class DayColumn extends React.Component<IProps, IState> {
             containerClassName={'cal-event-modal-container'}
             content={(args) => this.renderEventDialog(event)}
             isOpen={true}
-            position={['right', 'left']}
+            position={['right', 'left', 'bottom', 'top']}
             padding={5}
           >
             <TimeGridEvent now={now} event={event} label={label} style={style} isPreview={false} />
