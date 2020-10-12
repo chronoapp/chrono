@@ -14,7 +14,7 @@ from app.api.utils.security import get_current_user
 from app.api.endpoints.labels import LabelVM, LabelInDbVM
 from app.core.logger import logger
 from app.db.models import Event, User
-from app.calendar.sync import insertGoogleEvent, deleteGoogleEvent, updateGoogleEvent
+from app.calendar.google import insertGoogleEvent, deleteGoogleEvent, updateGoogleEvent
 
 router = APIRouter()
 

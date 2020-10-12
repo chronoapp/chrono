@@ -7,7 +7,7 @@ from typing import List, Optional
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
 from app.db.models import User
-from app.calendar.sync import updateCalendar
+from app.calendar.google import updateCalendar
 from app.core.logger import logger
 
 router = APIRouter()
