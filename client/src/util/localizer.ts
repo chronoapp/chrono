@@ -51,6 +51,10 @@ export function formatDateTime(value: any) {
   return moment(value).format()
 }
 
+export function getWorkWeekRange(date: Date) {
+  return getWeekRange(date).filter((d) => !isWeekend(d))
+}
+
 export function getWeekRange(date: Date) {
   const firstOfWeek = startOfWeek()
   const start = dates.startOf(date, 'week', firstOfWeek)
@@ -70,4 +74,9 @@ export function getDurationDisplay(start: Date, end: Date): string {
     const min = minutes % 60
     return min > 0 ? `${hours}h ${min}m` : `${hours}h`
   }
+}
+
+function isWeekend(date: Date): boolean {
+  const day = moment(date).day()
+  return day === moment().day('Saturday').day() || day === moment().day('Sunday').day()
 }

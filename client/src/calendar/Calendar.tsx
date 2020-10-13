@@ -6,6 +6,7 @@ import { mdiChevronDown, mdiChevronLeft, mdiChevronRight } from '@mdi/js'
 import TimeGrid from './TimeGrid'
 import Week from './Week'
 import Month from './Month'
+import WorkWeek from './WorkWeek'
 import * as dates from '../util/dates'
 import { startOfWeek, formatDateTime, format } from '../util/localizer'
 import { getAuthToken, getEvents } from '../util/Api'
@@ -13,7 +14,7 @@ import { getAuthToken, getEvents } from '../util/Api'
 import { CalendarsContext, CalendarsContextType } from '../components/CalendarsContext'
 import { EventActionContext } from './EventActionContext'
 
-type Display = 'Day' | 'Week' | 'Month'
+type Display = 'Day' | 'Week' | 'WorkWeek' | 'Month'
 
 function Calendar() {
   const firstOfWeek = startOfWeek()
@@ -37,6 +38,17 @@ function Calendar() {
   useEffect(() => {
     loadCurrentViewEvents()
   }, [display, eventsContext.selectedDate])
+
+  function titleForDisplay(display: Display) {
+    switch (display) {
+      case 'WorkWeek': {
+        return 'Work week'
+      }
+      default: {
+        return display
+      }
+    }
+  }
 
   function handleKeyboardShortcuts(e: KeyboardEvent) {
     if (e.key === 'Escape') {
@@ -73,7 +85,7 @@ function Calendar() {
       loadEvents(start, end)
     }
 
-    if (display == 'Week') {
+    if (display == 'Week' || display == 'WorkWeek') {
       const lastWeek = dates.subtract(eventsContext.selectedDate, 1, 'week')
       const nextWeek = dates.add(eventsContext.selectedDate, 1, 'week')
 
@@ -99,7 +111,6 @@ function Calendar() {
 
   function renderDisplaySelectionHeader() {
     const title = getViewTitle()
-
     return (
       <div
         className={clsx({ dropdown: true, 'is-active': displayToggleActive })}
@@ -123,7 +134,7 @@ function Calendar() {
             onClick={() => {
               if (display == 'Day') {
                 eventsContext.setSelectedDate(dates.subtract(eventsContext.selectedDate, 1, 'day'))
-              } else if (display == 'Week') {
+              } else if (display == 'Week' || display == 'WorkWeek') {
                 eventsContext.setSelectedDate(dates.subtract(eventsContext.selectedDate, 7, 'day'))
               } else if (display == 'Month') {
                 // HACK: Prevents flicker when switching months
@@ -143,7 +154,7 @@ function Calendar() {
             onClick={() => {
               if (display == 'Day') {
                 eventsContext.setSelectedDate(dates.add(eventsContext.selectedDate, 1, 'day'))
-              } else if (display == 'Week') {
+              } else if (display == 'Week' || display == 'WorkWeek') {
                 eventsContext.setSelectedDate(dates.add(eventsContext.selectedDate, 7, 'day'))
               } else if (display == 'Month') {
                 eventsContext.eventDispatch({ type: 'INIT', payload: [] })
@@ -170,7 +181,7 @@ function Calendar() {
               aria-controls="dropdown-menu"
               onClick={() => setDisplayToggleActive(!displayToggleActive)}
             >
-              <span>{display}</span>
+              <span>{titleForDisplay(display)}</span>
               <span className="icon is-small">
                 <Icon path={mdiChevronDown} size={1} />
               </span>
@@ -190,6 +201,9 @@ function Calendar() {
               <a onClick={() => selectDisplay('Week')} className="dropdown-item">
                 Week
               </a>
+              <a onClick={() => selectDisplay('WorkWeek')} className="dropdown-item">
+                Work week
+              </a>
               <a onClick={() => selectDisplay('Month')} className="dropdown-item">
                 Month
               </a>
@@ -205,6 +219,8 @@ function Calendar() {
       return format(eventsContext.selectedDate, 'LL')
     } else if (display == 'Week') {
       return Week.getTitle(eventsContext.selectedDate)
+    } else if (display == 'WorkWeek') {
+      return WorkWeek.getTitle(eventsContext.selectedDate)
     } else if (display == 'Month') {
       return Month.getTitle(eventsContext.selectedDate)
     }
@@ -231,6 +247,8 @@ function Calendar() {
       )
     } else if (display == 'Week') {
       return <Week date={eventsContext.selectedDate} events={events} />
+    } else if (display == 'WorkWeek') {
+      return <WorkWeek date={eventsContext.selectedDate} events={events} />
     } else if (display == 'Month') {
       return (
         <Month today={today} loading={loading} date={eventsContext.selectedDate} events={events} />
