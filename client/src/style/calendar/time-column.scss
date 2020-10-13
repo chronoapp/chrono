@@ -36,7 +36,7 @@
   .cal-event {
     display: flex;
     max-height: 100%;
-    flex-flow: column wrap;
+    flex-flow: column;
     align-items: flex-start;
     // overflow: hidden;
     position: absolute;
@@ -57,6 +57,9 @@
     min-height: 1em;
     font-weight: 500;
     padding-top: 3px;
+    font-size: 12px;
+    line-height: 14px;
+    overflow: hidden;
 
     &.cal-small-event {
       font-size: 0.7rem;

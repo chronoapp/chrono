@@ -12,8 +12,9 @@ interface IProps {
   style: { top: number; width: number; height: number; xOffset: number; border: string }
   label: string
   isPreview: boolean
-  innerRef?: React.Ref<HTMLDivElement>
   now: Date
+  innerRef?: React.Ref<HTMLDivElement>
+  getContainerRef?: () => React.RefObject<HTMLDivElement>
 }
 
 function stringifyPercent(v: number | string) {
@@ -23,6 +24,8 @@ function stringifyPercent(v: number | string) {
 function TimeGridEvent(props: IProps) {
   const eventActionContext = useContext(EventActionContext)
   const calendarsContext = useContext(CalendarsContext)
+  // Tiny gap to separate events.
+  const eventHeight = props.style.height - 0.15
 
   function foregroundColor() {
     return event.end < props.now ? 'hsl(0, 0%, 45%)' : event.foregroundColor
@@ -48,6 +51,30 @@ function TimeGridEvent(props: IProps) {
     }
   }
 
+  /**
+   * Fix the number of lines that the event title can display.
+   */
+  function getEventTitleHeight() {
+    const LINE_HEIGHT = 16
+    let titleMaxHeight = LINE_HEIGHT
+
+    if (props.getContainerRef) {
+      const containerRef = props.getContainerRef()
+      const { current } = containerRef
+
+      if (current) {
+        const height = current.getBoundingClientRect().height
+        const totalHeight = (height * eventHeight) / 100 - 3 - 8 // top padding, bottom anchor
+        const titleLines = Math.floor(totalHeight / LINE_HEIGHT) - 1 // 1 for the date
+        if (titleLines >= 1) {
+          titleMaxHeight = titleLines * LINE_HEIGHT
+        }
+      }
+    }
+
+    return titleMaxHeight
+  }
+
   function renderAnchor(direction: Direction, resizing: boolean) {
     return (
       <div
@@ -67,18 +94,17 @@ function TimeGridEvent(props: IProps) {
   if (diffMin <= 30) {
     inner = (
       <div
-        className={clsx('cal-event-content', diffMin <= 15 && 'cal-small-event')}
-        style={{ display: 'flex' }}
+        className={clsx('cal-event-content', diffMin <= 15 && 'cal-small-event', 'cal-ellipsis')}
+        style={{ display: 'flex', lineHeight: '12px' }}
       >
         <span>{displayTitle}</span>
-        <span className="cal-ellipsis" style={{ fontSize: '90%', flex: 1 }}>
-          {`, ${timeFormatShort(event.start)}`}
-        </span>
+        <span style={{ fontSize: '90%', flex: 1 }}>{`, ${timeFormatShort(event.start)}`}</span>
       </div>
     )
   } else {
+    const height = getEventTitleHeight()
     inner = [
-      <div key="1" className="cal-event-content" style={{ paddingTop: '3px' }}>
+      <div key="1" className="cal-event-content" style={{ paddingTop: '3px', maxHeight: height }}>
         {displayTitle}
       </div>,
       <div key="2" className="cal-event-label">
@@ -91,8 +117,6 @@ function TimeGridEvent(props: IProps) {
   const isInteracting =
     dnd && dnd.interacting && dnd.event.id === props.event.id && !props.isPreview
 
-  // Tiny gap to separate events.
-  const finalHeight = props.style.height - 0.15
   const isEditing = eventActionContext?.eventState.editingEventId === event.id
 
   const calendarColor = calendarsContext.getCalendarColor(event.calendar_id)
@@ -111,7 +135,7 @@ function TimeGridEvent(props: IProps) {
         top: stringifyPercent(props.style.top),
         left: stringifyPercent(props.style.xOffset),
         width: stringifyPercent(props.style.width),
-        height: stringifyPercent(finalHeight),
+        height: stringifyPercent(eventHeight),
         border: props.style.border,
         color: Event.getForegroundColor(props.event),
       }}

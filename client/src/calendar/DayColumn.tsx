@@ -79,6 +79,7 @@ class DayColumn extends React.Component<IProps, IState> {
     this.initSelection = this.initSelection.bind(this)
     this.selectionState = this.selectionState.bind(this)
     this.handleSelectProgress = this.handleSelectProgress.bind(this)
+    this.getContainerRef = this.getContainerRef.bind(this)
   }
 
   componentDidMount() {
@@ -107,6 +108,10 @@ class DayColumn extends React.Component<IProps, IState> {
 
   UNSAFE_componentWillReceiveProps(props: IProps) {
     this.slotMetrics = new SlotMetrics(props.min, props.max, props.step, props.timeslots)
+  }
+
+  getContainerRef() {
+    return this.dayRef
   }
 
   clearTimeIndicatorInterval() {
@@ -166,7 +171,14 @@ class DayColumn extends React.Component<IProps, IState> {
             position={['right', 'left', 'bottom', 'top']}
             padding={5}
           >
-            <TimeGridEvent now={now} event={event} label={label} style={style} isPreview={false} />
+            <TimeGridEvent
+              now={now}
+              event={event}
+              label={label}
+              style={style}
+              isPreview={false}
+              getContainerRef={this.getContainerRef}
+            />
           </Popover>
         )
       } else {
@@ -178,6 +190,7 @@ class DayColumn extends React.Component<IProps, IState> {
             label={label}
             style={style}
             isPreview={false}
+            getContainerRef={this.getContainerRef}
           />
         )
       }

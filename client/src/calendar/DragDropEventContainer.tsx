@@ -52,6 +52,7 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
     this.initSelection = this.initSelection.bind(this)
     this.reset = this.reset.bind(this)
     this.updateEvent = this.updateEvent.bind(this)
+    this.getContainerRef = this.getContainerRef.bind(this)
 
     this.state = {
       event: null,
@@ -66,6 +67,10 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
 
   componentWillUnmount() {
     this.selection?.teardown()
+  }
+
+  private getContainerRef() {
+    return this.containerRef
   }
 
   private updateEvent(event: Event, startDate: Date, endDate: Date, top: number, height: number) {
@@ -213,6 +218,7 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
               label={timeRangeFormat(event.start, event.end)}
               style={{ top, height, width: 100, xOffset: 0, border: 'none' }}
               isPreview={true}
+              getContainerRef={this.getContainerRef}
             />
           )}
         </div>
