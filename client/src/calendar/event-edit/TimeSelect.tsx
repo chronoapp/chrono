@@ -51,12 +51,26 @@ function TimeSelect(props: IProps) {
       return { ...provided, marginLeft: 'auto', marginRight: 'auto' }
     },
     container: (provided, state) => {
-      return { ...provided, fontSize: '0.8rem', zIndex: 5 }
+      return {
+        ...provided,
+        fontSize: '0.8rem',
+        zIndex: 5,
+      }
+    },
+    control: (provided, state) => {
+      return {
+        ...provided,
+        borderStyle: 'none none solid none',
+        boxShadow: null,
+        borderColor: 'hsl(0, 0%, 86%)', // $grey-lighter
+        borderRadius: 0,
+        borderWidth: '2px',
+      }
     },
   }
 
   return (
-    <div className="cal-time-select-wrapper">
+    <div className="cal-time-select-wrapper ml-1">
       <Select
         components={{ IndicatorSeparator: () => null }}
         styles={customStyles}
@@ -73,7 +87,7 @@ function TimeSelect(props: IProps) {
       <Select
         components={{ IndicatorSeparator: () => null }}
         styles={customStyles}
-        className="cal-date-select"
+        className="cal-date-select ml-1"
         value={endTimeOptions[endIdx]}
         onChange={({ value }) => {
           const date = dates.add(props.start, (value + 1) * INTERVAL, 'minutes')

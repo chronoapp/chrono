@@ -113,7 +113,7 @@ function HabitGraph(props: IProps) {
   }
 
   return (
-    <div className="container mt-2">
+    <div className="container is-centered is-max-desktop mt-2">
       <div>
         <div className="level">
           <div className="level-left">

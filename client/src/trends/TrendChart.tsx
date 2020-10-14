@@ -72,7 +72,11 @@ function TrendChart(props: IProps) {
     return (
       <div className={clsx('ml-2 mr-2 dropdown', labelTreeExpanded && 'is-active')}>
         <div onClick={() => setLabelTreeExpanded(!labelTreeExpanded)} className="dropdown-trigger">
-          <button className="button" aria-haspopup="true" aria-controls="dropdown-menu">
+          <button
+            className="button button-underline"
+            aria-haspopup="true"
+            aria-controls="dropdown-menu"
+          >
             <span
               className="event-label"
               style={{ backgroundColor: label.color_hex, display: 'inline-block' }}
@@ -101,7 +105,12 @@ function TrendChart(props: IProps) {
       <div className="ml-2 field has-addons">
         <button
           onClick={() => setSelectedTimePeriod('DAY')}
-          className={clsx('button', 'is-small', selectedTimePeriod === 'DAY' && 'is-active')}
+          className={clsx(
+            'button',
+            'button-underline',
+            'is-small',
+            selectedTimePeriod === 'DAY' && 'is-active'
+          )}
         >
           Day
         </button>
@@ -109,6 +118,7 @@ function TrendChart(props: IProps) {
           onClick={() => setSelectedTimePeriod('WEEK')}
           className={clsx(
             'button',
+            'button-underline',
             'ml-1',
             'is-small',
             selectedTimePeriod === 'WEEK' && 'is-active'
@@ -120,6 +130,7 @@ function TrendChart(props: IProps) {
           onClick={() => setSelectedTimePeriod('MONTH')}
           className={clsx(
             'button',
+            'button-underline',
             'ml-1',
             'is-small',
             selectedTimePeriod === 'MONTH' && 'is-active'
@@ -198,7 +209,7 @@ function TrendChart(props: IProps) {
           return renderEmpty()
         } else {
           return (
-            <div className="container mt-2">
+            <div className="container is-centered is-max-desktop mt-2">
               <div>
                 <div className="level">
                   <div className="level-left">

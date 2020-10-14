@@ -16,6 +16,7 @@ function ViewSelector(props: IProps) {
         onClick={() => props.setSelectedView('CHART')}
         className={clsx(
           'button',
+          'button-invert-active',
           'is-small',
           'has-text-grey',
           props.selectedView === 'CHART' && 'is-active'
@@ -27,6 +28,8 @@ function ViewSelector(props: IProps) {
         onClick={() => props.setSelectedView('HABIT_GRAPH')}
         className={clsx(
           'button',
+          'button-invert-active',
+          'ml-1',
           'is-small',
           'has-text-grey',
           props.selectedView === 'HABIT_GRAPH' && 'is-active'

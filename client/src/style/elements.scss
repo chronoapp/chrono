@@ -75,3 +75,32 @@
     overflow: visible;
   }
 }
+
+// Form Elements
+
+.button-invert-active {
+  &.is-active {
+    background-color: $white-ter;
+    border: none;
+    box-shadow: inset 0px 1px 5px rgba(0, 0, 0, 0.2);
+    color: $black-ter;
+  }
+}
+
+.button-underline {
+  border-style: none none solid none;
+  box-shadow: none;
+  border-radius: 0;
+  border-width: 2px;
+  min-height: 38px;
+  border-color: $grey-lighter;
+
+  &.is-active {
+    font-weight: bold;
+  }
+
+  &:focus:not(:active) {
+    border-style: none none solid none;
+    box-shadow: none;
+  }
+}

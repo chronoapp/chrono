@@ -333,7 +333,7 @@ function EventPopover(props: IProps) {
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
             <Icon className="mr-2" path={mdiClockOutline} size={1} style={{ flex: 'none' }} />
             <input
-              className="input is-small"
+              className="button-underline input is-small"
               type="date"
               value={format(eventFields.start, 'YYYY-MM-DD')}
               onChange={(e) => console.log(e.target.value)}
