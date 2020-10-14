@@ -16,7 +16,7 @@ class Home extends React.Component<Props, State> {
 
   render() {
     return (
-      <Layout>
+      <Layout canCreateEvent={true}>
         <Calendar />
       </Layout>
     )

@@ -180,7 +180,7 @@ function Calendar() {
         <div className="calendar-dropdown">
           <div className="dropdown-trigger">
             <button
-              className="button is-small"
+              className="button button-underline is-small"
               aria-haspopup="true"
               aria-controls="dropdown-menu"
               onClick={() => setDisplayToggleActive(!displayToggleActive)}

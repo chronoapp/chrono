@@ -330,11 +330,9 @@ class DayColumn extends React.Component<IProps, IState> {
           clickEvent.y,
           getBoundsForNode(current)
         )
-        const endDate = dates.add(startDate, 60, 'minutes')
-        const event = new Event(-1, '', '', '', startDate, endDate, [], false, '', '#fff')
         this.context?.eventDispatch({
-          type: 'INIT_EDIT_NEW_EVENT',
-          payload: event,
+          type: 'INIT_NEW_EVENT_AT_DATE',
+          payload: startDate,
         })
 
         this.setState({ selecting: false })

@@ -76,6 +76,23 @@ export function getDurationDisplay(start: Date, end: Date): string {
   }
 }
 
+export function roundNext15Min(date: Date): Date {
+  const m = moment(date)
+
+  var intervals = Math.floor(m.minutes() / 15)
+  if (m.minutes() % 15 != 0) {
+    intervals++
+  }
+  if (intervals == 4) {
+    m.add('hours', 1)
+    intervals = 0
+  }
+  m.minutes(intervals * 15)
+  m.seconds(0)
+
+  return m.toDate()
+}
+
 function isWeekend(date: Date): boolean {
   const day = moment(date).day()
   return day === moment().day('Saturday').day() || day === moment().day('Sunday').day()

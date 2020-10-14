@@ -2,6 +2,7 @@ import { createContext, useReducer, useState } from 'react'
 import update from 'immutability-helper'
 import { normalizeArr } from '../lib/normalizer'
 
+import * as dates from '../util/dates'
 import Event from '../models/Event'
 
 export type Action = 'MOVE' | 'RESIZE'
@@ -44,6 +45,7 @@ type ActionType =
   | { type: 'INIT'; payload: Event[] }
   | { type: 'INIT_EDIT_NEW_EVENT'; payload: Event }
   | { type: 'INIT_EDIT_EVENT'; payload: Event }
+  | { type: 'INIT_NEW_EVENT_AT_DATE'; payload: Date }
   | { type: 'CREATE_EVENT'; payload: Event }
   | { type: 'DELETE_EVENT'; payload: { eventId: number } }
   | { type: 'CANCEL_SELECT' }
@@ -73,6 +75,18 @@ function eventReducer(state: EventState, action: ActionType) {
         ...state,
         eventsById: { ...eventsById, [action.payload.id]: action.payload },
         editingEventId: action.payload.id,
+      }
+
+    /**
+     * Create new event from start date, for a default duration of 1h.
+     */
+    case 'INIT_NEW_EVENT_AT_DATE':
+      const endDate = dates.add(action.payload, 1, 'hours')
+      const event = new Event(-1, '', '', '', action.payload, endDate, [], false, '', '#fff')
+      return {
+        ...state,
+        eventsById: { ...eventsById, [event.id]: event },
+        editingEventId: event.id,
       }
 
     /**

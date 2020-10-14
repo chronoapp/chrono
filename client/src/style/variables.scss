@@ -2,12 +2,11 @@
 
 $size-small: 0.85rem;
 $navbar-breakpoint: '600px';
-$primary: #1daea5;
-$primary2: #5c6bc0;
+$primary: #5c6bc0;
 
 // Calendar Colors
 
-$cal-primary: $primary2; //#00a0cc;
+$cal-primary: $primary;
 
 $out-of-range-color: lighten(#333, 40%) !default;
 $out-of-range-bg-color: lighten(#333, 70%) !default;

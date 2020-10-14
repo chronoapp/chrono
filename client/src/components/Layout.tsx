@@ -7,17 +7,41 @@ import Icon from '@mdi/react'
 import { mdiDotsHorizontal } from '@mdi/js'
 
 import { getAuthToken, signOut, syncCalendar } from '../util/Api'
+import { roundNext15Min } from '../util/localizer'
+import { GlobalEvent } from '../util/global'
+
 import MiniCalendar from '../calendar/MiniCalendar'
 import LabelPanel from './LabelPanel'
 import CalendarsPanel from './CalendarsPanel'
 import { AlertsContext } from '../components/AlertsContext'
-import { GlobalEvent } from '../util/global'
+import { EventActionContext } from '../calendar/EventActionContext'
 
 import '../style/index.scss'
 
 interface Props {
   title: string
   children: any
+  canCreateEvent: boolean
+}
+
+function NewEventButton() {
+  const eventsContext = useContext(EventActionContext)
+
+  // TODO: Scroll to the event if it's off-screen.
+  return (
+    <button
+      className="button is-small is-primary mt-3"
+      style={{ maxWidth: '8em', maxHeight: '2.2em' }}
+      onClick={() => {
+        eventsContext.eventDispatch({
+          type: 'INIT_NEW_EVENT_AT_DATE',
+          payload: roundNext15Min(new Date()),
+        })
+      }}
+    >
+      Create Event
+    </button>
+  )
 }
 
 /**
@@ -138,6 +162,7 @@ function Layout(props: Props) {
 
       <div className="app-content">
         <div className="left-section">
+          {props.canCreateEvent && <NewEventButton />}
           <MiniCalendar />
           <LabelPanel />
           <CalendarsPanel />
@@ -152,6 +177,7 @@ function Layout(props: Props) {
 
 Layout.defaultProps = {
   title: 'Timecouncil',
+  canCreateEvent: false,
 }
 
 export default Layout

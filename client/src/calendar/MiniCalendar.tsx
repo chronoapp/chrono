@@ -68,7 +68,7 @@ export default function MiniCalendar() {
   }
 
   return (
-    <div className="mt-5">
+    <div className="mt-3">
       <div className="cal-mini-month-header has-text-left pl-1">
         <span>{format(viewDate, 'MMMM YYYY')}</span>
         <span>
