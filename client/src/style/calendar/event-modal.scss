@@ -29,3 +29,15 @@
 .cal-date-select {
   flex: 1;
 }
+
+.cal-event-edit-description {
+  background-color: $white-ter;
+  padding: 0.25rem;
+  border-radius: $event-border-radius;
+  width: 100%;
+}
+
+.cal-event-edit-description[contenteditable]:focus {
+  outline: 0px solid transparent;
+  border: 1px solid $link;
+}

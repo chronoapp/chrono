@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, createRef } from 'react'
+import React, { useContext, useState, useEffect, createRef, useRef } from 'react'
 import clsx from 'clsx'
 import update from 'immutability-helper'
 import Select from 'react-select'
@@ -27,8 +27,9 @@ import { CalendarsContext } from '../../components/CalendarsContext'
 import { AlertsContext } from '../../components/AlertsContext'
 import LabelTag from '../../components/LabelTag'
 import LabelTree from '../../components/LabelTree'
-
 import TimeSelect from './TimeSelect'
+
+import ContentEditable from '../../lib/ContentEditable'
 
 interface IProps {
   event: Event
@@ -90,7 +91,7 @@ function EventPopover(props: IProps) {
 
   function keyboardEvents(e: KeyboardEvent) {
     if (e.key === 'Enter') {
-      onSaveEvent(props.event)
+      // onSaveEvent(props.event)
     }
   }
 
@@ -360,13 +361,12 @@ function EventPopover(props: IProps) {
             />
           </div>
 
-          <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
+          <div className="mt-2" style={{ display: 'flex', alignItems: 'top' }}>
             <Icon className="mr-2" path={mdiTextSubject} size={1} />
-            <input
-              className="input"
-              type="textarea"
-              name="description"
-              value={eventFields.description}
+
+            <ContentEditable
+              className="cal-event-edit-description"
+              html={eventFields.description}
               onChange={(e) => setEventFields({ ...eventFields, description: e.target.value })}
             />
           </div>
