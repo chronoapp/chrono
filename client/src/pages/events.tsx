@@ -46,6 +46,30 @@ interface State {
   isRefreshing: boolean
 }
 
+function LabelTagSolid(props: {
+  event: Event
+  label: Label
+  onRemoveLabel: (eventId: number, labelId: number) => void
+}) {
+  const labelStyle = {
+    backgroundColor: props.label.color_hex,
+    marginRight: '0.25em',
+    paddingRight: 0,
+    color: tinycolor(props.label.color_hex).getLuminance() < 0.5 ? 'white' : '#4a4a4a',
+  }
+
+  return (
+    <span style={labelStyle} className="tag">
+      {props.label.title}
+      <a
+        style={labelStyle}
+        onClick={(e) => props.onRemoveLabel(props.event.id, props.label.id)}
+        className="tag is-delete is-delete-solid"
+      ></a>
+    </span>
+  )
+}
+
 class EventList extends Component<Props, State> {
   constructor(props: Props) {
     super(props)
@@ -63,6 +87,7 @@ class EventList extends Component<Props, State> {
     this.onSearchChange = this.onSearchChange.bind(this)
     this.refreshEvents = this.refreshEvents.bind(this)
     this.applyLabelToEvent = this.applyLabelToEvent.bind(this)
+    this.removeLabel = this.removeLabel.bind(this)
   }
 
   static async getInitialProps(ctx) {
@@ -280,16 +305,14 @@ class EventList extends Component<Props, State> {
                   <td>{getDurationDisplay(event.start, event.end)}</td>
                   <td>{event.title}</td>
                   <td>
-                    {event.labels.map((label) => {
-                      return (
-                        <LabelTag
-                          key={`${event.id}-${label.id}`}
-                          label={label}
-                          onClickDelete={() => this.removeLabel(event.id, label.id)}
-                          allowEdit={true}
-                        />
-                      )
-                    })}
+                    {event.labels.map((label) => (
+                      <LabelTagSolid
+                        key={`${event.id}-${label.id}`}
+                        event={event}
+                        label={label}
+                        onRemoveLabel={this.removeLabel}
+                      />
+                    ))}
                     {this.renderDropdown(event.id)}
                   </td>
                 </tr>

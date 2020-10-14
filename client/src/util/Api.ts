@@ -71,6 +71,7 @@ export function signOut() {
   cookies.remove('auth_token')
 
   Router.push('/login')
+  Router.reload()
 }
 
 export async function authenticate(code: string, state: string) {

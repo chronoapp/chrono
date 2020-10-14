@@ -104,3 +104,14 @@
     box-shadow: none;
   }
 }
+
+.is-delete-solid {
+  margin-right: 0.25em;
+  margin-left: 0.15em !important;
+
+  &:hover {
+    color: $grey-darker !important;
+    background-color: $grey-lighter !important;
+    opacity: 0.5;
+  }
+}
