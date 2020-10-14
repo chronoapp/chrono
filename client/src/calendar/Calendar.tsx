@@ -13,6 +13,7 @@ import { getAuthToken, getEvents } from '../util/Api'
 
 import { CalendarsContext, CalendarsContextType } from '../components/CalendarsContext'
 import { EventActionContext } from './EventActionContext'
+import { GlobalEvent } from '../util/global'
 
 type Display = 'Day' | 'Week' | 'WorkWeek' | 'Month'
 
@@ -30,8 +31,11 @@ function Calendar() {
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyboardShortcuts)
+    document.addEventListener(GlobalEvent.refreshCalendar, loadCurrentViewEvents)
+
     return function cleanup() {
       document.removeEventListener('keydown', handleKeyboardShortcuts)
+      document.removeEventListener(GlobalEvent.refreshCalendar, loadCurrentViewEvents)
     }
   }, [])
 

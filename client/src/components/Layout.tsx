@@ -11,6 +11,7 @@ import MiniCalendar from '../calendar/MiniCalendar'
 import LabelPanel from './LabelPanel'
 import CalendarsPanel from './CalendarsPanel'
 import { AlertsContext } from '../components/AlertsContext'
+import { GlobalEvent } from '../util/global'
 
 import '../style/index.scss'
 
@@ -32,6 +33,7 @@ function Layout(props: Props) {
     alertsContext.addMessage('Updating calendar..')
     await syncCalendar(getAuthToken())
     alertsContext.addMessage('Calendar updated.')
+    document.dispatchEvent(new Event(GlobalEvent.refreshCalendar))
   }
 
   function Settings() {
