@@ -16,6 +16,7 @@ import { Label } from '../models/Label'
 import { LabelRule } from '../models/LabelRule'
 import Layout from '../components/Layout'
 import LabelTree from '../components/LabelTree'
+import LabelTag from '../components/LabelTag'
 
 interface Props {
   authToken: string
@@ -280,22 +281,13 @@ class EventList extends Component<Props, State> {
                   <td>{event.title}</td>
                   <td>
                     {event.labels.map((label) => {
-                      const labelStyle = {
-                        backgroundColor: label.color_hex,
-                        marginRight: 5,
-                        color:
-                          tinycolor(label.color_hex).getLuminance() < 0.5 ? 'white' : '#4a4a4a',
-                      }
-
                       return (
-                        <span
-                          onClick={() => this.removeLabel(event.id, label.id)}
+                        <LabelTag
                           key={`${event.id}-${label.id}`}
-                          style={labelStyle}
-                          className="tag"
-                        >
-                          {label.title}
-                        </span>
+                          label={label}
+                          onClickDelete={() => this.removeLabel(event.id, label.id)}
+                          allowEdit={true}
+                        />
                       )
                     })}
                     {this.renderDropdown(event.id)}

@@ -55,7 +55,7 @@ function TimeGridEvent(props: IProps) {
    * Fix the number of lines that the event title can display.
    */
   function getEventTitleHeight() {
-    const LINE_HEIGHT = 16
+    const LINE_HEIGHT = 15
     let titleMaxHeight = LINE_HEIGHT
 
     if (props.getContainerRef) {
@@ -72,7 +72,7 @@ function TimeGridEvent(props: IProps) {
       }
     }
 
-    return titleMaxHeight
+    return titleMaxHeight + 2
   }
 
   function renderAnchor(direction: Direction, resizing: boolean) {
