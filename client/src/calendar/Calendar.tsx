@@ -130,7 +130,13 @@ function Calendar() {
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div
             className="button is-small is-light"
-            onClick={() => eventsContext.setSelectedDate(today)}
+            onClick={() => {
+              if (dates.eq(eventsContext.selectedDate, today, 'day')) {
+                document.dispatchEvent(new Event(GlobalEvent.scrollToEvent))
+              } else {
+                eventsContext.setSelectedDate(today)
+              }
+            }}
           >
             Today
           </div>

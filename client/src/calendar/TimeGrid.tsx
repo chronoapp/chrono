@@ -8,6 +8,7 @@ import TimeGridHeader from './TimeGridHeader'
 import SlotMetrics from './utils/SlotMetrics'
 import { timeFormatShort } from '../util/localizer'
 import { inRange, sortEvents } from './utils/eventLevels'
+import { GlobalEvent } from '../util/global'
 
 function remToPixels(rem) {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
@@ -55,6 +56,8 @@ class TimeGrid extends React.Component<IProps, IState> {
       gutterWidth: 0,
       scrollbarSize: 0,
     }
+
+    this.scrollToEvent = this.scrollToEvent.bind(this)
   }
 
   UNSAFE_componentWillMount() {
@@ -69,10 +72,29 @@ class TimeGrid extends React.Component<IProps, IState> {
     }
 
     this.applyTopScroll()
+
+    document.addEventListener(GlobalEvent.scrollToEvent, this.scrollToEvent)
   }
 
   componentDidUpdate() {
     this.applyTopScroll()
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener(GlobalEvent.scrollToEvent, this.scrollToEvent)
+  }
+
+  private scrollToEvent() {
+    const { min, max, now, range } = this.props
+    const totalMillis = dates.diff(max, min)
+    const diffMillis = now.getTime() - dates.startOf(now, 'day').getTime()
+    const scrollTopRatio = diffMillis / totalMillis
+
+    const content = this.contentRef.current
+    const padding = content.scrollHeight * 0.2
+
+    const scrollTop = Math.max(0, content.scrollHeight * scrollTopRatio - padding)
+    content.scrollTo({ top: scrollTop, behavior: 'smooth' })
   }
 
   /**
