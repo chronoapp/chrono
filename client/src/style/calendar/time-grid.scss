@@ -111,6 +111,11 @@
   color: $cal-primary;
 }
 
+.cal-header-day {
+  color: $grey-dark;
+  font-size: 0.9em;
+}
+
 .cal-today {
   font-weight: bold;
 }

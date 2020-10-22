@@ -209,7 +209,7 @@ function TrendChart(props: IProps) {
           return renderEmpty()
         } else {
           return (
-            <div className="container is-centered is-max-desktop mt-2">
+            <div className="container is-centered is-max-desktop mt-2 ml-2">
               <div>
                 <div className="level">
                   <div className="level-left">

@@ -25,7 +25,9 @@ function TimeGridHeader(props: IProps) {
 
       return (
         <div key={i} className={clsx('cal-header', dates.eq(date, today, 'day') && 'cal-today')}>
-          <span className={clsx({ 'cal-header-day-selected': isToday })}>{dateString}</span>
+          <span className={clsx(isToday && 'cal-header-day-selected', 'cal-header-day')}>
+            {dateString}
+          </span>
           <div className={clsx('is-size-5', isToday && 'cal-today-bg')}>{dayNumber}</div>
         </div>
       )

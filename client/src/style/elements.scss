@@ -111,7 +111,6 @@
 
   &:hover {
     color: $grey-darker !important;
-    background-color: $grey-lighter !important;
-    opacity: 0.5;
+    background-color: rgba($grey-lighter, 0.5) !important;
   }
 }

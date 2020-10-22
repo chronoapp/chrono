@@ -355,7 +355,7 @@ class EventList extends Component<Props, State> {
   render() {
     return (
       <Layout>
-        <section style={{ width: '100%', overflowY: 'scroll' }}>
+        <section className="ml-2" style={{ width: '100%', overflowY: 'scroll' }}>
           <div className="container is-centered is-max-desktop">
             {this.renderSearchBar()}
             {this.renderAddLabelRuleModal()}
