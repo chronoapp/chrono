@@ -208,6 +208,15 @@ def insertGoogleEvent(user: User, event: Event):
     return getService(user).events().insert(calendarId=event.calendar_id, body=eventBody).execute()
 
 
+def moveGoogleEvent(user: User, event: Event, prevCalendarId: str):
+    """Moves an event to another calendar, i.e. changes an event's organizer.
+    """
+    return getService(user).events().move(
+        calendarId=prevCalendarId,
+        eventId=event.g_id,
+        destination=event.calendar_id).execute()
+
+
 def updateGoogleEvent(user: User, event: Event):
     timeZone = event.calendar.timezone
     eventBody = getEventBody(event, timeZone)

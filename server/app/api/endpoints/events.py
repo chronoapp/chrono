@@ -14,7 +14,7 @@ from app.api.utils.security import get_current_user
 from app.api.endpoints.labels import LabelVM, LabelInDbVM
 from app.core.logger import logger
 from app.db.models import Event, User
-from app.calendar.google import insertGoogleEvent, deleteGoogleEvent, updateGoogleEvent
+from app.calendar.google import insertGoogleEvent, deleteGoogleEvent, updateGoogleEvent, moveGoogleEvent
 
 router = APIRouter()
 
@@ -111,6 +111,7 @@ async def updateEvent(
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db)) -> Event:
 
+    prevCalendarId: Optional[str] = None
     eventDb = user.events.filter_by(id=event_id).first()
     if not eventDb:
         eventDb = Event(None, event.title, event.description, event.start, event.end,
@@ -121,7 +122,10 @@ async def updateEvent(
             eventDb.description = event.description
             eventDb.start = event.start
             eventDb.end = event.end
-            # TODO: Update other fields.
+
+            prevCalendarId = eventDb.calendar_id
+            eventDb.calendar_id = event.calendar_id
+            # TODO: Update other fields
 
     eventDb.labels.clear()
     for label in event.labels:
@@ -129,6 +133,10 @@ async def updateEvent(
         eventDb.labels.append(label)
 
     if user.syncWithGoogle():
+        # Move and update the event.
+        if prevCalendarId and prevCalendarId != eventDb.calendar_id:
+            moveGoogleEvent(user, eventDb, prevCalendarId)
+
         updateGoogleEvent(user, eventDb)
 
     session.commit()
