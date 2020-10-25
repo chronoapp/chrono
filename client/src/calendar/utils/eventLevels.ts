@@ -19,9 +19,8 @@ export function endOfRange(dateRange: Date[], unit = 'day') {
 }
 
 export function eventSegments(event: Event, range: Date[]): EventSegment {
-  let { first, last } = endOfRange(range)
-
-  let slots = dates.diff(first, last, 'day')
+  const { first, last } = endOfRange(range)
+  const slots = dates.diff(first, last, 'day')
 
   let padding = findIndex(range, (x) => dates.eq(x, event.start, 'day'))
   let span = dates.diff(event.start, event.end, 'day')

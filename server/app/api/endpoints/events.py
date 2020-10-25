@@ -26,6 +26,9 @@ class EventBaseVM(BaseModel):
     description: Optional[str] = None
     start: datetime
     end: datetime
+    start_date: Optional[str]
+    end_date: Optional[str]
+
     labels: List[LabelInDbVM] = []
     all_day: Optional[bool]
     background_color: Optional[str]

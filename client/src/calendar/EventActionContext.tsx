@@ -82,7 +82,7 @@ function eventReducer(state: EventState, action: ActionType) {
      */
     case 'INIT_NEW_EVENT_AT_DATE':
       const endDate = dates.add(action.payload, 1, 'hours')
-      const event = new Event(-1, '', '', '', action.payload, endDate, [], false, '', '#fff')
+      const event = Event.newDefaultEvent(action.payload, endDate)
       return {
         ...state,
         eventsById: { ...eventsById, [event.id]: event },

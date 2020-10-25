@@ -93,6 +93,10 @@ export function roundNext15Min(date: Date): Date {
   return m.toDate()
 }
 
+export function localFullDate(dateStr: string): Date {
+  return moment(dateStr).toDate()
+}
+
 function isWeekend(date: Date): boolean {
   const day = moment(date).day()
   return day === moment().day('Saturday').day() || day === moment().day('Sunday').day()

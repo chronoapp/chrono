@@ -1,5 +1,6 @@
 import { Label } from './Label'
 import { hexToHSL } from '../calendar/utils/Colors'
+import { localFullDate } from '../util/localizer'
 
 const today = new Date()
 
@@ -16,6 +17,8 @@ export default class Event {
     readonly description: string,
     readonly start: Date,
     readonly end: Date,
+    readonly startDate: string | null,
+    readonly endDate: string | null,
     labels: Label[],
     readonly isAllDay: boolean,
     readonly backgroundColor: string,
@@ -30,8 +33,10 @@ export default class Event {
       eventJson.calendar_id,
       eventJson.title,
       eventJson.description,
-      new Date(eventJson.start),
-      new Date(eventJson.end),
+      eventJson.all_day ? localFullDate(eventJson.start_date) : new Date(eventJson.start),
+      eventJson.all_day ? localFullDate(eventJson.end_date) : new Date(eventJson.end),
+      eventJson.start_date,
+      eventJson.end_date,
       eventJson.labels.map((labelJson) => Label.fromJson(labelJson)),
       eventJson.all_day,
       eventJson.background_color,
@@ -55,5 +60,9 @@ export default class Event {
 
   static getForegroundColor(event: Event) {
     return event.end < today ? 'hsl(0, 0%, 45%)' : event.foregroundColor
+  }
+
+  static newDefaultEvent(startDate: Date, endDate: Date) {
+    return new Event(-1, '', '', '', startDate, endDate, null, null, [], false, '', '#fff')
   }
 }

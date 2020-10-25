@@ -68,6 +68,14 @@ class Event(Base):
 
         return isDayEvent(self.start) and isDayEvent(self.end)
 
+    @property
+    def start_date(self):
+        return self.start.strftime('%Y-%m-%d') if self.all_day else None
+
+    @property
+    def end_date(self):
+        return self.end.strftime('%Y-%m-%d') if self.all_day else None
+
     def __init__(self, g_id: Optional[str], title: Optional[str], description: Optional[str],
                  start: datetime, end: datetime, calendar_id: str):
         self.g_id = g_id
@@ -76,3 +84,6 @@ class Event(Base):
         self.start = start
         self.end = end
         self.calendar_id = calendar_id
+
+    def __repr__(self):
+        return f'<Event {self.title} start:{self.start} end:{self.end}/>'
