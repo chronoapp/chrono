@@ -31,6 +31,7 @@
 
 .cal-row-content {
   z-index: 1;
+  user-select: none;
 }
 
 .cal-row {
@@ -93,74 +94,24 @@
   margin-right: 3px;
 }
 
-// Mini Calendar
+// Drag and Drop Row
 
-.cal-mini-month-header {
-  display: flex;
-  justify-content: space-between;
+.cal-dnd-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
 }
 
-.cal-mini-month-row {
-  display: flex;
+.cal-dnd-row-body {
   position: relative;
-  overflow: hidden;
-  width: 100%;
 }
 
-.cal-mini-month-day {
-  text-align: center;
-  flex: 1;
-  font-size: $size-7;
-  padding: 0.25em;
-  border-radius: 5px;
-
-  &:hover {
-    @extend .cal-mini-month-day-selected;
-  }
+.cal-event-preview-full {
+  box-shadow: $event-shadow;
 }
 
-.cal-mini-month-day-selected {
-  cursor: pointer;
-  background-color: $grey-lighter;
-}
-
-.cal-mini-month-today-bg {
-  @extend .cal-today-bg;
-  width: 15px;
-}
-
-.animate-bottom {
-  position: relative;
-  animation-name: animatebottom;
-  animation-duration: 0.2s;
-}
-
-@keyframes animatebottom {
-  from {
-    bottom: -3rem;
-    opacity: 0;
-  }
-
-  to {
-    bottom: 0;
-    opacity: 1;
-  }
-}
-
-.animate-top {
-  position: relative;
-  animation-name: top;
-  animation-duration: 0.2s;
-}
-
-@keyframes top {
-  from {
-    bottom: 3rem;
-    opacity: 0;
-  }
-
-  to {
-    bottom: 0;
-    opacity: 1;
-  }
+.cal-event-preview {
+  background: rgba($light, 0.8);
+  box-shadow: $event-shadow;
 }

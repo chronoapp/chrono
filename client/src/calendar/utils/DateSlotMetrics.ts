@@ -9,6 +9,7 @@ export default class DateSlotMetrics {
   readonly last: Date
   readonly range: Date[]
   readonly segments: EventSegment[]
+  readonly slots: number
 
   // 2d array of levels of events.
   readonly levels: EventSegment[][]
@@ -27,6 +28,7 @@ export default class DateSlotMetrics {
     this.range = range
     this.segments = segments
     this.levels = levels
+    this.slots = this.range.length
   }
 
   public getDateForSlot(slotNumber: number) {

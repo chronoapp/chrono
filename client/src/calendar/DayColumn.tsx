@@ -284,7 +284,6 @@ class DayColumn extends React.Component<IProps, IState> {
 
       selection.on('beforeSelect', (point: EventData) => {
         if (this.context?.dragAndDropAction) {
-          console.log('dragDropAction')
           return false
         }
 
