@@ -2,7 +2,8 @@ import * as dates from './dates'
 import moment from 'moment'
 
 /**
- * TODO: Replace moment with luxon.
+ * Wrapper for date localization.
+ * TODO: Replace moment with date-fns / luxon.
  */
 
 export function timeFormatShort(date: Date, space: boolean = false) {
@@ -49,6 +50,10 @@ export function format(value: any, format: string) {
 
 export function formatDateTime(value: any) {
   return moment(value).format()
+}
+
+export function fullDayFormat(date: Date) {
+  return moment(date).format(moment.HTML5_FMT.DATE)
 }
 
 export function getWorkWeekRange(date: Date) {
