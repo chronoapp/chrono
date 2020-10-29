@@ -3,6 +3,7 @@ import logging
 from uuid import uuid4
 from typing import Optional, Dict
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 
 from datetime import datetime, timedelta
 from backports.zoneinfo import ZoneInfo
@@ -58,7 +59,7 @@ def getService(user: User):
     return service
 
 
-def syncAllEvents(userId: int):
+def syncAllEvents(userId: int, fullSync: bool = False):
     """Syncs events from google calendar.
     """
     with scoped_session() as session:
@@ -92,10 +93,10 @@ def syncAllEvents(userId: int):
                                         calendar.get('deleted'))
                 user.calendars.append(userCalendar)
 
-            syncCalendar(userCalendar, session)
+            syncCalendar(userCalendar, session, fullSync=fullSync)
 
 
-def syncCalendar(calendar: Calendar, session: Session) -> None:
+def syncCalendar(calendar: Calendar, session: Session, fullSync: bool = False) -> None:
     service = getService(calendar.user)
     createWebhook(calendar)
 
@@ -103,7 +104,7 @@ def syncCalendar(calendar: Calendar, session: Session) -> None:
     nextPageToken = None
 
     while True:
-        if calendar.sync_token:
+        if calendar.sync_token and not fullSync:
             try:
                 eventsResult = service.events().list(calendarId=calendar.id,
                                                      timeMax=None if calendar.sync_token else end,
@@ -130,7 +131,6 @@ def syncCalendar(calendar: Calendar, session: Session) -> None:
         nextSyncToken = eventsResult.get('nextSyncToken')
 
         syncEventsToDb(calendar, events, session)
-        session.commit()
 
         if not nextPageToken:
             break
@@ -155,18 +155,23 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
         if eventId in addedEvents:
             event = addedEvents[eventId]
         else:
-            event = user.events.filter(Event.g_id == eventId).first()
+            event = user.events.filter(and_(Event.g_id == eventId,
+                Event.calendar_id == calendar.id)).first()
 
         if eventItem['status'] == 'cancelled':
             if event:
+                addedEvents[eventId] = event
                 deletedEvents += 1
                 session.delete(event)
             continue
 
         # Fix: There's no timezones for all day events..
         eventItemStart = eventItem['start'].get('dateTime', eventItem['start'].get('date'))
+        eventFullDayStart = eventItem['start'].get('date')
         eventStart = datetime.fromisoformat(eventItemStart)
+
         eventItemEnd = eventItem['end'].get('dateTime', eventItem['end'].get('date'))
+        eventFullDayEnd = eventItem['end'].get('date')
         eventEnd = datetime.fromisoformat(eventItemEnd)
         eventSummary = eventItem.get('summary')
         eventDescription = eventItem.get('description')
@@ -176,7 +181,7 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
             # New event
             newEvents += 1
             event = Event(eventId, eventSummary, eventDescription, eventStart, eventEnd,
-                          calendar.id)
+                eventFullDayStart, eventFullDayEnd, calendar.id)
             user.events.append(event)
         else:
             # Update Event
@@ -186,6 +191,8 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
             event.start = eventStart
             event.end = eventEnd
             event.time_zone = timeZone
+            event.start_day = eventFullDayStart
+            event.end_day = eventFullDayEnd
 
         # Auto Labelling
         if event.title:
@@ -196,6 +203,7 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
 
         addedEvents[eventId] = event
 
+    session.commit()
     logger.info(f'Updated {updatedEvents} events.')
     logger.info(f'Deleted {deletedEvents} events.')
     logger.info(f'Added {newEvents} events.')
@@ -279,12 +287,27 @@ def getEventBody(event: Event, timeZone: str):
     eventBody = {
         'summary': event.title,
         'description': event.description,
-        'start': {
-            'dateTime': convertToLocalTime(event.start, timeZone).isoformat(),
-        },
-        'end': {
-            'dateTime': convertToLocalTime(event.end, timeZone).isoformat(),
-        },
     }
+
+    if event.all_day:
+        eventBody['start'] = {
+            'date': event.start_day,
+            'timeZone': timeZone
+        }
+        eventBody['end'] = {
+            'date': event.end_day,
+            'timeZone': timeZone
+        }
+    else:
+        eventBody['start'] = {
+            'dateTime': convertToLocalTime(event.start, timeZone).isoformat(),
+            'timeZone': timeZone
+        }
+        eventBody['end'] = {
+            'dateTime': convertToLocalTime(event.end, timeZone).isoformat(),
+            'timeZone': timeZone
+        }
+
+    logger.info(eventBody)
 
     return eventBody

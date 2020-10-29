@@ -1,3 +1,5 @@
+from app.db.base_class import Base
+
 from .user import User
 from .user_credentials import UserCredential, ProviderType
 from .calendar import Calendar

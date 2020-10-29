@@ -31,6 +31,9 @@ class Event(Base):
 
     start = Column(DateTime(timezone=True))
     end = Column(DateTime(timezone=True))
+    # TODO: Validate these fields.
+    start_day = Column(String(10), nullable=True) # YYYY-MM-DD date if full day
+    end_day = Column(String(10), nullable=True) # YYYY-MM-DD date if full day
     time_zone = Column(String(255))
 
     labels = relationship('Label', lazy='joined', secondary=event_label_association_table)
@@ -63,26 +66,17 @@ class Event(Base):
 
     @property
     def all_day(self):
-        def isDayEvent(date):
-            return date.hour == 0 and date.minute == 0 and date.second == 0
-
-        return isDayEvent(self.start) and isDayEvent(self.end)
-
-    @property
-    def start_date(self):
-        return self.start.strftime('%Y-%m-%d') if self.all_day else None
-
-    @property
-    def end_date(self):
-        return self.end.strftime('%Y-%m-%d') if self.all_day else None
+        return self.start_day is not None and self.end_day is not None
 
     def __init__(self, g_id: Optional[str], title: Optional[str], description: Optional[str],
-                 start: datetime, end: datetime, calendar_id: str):
+                 start: datetime, end: datetime, start_day: Optional[str], end_day: Optional[str], calendar_id: str):
         self.g_id = g_id
         self.title = title
         self.description = description
         self.start = start
         self.end = end
+        self.start_day = start_day
+        self.end_day = end_day
         self.calendar_id = calendar_id
 
     def __repr__(self):

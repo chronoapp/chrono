@@ -20,7 +20,7 @@ function EventItem(props: { event: Event; isPreview: boolean }) {
     }
   }
   const { event } = props
-  if (event.isAllDay) {
+  if (event.all_day) {
     let color: string = calendarsContext.getCalendarColor(event.calendar_id)
 
     return (

@@ -26,8 +26,8 @@ class EventBaseVM(BaseModel):
     description: Optional[str] = None
     start: datetime
     end: datetime
-    start_date: Optional[str]
-    end_date: Optional[str]
+    start_day: Optional[str]
+    end_day: Optional[str]
 
     labels: List[LabelInDbVM] = []
     all_day: Optional[bool]
@@ -79,7 +79,7 @@ async def createEvent(event: EventBaseVM,
     try:
         calendarDb = user.calendars.filter_by(id=event.calendar_id).one_or_none()
         eventDb = Event(None, event.title, event.description, event.start, event.end,
-                        event.calendar_id)
+            event.start_day, event.end_day, event.calendar_id)
         eventDb.calendar = calendarDb
         user.events.append(eventDb)
 
@@ -118,7 +118,7 @@ async def updateEvent(
     eventDb = user.events.filter_by(id=event_id).first()
     if not eventDb:
         eventDb = Event(None, event.title, event.description, event.start, event.end,
-                        event.calendar_id)
+            event.start_day, event.end_day, event.calendar_id)
     else:
         if event.title:
             eventDb.title = event.title
@@ -136,7 +136,6 @@ async def updateEvent(
         eventDb.labels.append(label)
 
     if user.syncWithGoogle():
-        # Move and update the event.
         if prevCalendarId and prevCalendarId != eventDb.calendar_id:
             moveGoogleEvent(user, eventDb, prevCalendarId)
 

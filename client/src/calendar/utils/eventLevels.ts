@@ -92,7 +92,7 @@ export function sortEvents(evtA: Event, evtB: Event) {
   return (
     startSort || // sort by start Day first
     Math.max(durB, 1) - Math.max(durA, 1) || // events spanning multiple days go first
-    +evtB.isAllDay - +evtA.isAllDay || // then allDay single day events
+    +evtB.all_day - +evtA.all_day || // then allDay single day events
     +evtA.start - +evtB.start
   ) // then sort by start time
 }
