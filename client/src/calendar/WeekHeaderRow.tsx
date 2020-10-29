@@ -32,7 +32,7 @@ function WeekHeaderRow(props: IProps) {
       {renderBackgroundCells()}
       <div className="cal-row-content">
         {dayMetrics.levels.map((segments, idx) => (
-          <EventRow key={idx} segments={segments} slotMetrics={dayMetrics} />
+          <EventRow key={idx} isPreview={false} segments={segments} slotMetrics={dayMetrics} />
         ))}
       </div>
     </div>

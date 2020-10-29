@@ -5,7 +5,7 @@ import { Label } from '../models/Label'
 interface IProps {
   label: Label
   allowEdit: boolean
-  onClickDelete?: (e: MouseEvent) => void
+  onClickDelete?: (e) => void
 }
 
 function LabelTag(props: IProps) {
