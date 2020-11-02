@@ -91,9 +91,15 @@
   border-style: none none solid none;
   box-shadow: none;
   border-radius: 0;
-  border-width: 2px;
+  border-width: 3px;
   min-height: 38px;
   border-color: $grey-lighter;
+
+  &.button {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    padding-bottom: 0.25em;
+  }
 
   &.is-active {
     font-weight: bold;

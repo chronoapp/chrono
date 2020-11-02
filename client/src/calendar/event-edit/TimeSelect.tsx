@@ -64,7 +64,7 @@ function TimeSelect(props: IProps) {
         boxShadow: null,
         borderColor: 'hsl(0, 0%, 86%)', // $grey-lighter
         borderRadius: 0,
-        borderWidth: '2px',
+        borderWidth: '3px',
       }
     },
   }

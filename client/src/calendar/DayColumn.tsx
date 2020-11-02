@@ -159,9 +159,9 @@ class DayColumn extends React.Component<IProps, IState> {
     return styledEvents.map(({ event, style }, idx) => {
       const label = timeRangeFormat(event.start, event.end)
       const isInteracting = dnd && dnd.interacting && dnd.event.id === event.id
-      const isCreating = editingEventId === event.id
+      const isEditing = editingEventId === event.id
 
-      if (isCreating && !isInteracting) {
+      if (isEditing && !isInteracting) {
         return (
           <Popover
             key={`evt_${idx}`}

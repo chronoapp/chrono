@@ -278,6 +278,65 @@ function EventPopover(props: IProps) {
     )
   }
 
+  function renderSelectCalendar() {
+    const calendarValues = Object.values(calendarContext.calendarsById)
+      .filter((cal) => cal.isWritable())
+      .map((calendar) => {
+        return {
+          value: calendar.id,
+          label: calendar.summary,
+          color: calendar.backgroundColor,
+        }
+      })
+
+    const dot = (color = '#ccc') => ({
+      alignItems: 'center',
+      display: 'flex',
+
+      ':before': {
+        backgroundColor: color,
+        borderRadius: 3,
+        content: '" "',
+        display: 'block',
+        marginRight: 5,
+        marginLeft: 5,
+        height: 12,
+        width: 12,
+      },
+    })
+
+    const colourStyles = {
+      option: (styles, { data }) => ({ ...styles, ...dot(data.color) }),
+      container: (styles) => ({ ...styles, minWidth: '14em' }),
+      singleValue: (styles, { data }) => ({ ...styles, ...dot(data.color) }),
+    }
+
+    const defaultCal = calendarContext.calendarsById[eventFields.calendarId]
+    const defaultValue = {
+      value: defaultCal.id,
+      label: defaultCal.summary,
+      color: defaultCal.backgroundColor,
+    }
+
+    return (
+      <Select
+        defaultValue={defaultValue}
+        options={calendarValues}
+        styles={colourStyles}
+        onChange={({ value }) => {
+          // Forces a color change without an API request.
+          // TODO: Discard changes on close.
+          setEventFields({ ...eventFields, calendarId: value })
+          const event = { ...props.event, calendar_id: value }
+          eventActions.eventDispatch({
+            type: 'UPDATE_EVENT',
+            payload: { event: event, replaceEventId: event.id },
+          })
+        }}
+      />
+    )
+  }
+
   function renderEditView() {
     return (
       <div className="has-icon-grey">
@@ -373,30 +432,7 @@ function EventPopover(props: IProps) {
 
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
             <Icon className="mr-2" path={mdiCalendar} size={1} style={{ flex: 'none' }} />
-            <div className="select">
-              <select
-                value={eventFields.calendarId}
-                onChange={(e) => {
-                  // Forces a color change without an API request.
-                  setEventFields({ ...eventFields, calendarId: e.target.value })
-                  const event = { ...props.event, calendar_id: e.target.value }
-                  eventActions.eventDispatch({
-                    type: 'UPDATE_EVENT',
-                    payload: { event: event, replaceEventId: event.id },
-                  })
-                }}
-              >
-                {Object.values(calendarContext.calendarsById)
-                  .filter((cal) => cal.isWritable())
-                  .map((calendar) => {
-                    return (
-                      <option key={calendar.id} value={calendar.id}>
-                        {calendar.summary}
-                      </option>
-                    )
-                  })}
-              </select>
-            </div>
+            {renderSelectCalendar()}
           </div>
 
           <div className="mt-4" style={{ display: 'flex' }}>

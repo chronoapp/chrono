@@ -19,7 +19,7 @@ function TimeGridHeader(props: IProps) {
     const today = new Date() // TODO: pass via props.
 
     return props.range.map((date, i) => {
-      const dayNumber = format(date, 'DD')
+      const dayNumber = format(date, 'D')
       const dateString = format(date, 'ddd')
       const isToday = dates.eq(date, today, 'day')
 
