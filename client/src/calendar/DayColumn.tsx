@@ -64,6 +64,7 @@ class DayColumn extends React.Component<IProps, IState> {
   private hasJustCancelledEventCreate: boolean = false
 
   static contextType = EventActionContext
+  context!: React.ContextType<typeof EventActionContext>
 
   constructor(props: IProps) {
     super(props)
@@ -251,6 +252,11 @@ class DayColumn extends React.Component<IProps, IState> {
 
   onEventUpdated(event: Event, alertsContext: AlertsContextType) {
     if (!Event.isNewEvent(event)) {
+      const eventToUpdate: Event = this.context.eventState.eventsById[event.id]
+      if (dates.eq(eventToUpdate.start, event.start) && dates.eq(eventToUpdate.end, event.end)) {
+        return
+      }
+
       const alert = new Alert({ title: 'Saving Event..', isLoading: true })
       alertsContext.addAlert(alert)
       updateEvent(getAuthToken(), event)

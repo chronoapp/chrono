@@ -182,8 +182,8 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
         const { event } = this.state
         this.reset()
 
-        this.context.onEnd(event)
         this.props.onEventUpdated(event)
+        this.context.onEnd(event)
       })
 
       selection.on('click', () => {

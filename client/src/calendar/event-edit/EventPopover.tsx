@@ -68,6 +68,7 @@ function EventPopover(props: IProps) {
   const isExistingEvent = props.event.id !== -1
   const [readonly, setReadonly] = useState(isExistingEvent)
   const titleInputRef = createRef<HTMLInputElement>()
+  const contentEditableRef = createRef<HTMLInputElement>()
   const [addTagDropdownActive, setAddTagDropdownActive] = useState(false)
 
   useEffect(() => {
@@ -91,7 +92,9 @@ function EventPopover(props: IProps) {
 
   function keyboardEvents(e: KeyboardEvent) {
     if (e.key === 'Enter') {
-      // onSaveEvent(props.event)
+      if (contentEditableRef.current && document.activeElement !== contentEditableRef.current) {
+        onSaveEvent(props.event)
+      }
     }
   }
 
@@ -424,6 +427,7 @@ function EventPopover(props: IProps) {
             <Icon className="mr-2" path={mdiTextSubject} size={1} />
 
             <ContentEditable
+              innerRef={contentEditableRef}
               className="cal-event-edit-description"
               html={eventFields.description}
               onChange={(e) => setEventFields({ ...eventFields, description: e.target.value })}

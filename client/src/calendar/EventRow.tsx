@@ -68,7 +68,6 @@ function EventItem(props: { event: Event; isPreview: boolean }) {
   const dnd = eventActionContext.dragAndDropAction
   const isDragging = dnd && dnd.interacting && dnd.event.id === event.id
   const isEditing = eventActionContext.eventState.editingEventId === event.id
-  console.log(`${isDragging} ${isEditing}`)
 
   if (isEditing && !isDragging) {
     return (
