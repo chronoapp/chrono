@@ -66,10 +66,15 @@ code {
   min-width: 230px;
   display: flex;
   flex-direction: column;
-  padding-right: 10px;
   padding-left: 10px;
   background-color: whitesmoke;
+}
+
+.left-section-scrollable {
+  display: flex;
+  flex-direction: column;
   overflow-y: scroll;
+  padding-right: 10px;
   padding-bottom: 20px;
 }
 

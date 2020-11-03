@@ -54,6 +54,15 @@
   }
 }
 
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  padding-right: 1rem;
+  padding-bottom: 0.25rem;
+  padding-top: 0.25rem;
+  padding-left: 0.5rem;
+}
+
 .cal-has-shadow {
   box-shadow: $event-shadow !important;
   z-index: 1;

@@ -163,9 +163,11 @@ function Layout(props: Props) {
       <div className="app-content">
         <div className="left-section">
           {props.canCreateEvent && <NewEventButton />}
-          <MiniCalendar />
-          <LabelPanel />
-          <CalendarsPanel />
+          <div className="left-section-scrollable" style={{ overflowY: 'scroll' }}>
+            <MiniCalendar />
+            <LabelPanel />
+            <CalendarsPanel />
+          </div>
         </div>
         {props.children}
       </div>

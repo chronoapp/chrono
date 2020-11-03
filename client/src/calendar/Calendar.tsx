@@ -116,17 +116,7 @@ function Calendar() {
   function renderDisplaySelectionHeader() {
     const title = getViewTitle()
     return (
-      <div
-        className={clsx({ dropdown: true, 'is-active': displayToggleActive })}
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          paddingRight: '2rem',
-          paddingBottom: '0.5rem',
-          paddingTop: '0.5rem',
-          marginLeft: '0.5rem',
-        }}
-      >
+      <div className={clsx('dropdown', 'calendar-header', displayToggleActive && 'is-active')}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div
             className="button is-small is-light"
