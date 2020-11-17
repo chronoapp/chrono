@@ -105,13 +105,10 @@
   padding-bottom: 8px;
 }
 
-.cal-header-day-selected {
-  color: $cal-primary;
-}
-
 .cal-header-day {
   color: $grey-dark;
   font-size: 0.9em;
+  padding-top: 0.25em;
 }
 
 .cal-today {
