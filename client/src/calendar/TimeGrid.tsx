@@ -139,8 +139,12 @@ class TimeGrid extends React.Component<IProps, IState> {
 
   private renderDays(range: Date[]) {
     return range.map((date, jj) => {
+      const startOfDay = dates.merge(date, this.props.min)
       const dayEvents = this.props.events.filter(
-        (event) => dates.inRange(date, event.start, event.end, 'day') && !event.all_day
+        (event) =>
+          dates.inRange(date, event.start, event.end, 'day') &&
+          !event.all_day &&
+          !dates.eq(event.end, startOfDay) // Ignore if event ends exactly on start of this day.
       )
 
       return (
@@ -150,7 +154,7 @@ class TimeGrid extends React.Component<IProps, IState> {
           date={date}
           step={this.props.step}
           timeslots={this.props.timeslots}
-          min={dates.merge(date, this.props.min)}
+          min={startOfDay}
           max={dates.merge(date, this.props.max)}
           isCurrentDay={dates.eq(date, this.props.now, 'day')}
           now={this.props.now}
