@@ -162,7 +162,7 @@ class DayColumn extends React.Component<IProps, IState> {
       const isInteracting = dnd && dnd.interacting && dnd.event.id === event.id
       const isEditing = editingEventId === event.id
 
-      if (isEditing && !isInteracting) {
+      if (isEditing && !isInteracting && !this.isTailEndofMultiDayEvent(event)) {
         return (
           <Popover
             key={`evt_${idx}`}
@@ -198,10 +198,16 @@ class DayColumn extends React.Component<IProps, IState> {
     })
   }
 
+  isTailEndofMultiDayEvent(event: Event): boolean {
+    return event.start < this.props.min && event.end >= this.props.min
+  }
+
   selectionState(rect: SelectRect): SelectRange | undefined {
     const { current } = this.dayRef
 
-    if (!current) return
+    if (!current) {
+      return
+    }
 
     let currentSlot = this.slotMetrics.closestSlotFromPoint(rect.y, getBoundsForNode(current))
 

@@ -84,10 +84,15 @@ class TimeGrid extends React.Component<IProps, IState> {
     document.removeEventListener(GlobalEvent.scrollToEvent, this.scrollToEvent)
   }
 
-  private scrollToEvent() {
-    const { min, max, now, range } = this.props
+  /**
+   * Scrolls to time, defaults to now if date in event.detail is unspecified.
+   */
+  private scrollToEvent(event) {
+    const { min, max, now } = this.props
+    const scrollToDate = event.detail ? event.detail : now
+
     const totalMillis = dates.diff(max, min)
-    const diffMillis = now.getTime() - dates.startOf(now, 'day').getTime()
+    const diffMillis = scrollToDate.getTime() - dates.startOf(scrollToDate, 'day').getTime()
     const scrollTopRatio = diffMillis / totalMillis
 
     const content = this.contentRef.current

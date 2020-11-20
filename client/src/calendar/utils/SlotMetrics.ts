@@ -108,14 +108,24 @@ export default class SlotMetrics {
     return next
   }
 
-  public closestSlotToPosition(percent) {
+  public closestSlotToPosition(percent: number) {
     const slot = Math.min(this.slots.length - 1, Math.max(0, Math.round(percent * this.numSlots)))
     return this.slots[slot]
   }
 
-  public closestSlotFromPoint(pointY: number, boundaryRect: Rect) {
+  public closestSlotFromPoint(pointY: number, boundaryRect: Rect, overflow: boolean): Date {
     const range = Math.abs(boundaryRect.top - boundaryRect.bottom)
-    return this.closestSlotToPosition((pointY - boundaryRect.top) / range)
+    const percent = (pointY - boundaryRect.top) / range
+    if (overflow) {
+      const slot = Math.min(this.slots.length - 1, Math.round(percent * this.numSlots))
+      if (slot >= 0) {
+        return this.slots[slot]
+      } else {
+        return dates.add(this.slots[0], slot * this.step, 'minutes')
+      }
+    } else {
+      return this.closestSlotToPosition(percent)
+    }
   }
 
   public closestSlotFromDate(date: Date, offset = 0) {
