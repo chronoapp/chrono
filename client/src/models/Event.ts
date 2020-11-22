@@ -62,7 +62,11 @@ export default class Event {
     return event.end < today ? 'hsl(0, 0%, 45%)' : event.foregroundColor
   }
 
-  static newDefaultEvent(startDate: Date, endDate: Date) {
-    return new Event(-1, '', '', '', startDate, endDate, null, null, [], false, '', '#fff')
+  static newDefaultEvent(startDate: Date, endDate: Date, allDay: boolean) {
+    return new Event(-1, '', '', '', startDate, endDate, null, null, [], allDay, '', '#fff')
+  }
+
+  static getDefaultTitle(event: Event) {
+    return event.title ? event.title : '(No title)'
   }
 }

@@ -97,6 +97,7 @@ function WeekRow(props: IProps) {
           onUpdatedEvent={onUpdatedEvent}
           rowClassname="cal-row-wrapper"
           wrapperClassname="cal-month-view"
+          ignoreNewEventYBoundCheck={false}
         >
           {!props.loading &&
             dayMetrics.levels.map((segments, idx) => (

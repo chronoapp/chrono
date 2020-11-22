@@ -35,7 +35,7 @@ function NewEventButton() {
       onClick={() => {
         eventsContext.eventDispatch({
           type: 'INIT_NEW_EVENT_AT_DATE',
-          payload: roundNext15Min(new Date()),
+          payload: { date: roundNext15Min(new Date()), allDay: false },
         })
       }}
     >

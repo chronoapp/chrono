@@ -17,6 +17,7 @@ function EventItem(props: { event: Event; isPreview: boolean }) {
   const eventActionContext = useContext(EventActionContext)
   const { event } = props
   const calendar = calendarsContext.calendarsById[event.calendar_id]
+  const eventTitle = Event.getDefaultTitle(event)
 
   function handleStartDragging(e) {
     if (e.button === 0 && calendar.isWritable()) {
@@ -45,7 +46,7 @@ function EventItem(props: { event: Event; isPreview: boolean }) {
         onTouchStart={handleStartDragging}
         onClick={handleClickEvent}
       >
-        <div className="cal-event-content">{event.title}</div>
+        <div className="cal-event-content">{eventTitle}</div>
       </div>
     )
   } else {
@@ -60,7 +61,7 @@ function EventItem(props: { event: Event; isPreview: boolean }) {
         <div className="cal-label-circle" />
         {timeFormatShort(event.start)}
         <div className="cal-event-content" style={{ width: 0 }}>
-          {event.title}
+          {eventTitle}
         </div>
       </div>
     )

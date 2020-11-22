@@ -88,7 +88,7 @@ function TimeGridEvent(props: IProps) {
   }
 
   const diffMin = (event.end.getTime() - event.start.getTime()) / 60000
-  const displayTitle = event.title ? event.title : '(No title)'
+  const displayTitle = Event.getDefaultTitle(event)
 
   let inner
   if (diffMin <= 30) {

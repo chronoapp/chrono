@@ -45,7 +45,7 @@ type ActionType =
   | { type: 'INIT'; payload: Event[] }
   | { type: 'INIT_EDIT_NEW_EVENT'; payload: Event }
   | { type: 'INIT_EDIT_EVENT'; payload: Event }
-  | { type: 'INIT_NEW_EVENT_AT_DATE'; payload: Date }
+  | { type: 'INIT_NEW_EVENT_AT_DATE'; payload: { date: Date; allDay: boolean } }
   | { type: 'CREATE_EVENT'; payload: Event }
   | { type: 'DELETE_EVENT'; payload: { eventId: number } }
   | { type: 'CANCEL_SELECT' }
@@ -81,8 +81,9 @@ function eventReducer(state: EventState, action: ActionType) {
      * Create new event from start date, for a default duration of 1h.
      */
     case 'INIT_NEW_EVENT_AT_DATE':
-      const endDate = dates.add(action.payload, 1, 'hours')
-      const event = Event.newDefaultEvent(action.payload, endDate)
+      const endDate = dates.add(action.payload.date, 1, action.payload.allDay ? 'day' : 'hours')
+      const event = Event.newDefaultEvent(action.payload.date, endDate, action.payload.allDay)
+
       return {
         ...state,
         eventsById: { ...eventsById, [event.id]: event },

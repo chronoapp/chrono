@@ -296,6 +296,7 @@ class DayColumn extends React.Component<IProps, IState> {
 
       selection.on('beforeSelect', (point: EventData) => {
         if (this.context?.dragAndDropAction) {
+          // Already handled by DragDropEventContainer.
           return false
         }
 
@@ -314,7 +315,7 @@ class DayColumn extends React.Component<IProps, IState> {
           if (this.state.selectRange) {
             console.log('Handle Select Event')
             const { startDate, endDate } = this.state.selectRange
-            const event = Event.newDefaultEvent(startDate, endDate)
+            const event = Event.newDefaultEvent(startDate, endDate, false)
 
             this.context?.eventDispatch({
               type: 'INIT_EDIT_NEW_EVENT',
@@ -343,7 +344,7 @@ class DayColumn extends React.Component<IProps, IState> {
         )
         this.context?.eventDispatch({
           type: 'INIT_NEW_EVENT_AT_DATE',
-          payload: startDate,
+          payload: { date: startDate, allDay: false },
         })
 
         this.setState({ selecting: false })

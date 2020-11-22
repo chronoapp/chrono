@@ -7,7 +7,14 @@ import EventRow from './EventRow'
 import { EventSegment, eventSegments } from './utils/eventLevels'
 
 import { EventActionContext } from './EventActionContext'
-import { Selection, SelectRect, Rect, getBoundsForNode } from '../util/Selection'
+import {
+  Selection,
+  SelectRect,
+  Rect,
+  getBoundsForNode,
+  EventData,
+  isEvent,
+} from '../util/Selection'
 import { pointInBox, getSlotAtX } from '../util/selection-utils'
 import { fullDayFormat } from '../util/localizer'
 
@@ -17,6 +24,7 @@ interface IProps {
   onUpdatedEvent: (Event) => void
   rowClassname: string
   wrapperClassname: string
+  ignoreNewEventYBoundCheck: boolean
 }
 
 interface IState {
@@ -28,6 +36,8 @@ interface IState {
  */
 class WeekRowContainer extends React.Component<IProps, IState> {
   private _selection?: Selection
+  private _newEventSelection?: Selection
+
   context!: React.ContextType<typeof EventActionContext>
   static contextType = EventActionContext
   private rowBodyRef: React.RefObject<HTMLDivElement>
@@ -39,7 +49,9 @@ class WeekRowContainer extends React.Component<IProps, IState> {
     }
 
     this.updateEvent = this.updateEvent.bind(this)
-    this.initSelection = this.initSelection.bind(this)
+    this.handleCreateNewEvent = this.handleCreateNewEvent.bind(this)
+    this.initDragDropSelections = this.initDragDropSelections.bind(this)
+    this.initCreateNewEventSelections = this.initCreateNewEventSelections.bind(this)
     this.rowBodyRef = React.createRef()
   }
 
@@ -50,6 +62,9 @@ class WeekRowContainer extends React.Component<IProps, IState> {
   componentWillUnmount() {
     this._selection?.teardown()
     this._selection = undefined
+
+    this._newEventSelection?.teardown()
+    this._newEventSelection = undefined
   }
 
   private updateEvent(
@@ -107,6 +122,19 @@ class WeekRowContainer extends React.Component<IProps, IState> {
     }
   }
 
+  private handleCreateNewEvent(x: number, y: number, bounds: Rect) {
+    if (this.props.ignoreNewEventYBoundCheck || pointInBox(bounds, x, y)) {
+      const startDate = this.props.dayMetrics.getDateForSlot(
+        getSlotAtX(bounds, x, false, this.props.dayMetrics.slots)
+      )
+
+      this.context?.eventDispatch({
+        type: 'INIT_NEW_EVENT_AT_DATE',
+        payload: { date: startDate, allDay: true },
+      })
+    }
+  }
+
   private reset() {
     this.setState({ segment: undefined! })
   }
@@ -119,48 +147,75 @@ class WeekRowContainer extends React.Component<IProps, IState> {
       const container = current.closest(`.${this.props.wrapperClassname}`) as HTMLElement
 
       if (rowContainer && container) {
-        const selection = (this._selection = new Selection(container))
-
-        selection.on('beforeSelect', (point: SelectRect) => {
-          const dragAndDropAction = this.context.dragAndDropAction!
-          if (!dragAndDropAction) {
-            return false
-          }
-
-          console.log(`beforeSelect`)
-          console.log(this.context.dragAndDropAction)
-        })
-
-        selection.on('selecting', (point: SelectRect) => {
-          const bounds = getBoundsForNode(rowContainer)
-
-          if (this.context.dragAndDropAction?.action === 'MOVE') {
-            this.handleMove(point, bounds)
-          }
-        })
-
-        selection.on('select', (point: SelectRect) => {
-          const bounds = getBoundsForNode(rowContainer)
-          if (!this.state.segment || !pointInBox(bounds, point.x, point.y)) {
-            return
-          }
-
-          const { event } = this.state.segment
-          this.context.onEnd(event)
-          this.props.onUpdatedEvent(event)
-          this.reset()
-        })
-
-        selection.on('selectStart', () => this.context.onStart())
-
-        selection.on('click', () => this.context.onEnd(null))
-
-        selection.on('reset', () => {
-          this.reset()
-          this.context.onEnd()
-          this.context?.eventDispatch({ type: 'CANCEL_SELECT' })
-        })
+        this.initDragDropSelections(rowContainer, container)
+        this.initCreateNewEventSelections(rowContainer, container)
       }
+    }
+  }
+
+  private initDragDropSelections(rowContainer: HTMLElement, container: HTMLElement) {
+    if (rowContainer && container) {
+      const selection = (this._selection = new Selection(container))
+
+      selection.on('beforeSelect', (_point: EventData) => {
+        if (!this.context.dragAndDropAction) {
+          return false
+        }
+      })
+
+      selection.on('selecting', (point: SelectRect) => {
+        const bounds = getBoundsForNode(rowContainer)
+
+        if (this.context.dragAndDropAction?.action === 'MOVE') {
+          this.handleMove(point, bounds)
+        }
+      })
+
+      selection.on('select', (point: SelectRect) => {
+        const bounds = getBoundsForNode(rowContainer)
+        if (!this.state.segment || !pointInBox(bounds, point.x, point.y)) {
+          return
+        }
+
+        const { event } = this.state.segment
+        this.context.onEnd(event)
+        this.props.onUpdatedEvent(event)
+        this.reset()
+      })
+
+      selection.on('selectStart', () => this.context.onStart())
+
+      selection.on('click', (clickEvent: EventData) => {
+        this.context.onEnd(null)
+      })
+
+      selection.on('reset', () => {
+        this.reset()
+        this.context.onEnd()
+        this.context?.eventDispatch({ type: 'CANCEL_SELECT' })
+      })
+    }
+  }
+
+  private initCreateNewEventSelections(rowContainer: HTMLElement, container: HTMLElement) {
+    if (rowContainer && container) {
+      const selection = (this._newEventSelection = new Selection(container))
+
+      selection.on('beforeSelect', (point: EventData) => {
+        // Handled by drag & drop selection.
+        if (this.context.dragAndDropAction) {
+          return false
+        }
+
+        // Cancel the click if we've clicked on an event otherwise it the 'click' event emits first,
+        // which creates a new event instead of editing the existing one.
+        return !isEvent(rowContainer, point.clientX, point.clientY)
+      })
+
+      selection.on('click', (clickEvent: EventData) => {
+        const bounds = getBoundsForNode(rowContainer)
+        this.handleCreateNewEvent(clickEvent.x, clickEvent.y, bounds)
+      })
     }
   }
 

@@ -70,7 +70,8 @@ function WeekHeaderRow(props: IProps) {
           dayMetrics={dayMetrics}
           onUpdatedEvent={onUpdatedEvent}
           rowClassname={CELL_WRAPPER_CLS}
-          wrapperClassname={CELL_WRAPPER_CLS}
+          wrapperClassname={'cal-time-header-content'}
+          ignoreNewEventYBoundCheck={true}
         >
           {dayMetrics.levels.map((segments, idx) => (
             <EventRow key={idx} isPreview={false} segments={segments} slotMetrics={dayMetrics} />
