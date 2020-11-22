@@ -138,6 +138,7 @@ function TimeGridEvent(props: IProps) {
         height: stringifyPercent(eventHeight),
         border: props.style.border,
         color: Event.getForegroundColor(props.event),
+        zIndex: isEditing ? 5 : 0,
       }}
       onMouseDown={handleStartDragging}
       onTouchStart={handleStartDragging}

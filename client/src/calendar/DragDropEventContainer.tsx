@@ -189,6 +189,11 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
         const bounds = getBoundsForNode(node)
         const { dragAndDropAction } = this.context
 
+        // Don't drag full day events to the grid.
+        if (dragAndDropAction?.event.all_day) {
+          return
+        }
+
         if (dragAndDropAction!.action === 'RESIZE') {
           this.handleResize(point, bounds)
         } else if (dragAndDropAction!.action === 'MOVE') {

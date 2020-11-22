@@ -15,6 +15,8 @@ interface IProps {
   children: any
   dayMetrics: DateSlotMetrics
   onUpdatedEvent: (Event) => void
+  rowClassname: string
+  wrapperClassname: string
 }
 
 interface IState {
@@ -113,8 +115,8 @@ class WeekRowContainer extends React.Component<IProps, IState> {
     const { current } = this.rowBodyRef
 
     if (current) {
-      const rowContainer = current.closest('.cal-month-row') as HTMLElement
-      const container = current.closest('.cal-month-view') as HTMLElement
+      const rowContainer = current.closest(`.${this.props.rowClassname}`) as HTMLElement
+      const container = current.closest(`.${this.props.wrapperClassname}`) as HTMLElement
 
       if (rowContainer && container) {
         const selection = (this._selection = new Selection(container))

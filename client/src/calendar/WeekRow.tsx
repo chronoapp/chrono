@@ -86,13 +86,18 @@ function WeekRow(props: IProps) {
   }
 
   return (
-    <div className="cal-month-row">
+    <div className="cal-row-wrapper">
       {renderBackgroundCells()}
 
       <div className="cal-row-content">
         <div className="cal-row">{props.range.map(renderHeadingCell)}</div>
 
-        <WeekRowContainer dayMetrics={dayMetrics} onUpdatedEvent={onUpdatedEvent}>
+        <WeekRowContainer
+          dayMetrics={dayMetrics}
+          onUpdatedEvent={onUpdatedEvent}
+          rowClassname="cal-row-wrapper"
+          wrapperClassname="cal-month-view"
+        >
           {!props.loading &&
             dayMetrics.levels.map((segments, idx) => (
               <EventRow key={idx} segments={segments} slotMetrics={dayMetrics} isPreview={false} />

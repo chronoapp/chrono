@@ -113,7 +113,7 @@ export default class SlotMetrics {
     return this.slots[slot]
   }
 
-  public closestSlotFromPoint(pointY: number, boundaryRect: Rect, overflow: boolean): Date {
+  public closestSlotFromPoint(pointY: number, boundaryRect: Rect, overflow: boolean = false): Date {
     const range = Math.abs(boundaryRect.top - boundaryRect.bottom)
     const percent = (pointY - boundaryRect.top) / range
     if (overflow) {
