@@ -215,6 +215,8 @@ function EventPopover(props: IProps) {
   }
 
   function renderReadOnlyView() {
+    const calendar = getSelectedCalendar(eventFields.calendarId)
+
     return (
       <div className="has-icon-grey">
         <div className="cal-event-modal-header has-background-white-ter">
@@ -263,19 +265,24 @@ function EventPopover(props: IProps) {
 
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
             <Icon className="mr-2" path={mdiCalendar} size={1} />
-            <span>{getSelectedCalendar(eventFields.calendarId).summary}</span>
+            <span>{calendar.summary}</span>
           </div>
 
-          <div className="mt-4" style={{ display: 'flex' }}>
-            <button className="button is-primary" onClick={() => setReadonly(false)}>
-              Edit
-            </button>
+          {calendar.isWritable() && (
+            <div className="mt-4" style={{ display: 'flex' }}>
+              <button className="button is-primary" onClick={() => setReadonly(false)}>
+                Edit
+              </button>
 
-            <button className="button is-light ml-2" onClick={() => onDeleteEvent(props.event.id)}>
-              <Icon className="mr-1" path={mdiDeleteOutline} size={1} />
-              Delete{' '}
-            </button>
-          </div>
+              <button
+                className="button is-light ml-2"
+                onClick={() => onDeleteEvent(props.event.id)}
+              >
+                <Icon className="mr-1" path={mdiDeleteOutline} size={1} />
+                Delete{' '}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     )

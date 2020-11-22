@@ -16,9 +16,10 @@ function EventItem(props: { event: Event; isPreview: boolean }) {
   const calendarsContext = useContext(CalendarsContext)
   const eventActionContext = useContext(EventActionContext)
   const { event } = props
+  const calendar = calendarsContext.calendarsById[event.calendar_id]
 
   function handleStartDragging(e) {
-    if (e.button === 0) {
+    if (e.button === 0 && calendar.isWritable()) {
       eventActionContext.onBeginAction(event, 'MOVE')
     }
   }

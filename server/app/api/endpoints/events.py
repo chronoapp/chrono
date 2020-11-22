@@ -7,7 +7,7 @@ from googleapiclient.errors import HttpError
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from starlette.status import HTTP_400_BAD_REQUEST
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
 
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
@@ -79,7 +79,7 @@ async def createEvent(event: EventBaseVM,
     try:
         calendarDb = user.calendars.filter_by(id=event.calendar_id).one_or_none()
         eventDb = Event(None, event.title, event.description, event.start, event.end,
-            event.start_day, event.end_day, event.calendar_id)
+                        event.start_day, event.end_day, event.calendar_id)
         eventDb.calendar = calendarDb
         user.events.append(eventDb)
 
@@ -116,16 +116,20 @@ async def updateEvent(
 
     prevCalendarId: Optional[str] = None
     eventDb = user.events.filter_by(id=event_id).first()
+    if eventDb and not eventDb.isWritable():
+        raise HTTPException(HTTP_403_FORBIDDEN, detail="Can not update event.")
+
     if not eventDb:
         eventDb = Event(None, event.title, event.description, event.start, event.end,
-            event.start_day, event.end_day, event.calendar_id)
+                        event.start_day, event.end_day, event.calendar_id)
     else:
         if event.title:
             eventDb.title = event.title
             eventDb.description = event.description
             eventDb.start = event.start
             eventDb.end = event.end
-
+            eventDb.start_day = event.start_day
+            eventDb.end_day = event.end_day
             prevCalendarId = eventDb.calendar_id
             eventDb.calendar_id = event.calendar_id
             # TODO: Update other fields

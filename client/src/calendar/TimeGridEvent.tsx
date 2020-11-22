@@ -27,20 +27,22 @@ function TimeGridEvent(props: IProps) {
   // Tiny gap to separate events.
   const eventHeight = props.style.height - 0.15
 
+  const { event } = props
+  const calendar = calendarsContext.calendarsById[event.calendar_id]
+
   function foregroundColor() {
     return event.end < props.now ? 'hsl(0, 0%, 45%)' : event.foregroundColor
   }
 
   function handleResize(e, direction: Direction) {
-    if (e.button !== 0) {
-      return
+    if (e.button === 0 && calendar.isWritable()) {
+      e.stopPropagation()
+      eventActionContext?.onBeginAction(props.event, 'RESIZE', direction)
     }
-    e.stopPropagation()
-    eventActionContext?.onBeginAction(props.event, 'RESIZE', direction)
   }
 
   function handleStartDragging(e) {
-    if (e.button === 0) {
+    if (e.button === 0 && calendar.isWritable()) {
       eventActionContext?.onBeginAction(props.event, 'MOVE')
     }
   }
@@ -85,8 +87,6 @@ function TimeGridEvent(props: IProps) {
     )
   }
 
-  const { event } = props
-
   const diffMin = (event.end.getTime() - event.start.getTime()) / 60000
   const displayTitle = event.title ? event.title : '(No title)'
 
@@ -118,7 +118,6 @@ function TimeGridEvent(props: IProps) {
     dnd && dnd.interacting && dnd.event.id === props.event.id && !props.isPreview
 
   const isEditing = eventActionContext?.eventState.editingEventId === event.id
-
   const calendarColor = calendarsContext.getCalendarColor(event.calendar_id)
 
   return (

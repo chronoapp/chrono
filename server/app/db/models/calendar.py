@@ -2,6 +2,14 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship, backref
 
 from app.db.base_class import Base
+from enum import Enum
+
+
+class AccessRole(Enum):
+    freeBusyReader = 'freeBusyReader'
+    reader = 'reader'
+    writer = 'writer'
+    owner = 'owner'
 
 
 class Calendar(Base):
