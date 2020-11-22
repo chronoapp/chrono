@@ -1,6 +1,6 @@
 import { Label } from './Label'
 import { hexToHSL } from '../calendar/utils/Colors'
-import { localFullDate } from '../util/localizer'
+import { localFullDate, fullDayFormat } from '../util/localizer'
 
 const today = new Date()
 
@@ -63,7 +63,20 @@ export default class Event {
   }
 
   static newDefaultEvent(startDate: Date, endDate: Date, allDay: boolean) {
-    return new Event(-1, '', '', '', startDate, endDate, null, null, [], allDay, '', '#fff')
+    return new Event(
+      -1,
+      '',
+      '',
+      '',
+      startDate,
+      endDate,
+      allDay ? fullDayFormat(startDate) : null,
+      allDay ? fullDayFormat(endDate) : null,
+      [],
+      allDay,
+      '',
+      '#fff'
+    )
   }
 
   static getDefaultTitle(event: Event) {
