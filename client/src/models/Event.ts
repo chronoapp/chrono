@@ -5,7 +5,7 @@ import { localFullDate, fullDayFormat } from '../util/localizer'
 const today = new Date()
 
 /**
- * Fields only because it is copied for drag & drop.
+ * Contains fields only because it is copied for drag & drop.
  */
 export default class Event {
   public labels: Label[]

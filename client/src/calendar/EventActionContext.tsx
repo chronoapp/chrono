@@ -73,7 +73,10 @@ function eventReducer(state: EventState, action: ActionType) {
     case 'INIT_EDIT_EVENT':
       return {
         ...state,
-        eventsById: { ...eventsById, [action.payload.id]: action.payload },
+        eventsById: {
+          ...update(eventsById, { $unset: [-1] }),
+          [action.payload.id]: action.payload,
+        },
         editingEventId: action.payload.id,
       }
 
@@ -143,14 +146,12 @@ export function EventActionProvider(props: any) {
   })
 
   function handleInteractionStart() {
-    console.log('handleInteractionStart')
     if (dragDropAction) {
       setDragDropAction({ ...dragDropAction, interacting: true })
     }
   }
 
   function handleInteractionEnd(event?: Event) {
-    console.log('handleInteractionEnd')
     if (event) {
       eventDispatch({ type: 'UPDATE_EVENT', payload: { event, replaceEventId: event.id } })
     }

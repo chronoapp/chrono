@@ -52,6 +52,9 @@ export function formatDateTime(value: any) {
   return moment(value).format()
 }
 
+/**
+ * Date into a full day string (YYYY-MM-DD)
+ */
 export function fullDayFormat(date: Date) {
   return moment(date).format(moment.HTML5_FMT.DATE)
 }

@@ -28,7 +28,7 @@ function TimeGridEvent(props: IProps) {
   const eventHeight = props.style.height - 0.15
 
   const { event } = props
-  const calendar = calendarsContext.calendarsById[event.calendar_id]
+  const calendar = calendarsContext.getDefaultCalendar(event.calendar_id)
 
   function foregroundColor() {
     return event.end < props.now ? 'hsl(0, 0%, 45%)' : event.foregroundColor

@@ -16,7 +16,7 @@ function EventItem(props: { event: Event; isPreview: boolean }) {
   const calendarsContext = useContext(CalendarsContext)
   const eventActionContext = useContext(EventActionContext)
   const { event } = props
-  const calendar = calendarsContext.calendarsById[event.calendar_id]
+  const calendar = calendarsContext.getDefaultCalendar(event.calendar_id)
   const eventTitle = Event.getDefaultTitle(event)
 
   function handleStartDragging(e) {
