@@ -27,7 +27,7 @@ import { EventActionContext } from '../EventActionContext'
 import { CalendarsContext } from '../../components/CalendarsContext'
 import { AlertsContext } from '../../components/AlertsContext'
 import { LabelContext, LabelContextType } from '../../components/LabelsContext'
-import LabelTag from '../../components/LabelTag'
+import { LabelTag } from '../../components/LabelTag'
 import LabelTree from '../../components/LabelTree'
 import TimeSelect from './TimeSelect'
 
@@ -55,7 +55,7 @@ function EventPopover(props: IProps) {
   const eventActions = useContext(EventActionContext)
   const calendarContext = useContext(CalendarsContext)
   const alertsContext = useContext(AlertsContext)
-  const { labelState, dispatch } = useContext<LabelContextType>(LabelContext)
+  const { labelState } = useContext<LabelContextType>(LabelContext)
 
   const [eventFields, setEventFields] = useState(
     new EventFields(

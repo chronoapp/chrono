@@ -43,6 +43,8 @@
   border: 1px solid $link;
 }
 
+// Taggable Input
+
 .input__input {
   @extend %input;
 }
@@ -66,4 +68,14 @@
   .input__highlighter {
     border: none !important;
   }
+}
+
+.tag-highlight {
+  padding: 1px 0;
+  padding-right: 0.5px;
+  border-radius: 4px;
+  background-color: $grey-lightest;
+  border: 1px solid $grey-light;
+  margin-left: -1px;
+  color: transparent;
 }

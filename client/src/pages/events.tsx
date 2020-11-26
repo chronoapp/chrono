@@ -16,7 +16,6 @@ import { Label } from '../models/Label'
 import { LabelRule } from '../models/LabelRule'
 import Layout from '../components/Layout'
 import LabelTree from '../components/LabelTree'
-import LabelTag from '../components/LabelTag'
 
 interface Props {
   authToken: string

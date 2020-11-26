@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef, createRef } from 'react'
+import React, { useState, useEffect, useRef, useContext } from 'react'
 import clsx from 'clsx'
-
 import { MentionsInput, Mention } from 'react-mentions'
+
 import { Label } from '../../models/Label'
+import { LabelTagColor } from '../../components/LabelTag'
 
 interface IProps {
   labels: Label[]
@@ -23,10 +24,11 @@ const defaultStyle = {
   },
   suggestions: {
     zIndex: 10,
-    marginTop: 25,
+    marginTop: 32,
     list: {
       backgroundColor: 'white',
       border: '1px solid rgba(0,0,0,0.15)',
+      borderRadius: '3px',
       fontSize: 14,
     },
     item: {
@@ -37,14 +39,6 @@ const defaultStyle = {
       },
     },
   },
-}
-
-const highlightedStyle = {
-  padding: '1px 0.5px',
-  borderRadius: '4px',
-  backgroundColor: 'whitesmoke',
-  border: '1px solid rgba(0,0,0,0.15)',
-  color: 'transparent',
 }
 
 function difference(setA, setB) {
@@ -72,7 +66,7 @@ function TaggableInput(props: IProps) {
   }, [])
 
   const labels = props.labels.map((label) => {
-    return { id: label.id, display: label.title }
+    return { id: label.id, display: label.title, colorHex: label.color_hex }
   })
 
   function renderLabels(val) {
@@ -92,6 +86,15 @@ function TaggableInput(props: IProps) {
     }
   }
 
+  function renderSuggestion(entry, _search, highlightedDisplay) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <LabelTagColor colorHex={entry.colorHex} />{' '}
+        <span className="ml-1">{highlightedDisplay}</span>
+      </div>
+    )
+  }
+
   return (
     <div className={clsx(props.isHeading && 'input-heading')}>
       <MentionsInput
@@ -106,10 +109,11 @@ function TaggableInput(props: IProps) {
         <Mention
           trigger="#"
           data={renderLabels}
-          style={highlightedStyle}
+          className="tag-highlight"
           markup={'#[__display__](__id__)'}
           displayTransform={(_id, display) => ` #${display}`}
           appendSpaceOnAdd={true}
+          renderSuggestion={renderSuggestion}
         />
       </MentionsInput>
     </div>
