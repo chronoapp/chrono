@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect, createRef, useRef } from 'react
 import clsx from 'clsx'
 import update from 'immutability-helper'
 import Select from 'react-select'
+import { normalizeArr } from '../../lib/normalizer'
 
 import * as dates from '../../util/dates'
 import Icon from '@mdi/react'
@@ -25,12 +26,13 @@ import Alert from '../../models/Alert'
 import { EventActionContext } from '../EventActionContext'
 import { CalendarsContext } from '../../components/CalendarsContext'
 import { AlertsContext } from '../../components/AlertsContext'
+import { LabelContext, LabelContextType } from '../../components/LabelsContext'
 import LabelTag from '../../components/LabelTag'
 import LabelTree from '../../components/LabelTree'
 import TimeSelect from './TimeSelect'
 
 import ContentEditable from '../../lib/ContentEditable'
-
+import TaggableInput from './TaggableInput'
 interface IProps {
   event: Event
 }
@@ -53,6 +55,7 @@ function EventPopover(props: IProps) {
   const eventActions = useContext(EventActionContext)
   const calendarContext = useContext(CalendarsContext)
   const alertsContext = useContext(AlertsContext)
+  const { labelState, dispatch } = useContext<LabelContextType>(LabelContext)
 
   const [eventFields, setEventFields] = useState(
     new EventFields(
@@ -67,15 +70,9 @@ function EventPopover(props: IProps) {
 
   const isExistingEvent = props.event.id !== -1
   const [readonly, setReadonly] = useState(isExistingEvent)
-  const titleInputRef = createRef<HTMLInputElement>()
+
   const contentEditableRef = createRef<HTMLInputElement>()
   const [addTagDropdownActive, setAddTagDropdownActive] = useState(false)
-
-  useEffect(() => {
-    if (!readonly) {
-      titleInputRef.current?.focus()
-    }
-  }, [])
 
   useEffect(() => {
     document.addEventListener('keydown', keyboardEvents)
@@ -237,10 +234,12 @@ function EventPopover(props: IProps) {
         </div>
 
         <div className="cal-event-modal" style={{ display: 'flex', flexDirection: 'column' }}>
-          <div className="has-text-grey-darker is-size-5">{eventFields.title}</div>
+          <div className="has-text-grey-darker is-size-5">
+            <TaggableInput title={eventFields.title} labels={[]} isHeading={true} />
+          </div>
 
           {props.event.labels && (
-            <div className="mt-2" style={{ display: 'flex' }}>
+            <div style={{ display: 'flex' }}>
               {props.event.labels.map((label) => (
                 <LabelTag key={label.id} label={label} allowEdit={false} />
               ))}
@@ -348,6 +347,8 @@ function EventPopover(props: IProps) {
   }
 
   function renderEditView() {
+    const labels: Label[] = Object.values(labelState.labelsById)
+
     return (
       <div className="has-icon-grey">
         <div className="cal-event-modal-header has-background-white-ter">
@@ -369,18 +370,29 @@ function EventPopover(props: IProps) {
 
         <div className="cal-event-modal" style={{ display: 'flex', flexDirection: 'column' }}>
           <div>
-            <input
-              className="input"
-              type="text"
-              placeholder="title"
-              value={eventFields.title}
-              ref={titleInputRef}
-              onChange={(e) => {
-                setEventFields({ ...eventFields, title: e.target.value })
-                // setTitle(e.target.value)
+            <TaggableInput
+              labels={labels}
+              title={eventFields.title}
+              portalCls={'.cal-event-modal-container'}
+              isHeading={false}
+              handleChange={(title, textValue, labelIds: number[], removedLabelIds: number[]) => {
+                let updatedLabels = eventFields.labels
+
+                const updatedLabelIds = eventFields.labels.map((l) => l.id)
+                if (labelIds) {
+                  for (let labelId of labelIds) {
+                    if (!updatedLabelIds.includes(labelId)) {
+                      updatedLabelIds.push(labelId)
+                    }
+                  }
+                  updatedLabels = updatedLabelIds
+                    .map((labelId) => labelState.labelsById[labelId])
+                    .filter((label) => !removedLabelIds.includes(label.id))
+                }
+
+                setEventFields({ ...eventFields, title, labels: updatedLabels })
               }}
-              style={{ width: '100%' }}
-            ></input>
+            />
           </div>
 
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>

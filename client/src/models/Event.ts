@@ -14,6 +14,7 @@ export default class Event {
     readonly id: number,
     readonly calendar_id: string,
     readonly title: string,
+    readonly title_short: string,
     readonly description: string,
     readonly start: Date,
     readonly end: Date,
@@ -32,6 +33,7 @@ export default class Event {
       eventJson.id,
       eventJson.calendar_id,
       eventJson.title,
+      eventJson.title_short,
       eventJson.description,
       eventJson.all_day ? localFullDate(eventJson.start_day) : new Date(eventJson.start),
       eventJson.all_day ? localFullDate(eventJson.end_day) : new Date(eventJson.end),
@@ -68,6 +70,7 @@ export default class Event {
       '',
       '',
       '',
+      '',
       startDate,
       endDate,
       allDay ? fullDayFormat(startDate) : null,
@@ -80,6 +83,6 @@ export default class Event {
   }
 
   static getDefaultTitle(event: Event) {
-    return event.title ? event.title : '(No title)'
+    return event.title_short ? event.title_short : '(No title)'
   }
 }

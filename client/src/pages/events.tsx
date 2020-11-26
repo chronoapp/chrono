@@ -303,7 +303,7 @@ class EventList extends Component<Props, State> {
                 <tr key={`event-${event.id}`}>
                   <td>{format(event.start, 'MMM DD')}</td>
                   <td>{getDurationDisplay(event.start, event.end)}</td>
-                  <td>{event.title}</td>
+                  <td>{Event.getDefaultTitle(event)}</td>
                   <td>
                     {event.labels.map((label) => (
                       <LabelTagSolid
