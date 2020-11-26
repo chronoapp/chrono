@@ -7,7 +7,7 @@ from googleapiclient.errors import HttpError
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
 
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
@@ -23,6 +23,7 @@ class EventBaseVM(BaseModel):
     """Viewmodel for events.
     """
     title: Optional[str]
+    title_short: Optional[str]
     description: Optional[str] = None
     start: datetime
     end: datetime
@@ -43,13 +44,15 @@ class EventInDBVM(EventBaseVM):
 
 
 @router.get('/events/', response_model=List[EventInDBVM])
-async def getEvents(title: str = "",
-                    query: str = "",
-                    limit: int = 100,
-                    start_date: Optional[str] = None,
-                    end_date: Optional[str] = None,
-                    user: User = Depends(get_current_user),
-                    session: Session = Depends(get_db)):
+async def getEvents(
+    title: str = "",
+    query: str = "",
+    limit: int = 100,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_db)
+) -> List[Event]:
 
     startFilter = datetime.fromisoformat(start_date) if start_date\
         else datetime.now() - timedelta(days=365)
@@ -72,9 +75,9 @@ async def getEvents(title: str = "",
 
 
 @router.post('/events/', response_model=EventInDBVM)
-async def createEvent(event: EventBaseVM,
-                      user: User = Depends(get_current_user),
-                      session: Session = Depends(get_db)):
+async def createEvent(
+    event: EventBaseVM, user: User = Depends(get_current_user), session: Session = Depends(get_db)
+) -> Event:
 
     try:
         calendarDb = user.calendars.filter_by(id=event.calendar_id).one_or_none()
@@ -100,11 +103,15 @@ async def createEvent(event: EventBaseVM,
 
 
 @router.get('/events/{event_id}', response_model=EventInDBVM)
-async def getEvent(event_id: int,
-                   user: User = Depends(get_current_user),
-                   session: Session = Depends(get_db)):
+async def getEvent(
+    event_id: int, user: User = Depends(get_current_user),
+    session: Session = Depends(get_db)) -> Event:
 
-    return user.events.filter_by(id=event_id).first()
+    event = user.events.filter_by(id=event_id).one_or_none()
+    if not event:
+        raise HTTPException(HTTP_404_NOT_FOUND)
+
+    return event
 
 
 @router.put('/events/{event_id}', response_model=EventInDBVM)

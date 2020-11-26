@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
+import re
 
 from sqlalchemy import Column, Integer,\
     String, ForeignKey, BigInteger, Table, Text, DateTime, text, desc
@@ -12,6 +13,12 @@ from app.db.models.calendar import AccessRole
 event_label_association_table = Table('event_label', Base.metadata,
                                       Column('event_id', BigInteger, ForeignKey('event.id')),
                                       Column('label_id', Integer, ForeignKey('label.id')))
+
+TAG_PATTERN = re.compile(r'#\[([\w\s]+)\]\((\d+)\)')
+
+
+def getStrippedTitle(title: str):
+    return re.sub(TAG_PATTERN, r'#\1', title)
 
 
 class Event(Base):
@@ -39,7 +46,11 @@ class Event(Base):
     labels = relationship('Label', lazy='joined', secondary=event_label_association_table)
 
     @classmethod
-    def search(cls, session: Session, userId: str, searchQuery: str, limit: int = 250):
+    def search(cls,
+               session: Session,
+               userId: str,
+               searchQuery: str,
+               limit: int = 250) -> List['Event']:
         sqlQuery = """
             SELECT id FROM (
                 SELECT event.*,
@@ -67,6 +78,13 @@ class Event(Base):
     @property
     def all_day(self):
         return self.start_day is not None and self.end_day is not None
+
+    @property
+    def title_short(self):
+        if not self.labels:
+            return self.title
+        else:
+            return getStrippedTitle(self.title)
 
     def __init__(self, g_id: Optional[str], title: Optional[str], description: Optional[str],
                  start: datetime, end: datetime, start_day: Optional[str], end_day: Optional[str],
