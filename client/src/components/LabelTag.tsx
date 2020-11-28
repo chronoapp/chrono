@@ -2,15 +2,15 @@ import React from 'react'
 import clsx from 'clsx'
 import { Label } from '../models/Label'
 
-interface IProps {
-  label: Label
-  allowEdit: boolean
-  classNames?: string
-  onClickDelete?: (e) => void
+interface LabelTagColorProps {
+  colorHex: string
+  style?
+  lighten: boolean
 }
+export function LabelTagColor(props: LabelTagColorProps) {
+  let color = props.colorHex
 
-export function LabelTagColor(props: { colorHex: string; style? }) {
-  let style = { backgroundColor: props.colorHex }
+  let style = { backgroundColor: color, opacity: props.lighten ? 0.4 : 1 }
   if (props.style) {
     style = { ...style, ...props.style }
   }
@@ -18,7 +18,18 @@ export function LabelTagColor(props: { colorHex: string; style? }) {
   return <div style={style} className={clsx('event-label-small')} />
 }
 
-export function LabelTag(props: IProps) {
+LabelTagColor.defaultProps = {
+  lighten: false,
+}
+
+interface LabelTagProps {
+  label: Label
+  allowEdit: boolean
+  classNames?: string
+  onClickDelete?: (e) => void
+}
+
+export function LabelTag(props: LabelTagProps) {
   return (
     <div
       className={clsx(

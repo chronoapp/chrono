@@ -83,6 +83,6 @@ export default class Event {
   }
 
   static getDefaultTitle(event: Event) {
-    return event.title_short ? event.title_short : '(No title)'
+    return event.title ? event.title : '(No title)'
   }
 }

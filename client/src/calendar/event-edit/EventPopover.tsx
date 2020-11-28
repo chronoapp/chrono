@@ -2,7 +2,6 @@ import React, { useContext, useState, useEffect, createRef, useRef } from 'react
 import clsx from 'clsx'
 import update from 'immutability-helper'
 import Select from 'react-select'
-import { normalizeArr } from '../../lib/normalizer'
 
 import * as dates from '../../util/dates'
 import Icon from '@mdi/react'
@@ -18,6 +17,7 @@ import {
 
 import { getAuthToken, createEvent, updateEvent, deleteEvent } from '../../util/Api'
 import { format } from '../../util/localizer'
+import { addNewLabels } from '..//utils/LabelUtils'
 
 import Event from '../../models/Event'
 import Calendar from '../../models/Calendar'
@@ -134,7 +134,7 @@ function EventPopover(props: IProps) {
       })
     } else {
       eventActions.eventDispatch({ type: 'CREATE_EVENT', payload: event })
-
+      console.log(event)
       createEvent(token, event).then((event) => {
         console.log(`Created event in db: ${event.id}`)
         eventActions.eventDispatch({
@@ -234,9 +234,7 @@ function EventPopover(props: IProps) {
         </div>
 
         <div className="cal-event-modal" style={{ display: 'flex', flexDirection: 'column' }}>
-          <div className="has-text-grey-darker is-size-5">
-            <TaggableInput title={eventFields.title} labels={[]} isHeading={true} />
-          </div>
+          <div className="has-text-grey-darker is-size-5">{eventFields.title}</div>
 
           {props.event.labels && (
             <div style={{ display: 'flex' }}>
@@ -375,20 +373,12 @@ function EventPopover(props: IProps) {
               title={eventFields.title}
               portalCls={'.cal-event-modal-container'}
               isHeading={false}
-              handleChange={(title, textValue, labelIds: number[], removedLabelIds: number[]) => {
-                let updatedLabels = eventFields.labels
-
-                const updatedLabelIds = eventFields.labels.map((l) => l.id)
-                if (labelIds) {
-                  for (let labelId of labelIds) {
-                    if (!updatedLabelIds.includes(labelId)) {
-                      updatedLabelIds.push(labelId)
-                    }
-                  }
-                  updatedLabels = updatedLabelIds
-                    .map((labelId) => labelState.labelsById[labelId])
-                    .filter((label) => !removedLabelIds.includes(label.id))
-                }
+              handleChange={(title, labelIds: number[]) => {
+                const updatedLabels = addNewLabels(
+                  labelState.labelsById,
+                  eventFields.labels,
+                  labelIds
+                )
 
                 setEventFields({ ...eventFields, title, labels: updatedLabels })
               }}

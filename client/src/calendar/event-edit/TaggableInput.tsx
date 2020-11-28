@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from 'react'
+import React, { useEffect, useRef } from 'react'
 import clsx from 'clsx'
 import { MentionsInput, Mention } from 'react-mentions'
 
@@ -9,12 +9,7 @@ interface IProps {
   labels: Label[]
   portalCls?: string
   title: string
-  handleChange?: (
-    newValue: string,
-    textValue: string,
-    labelIds: number[],
-    removedLabelIds: number[]
-  ) => void
+  handleChange?: (newValue: string, labelIds: number[]) => void
   isHeading: boolean
 }
 
@@ -49,8 +44,10 @@ function difference(setA, setB) {
   return _difference
 }
 
+/**
+ * Input that allows #s to add tags.
+ */
 function TaggableInput(props: IProps) {
-  const [curLabelIds, setCurLabelIds] = useState([])
   const titleInputRef = useRef<HTMLInputElement>()
 
   useEffect(() => {
@@ -77,12 +74,14 @@ function TaggableInput(props: IProps) {
 
   function handleChange(_evt, newValue: string, newPlainTextValue: string, newLabels) {
     if (props.handleChange) {
+      let title = newValue
+
       const labelIds = newLabels.map((l) => parseInt(l.id))
-      const set1 = new Set(labelIds)
-      const set2 = new Set(curLabelIds)
-      const diff = difference(set2, set1)
-      props.handleChange(newValue, newPlainTextValue, labelIds, Array.from(diff) as number[])
-      setCurLabelIds(labelIds)
+      if (labelIds) {
+        const strippedTitle = title.replace(/#\[[\w\d]+\]\(\d+\)/g, '')
+        title = strippedTitle
+      }
+      props.handleChange(title, labelIds)
     }
   }
 
@@ -112,7 +111,6 @@ function TaggableInput(props: IProps) {
           className="tag-highlight"
           markup={'#[__display__](__id__)'}
           displayTransform={(_id, display) => ` #${display}`}
-          appendSpaceOnAdd={true}
           renderSuggestion={renderSuggestion}
         />
       </MentionsInput>
