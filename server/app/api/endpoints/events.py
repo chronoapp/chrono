@@ -23,7 +23,6 @@ class EventBaseVM(BaseModel):
     """Viewmodel for events.
     """
     title: Optional[str]
-    title_short: Optional[str]
     description: Optional[str] = None
     start: datetime
     end: datetime
@@ -78,11 +77,15 @@ async def getEvents(
 async def createEvent(
     event: EventBaseVM, user: User = Depends(get_current_user), session: Session = Depends(get_db)
 ) -> Event:
-
     try:
         calendarDb = user.calendars.filter_by(id=event.calendar_id).one_or_none()
         eventDb = Event(None, event.title, event.description, event.start, event.end,
                         event.start_day, event.end_day, event.calendar_id)
+
+        for label in event.labels:
+            label = user.labels.filter_by(id=label.id).first()
+            eventDb.labels.append(label)
+
         eventDb.calendar = calendarDb
         user.events.append(eventDb)
 

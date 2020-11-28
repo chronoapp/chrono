@@ -14,12 +14,6 @@ event_label_association_table = Table('event_label', Base.metadata,
                                       Column('event_id', BigInteger, ForeignKey('event.id')),
                                       Column('label_id', Integer, ForeignKey('label.id')))
 
-TAG_PATTERN = re.compile(r'#\[([\w\s]+)\]\((\d+)\)')
-
-
-def getStrippedTitle(title: str):
-    return re.sub(TAG_PATTERN, r'#\1', title)
-
 
 class Event(Base):
     __tablename__ = 'event'
@@ -78,13 +72,6 @@ class Event(Base):
     @property
     def all_day(self):
         return self.start_day is not None and self.end_day is not None
-
-    @property
-    def title_short(self):
-        if not self.labels:
-            return self.title
-        else:
-            return getStrippedTitle(self.title)
 
     def __init__(self, g_id: Optional[str], title: Optional[str], description: Optional[str],
                  start: datetime, end: datetime, start_day: Optional[str], end_day: Optional[str],
