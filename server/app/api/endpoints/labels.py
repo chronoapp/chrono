@@ -43,6 +43,24 @@ def createOrUpdateLabel(user: User, labelId: Optional[int], label: LabelVM) -> L
     return labelDb
 
 
+def combineLabels(labels: List[Label]) -> List[Label]:
+    """Children overrides parents. Maintains the same order.
+    """
+    labelsToRemove = set()
+    labelMap = {l.id: l for l in labels}
+
+    for l in labels:
+        parentId = l.parent_id
+        while parentId in labelMap:
+            labelsToRemove.add(parentId)
+            parent = labelMap[parentId]
+            del labelMap[parentId]
+            parentId = parent.id
+
+    res = [l for l in labels if l.id not in labelsToRemove]
+    return res
+
+
 @router.get('/labels/', response_model=List[LabelInDbVM])
 async def getLabels(user=Depends(get_current_user), session=Depends(get_db)):
     return user.labels.order_by(Label.title).all()

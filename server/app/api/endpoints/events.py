@@ -11,7 +11,7 @@ from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, HTTP_404_
 
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
-from app.api.endpoints.labels import LabelVM, LabelInDbVM
+from app.api.endpoints.labels import LabelVM, LabelInDbVM, Label, combineLabels
 from app.core.logger import logger
 from app.db.models import Event, User
 from app.calendar.google import insertGoogleEvent, deleteGoogleEvent, updateGoogleEvent, moveGoogleEvent
@@ -40,6 +40,16 @@ class EventBaseVM(BaseModel):
 
 class EventInDBVM(EventBaseVM):
     id: int
+
+
+def getCombinedLabels(user: User, labelVMs: List[LabelInDbVM]) -> List[Label]:
+    labels: List[Label] = []
+    for labelVM in labelVMs:
+        label = user.labels.filter_by(id=labelVM.id).one_or_none()
+        if label:
+            labels.append(label)
+
+    return combineLabels(labels)
 
 
 @router.get('/events/', response_model=List[EventInDBVM])
@@ -82,10 +92,7 @@ async def createEvent(
         eventDb = Event(None, event.title, event.description, event.start, event.end,
                         event.start_day, event.end_day, event.calendar_id)
 
-        for label in event.labels:
-            label = user.labels.filter_by(id=label.id).first()
-            eventDb.labels.append(label)
-
+        eventDb.labels = getCombinedLabels(user, event.labels)
         eventDb.calendar = calendarDb
         user.events.append(eventDb)
 
@@ -145,9 +152,7 @@ async def updateEvent(
             # TODO: Update other fields
 
     eventDb.labels.clear()
-    for label in event.labels:
-        label = user.labels.filter_by(id=label.id).first()
-        eventDb.labels.append(label)
+    eventDb.labels = getCombinedLabels(user, event.labels)
 
     if user.syncWithGoogle():
         if prevCalendarId and prevCalendarId != eventDb.calendar_id:
