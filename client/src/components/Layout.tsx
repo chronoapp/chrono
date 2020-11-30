@@ -22,6 +22,7 @@ interface Props {
   title: string
   children: any
   canCreateEvent: boolean
+  includeLeftPanel: boolean
 }
 
 function NewEventButton() {
@@ -61,6 +62,8 @@ function Layout(props: Props) {
   }
 
   function Settings() {
+    const router = useRouter()
+
     return (
       <div className={clsx('dropdown', settingsActive && 'is-active')}>
         <div className="dropdown-trigger" onClick={() => setSettingsActive(!settingsActive)}>
@@ -70,6 +73,10 @@ function Layout(props: Props) {
         </div>
         <div className="dropdown-menu" style={{ right: 0, left: 'auto' }}>
           <div className="dropdown-content has-text-left">
+            <a className="dropdown-item" onClick={() => router.push('/settings')}>
+              Settings
+            </a>
+            <hr style={{ margin: 0 }} />
             <a className="dropdown-item" onClick={refreshCalendar}>
               Refresh Events
             </a>
@@ -161,7 +168,8 @@ function Layout(props: Props) {
       </nav>
 
       <div className="app-content">
-        <div className="left-section">
+        {props.includeLeftPanel &&
+          <div className="left-section">
           {props.canCreateEvent && <NewEventButton />}
           <div className="left-section-scrollable" style={{ overflowY: 'scroll' }}>
             <MiniCalendar />
@@ -169,6 +177,7 @@ function Layout(props: Props) {
             <CalendarsPanel />
           </div>
         </div>
+        }
         {props.children}
       </div>
 
@@ -180,6 +189,7 @@ function Layout(props: Props) {
 Layout.defaultProps = {
   title: 'Timecouncil',
   canCreateEvent: false,
+  includeLeftPanel: true
 }
 
 export default Layout
