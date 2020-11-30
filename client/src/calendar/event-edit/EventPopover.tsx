@@ -16,7 +16,7 @@ import {
 } from '@mdi/js'
 
 import { getAuthToken, createEvent, updateEvent, deleteEvent } from '../../util/Api'
-import { format } from '../../util/localizer'
+import { format, fullDayFormat } from '../../util/localizer'
 import { addNewLabels } from '..//utils/LabelUtils'
 
 import Event from '../../models/Event'
@@ -30,9 +30,11 @@ import { LabelContext, LabelContextType } from '../../components/LabelsContext'
 import { LabelTag } from '../../components/LabelTag'
 import LabelTree from '../../components/LabelTree'
 import TimeSelect from './TimeSelect'
+import TimeSelectFullDay from './TimeSelectFullDay'
 
 import ContentEditable from '../../lib/ContentEditable'
 import TaggableInput from './TaggableInput'
+
 interface IProps {
   event: Event
 }
@@ -47,7 +49,9 @@ class EventFields {
     readonly start: Date,
     readonly end: Date,
     readonly labels: Label[],
-    readonly calendarId: string
+    readonly calendarId: string,
+    readonly allDay: boolean,
+    readonly fullDays: number
   ) {}
 }
 
@@ -57,6 +61,7 @@ function EventPopover(props: IProps) {
   const alertsContext = useContext(AlertsContext)
   const { labelState } = useContext<LabelContextType>(LabelContext)
 
+  console.log(props.event)
   const [eventFields, setEventFields] = useState(
     new EventFields(
       props.event.title,
@@ -64,7 +69,9 @@ function EventPopover(props: IProps) {
       props.event.start,
       props.event.end,
       props.event.labels,
-      getSelectedCalendar(props.event.calendar_id)?.id
+      getSelectedCalendar(props.event.calendar_id)?.id,
+      props.event.all_day,
+      props.event.all_day ? dates.diff(props.event.end, props.event.start, 'day') : 0
     )
   )
 
@@ -96,18 +103,32 @@ function EventPopover(props: IProps) {
   }
 
   function onSaveEvent(e: Event) {
+    const fullDayEventDetails = eventFields.allDay
+      ? {
+          all_day: true,
+          start_day: fullDayFormat(eventFields.start),
+          end_day: fullDayFormat(dates.add(eventFields.start, eventFields.fullDays, 'day')),
+        }
+      : {
+          all_day: false,
+          start: eventFields.start,
+          end: eventFields.end,
+          start_day: null,
+          end_day: null,
+        }
+
     const event = {
       ...e,
       title: eventFields.title,
       description: eventFields.description,
-      start: eventFields.start,
-      end: eventFields.end,
       calendar_id: eventFields.calendarId,
       labels: eventFields.labels,
       creating: false,
+      ...fullDayEventDetails,
     }
-    const token = getAuthToken()
+    console.log(event)
 
+    const token = getAuthToken()
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
 
     const savingAlert = new Alert({ title: 'Saving Event..', isLoading: true })
@@ -134,7 +155,6 @@ function EventPopover(props: IProps) {
       })
     } else {
       eventActions.eventDispatch({ type: 'CREATE_EVENT', payload: event })
-      console.log(event)
       createEvent(token, event).then((event) => {
         console.log(`Created event in db: ${event.id}`)
         eventActions.eventDispatch({
@@ -410,26 +430,59 @@ function EventPopover(props: IProps) {
               onChange={(e) => console.log(e.target.value)}
               style={{ flex: 1 }}
             />
-            <TimeSelect
-              start={eventFields.start}
-              end={eventFields.end}
-              onSelectStartDate={(date) => {
-                setEventFields({ ...eventFields, start: date })
-                const event = { ...props.event, start: date }
-                eventActions.eventDispatch({
-                  type: 'UPDATE_EVENT',
-                  payload: { event: event, replaceEventId: event.id },
-                })
-              }}
-              onSelectEndDate={(date) => {
-                setEventFields({ ...eventFields, end: date })
-                const event = { ...props.event, end: date }
-                eventActions.eventDispatch({
-                  type: 'UPDATE_EVENT',
-                  payload: { event: event, replaceEventId: event.id },
-                })
-              }}
-            />
+            {eventFields.allDay && (
+              <TimeSelectFullDay
+                days={eventFields.fullDays}
+                startDate={eventFields.start}
+                onSelectNumDays={(days) => {
+                  setEventFields({ ...eventFields, fullDays: days })
+                }}
+              />
+            )}
+            {!eventFields.allDay && (
+              <TimeSelect
+                start={eventFields.start}
+                end={eventFields.end}
+                onSelectStartDate={(date) => {
+                  setEventFields({ ...eventFields, start: date })
+                  const event = { ...props.event, start: date }
+                  eventActions.eventDispatch({
+                    type: 'UPDATE_EVENT',
+                    payload: { event: event, replaceEventId: event.id },
+                  })
+                }}
+                onSelectEndDate={(date) => {
+                  setEventFields({ ...eventFields, end: date })
+                  const event = { ...props.event, end: date }
+                  eventActions.eventDispatch({
+                    type: 'UPDATE_EVENT',
+                    payload: { event: event, replaceEventId: event.id },
+                  })
+                }}
+              />
+            )}
+          </div>
+
+          <div className="mt-2" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={eventFields.allDay}
+                onChange={(e) => {
+                  const isAllDay = e.target.checked
+                  if (isAllDay) {
+                    const start = dates.startOf(eventFields.start, 'day')
+                    const end = dates.endOf(eventFields.start, 'day')
+                    setEventFields({ ...eventFields, allDay: isAllDay, start, end, fullDays: 1 })
+                  } else {
+                    const start = dates.startOf(eventFields.start, 'day')
+                    const end = dates.add(start, 1, 'hours')
+                    setEventFields({ ...eventFields, allDay: isAllDay, start, end })
+                  }
+                }}
+              />{' '}
+              All day
+            </label>
           </div>
 
           <div className="mt-2" style={{ display: 'flex', alignItems: 'top' }}>

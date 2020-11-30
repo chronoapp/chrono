@@ -4,8 +4,9 @@ import { Label } from '../models/Label'
 
 interface LabelTagColorProps {
   colorHex: string
-  style?
   lighten: boolean
+  title?: string
+  style?
 }
 export function LabelTagColor(props: LabelTagColorProps) {
   let color = props.colorHex
@@ -15,7 +16,7 @@ export function LabelTagColor(props: LabelTagColorProps) {
     style = { ...style, ...props.style }
   }
 
-  return <div style={style} className={clsx('event-label-small')} />
+  return <div title={props.title} style={style} className={clsx('event-label-small')} />
 }
 
 LabelTagColor.defaultProps = {

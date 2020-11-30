@@ -6,6 +6,7 @@ from sqlalchemy import Column, Integer,\
     String, ForeignKey, BigInteger, Table, Text, DateTime, text, desc
 from sqlalchemy.orm import relationship, backref, Session
 
+from app.db.sql.event_search import EVENT_SEARCH_QUERY
 from app.db.base_class import Base
 from app.db.session import engine
 from app.db.models.calendar import AccessRole
@@ -45,20 +46,10 @@ class Event(Base):
                userId: str,
                searchQuery: str,
                limit: int = 250) -> List['Event']:
-        sqlQuery = """
-            SELECT id FROM (
-                SELECT event.*,
-                    setweight(to_tsvector('english', event.title), 'A') ||
-                    setweight(to_tsvector('english', coalesce(event.description, '')), 'B') as doc
-                FROM event
-                WHERE event.user_id = :userId
-            ) search
-            WHERE search.doc @@ to_tsquery(:query || ':*')
-            ORDER BY ts_rank(search.doc, to_tsquery(:query || ':*')) DESC
-            LIMIT :limit;
-        """
-
-        rows = engine.execute(text(sqlQuery), query=searchQuery, userId=userId, limit=limit)
+        rows = engine.execute(text(EVENT_SEARCH_QUERY),
+                              query=searchQuery,
+                              userId=userId,
+                              limit=limit)
 
         rowIds = [r[0] for r in rows]
 

@@ -156,7 +156,7 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
             event = addedEvents[eventId]
         else:
             event = user.events.filter(and_(Event.g_id == eventId,
-                Event.calendar_id == calendar.id)).first()
+                                            Event.calendar_id == calendar.id)).first()
 
         if eventItem['status'] == 'cancelled':
             if event:
@@ -181,7 +181,7 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
             # New event
             newEvents += 1
             event = Event(eventId, eventSummary, eventDescription, eventStart, eventEnd,
-                eventFullDayStart, eventFullDayEnd, calendar.id)
+                          eventFullDayStart, eventFullDayEnd, calendar.id)
             user.events.append(event)
         else:
             # Update Event
@@ -219,10 +219,9 @@ def insertGoogleEvent(user: User, event: Event):
 def moveGoogleEvent(user: User, event: Event, prevCalendarId: str):
     """Moves an event to another calendar, i.e. changes an event's organizer.
     """
-    return getService(user).events().move(
-        calendarId=prevCalendarId,
-        eventId=event.g_id,
-        destination=event.calendar_id).execute()
+    return getService(user).events().move(calendarId=prevCalendarId,
+                                          eventId=event.g_id,
+                                          destination=event.calendar_id).execute()
 
 
 def updateGoogleEvent(user: User, event: Event):
@@ -290,22 +289,18 @@ def getEventBody(event: Event, timeZone: str):
     }
 
     if event.all_day:
-        eventBody['start'] = {
-            'date': event.start_day,
-            'timeZone': timeZone
-        }
-        eventBody['end'] = {
-            'date': event.end_day,
-            'timeZone': timeZone
-        }
+        eventBody['start'] = {'date': event.start_day, 'timeZone': timeZone, 'dateTime': None}
+        eventBody['end'] = {'date': event.end_day, 'timeZone': timeZone, 'dateTime': None}
     else:
         eventBody['start'] = {
             'dateTime': convertToLocalTime(event.start, timeZone).isoformat(),
-            'timeZone': timeZone
+            'timeZone': timeZone,
+            'date': None
         }
         eventBody['end'] = {
             'dateTime': convertToLocalTime(event.end, timeZone).isoformat(),
-            'timeZone': timeZone
+            'timeZone': timeZone,
+            'date': None
         }
 
     logger.info(eventBody)

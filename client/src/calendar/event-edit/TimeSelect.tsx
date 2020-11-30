@@ -1,5 +1,6 @@
 import React, { useContext, useState } from 'react'
 import Select from 'react-select'
+import SelectStyles from './SelectStyles'
 
 import { format } from '../../util/localizer'
 import * as dates from '../../util/dates'
@@ -13,6 +14,15 @@ interface IProps {
 
 const INTERVAL = 15
 
+export function formatDuration(duration: number) {
+  if (duration <= dates.MILLI.hours) {
+    return `${duration / dates.MILLI.minutes} m`
+  }
+
+  const hours = duration / dates.MILLI.hours
+  return `${hours}h`
+}
+
 /**
  * Renders the start and end time selectors.
  */
@@ -22,6 +32,7 @@ function TimeSelect(props: IProps) {
 
   const startIdx = Math.round(dates.diff(dayStart, props.start, 'minutes') / INTERVAL) + 1
   const startTimeOptions: { value: number; label: string }[] = []
+
   let startDate: Date = dayStart
   let idx = 0
   while (dates.gt(dayEnd, startDate)) {
@@ -37,43 +48,17 @@ function TimeSelect(props: IProps) {
   idx = 0
   while (dates.gt(dayEnd, endDate)) {
     endDate = dates.add(endDate, INTERVAL, 'minutes')
-    const option = { value: idx, label: format(endDate, 'h:mm A') }
+    const label = `${format(endDate, 'h:mm A')}`
+    const option = { value: idx, label: label }
     endTimeOptions.push(option)
     idx += 1
-  }
-
-  const customStyles = {
-    option: (provided, state) => ({
-      ...provided,
-      fontSize: '0.75rem',
-    }),
-    singleValue: (provided, state) => {
-      return { ...provided, marginLeft: 'auto', marginRight: 'auto' }
-    },
-    container: (provided, state) => {
-      return {
-        ...provided,
-        fontSize: '0.8rem',
-        zIndex: 5,
-      }
-    },
-    control: (provided, state) => {
-      return {
-        ...provided,
-        borderStyle: 'none none solid none',
-        boxShadow: null,
-        borderColor: 'hsl(0, 0%, 86%)', // $grey-lighter
-        borderRadius: 0,
-        borderWidth: '3px',
-      }
-    },
   }
 
   return (
     <div className="cal-time-select-wrapper ml-1">
       <Select
         components={{ IndicatorSeparator: () => null }}
-        styles={customStyles}
+        styles={SelectStyles}
         name="start-date"
         className="cal-date-select"
         value={startTimeOptions[startIdx]}
@@ -86,7 +71,7 @@ function TimeSelect(props: IProps) {
       />
       <Select
         components={{ IndicatorSeparator: () => null }}
-        styles={customStyles}
+        styles={SelectStyles}
         className="cal-date-select ml-1"
         value={endTimeOptions[endIdx]}
         onChange={({ value }) => {

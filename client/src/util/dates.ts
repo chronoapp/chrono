@@ -24,7 +24,7 @@ export {
  * Thin wrapper around date arithmetic https://www.npmjs.com/package/date-arithmetic
  */
 
-const MILLI = {
+export const MILLI = {
   seconds: 1000,
   minutes: 1000 * 60,
   hours: 1000 * 60 * 60,
