@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  # FastAPI / Starlette
+  api:
+    build: ./server
+    ports:
+      - 8888:80
+    volumes:
+      - ./server:/app/
+      - model_data:/var/lib/model_data/
+    environment:
+      - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@postgres_db:5432/${DATABASE_NAME}
+      - APP_URL=${APP_URL}
+      - API_URL=${API_URL}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - MSFT_APP_ID=${MSFT_APP_ID}
+      - MSFT_APP_SECRET=${MSFT_APP_SECRET}
+      - TOKEN_SECRET=${TOKEN_SECRET}
+
+  # PostgreSQL database
+  postgres_db:
+    image: sameersbn/postgresql:10-1
+    volumes:
+      - postgres_db_data:/var/lib/postgresql
+    ports:
+      - '7432:5432'
+    environment:
+      DB_USER: ${DATABASE_USER}
+      DB_PASS: ${DATABASE_PASS}
+      DB_NAME: ${DATABASE_NAME}
+
+  # PostgreSQL database (Testing)
+  postgres_test:
+    image: postgres:latest
+
+volumes:
+  postgres_db_data: # PostgreSQL data volume
+  model_data:

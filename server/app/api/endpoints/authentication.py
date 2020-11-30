@@ -109,17 +109,20 @@ def googleAuthCallback(authData: AuthData, session: Session = Depends(get_db)):
         user.credentials = UserCredential(creds, ProviderType.Google)
         session.commit()
 
-        authToken = jwt.encode({
-            'user_id': user.id,
-            'iat': datetime.utcnow()
-        },
-                               config.TOKEN_SECRET,
-                               algorithm='HS256').decode('utf-8')
-
+        authToken = getAuthToken(user)
         return {'token': str(authToken)}
 
     except Exception as e:
         logging.error(e)
+
+
+def getAuthToken(user: User) -> str:
+    return jwt.encode({
+        'user_id': user.id,
+        'iat': datetime.utcnow()
+    },
+                      config.TOKEN_SECRET,
+                      algorithm='HS256').decode('utf-8')
 
 
 # ================================== Microsoft Graph OAuth2 ==================================

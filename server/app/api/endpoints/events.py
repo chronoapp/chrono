@@ -67,9 +67,8 @@ async def getEvents(
         else datetime.now() - timedelta(days=365)
     endFilter = datetime.fromisoformat(end_date) if end_date else datetime.now()
 
-    logger.info(f'getEvents:{user.username}')
+    logger.info(f'getEvents:{user.id}')
     logger.info(f'query:{query}')
-    logger.info(f'limit:{limit}')
 
     if title:
         return user.events.filter(and_(Event.start <= datetime.now(),

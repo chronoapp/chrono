@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -21,7 +23,7 @@ class User(Base):
                                uselist=False,
                                backref='user')
 
-    def __init__(self, email, name, pictureUrl):
+    def __init__(self, email: str, name: str, pictureUrl: Optional[str]):
         self.email = email
         self.name = name
         self.picture_url = pictureUrl
