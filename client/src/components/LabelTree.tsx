@@ -53,6 +53,7 @@ function LabelTree(props: IProps) {
   const [selectedLabelIdForColor, setSelectedLabelIdForColor] = useState<number | undefined>(
     undefined
   )
+
   const labelItems = getOrderedLabels(labelState.labelsById)
 
   function handleClickOutside(event) {
@@ -65,10 +66,19 @@ function LabelTree(props: IProps) {
     }
   }
 
+  function handleKeyboardShortcuts(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+      setSelectedLabelId(undefined)
+      setSelectedLabelIdForColor(undefined)
+    }
+  }
+
   useEffect(() => {
     document.addEventListener('click', handleClickOutside)
+    document.addEventListener('keydown', handleKeyboardShortcuts)
     return () => {
       document.removeEventListener('click', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyboardShortcuts)
     }
   })
 
@@ -84,14 +94,10 @@ function LabelTree(props: IProps) {
   }
 
   function onDragEnter(info) {
-    console.log('enter', info)
     setExpandedKeys(info.expandedKeys)
   }
 
   function onDrop(info) {
-    console.log('---onDrop---')
-    console.log(info)
-
     const dragKey = info.dragNode.props.eventKey
     const dropKey = info.node.props.eventKey
     const dropPos = info.node.props.pos.split('-')
@@ -203,29 +209,38 @@ function LabelTree(props: IProps) {
 
   function LabelView(label: Label, allowEdit: boolean) {
     return () => {
+      const selectedLabel = label.id === selectedLabelIdForColor
+
       return (
-        <div className={`dropdown ${label.id === selectedLabelIdForColor ? 'is-active' : ''}`}>
-          <div
-            onClick={() => {
-              if (allowEdit) {
-                toggleSelectedLabelId(label.id)
-              } else {
-                props.onSelect && props.onSelect(label)
-              }
-            }}
-            style={{ backgroundColor: label.color_hex }}
-            className={clsx(
-              'event-label',
-              allowEdit && 'event-label--hoverable',
-              'dropdown-trigger'
+        <div className={clsx('dropdown', selectedLabel && 'is-active')}>
+          <Popover
+            content={() => (
+              <ColorPicker
+                ref={colorPickerRef}
+                onSelectLabelColor={(color) => onSelectLabelColor(color, label)}
+              />
             )}
-          ></div>
-          {label.id === selectedLabelIdForColor && (
-            <ColorPicker
-              ref={colorPickerRef}
-              onSelectLabelColor={(color) => onSelectLabelColor(color, label)}
-            />
-          )}
+            isOpen={selectedLabel}
+            position={['bottom', 'right']}
+            align={'start'}
+          >
+            <div
+              onClick={() => {
+                setSelectedLabelId(undefined)
+                if (allowEdit) {
+                  toggleSelectedLabelId(label.id)
+                } else {
+                  props.onSelect && props.onSelect(label)
+                }
+              }}
+              style={{ backgroundColor: label.color_hex }}
+              className={clsx(
+                'event-label',
+                allowEdit && 'event-label--hoverable',
+                'dropdown-trigger'
+              )}
+            ></div>
+          </Popover>
         </div>
       )
     }
@@ -253,6 +268,7 @@ function LabelTree(props: IProps) {
   }
 
   function onClickDropdown(curMenuExpanded: boolean, item: TreeItem) {
+    setSelectedLabelIdForColor(undefined)
     // HACK: In react 17, use e.stopPropagation()
     document.removeEventListener('click', handleClickOutside)
     if (curMenuExpanded) {
@@ -318,7 +334,6 @@ function LabelTree(props: IProps) {
                     <div className={clsx('dropdown')}>
                       <Popover
                         content={() => renderDropdownMenu(item)}
-                        containerClassName={'edit-label-container'}
                         isOpen={curMenuExpanded}
                         align={'start'}
                         padding={-5}
