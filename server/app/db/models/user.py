@@ -5,6 +5,7 @@ from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
 from app.db.models.user_credentials import ProviderType
+from app.db.models.calendar import Calendar
 
 
 class User(Base):
@@ -36,3 +37,6 @@ class User(Base):
         return self.credentials\
             and self.credentials.provider == ProviderType.Google\
             and self.credentials.token_data
+
+    def getPrimaryCalendar(self) -> Optional[Calendar]:
+        return self.calendars.filter_by(primary=True).one_or_none()

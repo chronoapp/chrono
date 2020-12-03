@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Optional, List
-import re
 
 from sqlalchemy import Column, Integer,\
     String, ForeignKey, BigInteger, Table, Text, DateTime, text, desc
@@ -9,7 +8,6 @@ from sqlalchemy.orm import relationship, backref, Session
 from app.db.sql.event_search import EVENT_SEARCH_QUERY
 from app.db.base_class import Base
 from app.db.session import engine
-from app.db.models.calendar import AccessRole
 
 event_label_association_table = Table('event_label', Base.metadata,
                                       Column('event_id', BigInteger, ForeignKey('event.id')),
@@ -80,5 +78,5 @@ class Event(Base):
         return f'<Event {self.title} start:{self.start} end:{self.end}/>'
 
     def isWritable(self) -> bool:
-        return self.calendar.access_role == AccessRole.writer.value\
-            or self.calendar.access_role == AccessRole.owner.value
+        return self.calendar.access_role == 'writer'\
+            or self.calendar.access_role == 'owner'

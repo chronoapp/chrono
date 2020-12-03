@@ -1,15 +1,11 @@
+from typing import Literal
+
 from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship, backref
 
 from app.db.base_class import Base
-from enum import Enum
 
-
-class AccessRole(Enum):
-    freeBusyReader = 'freeBusyReader'
-    reader = 'reader'
-    writer = 'writer'
-    owner = 'owner'
+AccessRole = Literal['freeBusyReader', 'reader', 'writer', 'owner']
 
 
 class Calendar(Base):
@@ -33,8 +29,8 @@ class Calendar(Base):
     webhook = relationship("Webhook", uselist=False, back_populates="calendar")
 
     def __init__(self, id: str, timezone: str, summary: str, description: str,
-                 background_color: str, foreground_color: str, selected: bool, access_role: str,
-                 primary: bool, deleted: bool):
+                 background_color: str, foreground_color: str, selected: bool,
+                 access_role: AccessRole, primary: bool, deleted: bool):
         self.id = id
         self.timezone = timezone
         self.summary = summary
