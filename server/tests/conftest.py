@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 
 from tests.test_session import scoped_session, engine, TestingSessionLocal
 from app.db.base_class import Base
-from app.db.models import User
+from app.db.models import User, Calendar
 from app.main import app
 
 from app.api.utils.security import get_current_user
@@ -33,9 +33,15 @@ def test_client():
 
 
 @pytest.fixture
-def test_user():
+def userSession():
+    """Initializes the test user with one primary calendar.
+    Returns fixture with tuple of (user, session)
+    """
     with scoped_session() as session:
         user = User('test@example.com', 'Test User', None)
+        calendar = Calendar('default', 'America/Toronto', 'Default Calendar', 'description',
+                            '#ffffff', '#000000', True, 'owner', True, False)
+        user.calendars.append(calendar)
         session.add(user)
         session.commit()
 
@@ -44,4 +50,4 @@ def test_user():
 
         app.dependency_overrides[get_current_user] = override_get_user
 
-        yield user
+        yield user, session
