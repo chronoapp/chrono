@@ -92,16 +92,32 @@ def createRecurringEvents(user: User, rule: rrule, event: EventBaseVM, timezone:
     duration = event.end - event.start
 
     # First event.
-    recurringEvent = Event(None, event.title, event.description, event.start, event.end, None, None,
-                           event.calendar_id, timezone)
+    recurringEvent = Event(None,
+                           event.title,
+                           event.description,
+                           event.start,
+                           event.end,
+                           None,
+                           None,
+                           event.calendar_id,
+                           timezone,
+                           copyOriginalStart=True)
     recurringEvent.recurrences = [str(rule)]
     user.events.append(recurringEvent)
 
     for date in list(rule)[1:]:
         start = date.replace(tzinfo=ZoneInfo(timezone))
         end = start + duration
-        event = Event(None, event.title, event.description, start, end, None, None,
-                      event.calendar_id, timezone)
+        event = Event(None,
+                      event.title,
+                      event.description,
+                      start,
+                      end,
+                      None,
+                      None,
+                      event.calendar_id,
+                      timezone,
+                      copyOriginalStart=True)
         event.recurring_event = recurringEvent
         user.events.append(event)
 
@@ -117,8 +133,7 @@ def updateRecurringEvent(user: User, event: Event, updateEvent: EventBaseVM,
         if event.is_parent_recurring_event:
             baseEvent = event
         else:
-            baseEvent = session.query(Event).filter(
-                Event.id == event.recurring_event_id).one_or_none()
+            baseEvent = user.events.filter(Event.id == event.recurring_event_id).one_or_none()
 
         # normalize datetime to the base event.
         startDiff = updateEvent.start - event.original_start
@@ -136,11 +151,11 @@ def updateRecurringEvent(user: User, event: Event, updateEvent: EventBaseVM,
     elif updateOption == 'FOLLOWING':
         if event.is_parent_recurring_event:
             print('is_parent_recurring_event')
-            followingEvents = session.query(Event).filter(
+            followingEvents = user.events.filter(
                 and_(or_(Event.recurring_event_id == event.id, Event.id == event.id),
                      Event.start >= event.start))
         else:
-            followingEvents = session.query(Event).filter(
+            followingEvents = user.events.filter(
                 and_(Event.recurring_event_id == event.recurring_event_id,
                      Event.start >= event.start))
 
@@ -171,7 +186,7 @@ def deleteRecurringEvent(user: User, event: Event, updateOption: UpdateOption, s
         user.events.filter(Event.id == event.recurring_event_id).delete()
 
     elif updateOption == 'FOLLOWING':
-        session.query(Event).filter(
+        user.events.filter(
             and_(Event.recurring_event_id == event.recurring_event_id,
                  Event.start >= event.start)).delete()
 

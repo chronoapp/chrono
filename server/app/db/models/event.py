@@ -77,9 +77,17 @@ class Event(Base):
     def is_parent_recurring_event(self) -> bool:
         return self.recurrences is not None and len(self.recurrences) > 0
 
-    def __init__(self, g_id: Optional[str], title: Optional[str], description: Optional[str],
-                 start: datetime, end: datetime, start_day: Optional[str], end_day: Optional[str],
-                 calendar_id: str, timezone: Optional[str]):
+    def __init__(self,
+                 g_id: Optional[str],
+                 title: Optional[str],
+                 description: Optional[str],
+                 start: datetime,
+                 end: datetime,
+                 start_day: Optional[str],
+                 end_day: Optional[str],
+                 calendar_id: str,
+                 timezone: Optional[str],
+                 copyOriginalStart=False):
         self.g_id = g_id
         self.title = title
         self.description = description
@@ -90,9 +98,10 @@ class Event(Base):
         self.calendar_id = calendar_id
         self.time_zone = timezone
 
-        self.original_start = start
-        self.original_start_day = start_day
-        self.original_timezone = timezone
+        if copyOriginalStart:
+            self.original_start = start
+            self.original_start_day = start_day
+            self.original_timezone = timezone
 
     def __repr__(self):
         return f'<Event {self.title} start:{self.start} end:{self.end}/>'

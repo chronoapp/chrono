@@ -177,11 +177,20 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
         eventDescription = eventItem.get('description')
         timeZone = eventItem['start'].get('timeZone')
 
+        originalStartTime = eventItem.get('originalStartTime')
+
+        # TODO: Use the EventModel for this.
         if not event:
             # New event
             newEvents += 1
             event = Event(eventId, eventSummary, eventDescription, eventStart, eventEnd,
-                          eventFullDayStart, eventFullDayEnd, calendar.id)
+                          eventFullDayStart, eventFullDayEnd, calendar.id, None)
+
+            if originalStartTime:
+                event.original_start = datetime.fromisoformat(originalStartTime.get('dateTime'))
+                event.original_start_day = originalStartTime.get('date')
+                event.original_timezone = originalStartTime.get('timeZone')
+
             user.events.append(event)
         else:
             # Update Event
