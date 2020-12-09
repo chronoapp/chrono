@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, List
 
 from sqlalchemy import Column, Integer,\
-    String, ForeignKey, BigInteger, Table, Text, DateTime, text, desc
+    String, ForeignKey, BigInteger, Table, Text, DateTime, text, desc, ARRAY
 from sqlalchemy.orm import relationship, backref, Session
 
 from app.db.sql.event_search import EVENT_SEARCH_QUERY
@@ -31,12 +31,23 @@ class Event(Base):
 
     start = Column(DateTime(timezone=True))
     end = Column(DateTime(timezone=True))
+
     # TODO: Validate these fields.
     start_day = Column(String(10), nullable=True)  # YYYY-MM-DD date if full day
     end_day = Column(String(10), nullable=True)  # YYYY-MM-DD date if full day
     time_zone = Column(String(255))
 
     labels = relationship('Label', lazy='joined', secondary=event_label_association_table)
+
+    # Recurring Events.
+    recurrences = Column(ARRAY(String), nullable=True)
+    recurring_event_id = Column(BigInteger, ForeignKey('event.id'), nullable=True)
+    recurring_event = relationship(lambda: Event, remote_side=id, backref='recurring_events')
+
+    # Original time (For recurring events).
+    original_start = Column(DateTime(timezone=True))
+    original_start_day = Column(String(10))
+    original_timezone = Column(String(255))
 
     @classmethod
     def search(cls,
@@ -62,9 +73,13 @@ class Event(Base):
     def all_day(self):
         return self.start_day is not None and self.end_day is not None
 
+    @property
+    def is_parent_recurring_event(self) -> bool:
+        return self.recurrences is not None and len(self.recurrences) > 0
+
     def __init__(self, g_id: Optional[str], title: Optional[str], description: Optional[str],
                  start: datetime, end: datetime, start_day: Optional[str], end_day: Optional[str],
-                 calendar_id: str):
+                 calendar_id: str, timezone: Optional[str]):
         self.g_id = g_id
         self.title = title
         self.description = description
@@ -73,6 +88,11 @@ class Event(Base):
         self.start_day = start_day
         self.end_day = end_day
         self.calendar_id = calendar_id
+        self.time_zone = timezone
+
+        self.original_start = start
+        self.original_start_day = start_day
+        self.original_timezone = timezone
 
     def __repr__(self):
         return f'<Event {self.title} start:{self.start} end:{self.end}/>'
