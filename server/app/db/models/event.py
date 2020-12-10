@@ -17,6 +17,8 @@ event_label_association_table = Table('event_label', Base.metadata,
 class Event(Base):
     __tablename__ = 'event'
     id = Column(BigInteger, primary_key=True, nullable=False, index=True)
+
+    # Google-specific
     g_id = Column(String(255), unique=True)
 
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
@@ -76,6 +78,12 @@ class Event(Base):
     @property
     def is_parent_recurring_event(self) -> bool:
         return self.recurrences is not None and len(self.recurrences) > 0
+
+    def getTimezone(self) -> str:
+        if self.time_zone:
+            return self.time_zone
+        else:
+            return self.calendar.timezone
 
     def __init__(self,
                  g_id: Optional[str],

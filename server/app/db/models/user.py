@@ -38,5 +38,5 @@ class User(Base):
             and self.credentials.provider == ProviderType.Google\
             and self.credentials.token_data
 
-    def getPrimaryCalendar(self) -> Optional[Calendar]:
-        return self.calendars.filter_by(primary=True).one_or_none()
+    def getPrimaryCalendar(self) -> Calendar:
+        return self.calendars.filter_by(primary=True).one()
