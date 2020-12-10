@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
@@ -7,7 +7,7 @@ from dateutil.rrule import rrule, rruleset
 from backports.zoneinfo import ZoneInfo
 
 from pydantic import BaseModel
-from app.api.endpoints.labels import LabelInDbVM, Label, combineLabels
+from app.api.endpoints.labels import LabelInDbVM
 from app.db.models import Event, User
 """Event models and helpers to manage Recurring Events.
 """
@@ -26,7 +26,9 @@ class EventBaseVM(BaseModel):
     labels: List[LabelInDbVM] = []
     all_day: Optional[bool]
     background_color: Optional[str]
+    timezone: Optional[str]
     calendar_id: str
+    recurrences: Optional[List[str]]
 
     class Config:
         orm_mode = True
@@ -180,18 +182,27 @@ def deleteRecurringEvent(user: User, event: Event, updateOption: UpdateOption, s
     if updateOption == 'SINGLE':
         if event.is_parent_recurring_event:
             # DONOTSHIP: Set status = 'deleted'
-            pass
+            # Alternatively, create an extra concrete event for the parent.
+            raise Error('Not implemented')
         else:
             session.delete(event)
 
     elif updateOption == 'ALL':
-        user.events.filter(Event.recurring_event_id == event.recurring_event_id).delete()
-        user.events.filter(Event.id == event.recurring_event_id).delete()
+        if event.is_parent_recurring_event:
+            user.events.filter(Event.recurring_event_id == event.id).delete()
+            session.delete(event)
+        elif event.recurring_event_id:
+            user.events.filter(Event.recurring_event_id == event.recurring_event_id).delete()
+            user.events.filter(Event.id == event.recurring_event_id).delete()
 
     elif updateOption == 'FOLLOWING':
-        user.events.filter(
-            and_(Event.recurring_event_id == event.recurring_event_id,
-                 Event.start >= event.start)).delete()
+        if event.is_parent_recurring_event:
+            raise Error('Not implemented')
+
+        if event.recurring_event_id:
+            user.events.filter(
+                and_(Event.recurring_event_id == event.recurring_event_id,
+                     Event.start >= event.start)).delete()
 
     else:
         raise InputError(f'updateOption must be {UpdateOption}')
@@ -205,7 +216,7 @@ def createOrUpdateEvent(eventDb: Optional[Event],
     prevCalendarId = None
     if not eventDb:
         eventDb = Event(None, event.title, event.description, event.start, event.end,
-                        event.start_day, event.end_day, event.calendar_id, None)
+                        event.start_day, event.end_day, event.calendar_id, event.timezone)
     else:
         if event.title:
             eventDb.title = event.title

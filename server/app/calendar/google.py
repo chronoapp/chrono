@@ -1,13 +1,11 @@
-import logging
-
 from uuid import uuid4
-from typing import Optional, Dict
+from typing import Optional, Dict, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
 from datetime import datetime, timedelta
 from backports.zoneinfo import ZoneInfo
-
+from dateutil.rrule import rrulestr
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -16,6 +14,8 @@ from app.db.session import scoped_session
 from app.db.models import User, Event, LabelRule, Calendar, Webhook
 from app.core.logger import logger
 from app.core import config
+from app.api.events.event_utils import EventBaseVM, \
+    createRecurringEvents, createOrUpdateEvent, deleteRecurringEvent
 """
 Adapter to sync to and from google calendar.
 Perhaps separate a common interface, ie.
@@ -33,6 +33,10 @@ NEW_COLORS = [
     '#7cb342', '#c0ca33', '#e4c441', '#f6bf26', '#33b679', '#039be5', '#4285f4', '#3f51b5',
     '#7986cb', '#b39ddb', '#616161', '#a79b8e', '#ad1457', '#d81b60', '#8e24aa', '#9e69af'
 ]
+
+
+class GoogleEventVM(EventBaseVM):
+    g_id: str
 
 
 def convertToLocalTime(dateTime: datetime, timeZone: Optional[str]):
@@ -109,7 +113,7 @@ def syncCalendar(calendar: Calendar, session: Session, fullSync: bool = False) -
                 eventsResult = service.events().list(calendarId=calendar.id,
                                                      timeMax=None if calendar.sync_token else end,
                                                      maxResults=250,
-                                                     singleEvents=True,
+                                                     singleEvents=False,
                                                      syncToken=calendar.sync_token,
                                                      pageToken=nextPageToken).execute()
             except HttpError as e:
@@ -123,7 +127,7 @@ def syncCalendar(calendar: Calendar, session: Session, fullSync: bool = False) -
             eventsResult = service.events().list(calendarId=calendar.id,
                                                  timeMax=end,
                                                  maxResults=250,
-                                                 singleEvents=True,
+                                                 singleEvents=False,
                                                  pageToken=nextPageToken).execute()
 
         events = eventsResult.get('items', [])
@@ -151,7 +155,7 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
         eventId = eventItem['id']
         user = calendar.user
 
-        event: Event
+        event: Optional[Event]
         if eventId in addedEvents:
             event = addedEvents[eventId]
         else:
@@ -162,46 +166,14 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
             if event:
                 addedEvents[eventId] = event
                 deletedEvents += 1
-                session.delete(event)
+                syncDeletedEvent(calendar, event, session)
             continue
 
-        # Fix: There's no timezones for all day events..
-        eventItemStart = eventItem['start'].get('dateTime', eventItem['start'].get('date'))
-        eventFullDayStart = eventItem['start'].get('date')
-        eventStart = datetime.fromisoformat(eventItemStart)
-
-        eventItemEnd = eventItem['end'].get('dateTime', eventItem['end'].get('date'))
-        eventFullDayEnd = eventItem['end'].get('date')
-        eventEnd = datetime.fromisoformat(eventItemEnd)
-        eventSummary = eventItem.get('summary')
-        eventDescription = eventItem.get('description')
-        timeZone = eventItem['start'].get('timeZone')
-
-        originalStartTime = eventItem.get('originalStartTime')
-
-        # TODO: Use the EventModel for this.
-        if not event:
-            # New event
+        event, created = syncCreatedOrUpdatedGoogleEvent(calendar, event, eventItem)
+        if created:
             newEvents += 1
-            event = Event(eventId, eventSummary, eventDescription, eventStart, eventEnd,
-                          eventFullDayStart, eventFullDayEnd, calendar.id, None)
-
-            if originalStartTime:
-                event.original_start = datetime.fromisoformat(originalStartTime.get('dateTime'))
-                event.original_start_day = originalStartTime.get('date')
-                event.original_timezone = originalStartTime.get('timeZone')
-
-            user.events.append(event)
         else:
-            # Update Event
             updatedEvents += 1
-            event.title = eventSummary
-            event.description = eventDescription
-            event.start = eventStart
-            event.end = eventEnd
-            event.time_zone = timeZone
-            event.start_day = eventFullDayStart
-            event.end_day = eventFullDayEnd
 
         # Auto Labelling
         if event.title:
@@ -216,6 +188,82 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
     logger.info(f'Updated {updatedEvents} events.')
     logger.info(f'Deleted {deletedEvents} events.')
     logger.info(f'Added {newEvents} events.')
+
+
+def googleEventToEventVM(calendarId: str, eventItem) -> GoogleEventVM:
+    """Converts the google event to our ViewModel.
+    """
+    eventId = eventItem.get('id')
+
+    # Fix: There's no timezones for all day events..
+    eventItemStart = eventItem['start'].get('dateTime', eventItem['start'].get('date'))
+    eventFullDayStart = eventItem['start'].get('date')
+    eventStart = datetime.fromisoformat(eventItemStart)
+
+    eventItemEnd = eventItem['end'].get('dateTime', eventItem['end'].get('date'))
+    eventFullDayEnd = eventItem['end'].get('date')
+    eventEnd = datetime.fromisoformat(eventItemEnd)
+    eventSummary = eventItem.get('summary')
+    eventDescription = eventItem.get('description')
+    timeZone = eventItem['start'].get('timeZone')
+
+    originalStartTime = eventItem.get('originalStartTime')
+    recurrence = eventItem.get('recurrence')
+
+    eventVM = GoogleEventVM(g_id=eventId,
+                            title=eventSummary,
+                            description=eventDescription,
+                            start=eventStart,
+                            end=eventEnd,
+                            start_day=eventFullDayStart,
+                            end_day=eventFullDayEnd,
+                            calendar_id=calendarId,
+                            timezone=timeZone,
+                            recurrences=recurrence)
+    return eventVM
+
+
+def syncDeletedEvent(calendar: Calendar, event: Event, session: Session):
+    if event.is_parent_recurring_event:
+        deleteRecurringEvent(calendar.user, event, 'ALL', session)
+    else:
+        session.delete(event)
+
+
+def syncCreatedOrUpdatedGoogleEvent(calendar: Calendar, event: Optional[Event],
+                                    eventItem) -> Tuple[Event, bool]:
+    """Syncs new event, or update existing from Google.
+
+    For recurring events: create instances in DB based on the RRULE
+    We'll also need to create IDs matching google's.
+    """
+    eventVM = googleEventToEventVM(calendar.id, eventItem)
+    isNewEvent = not event
+    timeZone = eventVM.timezone if eventVM.timezone else calendar.timezone
+
+    if eventVM.recurrences:
+        localDate = eventVM.start.astimezone(ZoneInfo(timeZone)).replace(tzinfo=None)
+        rules = [rrulestr(r, dtstart=localDate) for r in eventVM.recurrences]
+
+        # TODO: Handle RRULE Change.
+        events = createRecurringEvents(calendar.user, rules, eventVM, timeZone)
+        events[0].g_id = eventVM.g_id
+        for e in events[1:]:
+            dtStr = e.start.astimezone(ZoneInfo('UTC')).strftime("%Y%m%dT%H%M%SZ")
+            eventGoogleId = f'{eventVM.g_id}_{dtStr}'
+            e.g_id = eventGoogleId
+
+        return events[0], isNewEvent
+    else:
+        resultEvent, _ = createOrUpdateEvent(event, eventVM)
+        calendar.user.events.append(resultEvent)
+        resultEvent.g_id = eventVM.g_id
+
+        return resultEvent, isNewEvent
+
+
+"""Handle writes from Timecouncil => Google
+"""
 
 
 def insertGoogleEvent(user: User, event: Event):

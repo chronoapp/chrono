@@ -26,7 +26,10 @@ class Event(Base):
 
     calendar_id = Column(String(255), ForeignKey('calendar.id'), nullable=False)
     calendar = relationship('Calendar',
-                            backref=backref('events', lazy='dynamic', cascade='all,delete'))
+                            backref=backref('events',
+                                            lazy='dynamic',
+                                            cascade='all,delete',
+                                            order_by='Event.start.asc()'))
 
     title = Column(String(255), index=True)
     description = Column(Text())
