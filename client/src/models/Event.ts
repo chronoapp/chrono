@@ -12,6 +12,7 @@ export default class Event {
 
   constructor(
     readonly id: number,
+    readonly recurring_event_id: number,
     readonly calendar_id: string,
     readonly title: string,
     readonly title_short: string,
@@ -31,6 +32,7 @@ export default class Event {
   static fromJson(eventJson): Event {
     return new Event(
       eventJson.id,
+      eventJson.recurring_event_id,
       eventJson.calendar_id,
       eventJson.title,
       eventJson.title_short,
@@ -66,6 +68,7 @@ export default class Event {
 
   static newDefaultEvent(startDate: Date, endDate: Date, allDay: boolean) {
     return new Event(
+      -1,
       -1,
       '',
       '',

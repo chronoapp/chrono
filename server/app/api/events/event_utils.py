@@ -29,6 +29,7 @@ class EventBaseVM(BaseModel):
     timezone: Optional[str]
     calendar_id: str
     recurrences: Optional[List[str]]
+    recurring_event_id: Optional[int]
 
     class Config:
         orm_mode = True
