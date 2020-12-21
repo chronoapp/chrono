@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 from app.db.models.user_credentials import ProviderType
 from app.db.models.calendar import Calendar
+from app.db.models.event import Event
 
 
 class User(Base):
@@ -40,3 +41,10 @@ class User(Base):
 
     def getPrimaryCalendar(self) -> Calendar:
         return self.calendars.filter_by(primary=True).one()
+
+    def getEvents(self, expandSingleEvents: bool = True):
+        if expandSingleEvents:
+            return self.events.filter_by(recurrences=None)
+        else:
+            # TODO: modified recurring events
+            return self.events.filter_by(recurring_event_id=None)

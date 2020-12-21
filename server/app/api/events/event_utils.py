@@ -79,15 +79,19 @@ def getRRule(startDate: datetime, freq: int, interval: int, occurrences: Optiona
 
 
 def createRecurringEvents(user: User, rules: List[rrule], event: EventBaseVM,
-                          timezone: str) -> List[Event]:
-    """Creates all recurring events with this rule.
+                          timezone: str) -> Tuple[Event, List[Event]]:
+    """Creates all recurring events with this rule. We create one "virtual" base event,
+    and concrete events with a reference to the base event.
+
     # TODO: Handle Full day events
     # TODO: Handle multiple rules
     """
+    if event.start_day is not None:
+        raise NotImplementedError('Start Day not inplemented.')
+
     duration = event.end - event.start
 
-    events = []
-    # First event.
+    # Base event.
     recurringEvent = Event(None,
                            event.title,
                            event.description,
@@ -100,13 +104,13 @@ def createRecurringEvents(user: User, rules: List[rrule], event: EventBaseVM,
                            copyOriginalStart=True)
     recurringEvent.recurrences = [str(r) for r in rules]
     user.events.append(recurringEvent)
-    events.append(recurringEvent)
 
     ruleSet = rruleset()
     for r in rules:
         ruleSet.rrule(r)
 
-    for date in list(ruleSet)[1:]:
+    events = []
+    for date in list(ruleSet):
         start = date.replace(tzinfo=ZoneInfo(timezone))
         end = start + duration
         event = Event(None,
@@ -123,7 +127,7 @@ def createRecurringEvents(user: User, rules: List[rrule], event: EventBaseVM,
         user.events.append(event)
         events.append(event)
 
-    return events
+    return recurringEvent, events
 
 
 def updateRecurringEvent(user: User, event: Event, updateEvent: EventBaseVM,
@@ -155,7 +159,6 @@ def updateRecurringEvent(user: User, event: Event, updateEvent: EventBaseVM,
     elif updateOption == 'FOLLOWING':
         # Alternatively, create a new Recurring event with a different RRULE.
         if event.is_parent_recurring_event:
-            print('is_parent_recurring_event')
             followingEvents = user.events.filter(
                 and_(or_(Event.recurring_event_id == event.id, Event.id == event.id),
                      Event.start >= event.start))
@@ -181,9 +184,7 @@ def updateRecurringEvent(user: User, event: Event, updateEvent: EventBaseVM,
 def deleteRecurringEvent(user: User, event: Event, updateOption: UpdateOption, session: Session):
     if updateOption == 'SINGLE':
         if event.is_parent_recurring_event:
-            # DONOTSHIP: Set status = 'deleted'
-            # Alternatively, create an extra concrete event for the parent.
-            raise Error('Not implemented')
+            deleteRecurringEvent(user, event, 'ALL', session)
         else:
             session.delete(event)
 
@@ -196,8 +197,9 @@ def deleteRecurringEvent(user: User, event: Event, updateOption: UpdateOption, s
             user.events.filter(Event.id == event.recurring_event_id).delete()
 
     elif updateOption == 'FOLLOWING':
+        # TODO: Could update the recurrence instead.
         if event.is_parent_recurring_event:
-            raise Error('Not implemented')
+            deleteRecurringEvent(user, event, 'ALL', session)
 
         if event.recurring_event_id:
             user.events.filter(
@@ -210,9 +212,6 @@ def deleteRecurringEvent(user: User, event: Event, updateOption: UpdateOption, s
 
 def createOrUpdateEvent(eventDb: Optional[Event],
                         event: EventBaseVM) -> Tuple[Event, Optional[str]]:
-    if eventDb and not eventDb.isWritable():
-        raise InputError("Can not update event.")
-
     prevCalendarId = None
     if not eventDb:
         eventDb = Event(None, event.title, event.description, event.start, event.end,

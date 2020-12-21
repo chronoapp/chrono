@@ -65,11 +65,11 @@ def test_createRecurringEvents(userSession: Tuple[User, Session]):
 
     createRecurringEvents(testUser, [rule], event, 'America/Toronto')
 
-    assert calendar.events.count() == 6
+    assert calendar.getEvents().count() == 6
 
-    recurringEvent = calendar.events.filter(Event.recurrences != None).one()
+    recurringEvent = calendar.getEvents(expandSingleEvents=False).one()
 
-    for e in calendar.events:
+    for e in calendar.getEvents():
         if not e.is_parent_recurring_event:
             assert e.recurring_event_id == recurringEvent.id
         else:
@@ -96,28 +96,28 @@ def test_deleteRecurringEvent(userSession: Tuple[User, Session]):
 
     # delete all events
     createRecurringEvents(user, [rule], event, 'UTC')
-    events = calendar.events.order_by(Event.start.asc()).all()
+    events = calendar.getEvents().order_by(Event.start.asc()).all()
     deleteRecurringEvent(user, events[2], 'ALL', session)
     session.commit()
 
-    assert calendar.events.count() == 0
+    assert calendar.getEvents().count() == 0
 
     # delete this and following events.
     createRecurringEvents(user, [rule], event, 'UTC')
-    events = calendar.events.order_by(Event.start.asc()).all()
+    events = calendar.getEvents().order_by(Event.start.asc()).all()
     deleteRecurringEvent(user, events[2], 'FOLLOWING', session)
     session.commit()
 
-    assert calendar.events.count() == 2
+    assert calendar.getEvents().count() == 2
     user.events.delete()
 
     # delete single event
     createRecurringEvents(user, [rule], event, 'UTC')
-    events = calendar.events.order_by(Event.start.asc()).all()
+    events = calendar.getEvents().order_by(Event.start.asc()).all()
     deleteRecurringEvent(user, events[2], 'SINGLE', session)
     session.commit()
 
-    assert calendar.events.count() == 4
+    assert calendar.getEvents().count() == 4
 
 
 def test_updateRecurringEvent(userSession: Tuple[User, Session]):
@@ -137,7 +137,7 @@ def test_updateRecurringEvent(userSession: Tuple[User, Session]):
     # One event every day for 5 days.
     rule = getRRule(localTime, DAILY, 1, 5, None)
     createRecurringEvents(user, [rule], event, 'UTC')
-    events = calendar.events.order_by(Event.start.asc()).all()
+    events = calendar.getEvents().order_by(Event.start.asc()).all()
 
     # Update single event
     updateEvent = EventBaseVM(title='Test Event 2',

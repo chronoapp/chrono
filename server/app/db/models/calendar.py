@@ -4,6 +4,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship, backref
 
 from app.db.base_class import Base
+from app.db.models.event import Event
 
 AccessRole = Literal['freeBusyReader', 'reader', 'writer', 'owner']
 
@@ -41,3 +42,10 @@ class Calendar(Base):
         self.access_role = access_role
         self.primary = primary
         self.deleted = deleted
+
+    def getEvents(self, expandSingleEvents: bool = True):
+        if expandSingleEvents:
+            return self.events.filter_by(recurrences=None)
+        else:
+            # TODO: modified recurring events
+            return self.events.filter(Event.recurring_event_id == None)

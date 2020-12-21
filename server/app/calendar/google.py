@@ -1,5 +1,5 @@
 from uuid import uuid4
-from typing import Optional, Dict, Tuple
+from typing import Optional, Dict, Tuple, List
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
@@ -144,6 +144,13 @@ def syncCalendar(calendar: Calendar, session: Session, fullSync: bool = False) -
 
 
 def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
+    """Sync items from google to the calendar.
+
+    Events could have been moved from one calendar to another.
+    E.g. Move event E from calendar C1 to C2, but either could be synced first.
+        If C1 first: Delete it, then added in sync(C2)
+        If C2 first: Update the calendar ID, then sync(C1) skips the delete.
+    """
     newEvents = 0
     updatedEvents = 0
     deletedEvents = 0
@@ -159,21 +166,30 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
         if eventId in addedEvents:
             event = addedEvents[eventId]
         else:
-            event = user.events.filter(and_(Event.g_id == eventId,
-                                            Event.calendar_id == calendar.id)).first()
+            event = user.events.filter(Event.g_id == eventId).first()
 
         if eventItem['status'] == 'cancelled':
-            if event:
+            # Only delete event if it's from this calendar.
+            if event and calendar.id == event.calendar_id:
                 addedEvents[eventId] = event
                 deletedEvents += 1
                 syncDeletedEvent(calendar, event, session)
             continue
 
-        event, created = syncCreatedOrUpdatedGoogleEvent(calendar, event, eventItem)
-        if created:
-            newEvents += 1
+        # TODO: Handle event moves when the previous event hasn't been deleted yet.
+        isNewEvent = not event
+
+        try:
+            event, recurringEvents = syncCreatedOrUpdatedGoogleEvent(calendar, event, eventItem)
+        except NotImplementedError as err:
+            logger.info(eventItem)
+            continue
+
+        numEvents = len(recurringEvents) + 1
+        if isNewEvent:
+            newEvents += numEvents
         else:
-            updatedEvents += 1
+            updatedEvents += numEvents
 
         # Auto Labelling
         if event.title:
@@ -182,7 +198,8 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
                 if rule.label not in event.labels:
                     event.labels.append(rule.label)
 
-        addedEvents[eventId] = event
+        for e in [event] + recurringEvents:
+            addedEvents[e.g_id] = e
 
     session.commit()
     logger.info(f'Updated {updatedEvents} events.')
@@ -231,35 +248,40 @@ def syncDeletedEvent(calendar: Calendar, event: Event, session: Session):
 
 
 def syncCreatedOrUpdatedGoogleEvent(calendar: Calendar, event: Optional[Event],
-                                    eventItem) -> Tuple[Event, bool]:
+                                    eventItem) -> Tuple[Event, List[Event]]:
     """Syncs new event, or update existing from Google.
 
     For recurring events: create instances in DB based on the RRULE
     We'll also need to create IDs matching google's.
     """
     eventVM = googleEventToEventVM(calendar.id, eventItem)
-    isNewEvent = not event
     timeZone = eventVM.timezone if eventVM.timezone else calendar.timezone
 
     if eventVM.recurrences:
         localDate = eventVM.start.astimezone(ZoneInfo(timeZone)).replace(tzinfo=None)
-        rules = [rrulestr(r, dtstart=localDate) for r in eventVM.recurrences]
+        rules = [rrulestr(r, dtstart=localDate, ignoretz=True) for r in eventVM.recurrences]
 
-        # TODO: Handle RRULE Change.
-        events = createRecurringEvents(calendar.user, rules, eventVM, timeZone)
-        events[0].g_id = eventVM.g_id
-        for e in events[1:]:
-            dtStr = e.start.astimezone(ZoneInfo('UTC')).strftime("%Y%m%dT%H%M%SZ")
-            eventGoogleId = f'{eventVM.g_id}_{dtStr}'
-            e.g_id = eventGoogleId
+        if not event:
+            baseEvent, events = createRecurringEvents(calendar.user, rules, eventVM, timeZone)
+            baseEvent.g_id = eventVM.g_id
 
-        return events[0], isNewEvent
+            for e in events:
+                dtStr = e.start.astimezone(ZoneInfo('UTC')).strftime("%Y%m%dT%H%M%SZ")
+                eventGoogleId = f'{eventVM.g_id}_{dtStr}'
+                e.g_id = eventGoogleId
+
+            return baseEvent, events
+        else:
+            # TODO: Handle RRULE Change.
+            logger.info(f'Updated Event {event}')
+            resultEvent, _ = createOrUpdateEvent(event, eventVM)
+            return resultEvent, []
     else:
         resultEvent, _ = createOrUpdateEvent(event, eventVM)
         calendar.user.events.append(resultEvent)
         resultEvent.g_id = eventVM.g_id
 
-        return resultEvent, isNewEvent
+        return resultEvent, []
 
 
 """Handle writes from Timecouncil => Google

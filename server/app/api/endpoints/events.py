@@ -50,13 +50,13 @@ async def getEvents(
     logger.info(f'query:{query}')
 
     if title:
-        return user.events.filter(and_(Event.start <= datetime.now(),
-                                       Event.title.ilike(title))).all()
+        return user.getEvents().filter(and_(Event.start <= datetime.now(),
+                                            Event.title.ilike(title))).all()
     elif query:
         tsQuery = ' & '.join(query.split())
         return Event.search(session, user.id, tsQuery)
     else:
-        return user.events.filter(and_(Event.start >= startFilter, Event.start <= endFilter))\
+        return user.getEvents().filter(and_(Event.start >= startFilter, Event.start <= endFilter))\
             .order_by(desc(Event.start))\
             .limit(limit).all()
 
@@ -121,7 +121,17 @@ async def updateEvent(
 
     if user.syncWithGoogle():
         if prevCalendarId and prevCalendarId != eventDb.calendar_id:
-            moveGoogleEvent(user, eventDb, prevCalendarId)
+            if eventDb.recurring_event:
+                # Move one event => all events.
+                eventDb.recurring_event.calendar_id = eventDb.calendar_id
+                allRecurringEvents = user.events.filter(
+                    Event.recurring_event_id == eventDb.recurring_event_id)
+                for e in allRecurringEvents:
+                    e.calendar_id = eventDb.calendar_id
+
+                moveGoogleEvent(user, eventDb.recurring_event, prevCalendarId)
+            else:
+                moveGoogleEvent(user, eventDb, prevCalendarId)
 
         updateGoogleEvent(user, eventDb)
 

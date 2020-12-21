@@ -50,7 +50,7 @@ def test_syncCreatedOrUpdatedGoogleEvent_single(userSession: Tuple[User, Session
 
     assert event.title == eventItem.get('summary')
     assert event.g_id == eventItem.get('id')
-    assert calendar.events.count() == 1
+    assert calendar.getEvents().count() == 1
 
 
 def test_syncCreatedOrUpdatedGoogleEvent_recurring(userSession: Tuple[User, Session]):
@@ -60,7 +60,8 @@ def test_syncCreatedOrUpdatedGoogleEvent_recurring(userSession: Tuple[User, Sess
     event, _ = syncCreatedOrUpdatedGoogleEvent(calendar, None, EVENT_ITEM_RECURRING)
 
     assert event.g_id == EVENT_ITEM_RECURRING.get('id')
-    assert calendar.events.count() == 5
+    assert calendar.getEvents(False).count() == 1
+    assert calendar.getEvents(True).count() == 5
 
 
 def test_syncDeletedEvent(userSession: Tuple[User, Session]):
@@ -69,7 +70,7 @@ def test_syncDeletedEvent(userSession: Tuple[User, Session]):
 
     event, _ = syncCreatedOrUpdatedGoogleEvent(calendar, None, EVENT_ITEM_RECURRING)
     session.commit()
-    assert calendar.events.count() == 5
+    assert calendar.getEvents().count() == 5
 
     syncDeletedEvent(calendar, event, session)
 
