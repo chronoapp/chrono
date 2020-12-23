@@ -182,8 +182,13 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
         try:
             event, recurringEvents = syncCreatedOrUpdatedGoogleEvent(calendar, event, eventItem)
         except NotImplementedError as err:
+            # TODO: Handle Full day recurring events.
             logger.info(eventItem)
             continue
+
+        # Commit recurring events.
+        if len(recurringEvents) > 0:
+            session.commit()
 
         numEvents = len(recurringEvents) + 1
         if isNewEvent:
@@ -198,8 +203,7 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
                 if rule.label not in event.labels:
                     event.labels.append(rule.label)
 
-        for e in [event] + recurringEvents:
-            addedEvents[e.g_id] = e
+        addedEvents[event.g_id] = event
 
     session.commit()
     logger.info(f'Updated {updatedEvents} events.')
@@ -273,7 +277,7 @@ def syncCreatedOrUpdatedGoogleEvent(calendar: Calendar, event: Optional[Event],
             return baseEvent, events
         else:
             # TODO: Handle RRULE Change.
-            logger.info(f'Updated Event {event}')
+            # => Delete & Update ALL Events.
             resultEvent, _ = createOrUpdateEvent(event, eventVM)
             return resultEvent, []
     else:

@@ -1,4 +1,5 @@
 from datetime import datetime
+from itertools import islice
 
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
@@ -111,7 +112,7 @@ def createRecurringEvents(user: User, rules: List[rrule], event: EventBaseVM,
         ruleSet.rrule(r)
 
     events = []
-    for date in list(ruleSet):
+    for date in islice(ruleSet, MAX_RECURRING_EVENT_COUNT):
         start = date.replace(tzinfo=ZoneInfo(timezone))
         end = start + duration
         event = Event(None,
