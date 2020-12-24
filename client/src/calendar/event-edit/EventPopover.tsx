@@ -17,7 +17,8 @@ import {
 
 import { getAuthToken, createEvent, updateEvent, deleteEvent } from '../../util/Api'
 import { format, fullDayFormat } from '../../util/localizer'
-import { addNewLabels } from '..//utils/LabelUtils'
+import { addNewLabels } from '../utils/LabelUtils'
+import { GlobalEvent } from '../../util/global'
 
 import Event from '../../models/Event'
 import Calendar from '../../models/Calendar'
@@ -60,8 +61,8 @@ function EventPopover(props: IProps) {
   const calendarContext = useContext(CalendarsContext)
   const alertsContext = useContext(AlertsContext)
   const { labelState } = useContext<LabelContextType>(LabelContext)
+  const originalCalendarId = props.event.calendar_id
 
-  console.log(props.event)
   const [eventFields, setEventFields] = useState(
     new EventFields(
       props.event.title,
@@ -126,7 +127,6 @@ function EventPopover(props: IProps) {
       creating: false,
       ...fullDayEventDetails,
     }
-    console.log(event)
 
     const token = getAuthToken()
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
@@ -139,20 +139,30 @@ function EventPopover(props: IProps) {
         payload: { event: event, replaceEventId: event.id },
       })
 
-      updateEvent(token, event).then((event) => {
-        eventActions.eventDispatch({
-          type: 'UPDATE_EVENT',
-          payload: { event, replaceEventId: -1 },
-        })
-        alertsContext.addAlert(
-          new Alert({
-            title: 'Event Updated.',
-            iconType: mdiCheck,
-            autoDismiss: true,
-            removeAlertId: savingAlert.id,
+      updateEvent(token, event)
+        .then((event) => {
+          eventActions.eventDispatch({
+            type: 'UPDATE_EVENT',
+            payload: { event, replaceEventId: -1 },
           })
-        )
-      })
+
+          return event
+        })
+        .then((event) => {
+          // Recurring event: TODO: Only refresh if moved calendar.
+          if (event.recurring_event_id != null) {
+            document.dispatchEvent(new CustomEvent(GlobalEvent.refreshCalendar))
+          }
+
+          alertsContext.addAlert(
+            new Alert({
+              title: 'Event Updated.',
+              iconType: mdiCheck,
+              autoDismiss: true,
+              removeAlertId: savingAlert.id,
+            })
+          )
+        })
     } else {
       eventActions.eventDispatch({ type: 'CREATE_EVENT', payload: event })
       createEvent(token, event).then((event) => {
@@ -305,65 +315,6 @@ function EventPopover(props: IProps) {
     )
   }
 
-  function renderSelectCalendar() {
-    const calendarValues = Object.values(calendarContext.calendarsById)
-      .filter((cal) => cal.isWritable())
-      .map((calendar) => {
-        return {
-          value: calendar.id,
-          label: calendar.summary,
-          color: calendar.backgroundColor,
-        }
-      })
-
-    const dot = (color = '#ccc') => ({
-      alignItems: 'center',
-      display: 'flex',
-
-      ':before': {
-        backgroundColor: color,
-        borderRadius: 3,
-        content: '" "',
-        display: 'block',
-        marginRight: 5,
-        marginLeft: 5,
-        height: 12,
-        width: 12,
-      },
-    })
-
-    const colourStyles = {
-      option: (styles, { data }) => ({ ...styles, ...dot(data.color) }),
-      container: (styles) => ({ ...styles, minWidth: '14em' }),
-      singleValue: (styles, { data }) => ({ ...styles, ...dot(data.color) }),
-    }
-
-    const defaultCal = calendarContext.calendarsById[eventFields.calendarId]
-    const defaultValue = {
-      value: defaultCal.id,
-      label: defaultCal.summary,
-      color: defaultCal.backgroundColor,
-    }
-
-    return (
-      <Select
-        defaultValue={defaultValue}
-        options={calendarValues}
-        styles={colourStyles}
-        onChange={({ value }) => {
-          // Forces a color change without an API request.
-          // TODO: Discard changes on close.
-          setEventFields({ ...eventFields, calendarId: value })
-          const event = { ...props.event, calendar_id: value }
-          eventActions.eventDispatch({
-            type: 'UPDATE_EVENT',
-            payload: { event: event, replaceEventId: event.id },
-          })
-        }}
-      />
-    )
-  }
-
   function renderEditView() {
     const labels: Label[] = Object.values(labelState.labelsById)
 
@@ -485,6 +436,11 @@ function EventPopover(props: IProps) {
             </label>
           </div>
 
+          <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
+            <Icon className="mr-2" path={mdiCalendar} size={1} style={{ flex: 'none' }} />
+            {renderSelectCalendar()}
+          </div>
+
           <div className="mt-2" style={{ display: 'flex', alignItems: 'top' }}>
             <Icon className="mr-2" path={mdiTextSubject} size={1} />
 
@@ -494,11 +450,6 @@ function EventPopover(props: IProps) {
               html={eventFields.description}
               onChange={(e) => setEventFields({ ...eventFields, description: e.target.value })}
             />
-          </div>
-
-          <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
-            <Icon className="mr-2" path={mdiCalendar} size={1} style={{ flex: 'none' }} />
-            {renderSelectCalendar()}
           </div>
 
           <div className="mt-4" style={{ display: 'flex' }}>
@@ -527,6 +478,88 @@ function EventPopover(props: IProps) {
           </div>
         </div>
       </div>
+    )
+  }
+
+  function renderSelectCalendar() {
+    const calendarValues = Object.values(calendarContext.calendarsById)
+      .filter((cal) => cal.isWritable())
+      .map((calendar) => {
+        return {
+          value: calendar.id,
+          label: calendar.summary,
+          color: calendar.backgroundColor,
+        }
+      })
+
+    const dot = (color = '#ccc') => ({
+      alignItems: 'center',
+      display: 'flex',
+
+      ':before': {
+        backgroundColor: color,
+        borderRadius: 3,
+        content: '" "',
+        display: 'block',
+        marginRight: 5,
+        marginLeft: 5,
+        height: 12,
+        width: 12,
+      },
+    })
+
+    const customStyles = {
+      option: (styles, { data }) => ({ ...styles, ...dot(data.color), height: 30 }),
+      container: (styles) => ({ ...styles, minWidth: '14em' }),
+      singleValue: (styles, { data }) => ({ ...styles, ...dot(data.color) }),
+      control: (provided, state) => ({
+        ...provided,
+        border: 0,
+        minHeight: 30,
+        height: 30,
+        boxShadow: state.isFocused ? null : null,
+      }),
+      valueContainer: (provided, state) => ({
+        ...provided,
+        height: 30,
+        padding: '0 6px',
+      }),
+      input: (provided, state) => ({
+        ...provided,
+        margin: '0px',
+      }),
+      indicatorSeparator: (state) => ({
+        display: 'none',
+      }),
+      indicatorsContainer: (provided, state) => ({
+        ...provided,
+        height: 30,
+      }),
+    }
+
+    const defaultCal = calendarContext.calendarsById[eventFields.calendarId]
+    const defaultValue = {
+      value: defaultCal.id,
+      label: defaultCal.summary,
+      color: defaultCal.backgroundColor,
+    }
+
+    return (
+      <Select
+        defaultValue={defaultValue}
+        options={calendarValues}
+        styles={customStyles}
+        onChange={({ value }) => {
+          // Forces a color change without an API request.
+          // TODO: Discard changes on close.
+          setEventFields({ ...eventFields, calendarId: value })
+          const event = { ...props.event, calendar_id: value }
+          eventActions.eventDispatch({
+            type: 'UPDATE_EVENT',
+            payload: { event: event, replaceEventId: event.id },
+          })
+        }}
+      />
     )
   }
 }

@@ -2,6 +2,7 @@ export default {
   option: (provided, state) => ({
     ...provided,
     fontSize: '0.75rem',
+    height: '30px',
   }),
   singleValue: (provided, state) => {
     return { ...provided, marginLeft: 'auto', marginRight: 'auto' }
