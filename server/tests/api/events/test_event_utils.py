@@ -3,7 +3,7 @@ from uuid import uuid4
 from typing import Tuple
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-from dateutil.rrule import DAILY
+from dateutil.rrule import DAILY, WEEKLY
 
 from app.db.models import User
 from app.db.models.event import Event
@@ -45,7 +45,6 @@ def test_getEventsBasic(userSession, test_client):
 
 
 def test_createRecurringEvents(userSession: Tuple[User, Session]):
-    from dateutil.rrule import WEEKLY
     startDate = datetime.fromisoformat('2020-01-01T12:00:00-05:00')
     endDate = datetime.fromisoformat('2020-01-01T13:00:00-05:00')
     until = datetime(2020, 3, 15)
@@ -75,6 +74,34 @@ def test_createRecurringEvents(userSession: Tuple[User, Session]):
         else:
             assert len(e.recurrences) == 1
             assert e.recurrences[0] == str(rule)
+
+
+def test_createRecurringEvents_fullDay(userSession: Tuple[User, Session]):
+    testUser, _ = userSession
+    calendar = testUser.getPrimaryCalendar()
+
+    startDay = '2020-12-25'
+    endDay = '2020-12-26'
+    timezone = 'America/Los_Angeles'
+    eventVM = EventBaseVM(title='Event',
+                          description='Test event description',
+                          start=datetime.strptime(startDay, "%Y-%m-%d"),
+                          end=datetime.strptime(endDay, "%Y-%m-%d"),
+                          start_day=startDay,
+                          end_day=endDay,
+                          calendar_id=calendar.id,
+                          recurrences=['FREQ=WEEKLY;BYDAY=SU;INTERVAL=1;COUNT=5'])
+
+    rules = eventVM.getRRules(timezone)
+    event, recurringEvents = createRecurringEvents(testUser, rules, eventVM, timezone)
+    assert len(recurringEvents) == 5
+
+    firstStart = datetime.strptime('2020-12-27', "%Y-%m-%d")
+    for idx, e in enumerate(recurringEvents):
+        expectedStart = firstStart + timedelta(days=7 * idx)
+        assert e.start_day == expectedStart.strftime('%Y-%m-%d')
+        expectedEnd = expectedStart + timedelta(days=1)
+        assert e.end_day == expectedEnd.strftime('%Y-%m-%d')
 
 
 def test_deleteRecurringEvent(userSession: Tuple[User, Session]):

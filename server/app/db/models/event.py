@@ -115,7 +115,7 @@ class Event(Base):
             self.original_timezone = timezone
 
     def __repr__(self):
-        return f'<Event {self.title} start:{self.start} end:{self.end}/>'
+        return f'<Event {self.id} {self.title} start:{self.start} end:{self.end}/>'
 
     def isWritable(self) -> bool:
         return self.calendar.access_role == 'writer'\

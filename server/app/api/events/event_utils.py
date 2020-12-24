@@ -4,7 +4,7 @@ from itertools import islice
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 from typing import List, Optional, Literal, Tuple
-from dateutil.rrule import rrule, rruleset
+from dateutil.rrule import rrule, rruleset, rrulestr
 from backports.zoneinfo import ZoneInfo
 
 from pydantic import BaseModel
@@ -16,6 +16,7 @@ from app.db.models import Event, User
 
 class EventBaseVM(BaseModel):
     """Viewmodel for events.
+    TODO: If we have start_day and end_day, we don't need start and end.
     """
     title: Optional[str]
     description: Optional[str] = None
@@ -31,6 +32,22 @@ class EventBaseVM(BaseModel):
     calendar_id: str
     recurrences: Optional[List[str]]
     recurring_event_id: Optional[int]
+
+    def isAllDay(self) -> Optional[bool]:
+        return self.start_day is not None and self.end_day is not None
+
+    def getRRules(self, timeZone: str) -> List[rrule]:
+        """Gets the rrule objects from recurrence string array.
+        """
+        if not self.recurrences:
+            return []
+
+        if self.isAllDay() and self.start_day is not None:
+            localDate = datetime.strptime(self.start_day, "%Y-%m-%d")
+        else:
+            localDate = self.start.astimezone(ZoneInfo(timeZone)).replace(tzinfo=None)
+
+        return [rrulestr(r, dtstart=localDate, ignoretz=True) for r in self.recurrences]
 
     class Config:
         orm_mode = True
@@ -84,13 +101,7 @@ def createRecurringEvents(user: User, rules: List[rrule], event: EventBaseVM,
                           timezone: str) -> Tuple[Event, List[Event]]:
     """Creates all recurring events with this rule. We create one "virtual" base event,
     and concrete events with a reference to the base event.
-
-    # TODO: Handle Full day events
-    # TODO: Handle multiple rules
     """
-    if event.start_day is not None:
-        raise NotImplementedError('Start Day not inplemented.')
-
     duration = event.end - event.start
 
     # Base event.
@@ -99,8 +110,8 @@ def createRecurringEvents(user: User, rules: List[rrule], event: EventBaseVM,
                            event.description,
                            event.start,
                            event.end,
-                           None,
-                           None,
+                           event.start_day,
+                           event.end_day,
                            event.calendar_id,
                            timezone,
                            copyOriginalStart=True)
@@ -111,17 +122,19 @@ def createRecurringEvents(user: User, rules: List[rrule], event: EventBaseVM,
     for r in rules:
         ruleSet.rrule(r)
 
+    isAllDay = event.isAllDay()
     events = []
     for date in islice(ruleSet, MAX_RECURRING_EVENT_COUNT):
         start = date.replace(tzinfo=ZoneInfo(timezone))
         end = start + duration
+
         event = Event(None,
                       event.title,
                       event.description,
                       start,
                       end,
-                      None,
-                      None,
+                      start.strftime('%Y-%m-%d') if isAllDay else None,
+                      end.strftime('%Y-%m-%d') if isAllDay else None,
                       event.calendar_id,
                       timezone,
                       copyOriginalStart=True)

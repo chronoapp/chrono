@@ -262,10 +262,8 @@ def syncCreatedOrUpdatedGoogleEvent(calendar: Calendar, event: Optional[Event],
     timeZone = eventVM.timezone if eventVM.timezone else calendar.timezone
 
     if eventVM.recurrences:
-        localDate = eventVM.start.astimezone(ZoneInfo(timeZone)).replace(tzinfo=None)
-        rules = [rrulestr(r, dtstart=localDate, ignoretz=True) for r in eventVM.recurrences]
-
         if not event:
+            rules = eventVM.getRRules(timeZone)
             baseEvent, events = createRecurringEvents(calendar.user, rules, eventVM, timeZone)
             baseEvent.g_id = eventVM.g_id
 
