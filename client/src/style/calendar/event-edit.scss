@@ -79,3 +79,31 @@
   margin-left: -1px;
   color: transparent;
 }
+
+// RecurringEventEditor
+
+.recurring-days {
+  display: flex;
+  flex-direction: row;
+}
+
+.recurring-day {
+  display: flex;
+  justify-content: center;
+
+  font-size: $size-6;
+  padding: 0.25em;
+  border-radius: 1em;
+
+  width: 2em;
+  height: 2em;
+
+  border: 1px solid $border-light;
+  color: $grey;
+  cursor: pointer;
+
+  &.selected {
+    background-color: $primary;
+    color: $grey-lightest;
+  }
+}
