@@ -176,17 +176,11 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
                 syncDeletedEvent(calendar, event, session)
             continue
 
-        # TODO: Handle event moves when the previous event hasn't been deleted yet.
         isNewEvent = not event
+        event, recurringEvents = syncCreatedOrUpdatedGoogleEvent(calendar, event, eventItem,
+                                                                 session)
 
-        try:
-            event, recurringEvents = syncCreatedOrUpdatedGoogleEvent(calendar, event, eventItem)
-        except NotImplementedError as err:
-            # TODO: Handle Full day recurring events.
-            logger.info(eventItem)
-            continue
-
-        # Commit recurring events.
+        # Commit new recurring events.
         if len(recurringEvents) > 0:
             session.commit()
 
@@ -251,8 +245,8 @@ def syncDeletedEvent(calendar: Calendar, event: Event, session: Session):
         session.delete(event)
 
 
-def syncCreatedOrUpdatedGoogleEvent(calendar: Calendar, event: Optional[Event],
-                                    eventItem) -> Tuple[Event, List[Event]]:
+def syncCreatedOrUpdatedGoogleEvent(calendar: Calendar, event: Optional[Event], eventItem,
+                                    session: Session) -> Tuple[Event, List[Event]]:
     """Syncs new event, or update existing from Google.
 
     For recurring events: create instances in DB based on the RRULE
@@ -262,22 +256,23 @@ def syncCreatedOrUpdatedGoogleEvent(calendar: Calendar, event: Optional[Event],
     timeZone = eventVM.timezone if eventVM.timezone else calendar.timezone
 
     if eventVM.recurrences:
-        if not event:
-            rules = eventVM.getRRules(timeZone)
-            baseEvent, events = createRecurringEvents(calendar.user, rules, eventVM, timeZone)
-            baseEvent.g_id = eventVM.g_id
+        if event:
+            deleteRecurringEvent(calendar.user, event, 'ALL', session)
+            session.commit()
 
-            for e in events:
-                dtStr = e.start.astimezone(ZoneInfo('UTC')).strftime("%Y%m%dT%H%M%SZ")
-                eventGoogleId = f'{eventVM.g_id}_{dtStr}'
-                e.g_id = eventGoogleId
+        rules = eventVM.getRRules(timeZone)
+        logger.info(f'Expand Recurring Event: {eventVM.g_id}')
 
-            return baseEvent, events
-        else:
-            # TODO: Handle RRULE Change.
-            # => Delete & Update ALL Events.
-            resultEvent, _ = createOrUpdateEvent(event, eventVM)
-            return resultEvent, []
+        baseEvent, recurringEvents = createRecurringEvents(calendar.user, rules, eventVM, timeZone)
+        baseEvent.g_id = eventVM.g_id
+
+        for e in recurringEvents:
+            dtStr = e.start.astimezone(
+                ZoneInfo('UTC')).strftime("%Y%m%d" if e.all_day else "%Y%m%dT%H%M%SZ")
+            e.g_id = f'{baseEvent.g_id}_{dtStr}'
+
+        return baseEvent, recurringEvents
+
     else:
         resultEvent, _ = createOrUpdateEvent(event, eventVM)
         calendar.user.events.append(resultEvent)

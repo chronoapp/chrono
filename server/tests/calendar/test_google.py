@@ -46,7 +46,7 @@ def test_syncCreatedOrUpdatedGoogleEvent_single(userSession: Tuple[User, Session
     eventItem = EVENT_ITEM_RECURRING.copy()
     del eventItem['recurrence']
 
-    event, _ = syncCreatedOrUpdatedGoogleEvent(calendar, None, eventItem)
+    event, _ = syncCreatedOrUpdatedGoogleEvent(calendar, None, eventItem, session)
 
     assert event.title == eventItem.get('summary')
     assert event.g_id == eventItem.get('id')
@@ -57,18 +57,32 @@ def test_syncCreatedOrUpdatedGoogleEvent_recurring(userSession: Tuple[User, Sess
     user, session = userSession
     calendar = user.getPrimaryCalendar()
 
-    event, _ = syncCreatedOrUpdatedGoogleEvent(calendar, None, EVENT_ITEM_RECURRING)
+    event, _ = syncCreatedOrUpdatedGoogleEvent(calendar, None, EVENT_ITEM_RECURRING, session)
 
     assert event.g_id == EVENT_ITEM_RECURRING.get('id')
     assert calendar.getEvents(False).count() == 1
     assert calendar.getEvents(True).count() == 5
 
 
+def test_syncCreatedOrUpdatedGoogleEvent_recurring_update(userSession: Tuple[User, Session]):
+    user, session = userSession
+    calendar = user.getPrimaryCalendar()
+
+    event, _ = syncCreatedOrUpdatedGoogleEvent(calendar, None, EVENT_ITEM_RECURRING, session)
+    assert calendar.getEvents(True).count() == 5
+
+    updatedEventItem = EVENT_ITEM_RECURRING.copy()
+    updatedEventItem['recurrence'] = ['RRULE:FREQ=DAILY;COUNT=10']
+    event, _ = syncCreatedOrUpdatedGoogleEvent(calendar, event, updatedEventItem, session)
+
+    assert calendar.getEvents(True).count() == 10
+
+
 def test_syncDeletedEvent(userSession: Tuple[User, Session]):
     user, session = userSession
     calendar = user.getPrimaryCalendar()
 
-    event, _ = syncCreatedOrUpdatedGoogleEvent(calendar, None, EVENT_ITEM_RECURRING)
+    event, _ = syncCreatedOrUpdatedGoogleEvent(calendar, None, EVENT_ITEM_RECURRING, session)
     session.commit()
     assert calendar.getEvents().count() == 5
 
