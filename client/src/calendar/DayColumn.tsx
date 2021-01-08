@@ -145,29 +145,25 @@ class DayColumn extends React.Component<IProps, IState> {
     }
   }
 
-  renderEventDialog(event: Event) {
-    return <EventPopover event={event} />
-  }
-
   renderEvents(slotMetrics) {
     const { events, step, now } = this.props
 
     const styledEvents = getStyledEvents(events, step, slotMetrics)
 
     const dnd = this.context?.dragAndDropAction
-    const editingEventId = this.context?.eventState.editingEventId
+    const editingEvent = this.context?.eventState.editingEvent
 
     return styledEvents.map(({ event, style }, idx) => {
       const label = timeRangeFormat(event.start, event.end)
       const isInteracting = dnd && dnd.interacting && dnd.event.id === event.id
-      const isEditing = editingEventId === event.id
+      const isEditing = editingEvent?.id === event.id && editingEvent?.moreOptions === false
 
       if (isEditing && !isInteracting && !this.isTailEndofMultiDayEvent(event)) {
         return (
           <Popover
             key={`evt_${idx}`}
             containerClassName={'cal-event-modal-container'}
-            content={(args) => this.renderEventDialog(event)}
+            content={(args) => <EventPopover event={editingEvent!.event} />}
             isOpen={true}
             position={['right', 'left', 'bottom', 'top']}
             padding={5}
@@ -300,7 +296,7 @@ class DayColumn extends React.Component<IProps, IState> {
           return false
         }
 
-        if (this.context?.eventState.editingEventId) {
+        if (this.context?.eventState.editingEvent?.id) {
           this.context?.eventDispatch({ type: 'CANCEL_SELECT' })
           this.hasJustCancelledEventCreate = true
         }

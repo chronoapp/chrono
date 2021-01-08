@@ -50,7 +50,10 @@ export default function CalendarsPanel() {
       {calendars.length > 0 &&
         calendars.map((calendar, idx) => {
           return (
-            <label key={idx} className="cal-checkbox-container has-text-left tag-block">
+            <label
+              key={idx}
+              className="cal-checkbox-container has-text-left tag-block with-padding"
+            >
               <input
                 type="checkbox"
                 checked={calendar.selected}

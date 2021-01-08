@@ -117,7 +117,7 @@ function HabitGraph(props: IProps) {
       <div>
         <div className="level">
           <div className="level-left">
-            <span className="mr-2">Habit Chart</span>
+            <span className="ml-2">Habit Chart</span>
             <button
               className="button is-text is-small is-size-6"
               onClick={() => setViewDate(dates.subtract(viewDate, 1, 'month'))}

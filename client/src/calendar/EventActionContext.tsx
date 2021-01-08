@@ -33,12 +33,14 @@ export const EventActionContext = createContext<EventActionContextType>(undefine
 /**
  * Handles events and CRUD actions on events.
  * TODO: Optimizations with caching and normalization.
+ * TODO: Store the editingEvent data as a separate state so that all the calendar views
+ *  (e.g. day columns) will not update.
  */
 
 export interface EventState {
   loading: boolean
   eventsById: Record<number, Event>
-  editingEventId: number | null
+  editingEvent: { id: number; moreOptions: boolean; event: Event } | null
 }
 
 type ActionType =
@@ -49,7 +51,9 @@ type ActionType =
   | { type: 'CREATE_EVENT'; payload: Event }
   | { type: 'DELETE_EVENT'; payload: { eventId: number } }
   | { type: 'CANCEL_SELECT' }
+  | { type: 'FULL_EVENT_EDIT_MODE' }
   | { type: 'UPDATE_EVENT'; payload: { event: Event; replaceEventId: number } }
+  | { type: 'UPDATE_EDIT_EVENT'; payload: Event }
 
 function eventReducer(state: EventState, action: ActionType) {
   const { eventsById } = state
@@ -67,7 +71,7 @@ function eventReducer(state: EventState, action: ActionType) {
       return {
         ...state,
         eventsById: { ...eventsById, [action.payload.id]: action.payload },
-        editingEventId: action.payload.id,
+        editingEvent: { id: action.payload.id, moreOptions: false, event: action.payload },
       }
 
     case 'INIT_EDIT_EVENT':
@@ -77,7 +81,7 @@ function eventReducer(state: EventState, action: ActionType) {
           ...update(eventsById, { $unset: [-1] }),
           [action.payload.id]: action.payload,
         },
-        editingEventId: action.payload.id,
+        editingEvent: { id: action.payload.id, moreOptions: false, event: action.payload },
       }
 
     /**
@@ -90,7 +94,7 @@ function eventReducer(state: EventState, action: ActionType) {
       return {
         ...state,
         eventsById: { ...eventsById, [event.id]: event },
-        editingEventId: event.id,
+        editingEvent: { id: event.id, moreOptions: false, event },
       }
 
     /**
@@ -128,8 +132,23 @@ function eventReducer(state: EventState, action: ActionType) {
       return {
         ...state,
         eventsById: eventsUnselected,
-        editingEventId: null,
+        editingEvent: null,
       }
+
+    case 'FULL_EVENT_EDIT_MODE':
+      if (!state.editingEvent) {
+        return state
+      } else {
+        return { ...state, editingEvent: { ...state.editingEvent, moreOptions: true } }
+      }
+
+    case 'UPDATE_EDIT_EVENT':
+      if (!state.editingEvent) {
+        return state
+      } else {
+        return { ...state, editingEvent: { ...state.editingEvent, event: action.payload } }
+      }
+
     default:
       throw new Error('Unknown action')
   }
@@ -142,7 +161,7 @@ export function EventActionProvider(props: any) {
   const [eventState, eventDispatch] = useReducer(eventReducer, {
     loading: true,
     eventsById: {},
-    editingEventId: null,
+    editingEvent: null,
   })
 
   function handleInteractionStart() {

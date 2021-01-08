@@ -26,6 +26,7 @@
     "react": "^16.14.0",
     "react-chartjs-2": "^2.9.0",
     "react-dom": "^16.14.0",
+    "react-icons": "^4.1.0",
     "react-mentions": "^4.0.2",
     "react-select": "^3.1.0",
     "styled-components": "^5.1.1",

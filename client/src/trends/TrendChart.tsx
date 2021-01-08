@@ -212,7 +212,7 @@ function TrendChart(props: IProps) {
             <div className="container is-centered is-max-desktop mt-2">
               <div>
                 <div className="level">
-                  <div className="level-left">
+                  <div className="level-left ml-2">
                     Time spent on {renderTagDropdown(labelsById)} per {renderTimePeriodSelections()}
                   </div>
 

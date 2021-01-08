@@ -7,10 +7,13 @@ import { LabelTagColor } from '../../components/LabelTag'
 
 interface IProps {
   labels: Label[]
+  wrapperCls?: string
   portalCls?: string
   title: string
   handleChange?: (newValue: string, labelIds: number[]) => void
+  onBlur?: (v) => void
   isHeading: boolean
+  placeholder?: string
 }
 
 const defaultStyle = {
@@ -95,14 +98,16 @@ function TaggableInput(props: IProps) {
   }
 
   return (
-    <div className={clsx(props.isHeading && 'input-heading')}>
+    <div className={clsx(props.wrapperCls, props.isHeading && 'input-heading')}>
       <MentionsInput
         inputRef={titleInputRef}
         singleLine={true}
         value={props.title}
         onChange={props.handleChange && handleChange}
+        onBlur={props.onBlur}
         style={defaultStyle}
         className={'input'}
+        placeholder={props.placeholder}
         suggestionsPortalHost={props.portalCls && document.querySelector(props.portalCls)}
       >
         <Mention

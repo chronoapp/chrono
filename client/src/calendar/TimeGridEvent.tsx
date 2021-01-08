@@ -6,6 +6,7 @@ import { timeFormatShort } from '../util/localizer'
 
 import { Direction, EventActionContext } from './EventActionContext'
 import { CalendarsContext } from '../components/CalendarsContext'
+import { LabelTagColor } from '../components/LabelTag'
 
 interface IProps {
   event: Event
@@ -27,8 +28,16 @@ function TimeGridEvent(props: IProps) {
   // Tiny gap to separate events.
   const eventHeight = props.style.height - 0.15
 
-  const { event } = props
+  const event = getDefaultEvent()
   const calendar = calendarsContext.getDefaultCalendar(event.calendar_id)
+
+  function getDefaultEvent() {
+    if (eventActionContext.eventState.editingEvent?.event.id == props.event.id) {
+      return eventActionContext.eventState.editingEvent!.event
+    } else {
+      return props.event
+    }
+  }
 
   function foregroundColor() {
     return event.end < props.now ? 'hsl(0, 0%, 45%)' : event.foregroundColor
@@ -48,7 +57,7 @@ function TimeGridEvent(props: IProps) {
   }
 
   function handleClickEvent(e) {
-    if (props.event.id !== eventActionContext.eventState.editingEventId) {
+    if (props.event.id !== eventActionContext.eventState.editingEvent?.id) {
       eventActionContext?.eventDispatch({ type: 'INIT_EDIT_EVENT', payload: props.event })
     }
   }
@@ -90,6 +99,16 @@ function TimeGridEvent(props: IProps) {
   const diffMin = (event.end.getTime() - event.start.getTime()) / 60000
   const displayTitle = Event.getDefaultTitle(event)
 
+  const tagColors = event.labels.map((label, idx) => (
+    <LabelTagColor
+      key={label.id}
+      style={{ marginLeft: 1, height: 8, width: 8, borderRadius: 3 }}
+      colorHex={label.color_hex}
+      lighten={event.end < props.now}
+      title={label.title}
+    />
+  ))
+
   let inner
   if (diffMin <= 30) {
     inner = (
@@ -99,6 +118,7 @@ function TimeGridEvent(props: IProps) {
       >
         <span>{displayTitle}</span>
         <span style={{ fontSize: '90%', flex: 1 }}>{`, ${timeFormatShort(event.start)}`}</span>
+        <span style={{ display: 'flex', alignItems: 'center' }}>{tagColors}</span>
       </div>
     )
   } else {
@@ -110,14 +130,16 @@ function TimeGridEvent(props: IProps) {
       <div key="2" className="cal-event-label">
         {props.label}
       </div>,
+      <div key="3" style={{ display: 'flex', position: 'absolute', right: 2, bottom: 5 }}>
+        {tagColors}
+      </div>,
     ]
   }
 
   const dnd = eventActionContext?.dragAndDropAction
-  const isInteracting =
-    dnd && dnd.interacting && dnd.event.id === props.event.id && !props.isPreview
+  const isInteracting = dnd && dnd.interacting && dnd.event.id === event.id && !props.isPreview
 
-  const isEditing = eventActionContext?.eventState.editingEventId === event.id
+  const isEditing = eventActionContext?.eventState.editingEvent?.id === event.id
   const calendarColor = calendarsContext.getCalendarColor(event.calendar_id)
 
   return (
@@ -130,13 +152,13 @@ function TimeGridEvent(props: IProps) {
         props.isPreview && 'is-dragging'
       )}
       style={{
-        backgroundColor: Event.getBackgroundColor(props.event, calendarColor),
+        backgroundColor: Event.getBackgroundColor(event, calendarColor),
         top: stringifyPercent(props.style.top),
         left: stringifyPercent(props.style.xOffset),
         width: stringifyPercent(props.style.width),
         height: stringifyPercent(eventHeight),
         border: props.style.border,
-        color: Event.getForegroundColor(props.event),
+        color: Event.getForegroundColor(event),
         zIndex: isEditing ? 5 : 0,
       }}
       onMouseDown={handleStartDragging}

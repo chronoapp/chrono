@@ -7,6 +7,8 @@ import TimeGrid from './TimeGrid'
 import Week from './Week'
 import Month from './Month'
 import WorkWeek from './WorkWeek'
+import EventEditFull from './event-edit/EventEditFull'
+
 import * as dates from '../util/dates'
 import { startOfWeek, formatDateTime, format } from '../util/localizer'
 import { getAuthToken, getEvents } from '../util/Api'
@@ -60,7 +62,7 @@ function Calendar() {
       setDisplayToggleActive(false)
     }
 
-    // if (eventsContext.eventState.editingEventId === null) {
+    // if (eventsContext.eventState.editingEvent?.id === null) {
     //   if (e.key === 'w') {
     //     selectDisplay('Week')
     //   }
@@ -257,10 +259,23 @@ function Calendar() {
     }
   }
 
+  function renderFullEditMode() {
+    const { eventState } = eventsContext
+    if (eventState.editingEvent) {
+      const fullEditMode = eventState.editingEvent?.moreOptions == true
+
+      if (fullEditMode) {
+        const event = eventState.editingEvent.event
+        return event && <EventEditFull event={event} />
+      }
+    }
+  }
+
   return (
     <div className="cal-calendar">
       {renderDisplaySelectionHeader()}
       {renderCalendar()}
+      {renderFullEditMode()}
     </div>
   )
 }

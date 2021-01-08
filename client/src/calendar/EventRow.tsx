@@ -26,7 +26,7 @@ function EventItem(props: { event: Event; isPreview: boolean }) {
   }
 
   function handleClickEvent(e) {
-    if (props.event.id !== eventActionContext.eventState.editingEventId) {
+    if (props.event.id !== eventActionContext.eventState.editingEvent?.id) {
       eventActionContext.eventDispatch({ type: 'INIT_EDIT_EVENT', payload: event })
     }
   }
@@ -69,7 +69,7 @@ function EventItem(props: { event: Event; isPreview: boolean }) {
 
   const dnd = eventActionContext.dragAndDropAction
   const isDragging = dnd && dnd.interacting && dnd.event.id === event.id
-  const isEditing = eventActionContext.eventState.editingEventId === event.id
+  const isEditing = eventActionContext.eventState.editingEvent?.id === event.id
 
   if (isEditing && !isDragging) {
     return (

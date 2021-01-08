@@ -1,19 +1,12 @@
-import React, { useContext, useState, useEffect, createRef, useRef } from 'react'
+import React, { useContext, useState, useEffect, createRef } from 'react'
 import clsx from 'clsx'
 import update from 'immutability-helper'
 import Select from 'react-select'
 
 import * as dates from '../../util/dates'
-import Icon from '@mdi/react'
-import {
-  mdiTextSubject,
-  mdiClockOutline,
-  mdiCalendar,
-  mdiDeleteOutline,
-  mdiClose,
-  mdiDelete,
-  mdiCheck,
-} from '@mdi/js'
+import { mdiDelete, mdiCheck } from '@mdi/js'
+import { MdClose } from 'react-icons/md'
+import { FiCalendar, FiClock, FiAlignLeft, FiTrash } from 'react-icons/fi'
 
 import { getAuthToken, createEvent, updateEvent, deleteEvent } from '../../util/Api'
 import { format, fullDayFormat } from '../../util/localizer'
@@ -33,6 +26,7 @@ import LabelTree from '../../components/LabelTree'
 import TimeSelect from './TimeSelect'
 import TimeSelectFullDay from './TimeSelectFullDay'
 
+import SelectCalendar from './SelectCalendar'
 import ContentEditable from '../../lib/ContentEditable'
 import TaggableInput from './TaggableInput'
 
@@ -43,7 +37,7 @@ interface IProps {
 /**
  * Editable fields in event.
  */
-class EventFields {
+export class EventFields {
   public constructor(
     readonly title: string,
     readonly description: string,
@@ -245,7 +239,7 @@ function EventPopover(props: IProps) {
     const calendar = getSelectedCalendar(eventFields.calendarId)
 
     return (
-      <div className="has-icon-grey">
+      <div>
         <div className="cal-event-modal-header has-background-white-ter">
           <span
             className="mr-2"
@@ -254,12 +248,7 @@ function EventPopover(props: IProps) {
               eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
             }}
           >
-            <Icon
-              path={mdiClose}
-              size={1}
-              className="has-text-grey-light"
-              style={{ cursor: 'pointer' }}
-            />
+            <MdClose style={{ cursor: 'pointer' }} className="has-text-grey" />
           </span>
         </div>
 
@@ -275,7 +264,7 @@ function EventPopover(props: IProps) {
           )}
 
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
-            <Icon className="mr-2" path={mdiClockOutline} size={1} />
+            <FiClock className="mr-2" />
             <span>
               {format(eventFields.start, 'YYYY-MM-DD')} {format(eventFields.start, 'hh:mm')} -{' '}
               {format(eventFields.end, 'hh:mm')}
@@ -285,27 +274,27 @@ function EventPopover(props: IProps) {
 
           {props.event.description && (
             <div className="mt-2" style={{ display: 'flex', alignItems: 'flex-start' }}>
-              <Icon className="mr-2" path={mdiTextSubject} size={1} />
+              <FiAlignLeft className="mr-2" />
               <div dangerouslySetInnerHTML={{ __html: props.event.description }}></div>
             </div>
           )}
 
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
-            <Icon className="mr-2" path={mdiCalendar} size={1} />
+            <FiCalendar className="mr-2" />
             <span>{calendar.summary}</span>
           </div>
 
           {calendar.isWritable() && (
             <div className="mt-4" style={{ display: 'flex' }}>
-              <button className="button is-primary" onClick={() => setReadonly(false)}>
+              <button className="button is-small is-primary" onClick={() => setReadonly(false)}>
                 Edit
               </button>
 
               <button
-                className="button is-light ml-2"
+                className="button is-small is-light ml-2"
                 onClick={() => onDeleteEvent(props.event.id)}
               >
-                <Icon className="mr-1" path={mdiDeleteOutline} size={1} />
+                <FiTrash className="mr-1" />
                 Delete{' '}
               </button>
             </div>
@@ -319,7 +308,7 @@ function EventPopover(props: IProps) {
     const labels: Label[] = Object.values(labelState.labelsById)
 
     return (
-      <div className="has-icon-grey">
+      <>
         <div className="cal-event-modal-header has-background-white-ter">
           <div
             className="mr-2"
@@ -328,16 +317,11 @@ function EventPopover(props: IProps) {
               eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
             }}
           >
-            <Icon
-              path={mdiClose}
-              size={1}
-              className="has-text-grey-light"
-              style={{ cursor: 'pointer' }}
-            />
+            <MdClose style={{ cursor: 'pointer' }} className="has-text-grey" />
           </div>
         </div>
 
-        <div className="cal-event-modal" style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="cal-event-modal is-flex is-flex-direction-column">
           <div>
             <TaggableInput
               labels={labels}
@@ -372,8 +356,8 @@ function EventPopover(props: IProps) {
             {renderAddTagDropdown()}
           </div>
 
-          <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
-            <Icon className="mr-2" path={mdiClockOutline} size={1} style={{ flex: 'none' }} />
+          <div className="mt-2 is-flex is-align-items-center">
+            <FiClock className="mr-2" size={'1.2em'} />
             <input
               className="button-underline input is-small"
               type="date"
@@ -437,12 +421,25 @@ function EventPopover(props: IProps) {
           </div>
 
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
-            <Icon className="mr-2" path={mdiCalendar} size={1} style={{ flex: 'none' }} />
-            {renderSelectCalendar()}
+            <FiCalendar className="mr-2" size={'1.2em'} />
+            <SelectCalendar
+              defaultCalendarId={eventFields.calendarId}
+              calendarsById={calendarContext.calendarsById}
+              onChange={(value) => {
+                // Forces a color change without an API request.
+                // TODO: Discard changes on close.
+                setEventFields({ ...eventFields, calendarId: value })
+                const event = { ...props.event, calendar_id: value }
+                eventActions.eventDispatch({
+                  type: 'UPDATE_EDIT_EVENT',
+                  payload: event,
+                })
+              }}
+            />
           </div>
 
           <div className="mt-2" style={{ display: 'flex', alignItems: 'top' }}>
-            <Icon className="mr-2" path={mdiTextSubject} size={1} />
+            <FiAlignLeft className="mr-2" size={'1.2em'} />
 
             <ContentEditable
               innerRef={contentEditableRef}
@@ -452,114 +449,46 @@ function EventPopover(props: IProps) {
             />
           </div>
 
-          <div className="mt-4" style={{ display: 'flex' }}>
-            <button className="button is-primary" onClick={() => onSaveEvent(props.event)}>
-              Save
-            </button>
+          <div className="mt-4" style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex' }}>
+              <button
+                className="button is-small is-primary"
+                onClick={() => onSaveEvent(props.event)}
+              >
+                Save
+              </button>
 
-            {isExistingEvent ? (
-              <button
-                className="button is-light ml-2"
-                onClick={() => onDeleteEvent(props.event.id)}
-              >
-                <Icon className="mr-1" path={mdiDeleteOutline} size={1} />
-                Delete{' '}
-              </button>
-            ) : (
-              <button
-                className="button is-light ml-2"
-                onClick={() => {
-                  eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
-                }}
-              >
-                Discard
-              </button>
-            )}
+              {isExistingEvent ? (
+                <button
+                  className="button is-small is-light ml-2"
+                  onClick={() => onDeleteEvent(props.event.id)}
+                >
+                  <FiTrash className="mr-1" />
+                  Delete{' '}
+                </button>
+              ) : (
+                <button
+                  className="button is-small is-light ml-2"
+                  onClick={() => {
+                    eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
+                  }}
+                >
+                  Discard
+                </button>
+              )}
+            </div>
+
+            <button
+              className="button is-small is-text ml-2"
+              onClick={() => {
+                eventActions.eventDispatch({ type: 'FULL_EVENT_EDIT_MODE' })
+              }}
+            >
+              More Options
+            </button>
           </div>
         </div>
-      </div>
-    )
-  }
-
-  function renderSelectCalendar() {
-    const calendarValues = Object.values(calendarContext.calendarsById)
-      .filter((cal) => cal.isWritable())
-      .map((calendar) => {
-        return {
-          value: calendar.id,
-          label: calendar.summary,
-          color: calendar.backgroundColor,
-        }
-      })
-
-    const dot = (color = '#ccc') => ({
-      alignItems: 'center',
-      display: 'flex',
-
-      ':before': {
-        backgroundColor: color,
-        borderRadius: 3,
-        content: '" "',
-        display: 'block',
-        marginRight: 5,
-        marginLeft: 5,
-        height: 12,
-        width: 12,
-      },
-    })
-
-    const customStyles = {
-      option: (styles, { data }) => ({ ...styles, ...dot(data.color), height: 30 }),
-      container: (styles) => ({ ...styles, minWidth: '14em' }),
-      singleValue: (styles, { data }) => ({ ...styles, ...dot(data.color) }),
-      control: (provided, state) => ({
-        ...provided,
-        border: 0,
-        minHeight: 30,
-        height: 30,
-        boxShadow: state.isFocused ? null : null,
-      }),
-      valueContainer: (provided, state) => ({
-        ...provided,
-        height: 30,
-        padding: '0 6px',
-      }),
-      input: (provided, state) => ({
-        ...provided,
-        margin: '0px',
-      }),
-      indicatorSeparator: (state) => ({
-        display: 'none',
-      }),
-      indicatorsContainer: (provided, state) => ({
-        ...provided,
-        height: 30,
-      }),
-    }
-
-    const defaultCal = calendarContext.calendarsById[eventFields.calendarId]
-    const defaultValue = {
-      value: defaultCal.id,
-      label: defaultCal.summary,
-      color: defaultCal.backgroundColor,
-    }
-
-    return (
-      <Select
-        defaultValue={defaultValue}
-        options={calendarValues}
-        styles={customStyles}
-        onChange={({ value }) => {
-          // Forces a color change without an API request.
-          // TODO: Discard changes on close.
-          setEventFields({ ...eventFields, calendarId: value })
-          const event = { ...props.event, calendar_id: value }
-          eventActions.eventDispatch({
-            type: 'UPDATE_EVENT',
-            payload: { event: event, replaceEventId: event.id },
-          })
-        }}
-      />
+      </>
     )
   }
 }

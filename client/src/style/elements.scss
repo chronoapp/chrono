@@ -6,9 +6,12 @@
   color: #363636;
   display: flex;
   justify-content: flex-start;
-  padding: 0.35em 0.75em;
 
   cursor: pointer;
+
+  &.with-padding {
+    padding: 0.25em 0.75em;
+  }
 }
 
 /** Checkbox **/
