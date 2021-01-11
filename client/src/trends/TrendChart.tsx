@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Bar } from 'react-chartjs-2'
+import { FiChevronDown } from 'react-icons/fi'
 import clsx from 'clsx'
-
-import Icon from '@mdi/react'
-import { mdiChevronDown } from '@mdi/js'
 
 import * as dates from '../util/dates'
 import { getTrends, getAuthToken } from '../util/Api'
@@ -82,7 +80,7 @@ function TrendChart(props: IProps) {
               style={{ backgroundColor: label.color_hex, display: 'inline-block' }}
             ></span>
             <span className="ml-1">{label.title}</span>
-            <Icon path={mdiChevronDown} size={1}></Icon>
+            <FiChevronDown className="mt-1" />
           </button>
         </div>
         <div className="dropdown-menu" id="dropdown-menu" role="menu">

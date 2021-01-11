@@ -1,6 +1,5 @@
 import clsx from 'clsx'
-import { mdiPoll, mdiViewGrid } from '@mdi/js'
-import Icon from '@mdi/react'
+import { FiBarChart2, FiGrid } from 'react-icons/fi'
 
 export type TrendView = 'CHART' | 'HABIT_GRAPH'
 
@@ -22,7 +21,7 @@ function ViewSelector(props: IProps) {
           props.selectedView === 'CHART' && 'is-active'
         )}
       >
-        <Icon path={mdiPoll} size={1}></Icon>
+        <FiBarChart2 size={'1.25em'} />
       </button>
       <button
         onClick={() => props.setSelectedView('HABIT_GRAPH')}
@@ -35,7 +34,7 @@ function ViewSelector(props: IProps) {
           props.selectedView === 'HABIT_GRAPH' && 'is-active'
         )}
       >
-        <Icon path={mdiViewGrid} size={1}></Icon>
+        <FiGrid size={'1.25em'} />
       </button>
     </div>
   )

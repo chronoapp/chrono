@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import clsx from 'clsx'
-import Icon from '@mdi/react'
-import { mdiChevronDown, mdiChevronLeft, mdiChevronRight } from '@mdi/js'
+import { FiChevronDown, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 
 import TimeGrid from './TimeGrid'
 import Week from './Week'
@@ -149,7 +148,7 @@ function Calendar() {
             }}
           >
             <span className="icon">
-              <Icon path={mdiChevronLeft} size={1} />
+              <FiChevronLeft size={'1.25em'} />
             </span>
           </button>
           <button
@@ -165,8 +164,8 @@ function Calendar() {
               }
             }}
           >
-            <span className="icon icon-button">
-              <Icon path={mdiChevronRight} size={1} />
+            <span className="icon">
+              <FiChevronRight size={'1.25em'} />
             </span>
           </button>
           <div
@@ -186,7 +185,7 @@ function Calendar() {
             >
               <span>{titleForDisplay(display)}</span>
               <span className="icon is-small">
-                <Icon path={mdiChevronDown} size={1} />
+                <FiChevronDown />
               </span>
             </button>
           </div>

@@ -1,8 +1,7 @@
 import React, { useContext, useEffect } from 'react'
-import { getAuthToken, getLabels } from '../util/Api'
+import { FiPlus } from 'react-icons/fi'
 
-import Icon from '@mdi/react'
-import { mdiPlus } from '@mdi/js'
+import { getAuthToken, getLabels } from '../util/Api'
 import { LabelContext, LabelContextType } from './LabelsContext'
 import LabelEditModal from './LabelEditModal'
 import LabelTree from './LabelTree'
@@ -51,8 +50,7 @@ function LabelPanel() {
         onClick={onClickAddProject}
         style={{ justifyContent: 'left' }}
       >
-        <Icon path={mdiPlus} size={1} horizontal vertical />
-        add tag
+        <FiPlus /> add tag
       </button>
     </>
   )

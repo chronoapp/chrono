@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react'
 import chunk from 'lodash/chunk'
 import clsx from 'clsx'
-import Icon from '@mdi/react'
-import { mdiChevronLeft, mdiChevronRight } from '@mdi/js'
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 
 import ViewSelector, { TrendView } from './ViewSelector'
 import { Label, TimePeriod } from '../models/Label'
@@ -123,7 +122,7 @@ function HabitGraph(props: IProps) {
               onClick={() => setViewDate(dates.subtract(viewDate, 1, 'month'))}
             >
               <span className="icon">
-                <Icon path={mdiChevronLeft} size={1} />
+                <FiChevronLeft size={'1.25em'} />
               </span>
             </button>
             <button
@@ -131,7 +130,7 @@ function HabitGraph(props: IProps) {
               onClick={() => setViewDate(dates.add(viewDate, 1, 'month'))}
             >
               <span className="icon">
-                <Icon path={mdiChevronRight} size={1} />
+                <FiChevronRight size={'1.25em'} />
               </span>
             </button>
             <span className="ml-2">{format(viewDate, 'MMMM YYYY')}</span>

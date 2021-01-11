@@ -3,8 +3,7 @@ import clsx from 'clsx'
 import Link from 'next/link'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import Icon from '@mdi/react'
-import { mdiDotsHorizontal } from '@mdi/js'
+import { FiMoreHorizontal } from 'react-icons/fi'
 
 import { getAuthToken, signOut, syncCalendar } from '../util/Api'
 import { roundNext15Min } from '../util/localizer'
@@ -68,7 +67,7 @@ function Layout(props: Props) {
       <div className={clsx('dropdown', settingsActive && 'is-active')}>
         <div className="dropdown-trigger" onClick={() => setSettingsActive(!settingsActive)}>
           <button className="button is-text">
-            <Icon size={1} path={mdiDotsHorizontal}></Icon>
+            <FiMoreHorizontal size={'1.25em'} />
           </button>
         </div>
         <div className="dropdown-menu" style={{ right: 0, left: 'auto' }}>
@@ -168,16 +167,16 @@ function Layout(props: Props) {
       </nav>
 
       <div className="app-content">
-        {props.includeLeftPanel &&
+        {props.includeLeftPanel && (
           <div className="left-section">
-          {props.canCreateEvent && <NewEventButton />}
-          <div className="left-section-scrollable" style={{ overflowY: 'scroll' }}>
-            <MiniCalendar />
-            <LabelPanel />
-            <CalendarsPanel />
+            {props.canCreateEvent && <NewEventButton />}
+            <div className="left-section-scrollable" style={{ overflowY: 'scroll' }}>
+              <MiniCalendar />
+              <LabelPanel />
+              <CalendarsPanel />
+            </div>
           </div>
-        </div>
-        }
+        )}
         {props.children}
       </div>
 
@@ -189,7 +188,7 @@ function Layout(props: Props) {
 Layout.defaultProps = {
   title: 'Timecouncil',
   canCreateEvent: false,
-  includeLeftPanel: true
+  includeLeftPanel: true,
 }
 
 export default Layout
