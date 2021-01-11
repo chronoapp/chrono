@@ -29,9 +29,19 @@ class Calendar(Base):
 
     webhook = relationship("Webhook", uselist=False, back_populates="calendar")
 
-    def __init__(self, id: str, timezone: str, summary: str, description: str,
-                 background_color: str, foreground_color: str, selected: bool,
-                 access_role: AccessRole, primary: bool, deleted: bool):
+    def __init__(
+        self,
+        id: str,
+        timezone: str,
+        summary: str,
+        description: str,
+        background_color: str,
+        foreground_color: str,
+        selected: bool,
+        access_role: AccessRole,
+        primary: bool,
+        deleted: bool,
+    ):
         self.id = id
         self.timezone = timezone
         self.summary = summary

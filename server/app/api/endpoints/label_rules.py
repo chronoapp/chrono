@@ -7,6 +7,7 @@ from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
 from app.db.models import Label, LabelRule, User, Event
 from app.core.logger import logger
+
 """Rules for each event.
 """
 
@@ -27,10 +28,9 @@ class LabelRuleInDBVM(LabelRuleVM):
 
 
 @router.get('/label_rules/', response_model=List[LabelRuleInDBVM])
-async def getLabelRules(label_id: int,
-                        text: str = '',
-                        user=Depends(get_current_user),
-                        session=Depends(get_db)):
+async def getLabelRules(
+    label_id: int, text: str = '', user=Depends(get_current_user), session=Depends(get_db)
+):
     if text:
         return user.label_rules.filter(and_(LabelRule.text == text, LabelRule.id == label_id)).all()
     else:
@@ -41,8 +41,9 @@ async def getLabelRules(label_id: int,
 async def putLabel(labelRule: LabelRuleVM, user=Depends(get_current_user), session=Depends(get_db)):
 
     labelDb = user.labels.filter_by(id=labelRule.label_id).first()
-    labelRuleDb = user.label_rules.filter_by(label_id=labelRule.label_id,
-                                             text=labelRule.text).first()
+    labelRuleDb = user.label_rules.filter_by(
+        label_id=labelRule.label_id, text=labelRule.text
+    ).first()
 
     if not labelRuleDb:
         labelRuleDb = LabelRule(labelRule.text)

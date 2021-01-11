@@ -38,10 +38,12 @@ async def getCalendars(user: User = Depends(get_current_user), session: Session 
 
 
 @router.put('/calendars/{calendarId}', response_model=CalendarVM)
-async def putCalendar(calendarId: str,
-                      calendar: CalendarVM,
-                      user: User = Depends(get_current_user),
-                      session: Session = Depends(get_db)):
+async def putCalendar(
+    calendarId: str,
+    calendar: CalendarVM,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_db),
+):
     calendarDb = user.calendars.filter_by(id=calendar.id).one_or_none()
     if calendarDb:
         calendarDb.selected = calendar.selected

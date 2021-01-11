@@ -44,8 +44,7 @@ def createOrUpdateLabel(user: User, labelId: Optional[int], label: LabelVM) -> L
 
 
 def combineLabels(labels: List[Label]) -> List[Label]:
-    """Children overrides parents. Maintains the same order.
-    """
+    """Children overrides parents. Maintains the same order."""
     labelsToRemove = set()
     labelMap = {l.id: l for l in labels}
 
@@ -68,7 +67,8 @@ async def getLabels(user=Depends(get_current_user), session=Depends(get_db)):
 
 @router.post('/labels/', response_model=LabelInDbVM)
 async def createLabel(
-    label: LabelVM, user=Depends(get_current_user), session=Depends(get_db)) -> Label:
+    label: LabelVM, user=Depends(get_current_user), session=Depends(get_db)
+) -> Label:
     labelDb = Label(label.title, label.color_hex)
     user.labels.append(labelDb)
     session.commit()
@@ -77,11 +77,10 @@ async def createLabel(
 
 
 @router.put('/labels/', response_model=List[LabelInDbVM])
-async def putLabels(labels: List[LabelInDbVM],
-                    user=Depends(get_current_user),
-                    session=Depends(get_db)):
-    """TODO: Bulk update with one query.
-    """
+async def putLabels(
+    labels: List[LabelInDbVM], user=Depends(get_current_user), session=Depends(get_db)
+):
+    """TODO: Bulk update with one query."""
     updatedLabels = [createOrUpdateLabel(user, label.id, label) for label in labels]
     session.commit()
 
@@ -93,8 +92,8 @@ async def putLabel(
     label: LabelInDbVM,
     labelId: int,
     user: User = Depends(get_current_user),
-    session: Session = Depends(get_db)) -> Label:
-
+    session: Session = Depends(get_db),
+) -> Label:
     labelDb = createOrUpdateLabel(user, labelId, label)
     session.commit()
     session.refresh(labelDb)
@@ -104,9 +103,8 @@ async def putLabel(
 
 @router.delete('/labels/{labelId}', response_model=LabelInDbVM)
 async def deleteLabel(
-    labelId: int, user: User = Depends(get_current_user),
-    session: Session = Depends(get_db)) -> Label:
-
+    labelId: int, user: User = Depends(get_current_user), session: Session = Depends(get_db)
+) -> Label:
     label = session.query(Label).filter_by(id=labelId).one_or_none()
     if not label:
         raise HTTPException(status_code=404, detail="Label not found.")

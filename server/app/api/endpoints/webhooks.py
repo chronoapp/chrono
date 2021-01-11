@@ -10,8 +10,7 @@ router = APIRouter()
 
 @router.post('/webhooks/google_events')
 async def updateGoogleEvent(request: Request, session: Session = Depends(get_db)):
-    """Watches for updates from google calendar.
-    """
+    """Watches for updates from google calendar."""
     print('Update Events')
 
     channelId = request.headers.get('x-goog-channel-id')

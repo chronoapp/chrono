@@ -14,7 +14,12 @@ from app.api.utils.security import get_current_user
 
 from app.api.events.event_utils import EventBaseVM, EventInDBVM, createOrUpdateEvent
 from app.api.endpoints.labels import LabelInDbVM, Label, combineLabels
-from app.calendar.google import insertGoogleEvent, deleteGoogleEvent, updateGoogleEvent, moveGoogleEvent
+from app.calendar.google import (
+    insertGoogleEvent,
+    deleteGoogleEvent,
+    updateGoogleEvent,
+    moveGoogleEvent,
+)
 from app.db.models import Event, User
 
 router = APIRouter()
@@ -39,26 +44,34 @@ async def getEvents(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     user: User = Depends(get_current_user),
-    session: Session = Depends(get_db)
+    session: Session = Depends(get_db),
 ) -> List[Event]:
 
-    startFilter = datetime.fromisoformat(start_date) if start_date\
-        else datetime.now() - timedelta(days=365)
+    startFilter = (
+        datetime.fromisoformat(start_date) if start_date else datetime.now() - timedelta(days=365)
+    )
     endFilter = datetime.fromisoformat(end_date) if end_date else datetime.now()
 
     logger.info(f'getEvents:{user.id}')
     logger.info(f'query:{query}')
 
     if title:
-        return user.getEvents().filter(and_(Event.start <= datetime.now(),
-                                            Event.title.ilike(title))).all()
+        return (
+            user.getEvents()
+            .filter(and_(Event.start <= datetime.now(), Event.title.ilike(title)))
+            .all()
+        )
     elif query:
         tsQuery = ' & '.join(query.split())
         return Event.search(session, user.id, tsQuery)
     else:
-        return user.getEvents().filter(and_(Event.start >= startFilter, Event.start <= endFilter))\
-            .order_by(desc(Event.start))\
-            .limit(limit).all()
+        return (
+            user.getEvents()
+            .filter(and_(Event.start >= startFilter, Event.start <= endFilter))
+            .order_by(desc(Event.start))
+            .limit(limit)
+            .all()
+        )
 
 
 @router.post('/events/', response_model=EventInDBVM)
@@ -67,8 +80,17 @@ async def createEvent(
 ) -> Event:
     try:
         calendarDb = user.calendars.filter_by(id=event.calendar_id).one_or_none()
-        eventDb = Event(None, event.title, event.description, event.start, event.end,
-                        event.start_day, event.end_day, event.calendar_id, None)
+        eventDb = Event(
+            None,
+            event.title,
+            event.description,
+            event.start,
+            event.end,
+            event.start_day,
+            event.end_day,
+            event.calendar_id,
+            None,
+        )
 
         eventDb.labels = getCombinedLabels(user, event.labels)
         eventDb.calendar = calendarDb
@@ -92,8 +114,8 @@ async def createEvent(
 
 @router.get('/events/{event_id}', response_model=EventInDBVM)
 async def getEvent(
-    event_id: int, user: User = Depends(get_current_user),
-    session: Session = Depends(get_db)) -> Event:
+    event_id: int, user: User = Depends(get_current_user), session: Session = Depends(get_db)
+) -> Event:
 
     event = user.events.filter_by(id=event_id).one_or_none()
     if not event:
@@ -107,7 +129,8 @@ async def updateEvent(
     event: EventBaseVM,
     event_id: int,
     user: User = Depends(get_current_user),
-    session: Session = Depends(get_db)) -> Event:
+    session: Session = Depends(get_db),
+) -> Event:
 
     existingEvent = user.events.filter_by(id=event_id).one_or_none()
 
@@ -125,7 +148,8 @@ async def updateEvent(
                 # Move one event => all events.
                 eventDb.recurring_event.calendar_id = eventDb.calendar_id
                 allRecurringEvents = user.events.filter(
-                    Event.recurring_event_id == eventDb.recurring_event_id)
+                    Event.recurring_event_id == eventDb.recurring_event_id
+                )
                 for e in allRecurringEvents:
                     e.calendar_id = eventDb.calendar_id
 
@@ -142,9 +166,9 @@ async def updateEvent(
 
 
 @router.delete('/events/{eventId}')
-async def deleteEvent(eventId: int,
-                      user: User = Depends(get_current_user),
-                      session: Session = Depends(get_db)):
+async def deleteEvent(
+    eventId: int, user: User = Depends(get_current_user), session: Session = Depends(get_db)
+):
     """Delete an event.
     TODO: Handle recurring events.
     - Option to delete this event only.

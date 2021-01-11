@@ -10,6 +10,7 @@ from backports.zoneinfo import ZoneInfo
 from pydantic import BaseModel
 from app.api.endpoints.labels import LabelInDbVM
 from app.db.models import Event, User
+
 """Event models and helpers to manage Recurring Events.
 """
 
@@ -18,6 +19,7 @@ class EventBaseVM(BaseModel):
     """Viewmodel for events.
     TODO: If we have start_day and end_day, we don't need start and end.
     """
+
     title: Optional[str]
     description: Optional[str] = None
     start: datetime
@@ -37,8 +39,7 @@ class EventBaseVM(BaseModel):
         return self.start_day is not None and self.end_day is not None
 
     def getRRules(self, timeZone: str) -> List[rrule]:
-        """Gets the rrule objects from recurrence string array.
-        """
+        """Gets the rrule objects from recurrence string array."""
         if not self.recurrences:
             return []
 
@@ -64,11 +65,13 @@ UpdateOption = Literal['SINGLE', 'ALL', 'FOLLOWING']
 
 class Error(Exception):
     """Base class for exceptions in this module."""
+
     pass
 
 
 class InputError(Error):
     """Exception raised for errors in the input."""
+
     pass
 
 
@@ -77,8 +80,13 @@ def convertToLocalTime(dateTime: datetime, timeZone: str):
     return localAware
 
 
-def getRRule(startDate: datetime, freq: int, interval: int, occurrences: Optional[int],
-             until: Optional[datetime]) -> rrule:
+def getRRule(
+    startDate: datetime,
+    freq: int,
+    interval: int,
+    occurrences: Optional[int],
+    until: Optional[datetime],
+) -> rrule:
     if until and occurrences:
         raise InputError('Until and occurrences cannot both be set.')
     if not until and not occurrences:
@@ -86,8 +94,11 @@ def getRRule(startDate: datetime, freq: int, interval: int, occurrences: Optiona
 
     count = None
     if not until:
-        count = min(MAX_RECURRING_EVENT_COUNT,
-                    occurrences) if occurrences else MAX_RECURRING_EVENT_COUNT
+        count = (
+            min(MAX_RECURRING_EVENT_COUNT, occurrences)
+            if occurrences
+            else MAX_RECURRING_EVENT_COUNT
+        )
 
     if count:
         rule = rrule(dtstart=startDate, freq=freq, interval=interval, count=count)
@@ -97,24 +108,27 @@ def getRRule(startDate: datetime, freq: int, interval: int, occurrences: Optiona
     return rule
 
 
-def createRecurringEvents(user: User, rules: List[rrule], event: EventBaseVM,
-                          timezone: str) -> Tuple[Event, List[Event]]:
+def createRecurringEvents(
+    user: User, rules: List[rrule], event: EventBaseVM, timezone: str
+) -> Tuple[Event, List[Event]]:
     """Creates all recurring events with this rule. We create one "virtual" base event,
     and concrete events with a reference to the base event.
     """
     duration = event.end - event.start
 
     # Base event.
-    recurringEvent = Event(None,
-                           event.title,
-                           event.description,
-                           event.start,
-                           event.end,
-                           event.start_day,
-                           event.end_day,
-                           event.calendar_id,
-                           timezone,
-                           copyOriginalStart=True)
+    recurringEvent = Event(
+        None,
+        event.title,
+        event.description,
+        event.start,
+        event.end,
+        event.start_day,
+        event.end_day,
+        event.calendar_id,
+        timezone,
+        copyOriginalStart=True,
+    )
     recurringEvent.recurrences = [str(r) for r in rules]
     user.events.append(recurringEvent)
 
@@ -128,16 +142,18 @@ def createRecurringEvents(user: User, rules: List[rrule], event: EventBaseVM,
         start = date.replace(tzinfo=ZoneInfo(timezone))
         end = start + duration
 
-        event = Event(None,
-                      event.title,
-                      event.description,
-                      start,
-                      end,
-                      start.strftime('%Y-%m-%d') if isAllDay else None,
-                      end.strftime('%Y-%m-%d') if isAllDay else None,
-                      event.calendar_id,
-                      timezone,
-                      copyOriginalStart=True)
+        event = Event(
+            None,
+            event.title,
+            event.description,
+            start,
+            end,
+            start.strftime('%Y-%m-%d') if isAllDay else None,
+            end.strftime('%Y-%m-%d') if isAllDay else None,
+            event.calendar_id,
+            timezone,
+            copyOriginalStart=True,
+        )
         event.recurring_event = recurringEvent
         user.events.append(event)
         events.append(event)
@@ -145,10 +161,10 @@ def createRecurringEvents(user: User, rules: List[rrule], event: EventBaseVM,
     return recurringEvent, events
 
 
-def updateRecurringEvent(user: User, event: Event, updateEvent: EventBaseVM,
-                         updateOption: UpdateOption, session: Session):
-    """Bulk updates for recurring events.
-    """
+def updateRecurringEvent(
+    user: User, event: Event, updateEvent: EventBaseVM, updateOption: UpdateOption, session: Session
+):
+    """Bulk updates for recurring events."""
     if updateOption == 'SINGLE':
         createOrUpdateEvent(event, updateEvent)
 
@@ -165,22 +181,28 @@ def updateRecurringEvent(user: User, event: Event, updateEvent: EventBaseVM,
 
         if baseEvent:
             updateRecurringEvent(
-                user, baseEvent,
-                updateEvent.copy(update={
-                    'start': newStart,
-                    'end': newStart + duration
-                }), 'FOLLOWING', session)
+                user,
+                baseEvent,
+                updateEvent.copy(update={'start': newStart, 'end': newStart + duration}),
+                'FOLLOWING',
+                session,
+            )
 
     elif updateOption == 'FOLLOWING':
         # Alternatively, create a new Recurring event with a different RRULE.
         if event.is_parent_recurring_event:
             followingEvents = user.events.filter(
-                and_(or_(Event.recurring_event_id == event.id, Event.id == event.id),
-                     Event.start >= event.start))
+                and_(
+                    or_(Event.recurring_event_id == event.id, Event.id == event.id),
+                    Event.start >= event.start,
+                )
+            )
         else:
             followingEvents = user.events.filter(
-                and_(Event.recurring_event_id == event.recurring_event_id,
-                     Event.start >= event.start))
+                and_(
+                    Event.recurring_event_id == event.recurring_event_id, Event.start >= event.start
+                )
+            )
 
         # Shift from the original time.
         startDiff = updateEvent.start - event.original_start
@@ -188,10 +210,8 @@ def updateRecurringEvent(user: User, event: Event, updateEvent: EventBaseVM,
         for e in followingEvents:
             newStart = e.original_start + startDiff
             createOrUpdateEvent(
-                e, updateEvent.copy(update={
-                    'start': newStart,
-                    'end': newStart + duration
-                }))
+                e, updateEvent.copy(update={'start': newStart, 'end': newStart + duration})
+            )
     else:
         raise InputError(f'updateOption must be {UpdateOption}')
 
@@ -218,19 +238,31 @@ def deleteRecurringEvent(user: User, event: Event, updateOption: UpdateOption, s
 
         if event.recurring_event_id:
             user.events.filter(
-                and_(Event.recurring_event_id == event.recurring_event_id,
-                     Event.start >= event.start)).delete()
+                and_(
+                    Event.recurring_event_id == event.recurring_event_id, Event.start >= event.start
+                )
+            ).delete()
 
     else:
         raise InputError(f'updateOption must be {UpdateOption}')
 
 
-def createOrUpdateEvent(eventDb: Optional[Event],
-                        event: EventBaseVM) -> Tuple[Event, Optional[str]]:
+def createOrUpdateEvent(
+    eventDb: Optional[Event], event: EventBaseVM
+) -> Tuple[Event, Optional[str]]:
     prevCalendarId = None
     if not eventDb:
-        eventDb = Event(None, event.title, event.description, event.start, event.end,
-                        event.start_day, event.end_day, event.calendar_id, event.timezone)
+        eventDb = Event(
+            None,
+            event.title,
+            event.description,
+            event.start,
+            event.end,
+            event.start_day,
+            event.end_day,
+            event.calendar_id,
+            event.timezone,
+        )
     else:
         if event.title:
             eventDb.title = event.title
