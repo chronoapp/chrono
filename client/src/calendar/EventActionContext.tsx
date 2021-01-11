@@ -7,6 +7,7 @@ import Event from '../models/Event'
 
 export type Action = 'MOVE' | 'RESIZE'
 export type Direction = 'UP' | 'DOWN'
+type EditMode = 'READ' | 'EDIT' | 'FULL_EDIT'
 
 export interface DragDropAction {
   action: Action
@@ -40,7 +41,7 @@ export const EventActionContext = createContext<EventActionContextType>(undefine
 export interface EventState {
   loading: boolean
   eventsById: Record<number, Event>
-  editingEvent: { id: number; moreOptions: boolean; event: Event } | null
+  editingEvent: { id: number; moreOptions: boolean; editMode: EditMode; event: Event } | null
 }
 
 type ActionType =
@@ -51,9 +52,9 @@ type ActionType =
   | { type: 'CREATE_EVENT'; payload: Event }
   | { type: 'DELETE_EVENT'; payload: { eventId: number } }
   | { type: 'CANCEL_SELECT' }
-  | { type: 'FULL_EVENT_EDIT_MODE' }
   | { type: 'UPDATE_EVENT'; payload: { event: Event; replaceEventId: number } }
   | { type: 'UPDATE_EDIT_EVENT'; payload: Event }
+  | { type: 'UPDATE_EDIT_MODE'; payload: EditMode }
 
 function eventReducer(state: EventState, action: ActionType) {
   const { eventsById } = state
@@ -71,7 +72,12 @@ function eventReducer(state: EventState, action: ActionType) {
       return {
         ...state,
         eventsById: { ...eventsById, [action.payload.id]: action.payload },
-        editingEvent: { id: action.payload.id, moreOptions: false, event: action.payload },
+        editingEvent: {
+          id: action.payload.id,
+          moreOptions: false,
+          editMode: 'EDIT' as EditMode,
+          event: action.payload,
+        },
       }
 
     case 'INIT_EDIT_EVENT':
@@ -79,9 +85,13 @@ function eventReducer(state: EventState, action: ActionType) {
         ...state,
         eventsById: {
           ...update(eventsById, { $unset: [-1] }),
-          [action.payload.id]: action.payload,
         },
-        editingEvent: { id: action.payload.id, moreOptions: false, event: action.payload },
+        editingEvent: {
+          id: action.payload.id,
+          moreOptions: false,
+          editMode: 'READ' as EditMode,
+          event: action.payload,
+        },
       }
 
     /**
@@ -94,7 +104,7 @@ function eventReducer(state: EventState, action: ActionType) {
       return {
         ...state,
         eventsById: { ...eventsById, [event.id]: event },
-        editingEvent: { id: event.id, moreOptions: false, event },
+        editingEvent: { id: event.id, moreOptions: false, editMode: 'EDIT' as EditMode, event },
       }
 
     /**
@@ -135,18 +145,18 @@ function eventReducer(state: EventState, action: ActionType) {
         editingEvent: null,
       }
 
-    case 'FULL_EVENT_EDIT_MODE':
-      if (!state.editingEvent) {
-        return state
-      } else {
-        return { ...state, editingEvent: { ...state.editingEvent, moreOptions: true } }
-      }
-
     case 'UPDATE_EDIT_EVENT':
       if (!state.editingEvent) {
         return state
       } else {
         return { ...state, editingEvent: { ...state.editingEvent, event: action.payload } }
+      }
+
+    case 'UPDATE_EDIT_MODE':
+      if (!state.editingEvent) {
+        return state
+      } else {
+        return { ...state, editingEvent: { ...state.editingEvent, editMode: action.payload } }
       }
 
     default:

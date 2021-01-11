@@ -156,7 +156,7 @@ class DayColumn extends React.Component<IProps, IState> {
     return styledEvents.map(({ event, style }, idx) => {
       const label = timeRangeFormat(event.start, event.end)
       const isInteracting = dnd && dnd.interacting && dnd.event.id === event.id
-      const isEditing = editingEvent?.id === event.id && editingEvent?.moreOptions === false
+      const isEditing = editingEvent?.id === event.id && editingEvent?.editMode !== 'FULL_EDIT'
 
       if (isEditing && !isInteracting && !this.isTailEndofMultiDayEvent(event)) {
         return (

@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect, createRef } from 'react'
 import clsx from 'clsx'
-import update from 'immutability-helper'
+import produce from 'immer'
+import moment from 'moment'
 
 import * as dates from '../../util/dates'
 import { MdClose } from 'react-icons/md'
@@ -53,7 +54,6 @@ function EventPopover(props: IProps) {
   const calendarContext = useContext(CalendarsContext)
   const alertsContext = useContext(AlertsContext)
   const { labelState } = useContext<LabelContextType>(LabelContext)
-  const originalCalendarId = props.event.calendar_id
 
   const [eventFields, setEventFields] = useState(
     new EventFields(
@@ -69,8 +69,6 @@ function EventPopover(props: IProps) {
   )
 
   const isExistingEvent = props.event.id !== -1
-  const [readonly, setReadonly] = useState(isExistingEvent)
-
   const contentEditableRef = createRef<HTMLInputElement>()
   const [addTagDropdownActive, setAddTagDropdownActive] = useState(false)
 
@@ -81,10 +79,15 @@ function EventPopover(props: IProps) {
     }
   }, [eventFields])
 
-  if (readonly) {
+  const isReadOnly = eventActions.eventState.editingEvent?.editMode == 'READ'
+  if (isReadOnly) {
     return renderReadOnlyView()
   } else {
     return renderEditView()
+  }
+
+  function setReadOnly(readOnly: boolean) {
+    eventActions.eventDispatch({ type: 'UPDATE_EDIT_MODE', payload: readOnly ? 'READ' : 'EDIT' })
   }
 
   function keyboardEvents(e: KeyboardEvent) {
@@ -95,27 +98,27 @@ function EventPopover(props: IProps) {
     }
   }
 
-  function getUpdatedEvent() {
-    const fullDayEventDetails = eventFields.allDay
+  function getUpdatedEvent(e: Event, fields: EventFields) {
+    const fullDayEventDetails = fields.allDay
       ? {
           all_day: true,
-          start_day: fullDayFormat(eventFields.start),
-          end_day: fullDayFormat(dates.add(eventFields.start, eventFields.fullDays, 'day')),
+          start_day: fullDayFormat(fields.start),
+          end_day: fullDayFormat(dates.add(fields.start, fields.fullDays, 'day')),
         }
       : {
           all_day: false,
-          start: eventFields.start,
-          end: eventFields.end,
+          start: fields.start,
+          end: fields.end,
           start_day: null,
           end_day: null,
         }
 
     const event = {
-      ...props.event,
-      title: eventFields.title,
-      description: eventFields.description,
-      calendar_id: eventFields.calendarId,
-      labels: eventFields.labels,
+      ...e,
+      title: fields.title,
+      description: fields.description,
+      calendar_id: fields.calendarId,
+      labels: fields.labels,
       ...fullDayEventDetails,
     }
 
@@ -123,8 +126,7 @@ function EventPopover(props: IProps) {
   }
 
   function onSaveEvent() {
-    const event = getUpdatedEvent()
-
+    const event = getUpdatedEvent(props.event, eventFields)
     const token = getAuthToken()
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
 
@@ -289,7 +291,7 @@ function EventPopover(props: IProps) {
 
           {calendar.isWritable() && (
             <div className="mt-4" style={{ display: 'flex' }}>
-              <button className="button is-small is-primary" onClick={() => setReadonly(false)}>
+              <button className="button is-small is-primary" onClick={() => setReadOnly(false)}>
                 Edit
               </button>
 
@@ -314,8 +316,8 @@ function EventPopover(props: IProps) {
       <>
         <div className="cal-event-modal-header has-background-white-ter">
           <div
-            className="mr-2"
-            style={{ height: '100%', display: 'flex', alignItems: 'center' }}
+            className="mr-2 is-flex is-align-items-center"
+            style={{ height: '100%' }}
             onClick={(e) => {
               eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
             }}
@@ -331,13 +333,18 @@ function EventPopover(props: IProps) {
               title={eventFields.title}
               portalCls={'.cal-event-modal-container'}
               isHeading={false}
+              onBlur={() => {
+                eventActions.eventDispatch({
+                  type: 'UPDATE_EDIT_EVENT',
+                  payload: getUpdatedEvent(props.event, eventFields),
+                })
+              }}
               handleChange={(title, labelIds: number[]) => {
                 const updatedLabels = addNewLabels(
                   labelState.labelsById,
                   eventFields.labels,
                   labelIds
                 )
-
                 setEventFields({ ...eventFields, title, labels: updatedLabels })
               }}
             />
@@ -351,7 +358,9 @@ function EventPopover(props: IProps) {
                 allowEdit={true}
                 onClickDelete={(e) => {
                   const rmIdx = eventFields.labels.indexOf(label)
-                  const updatedLabels = update(eventFields.labels, { $splice: [[rmIdx, 1]] })
+                  const updatedLabels = produce(eventFields.labels, (labels) => {
+                    labels.splice(rmIdx, 1)
+                  })
                   setEventFields({ ...eventFields, labels: updatedLabels })
                 }}
               />
@@ -365,7 +374,21 @@ function EventPopover(props: IProps) {
               className="button-underline input is-small"
               type="date"
               value={format(eventFields.start, 'YYYY-MM-DD')}
-              onChange={(e) => console.log(e.target.value)}
+              onChange={(e) => {
+                const m = moment(e.target.value, 'YYYY-MM-DD')
+                const duration = dates.diff(eventFields.end, eventFields.start, 'minutes')
+
+                const start = dates.merge(m.toDate(), eventFields.start)
+                const end = dates.add(start, duration, 'minutes')
+                const updatedFields = { ...eventFields, start, end }
+                setEventFields(updatedFields)
+
+                eventActions.setSelectedDate(start)
+                eventActions.eventDispatch({
+                  type: 'UPDATE_EDIT_EVENT',
+                  payload: getUpdatedEvent(props.event, updatedFields),
+                })
+              }}
               style={{ flex: 1 }}
             />
             {eventFields.allDay && (
@@ -391,15 +414,10 @@ function EventPopover(props: IProps) {
                 }}
                 onSelectEndDate={(date) => {
                   setEventFields({ ...eventFields, end: date })
-                  const event = { ...props.event, end: date }
                   eventActions.eventDispatch({
                     type: 'UPDATE_EDIT_EVENT',
-                    payload: event,
+                    payload: { ...props.event, end: date },
                   })
-                  // eventActions.eventDispatch({
-                  //   type: 'UPDATE_EVENT',
-                  //   payload: { event: event, replaceEventId: event.id },
-                  // })
                 }}
               />
             )}
@@ -487,9 +505,9 @@ function EventPopover(props: IProps) {
               onClick={() => {
                 eventActions.eventDispatch({
                   type: 'UPDATE_EDIT_EVENT',
-                  payload: getUpdatedEvent(),
+                  payload: getUpdatedEvent(props.event, eventFields),
                 })
-                eventActions.eventDispatch({ type: 'FULL_EVENT_EDIT_MODE' })
+                eventActions.eventDispatch({ type: 'UPDATE_EDIT_MODE', payload: 'FULL_EDIT' })
               }}
             >
               More Options
