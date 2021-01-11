@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
-import Icon from '@mdi/react'
-import { mdiClose } from '@mdi/js'
+import { FiX } from 'react-icons/fi'
+
 import CircularProgress from '@material-ui/core/CircularProgress'
 
 import { AlertsContext } from '../components/AlertsContext'
@@ -17,18 +17,11 @@ export function Alerts() {
             {alert.isLoading && (
               <CircularProgress size={'1rem'} className="mr-1 has-text-white-ter" />
             )}
-            {alert.iconType && (
-              <Icon path={alert.iconType} size={0.7} className="has-text-grey-light mr-1" />
-            )}
+            {alert.icon && <alert.icon className="has-text-grey-light mr-1" />}
             {alert.title}
           </div>
           <div style={{ display: 'flex' }} onClick={() => alertContext.removeAlert(alert)}>
-            <Icon
-              path={mdiClose}
-              size={1}
-              className="has-text-grey-light"
-              style={{ cursor: 'pointer' }}
-            />
+            <FiX size={1} className="has-text-grey-light" style={{ cursor: 'pointer' }} />
           </div>
         </span>
       )}

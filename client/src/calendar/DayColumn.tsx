@@ -1,6 +1,6 @@
 import React from 'react'
 import clsx from 'clsx'
-import { mdiCheck } from '@mdi/js'
+import { FiCheck } from 'react-icons/fi'
 
 import Popover from '../lib/popover/Popover'
 
@@ -272,7 +272,7 @@ class DayColumn extends React.Component<IProps, IState> {
           alertsContext.addAlert(
             new Alert({
               title: 'Event Updated.',
-              iconType: mdiCheck,
+              icon: FiCheck,
               removeAlertId: alert.id,
               autoDismiss: true,
             })

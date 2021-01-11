@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 import clsx from 'clsx'
-import { mdiCheck } from '@mdi/js'
+import { FiCheck } from 'react-icons/fi'
 
 import * as dates from '../util/dates'
 import { format } from '../util/localizer'
@@ -77,7 +77,7 @@ function WeekRow(props: IProps) {
         alertsContext.addAlert(
           new Alert({
             title: 'Event Updated.',
-            iconType: mdiCheck,
+            icon: FiCheck,
             removeAlertId: alert.id,
             autoDismiss: true,
           })

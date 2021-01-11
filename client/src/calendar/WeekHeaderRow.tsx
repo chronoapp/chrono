@@ -2,7 +2,7 @@ import React, { useContext } from 'react'
 import clsx from 'clsx'
 import DateSlotMetrics from './utils/DateSlotMetrics'
 import { updateEvent, getAuthToken } from '../util/Api'
-import { mdiCheck } from '@mdi/js'
+import { FiCheck } from 'react-icons/fi'
 
 import EventRow from './EventRow'
 import Event from '../models/Event'
@@ -54,7 +54,7 @@ function WeekHeaderRow(props: IProps) {
         alertsContext.addAlert(
           new Alert({
             title: 'Event Updated.',
-            iconType: mdiCheck,
+            icon: FiCheck,
             removeAlertId: alert.id,
             autoDismiss: true,
           })
