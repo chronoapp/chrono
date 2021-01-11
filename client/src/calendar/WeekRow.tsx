@@ -62,9 +62,6 @@ function WeekRow(props: IProps) {
   }
 
   function onUpdatedEvent(event: Event) {
-    const alert = new Alert({ title: 'Saving Event..', isLoading: true })
-    alertsContext.addAlert(alert)
-
     if (event.id === eventActionContext.eventState.editingEvent?.id) {
       eventActionContext.eventDispatch({
         type: 'UPDATE_EDIT_EVENT',
@@ -72,24 +69,29 @@ function WeekRow(props: IProps) {
       })
     }
 
-    // TODO: Queue overrides from server to prevent race condition.
-    updateEvent(getAuthToken(), event)
-      .then((newEvent) => {
-        eventActionContext.eventDispatch({
-          type: 'UPDATE_EVENT',
-          payload: { event: newEvent, replaceEventId: event.id },
-        })
-      })
-      .then(() => {
-        alertsContext.addAlert(
-          new Alert({
-            title: 'Event Updated.',
-            icon: FiCheck,
-            removeAlertId: alert.id,
-            autoDismiss: true,
+    if (event.id !== -1) {
+      const alert = new Alert({ title: 'Saving Event..', isLoading: true })
+      alertsContext.addAlert(alert)
+
+      // TODO: Queue overrides from server to prevent race condition.
+      updateEvent(getAuthToken(), event)
+        .then((newEvent) => {
+          eventActionContext.eventDispatch({
+            type: 'UPDATE_EVENT',
+            payload: { event: newEvent, replaceEventId: event.id },
           })
-        )
-      })
+        })
+        .then(() => {
+          alertsContext.addAlert(
+            new Alert({
+              title: 'Event Updated.',
+              icon: FiCheck,
+              removeAlertId: alert.id,
+              autoDismiss: true,
+            })
+          )
+        })
+    }
   }
 
   return (

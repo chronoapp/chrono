@@ -181,9 +181,7 @@ class WeekRowContainer extends React.Component<IProps, IState> {
         this.context.onEnd(event)
 
         // Don't save if it hasn't been created yet.
-        if (event.id !== -1) {
-          this.props.onUpdatedEvent(event)
-        }
+        this.props.onUpdatedEvent(event)
 
         this.reset()
       })
