@@ -38,11 +38,12 @@ function RecurringEventEditor(props: { initialDate: Date }) {
     if (repeats === 'DAY' || repeats == 'WEEK') {
       return (
         <div className="mt-3 has-text-grey-lighter recurring-days">
-          {weekRange.map((day) => {
+          {weekRange.map((day, idx) => {
             const dayNumber = parseInt(format(day, 'd'))
             const isSelected = selectedDays.includes(dayNumber)
             return (
               <span
+                key={idx}
                 className={clsx('recurring-day ml-1', isSelected && 'selected')}
                 onClick={() => {
                   if (isSelected) {
@@ -115,10 +116,13 @@ function RecurringEventEditor(props: { initialDate: Date }) {
         ></input>
 
         <span className="select is-small">
-          <select onChange={(val) => setRepeats(val.target.value as Frequency)}>
+          <select
+            defaultValue={repeats}
+            onChange={(val) => setRepeats(val.target.value as Frequency)}
+          >
             {['DAY', 'WEEK', 'MONTH', 'YEAR'].map((val, idx) => {
               return (
-                <option key={idx} value={val} selected={repeats == val}>
+                <option key={idx} value={val}>
                   {val.toLowerCase()}
                 </option>
               )

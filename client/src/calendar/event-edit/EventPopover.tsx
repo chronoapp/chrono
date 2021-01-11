@@ -5,31 +5,28 @@ import moment from 'moment'
 
 import * as dates from '../../util/dates'
 import { MdClose } from 'react-icons/md'
-import { FiCalendar, FiCheck, FiClock, FiAlignLeft, FiTrash } from 'react-icons/fi'
+import { FiCalendar, FiClock, FiAlignLeft, FiTrash } from 'react-icons/fi'
 
-import { getAuthToken, createEvent, updateEvent, deleteEvent } from '../../util/Api'
 import { format, fullDayFormat } from '../../util/localizer'
 import { addNewLabels } from '../utils/LabelUtils'
-import { GlobalEvent } from '../../util/global'
 
 import Event from '../../models/Event'
 import Calendar from '../../models/Calendar'
 import { Label } from '../../models/Label'
-import Alert from '../../models/Alert'
 import { EventActionContext } from '../EventActionContext'
 import { CalendarsContext } from '../../components/CalendarsContext'
-import { AlertsContext } from '../../components/AlertsContext'
 import { LabelContext, LabelContextType } from '../../components/LabelsContext'
 import { LabelTag } from '../../components/LabelTag'
 import LabelTree from '../../components/LabelTree'
+
+import withEventEditor, { InjectedEventEditProps } from './withEventEditor'
 import TimeSelect from './TimeSelect'
 import TimeSelectFullDay from './TimeSelectFullDay'
-
 import SelectCalendar from './SelectCalendar'
 import ContentEditable from '../../lib/ContentEditable'
 import TaggableInput from './TaggableInput'
 
-interface IProps {
+interface IProps extends InjectedEventEditProps {
   event: Event
 }
 
@@ -52,7 +49,6 @@ export class EventFields {
 function EventPopover(props: IProps) {
   const eventActions = useContext(EventActionContext)
   const calendarContext = useContext(CalendarsContext)
-  const alertsContext = useContext(AlertsContext)
   const { labelState } = useContext<LabelContextType>(LabelContext)
 
   const [eventFields, setEventFields] = useState(
@@ -93,7 +89,7 @@ function EventPopover(props: IProps) {
   function keyboardEvents(e: KeyboardEvent) {
     if (e.key === 'Enter') {
       if (contentEditableRef.current && document.activeElement !== contentEditableRef.current) {
-        onSaveEvent()
+        props.onSaveEvent(getUpdatedEvent(props.event, eventFields))
       }
     }
   }
@@ -123,85 +119,6 @@ function EventPopover(props: IProps) {
     }
 
     return event
-  }
-
-  function onSaveEvent() {
-    const event = getUpdatedEvent(props.event, eventFields)
-    const token = getAuthToken()
-    eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
-
-    const savingAlert = new Alert({ title: 'Saving Event..', isLoading: true })
-    alertsContext.addAlert(savingAlert)
-    if (isExistingEvent) {
-      eventActions.eventDispatch({
-        type: 'UPDATE_EVENT',
-        payload: { event: event, replaceEventId: event.id },
-      })
-
-      updateEvent(token, event)
-        .then((event) => {
-          eventActions.eventDispatch({
-            type: 'UPDATE_EVENT',
-            payload: { event, replaceEventId: -1 },
-          })
-
-          return event
-        })
-        .then((event) => {
-          // Recurring event: TODO: Only refresh if moved calendar.
-          if (event.recurring_event_id != null) {
-            document.dispatchEvent(new CustomEvent(GlobalEvent.refreshCalendar))
-          }
-
-          alertsContext.addAlert(
-            new Alert({
-              title: 'Event Updated.',
-              icon: FiCheck,
-              autoDismiss: true,
-              removeAlertId: savingAlert.id,
-            })
-          )
-        })
-    } else {
-      eventActions.eventDispatch({ type: 'CREATE_EVENT', payload: event })
-      createEvent(token, event).then((event) => {
-        console.log(`Created event in db: ${event.id}`)
-        eventActions.eventDispatch({
-          type: 'UPDATE_EVENT',
-          payload: { event, replaceEventId: -1 },
-        })
-        alertsContext.addAlert(
-          new Alert({
-            title: 'Event Created.',
-            icon: FiCheck,
-            autoDismiss: true,
-            removeAlertId: savingAlert.id,
-          })
-        )
-      })
-    }
-  }
-
-  function onDeleteEvent(eventId: number) {
-    eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
-    eventActions.eventDispatch({
-      type: 'DELETE_EVENT',
-      payload: { eventId: props.event.id },
-    })
-    const token = getAuthToken()
-
-    const savingAlert = new Alert({ title: 'Deleting Event..', isLoading: true })
-    alertsContext.addAlert(savingAlert)
-    deleteEvent(token, eventId).then(() => {
-      alertsContext.addAlert(
-        new Alert({
-          title: 'Event Deleted',
-          icon: FiTrash,
-          autoDismiss: true,
-          removeAlertId: savingAlert.id,
-        })
-      )
-    })
   }
 
   function getSelectedCalendar(calendarId: string): Calendar {
@@ -297,7 +214,7 @@ function EventPopover(props: IProps) {
 
               <button
                 className="button is-small is-light ml-2"
-                onClick={() => onDeleteEvent(props.event.id)}
+                onClick={() => props.onDeleteEvent(props.event.id)}
               >
                 <FiTrash className="mr-1" />
                 Delete{' '}
@@ -476,14 +393,17 @@ function EventPopover(props: IProps) {
 
           <div className="mt-4 is-flex is-justify-content-space-between">
             <div className="is-flex">
-              <button className="button is-small is-primary" onClick={onSaveEvent}>
+              <button
+                className="button is-small is-primary"
+                onClick={() => props.onSaveEvent(getUpdatedEvent(props.event, eventFields))}
+              >
                 Save
               </button>
 
               {isExistingEvent ? (
                 <button
                   className="button is-small is-light ml-2"
-                  onClick={() => onDeleteEvent(props.event.id)}
+                  onClick={() => props.onDeleteEvent(props.event.id)}
                 >
                   <FiTrash className="mr-1" />
                   Delete{' '}
@@ -519,4 +439,4 @@ function EventPopover(props: IProps) {
   }
 }
 
-export default EventPopover
+export default withEventEditor(EventPopover)
