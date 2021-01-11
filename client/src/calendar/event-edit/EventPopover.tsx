@@ -1,12 +1,10 @@
 import React, { useContext, useState, useEffect, createRef } from 'react'
 import clsx from 'clsx'
 import update from 'immutability-helper'
-import Select from 'react-select'
 
 import * as dates from '../../util/dates'
-import { mdiDelete, mdiCheck } from '@mdi/js'
 import { MdClose } from 'react-icons/md'
-import { FiCalendar, FiClock, FiAlignLeft, FiTrash } from 'react-icons/fi'
+import { FiCalendar, FiCheck, FiClock, FiAlignLeft, FiTrash } from 'react-icons/fi'
 
 import { getAuthToken, createEvent, updateEvent, deleteEvent } from '../../util/Api'
 import { format, fullDayFormat } from '../../util/localizer'
@@ -92,12 +90,12 @@ function EventPopover(props: IProps) {
   function keyboardEvents(e: KeyboardEvent) {
     if (e.key === 'Enter') {
       if (contentEditableRef.current && document.activeElement !== contentEditableRef.current) {
-        onSaveEvent(props.event)
+        onSaveEvent()
       }
     }
   }
 
-  function onSaveEvent(e: Event) {
+  function getUpdatedEvent() {
     const fullDayEventDetails = eventFields.allDay
       ? {
           all_day: true,
@@ -113,14 +111,19 @@ function EventPopover(props: IProps) {
         }
 
     const event = {
-      ...e,
+      ...props.event,
       title: eventFields.title,
       description: eventFields.description,
       calendar_id: eventFields.calendarId,
       labels: eventFields.labels,
-      creating: false,
       ...fullDayEventDetails,
     }
+
+    return event
+  }
+
+  function onSaveEvent() {
+    const event = getUpdatedEvent()
 
     const token = getAuthToken()
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
@@ -151,7 +154,7 @@ function EventPopover(props: IProps) {
           alertsContext.addAlert(
             new Alert({
               title: 'Event Updated.',
-              iconType: mdiCheck,
+              icon: FiCheck,
               autoDismiss: true,
               removeAlertId: savingAlert.id,
             })
@@ -168,7 +171,7 @@ function EventPopover(props: IProps) {
         alertsContext.addAlert(
           new Alert({
             title: 'Event Created.',
-            iconType: mdiCheck,
+            icon: FiCheck,
             autoDismiss: true,
             removeAlertId: savingAlert.id,
           })
@@ -191,7 +194,7 @@ function EventPopover(props: IProps) {
       alertsContext.addAlert(
         new Alert({
           title: 'Event Deleted',
-          iconType: mdiDelete,
+          icon: FiTrash,
           autoDismiss: true,
           removeAlertId: savingAlert.id,
         })
@@ -390,15 +393,19 @@ function EventPopover(props: IProps) {
                   setEventFields({ ...eventFields, end: date })
                   const event = { ...props.event, end: date }
                   eventActions.eventDispatch({
-                    type: 'UPDATE_EVENT',
-                    payload: { event: event, replaceEventId: event.id },
+                    type: 'UPDATE_EDIT_EVENT',
+                    payload: event,
                   })
+                  // eventActions.eventDispatch({
+                  //   type: 'UPDATE_EVENT',
+                  //   payload: { event: event, replaceEventId: event.id },
+                  // })
                 }}
               />
             )}
           </div>
 
-          <div className="mt-2" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div className="mt-2 is-flex is-justify-content-flex-end">
             <label className="checkbox">
               <input
                 type="checkbox"
@@ -420,7 +427,7 @@ function EventPopover(props: IProps) {
             </label>
           </div>
 
-          <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
+          <div className="mt-2 is-flex is-align-items-center">
             <FiCalendar className="mr-2" size={'1.2em'} />
             <SelectCalendar
               defaultCalendarId={eventFields.calendarId}
@@ -438,23 +445,20 @@ function EventPopover(props: IProps) {
             />
           </div>
 
-          <div className="mt-2" style={{ display: 'flex', alignItems: 'top' }}>
+          <div className="mt-2 is-flex is-align-items-top">
             <FiAlignLeft className="mr-2" size={'1.2em'} />
-
             <ContentEditable
               innerRef={contentEditableRef}
               className="cal-event-edit-description"
               html={eventFields.description}
               onChange={(e) => setEventFields({ ...eventFields, description: e.target.value })}
+              style={{ minHeight: '3em' }}
             />
           </div>
 
-          <div className="mt-4" style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex' }}>
-              <button
-                className="button is-small is-primary"
-                onClick={() => onSaveEvent(props.event)}
-              >
+          <div className="mt-4 is-flex is-justify-content-space-between">
+            <div className="is-flex">
+              <button className="button is-small is-primary" onClick={onSaveEvent}>
                 Save
               </button>
 
@@ -481,6 +485,10 @@ function EventPopover(props: IProps) {
             <button
               className="button is-small is-text ml-2"
               onClick={() => {
+                eventActions.eventDispatch({
+                  type: 'UPDATE_EDIT_EVENT',
+                  payload: getUpdatedEvent(),
+                })
                 eventActions.eventDispatch({ type: 'FULL_EVENT_EDIT_MODE' })
               }}
             >

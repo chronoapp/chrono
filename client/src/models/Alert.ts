@@ -11,7 +11,7 @@ export default class Alert {
 
   /**
    * @param title Alert Message
-   * @param iconType icon string (e.g. mdiCheck from mdi/js)
+   * @param icon icon JSX Element
    */
   constructor(alert: {
     title: string

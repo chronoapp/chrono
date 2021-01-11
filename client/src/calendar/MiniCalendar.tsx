@@ -1,9 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react'
 import clsx from 'clsx'
 import chunk from 'lodash/chunk'
-
-import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown'
-import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp'
+import { FiChevronDown, FiChevronUp } from 'react-icons/fi'
 
 import * as dates from '../util/dates'
 import { startOfWeek, getWeekRange } from '../util/localizer'
@@ -80,17 +78,17 @@ export default function MiniCalendar() {
               setTimeout(() => setAnimateDirection('NONE'), 200)
             }}
           >
-            <KeyboardArrowUpIcon />
+            <FiChevronUp size={'1.25em'} />
           </span>
           <span
-            className="icon-button"
+            className="icon-button ml-1"
             onClick={() => {
               setAnimateDirection('FROM_BOTTOM')
               setViewDate(dates.add(viewDate, 1, 'month'))
               setTimeout(() => setAnimateDirection('NONE'), 200)
             }}
           >
-            <KeyboardArrowDownIcon />
+            <FiChevronDown size={'1.25em'} />
           </span>
         </span>
       </div>

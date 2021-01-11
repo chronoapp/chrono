@@ -1,10 +1,8 @@
 import React, { useContext, useState, useEffect, useRef } from 'react'
 import Tree from 'rc-tree'
 import { EventDataNode, DataNode } from 'rc-tree/lib/interface'
-import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown'
-import ChevronRightIcon from '@material-ui/icons/ChevronRight'
-import Icon from '@mdi/react'
-import { mdiDotsHorizontal, mdiDeleteOutline, mdiPencilOutline } from '@mdi/js'
+import { FiChevronDown, FiChevronRight, FiMoreHorizontal, FiTrash, FiEdit } from 'react-icons/fi'
+
 import clsx from 'clsx'
 import Popover from '../lib/popover/Popover'
 import Hoverable from '../lib/Hoverable'
@@ -289,18 +287,16 @@ function LabelTree(props: IProps) {
       >
         <div className="dropdown-content">
           <a
-            className="dropdown-item"
-            style={{ display: 'flex' }}
+            className="dropdown-item is-flex is-align-items-center"
             onClick={() => onClickEditLabel(item)}
           >
-            <Icon path={mdiPencilOutline} size={0.8} className="mr-1" /> Edit
+            <FiEdit className="mr-1" /> Edit
           </a>
           <a
-            className="dropdown-item"
-            style={{ display: 'flex' }}
+            className="dropdown-item is-flex is-align-items-center"
             onClick={() => onDeleteLabel(item)}
           >
-            <Icon path={mdiDeleteOutline} size={0.8} className="mr-1" /> Delete
+            <FiTrash className="mr-1" /> Delete
           </a>
         </div>
       </div>
@@ -310,9 +306,9 @@ function LabelTree(props: IProps) {
   function treeData(data: TreeItem[], allowEdit: boolean): DataNode[] {
     const Switcher = (props: EventDataNode) => {
       if (props.expanded) {
-        return <KeyboardArrowDownIcon />
+        return <FiChevronDown size={'1.25em'} style={{ marginTop: 1 }} />
       } else {
-        return <ChevronRightIcon />
+        return <FiChevronRight size={'1.25em'} style={{ marginTop: 1 }} />
       }
     }
 
@@ -343,7 +339,7 @@ function LabelTree(props: IProps) {
                           className="dropdown-trigger"
                           onClick={(e) => onClickDropdown(curMenuExpanded, item)}
                         >
-                          <Icon path={mdiDotsHorizontal} size={1} />
+                          <FiMoreHorizontal size={'1.25em'} />
                         </div>
                       </Popover>
                     </div>
