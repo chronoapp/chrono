@@ -28,16 +28,8 @@ function TimeGridEvent(props: IProps) {
   // Tiny gap to separate events.
   const eventHeight = props.style.height - 0.15
 
-  const event = getDefaultEvent()
+  const event = props.event
   const calendar = calendarsContext.getDefaultCalendar(event.calendar_id)
-
-  function getDefaultEvent() {
-    if (eventActionContext.eventState.editingEvent?.event.id == props.event.id) {
-      return eventActionContext.eventState.editingEvent!.event
-    } else {
-      return props.event
-    }
-  }
 
   function foregroundColor() {
     return event.end < props.now ? 'hsl(0, 0%, 45%)' : event.foregroundColor

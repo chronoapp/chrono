@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react'
+import produce from 'immer'
 import clsx from 'clsx'
 import { FiChevronDown, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 
@@ -229,12 +230,19 @@ function Calendar() {
   }
 
   function renderCalendar() {
-    const { loading, eventsById } = eventsContext.eventState
+    const { loading, eventsById, editingEvent } = eventsContext.eventState
 
     const selectedCalendarIds = Object.values(calendarContext.calendarsById)
       .filter((cal) => cal.selected)
       .map((cal) => cal.id)
-    const events = Object.values(eventsById).filter(
+
+    const eventByIdWithEditingEvent = produce(eventsById, (draft) => {
+      if (editingEvent && draft[editingEvent.id]) {
+        draft[editingEvent.id] = editingEvent.event
+      }
+    })
+
+    const events = Object.values(eventByIdWithEditingEvent).filter(
       (event) => !event.calendar_id || selectedCalendarIds.includes(event.calendar_id)
     )
 

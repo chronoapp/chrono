@@ -42,6 +42,13 @@ function WeekHeaderRow(props: IProps) {
     const alert = new Alert({ title: 'Saving Event..', isLoading: true })
     alertsContext.addAlert(alert)
 
+    if (event.id === eventActionContext.eventState.editingEvent?.id) {
+      eventActionContext.eventDispatch({
+        type: 'UPDATE_EDIT_EVENT',
+        payload: event,
+      })
+    }
+
     // TODO: Queue overrides from server to prevent race condition.
     updateEvent(getAuthToken(), event)
       .then((newEvent) => {

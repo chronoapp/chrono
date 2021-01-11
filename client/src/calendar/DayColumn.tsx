@@ -259,6 +259,13 @@ class DayColumn extends React.Component<IProps, IState> {
         return
       }
 
+      if (event.id === this.context.eventState.editingEvent?.id) {
+        this.context.eventDispatch({
+          type: 'UPDATE_EDIT_EVENT',
+          payload: event,
+        })
+      }
+
       const alert = new Alert({ title: 'Saving Event..', isLoading: true })
       alertsContext.addAlert(alert)
       updateEvent(getAuthToken(), event)
