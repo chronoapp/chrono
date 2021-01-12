@@ -45,6 +45,7 @@ export default function useEventService() {
   }
 
   function updateEvent(event: Event) {
+    // Update the the editing event copy.
     if (event.id === eventActions.eventState.editingEvent?.id) {
       eventActions.eventDispatch({
         type: 'UPDATE_EDIT_EVENT',
