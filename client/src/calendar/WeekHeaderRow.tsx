@@ -1,16 +1,12 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import clsx from 'clsx'
 import DateSlotMetrics from './utils/DateSlotMetrics'
-import { updateEvent, getAuthToken } from '../util/Api'
-import { FiCheck } from 'react-icons/fi'
 
 import EventRow from './EventRow'
 import Event from '../models/Event'
-import Alert from '../models/Alert'
 
 import WeekRowContainer from './WeekRowContainer'
-import { AlertsContext } from '../components/AlertsContext'
-import { EventActionContext } from './EventActionContext'
+import useEventService from './event-edit/useEventService'
 
 interface IProps {
   range: Date[]
@@ -25,8 +21,7 @@ const CELL_WRAPPER_CLS = 'cal-allday-cell'
  */
 function WeekHeaderRow(props: IProps) {
   const dayMetrics = new DateSlotMetrics(props.range, props.events, 8, 1)
-  const alertsContext = useContext(AlertsContext)
-  const eventActionContext = useContext(EventActionContext)
+  const { updateEvent } = useEventService()
 
   function renderBackgroundCells() {
     return (
@@ -38,46 +33,13 @@ function WeekHeaderRow(props: IProps) {
     )
   }
 
-  function onUpdatedEvent(event: Event) {
-    if (event.id === eventActionContext.eventState.editingEvent?.id) {
-      eventActionContext.eventDispatch({
-        type: 'UPDATE_EDIT_EVENT',
-        payload: event,
-      })
-    }
-
-    if (event.id !== -1) {
-      const alert = new Alert({ title: 'Saving Event..', isLoading: true })
-      alertsContext.addAlert(alert)
-
-      // TODO: Queue overrides from server to prevent race condition.
-      updateEvent(getAuthToken(), event)
-        .then((newEvent) => {
-          eventActionContext.eventDispatch({
-            type: 'UPDATE_EVENT',
-            payload: { event: newEvent, replaceEventId: event.id },
-          })
-        })
-        .then(() => {
-          alertsContext.addAlert(
-            new Alert({
-              title: 'Event Updated.',
-              icon: FiCheck,
-              removeAlertId: alert.id,
-              autoDismiss: true,
-            })
-          )
-        })
-    }
-  }
-
   return (
     <div className={CELL_WRAPPER_CLS}>
       {renderBackgroundCells()}
       <div className="cal-row-content">
         <WeekRowContainer
           dayMetrics={dayMetrics}
-          onUpdatedEvent={onUpdatedEvent}
+          onUpdatedEvent={updateEvent}
           rowClassname={CELL_WRAPPER_CLS}
           wrapperClassname={'cal-time-header-content'}
           ignoreNewEventYBoundCheck={true}

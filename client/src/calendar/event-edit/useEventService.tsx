@@ -1,35 +1,28 @@
 import React from 'react'
-import { Subtract } from 'utility-types'
 import { FiCheck, FiTrash } from 'react-icons/fi'
 
 import { GlobalEvent } from '../../util/global'
-import { getAuthToken, createEvent, updateEvent, deleteEvent } from '../../util/Api'
+import {
+  getAuthToken,
+  createEvent,
+  updateEvent as updateEventReq,
+  deleteEvent as deleteEventReq,
+} from '../../util/Api'
 import Event from '../../models/Event'
 import Alert from '../../models/Alert'
 
-import { EventActionContext, EventActionContextType } from '../EventActionContext'
-import { AlertsContext, AlertsContextType } from '../../components/AlertsContext'
-
-export interface InjectedEventEditProps {
-  onSaveEvent: (e: Event) => void
-  onDeleteEvent: (eventId: number) => void
-}
+import { EventActionContext } from '../EventActionContext'
+import { AlertsContext } from '../../components/AlertsContext'
 
 /**
- * Provides CRUD Actions that deal with the event API and injects:
- * - onSaveEvent
- * - onDeleteEvent
- *
- * @param WrappedComponent
+ * Hook to provides CRUD Action that deal with the event server API.
+ * and creates UI Alerts on updates.
  */
-function withEventEditor<P extends InjectedEventEditProps>(
-  WrappedComponent: React.ComponentType<P>
-) {
-  function onDeleteEvent(
-    eventId: number,
-    eventActions: EventActionContextType,
-    alertsContext: AlertsContextType
-  ) {
+export default function useEventService() {
+  const alertsContext = React.useContext(AlertsContext)
+  const eventActions = React.useContext(EventActionContext)
+
+  function deleteEvent(eventId: number) {
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
     eventActions.eventDispatch({
       type: 'DELETE_EVENT',
@@ -39,7 +32,7 @@ function withEventEditor<P extends InjectedEventEditProps>(
 
     const savingAlert = new Alert({ title: 'Deleting Event..', isLoading: true })
     alertsContext.addAlert(savingAlert)
-    deleteEvent(token, eventId).then(() => {
+    deleteEventReq(token, eventId).then(() => {
       alertsContext.addAlert(
         new Alert({
           title: 'Event Deleted',
@@ -51,14 +44,40 @@ function withEventEditor<P extends InjectedEventEditProps>(
     })
   }
 
-  /**
-   * Syncs the event to the server.
-   */
-  function onSaveEvent(
-    event: Event,
-    eventActions: EventActionContextType,
-    alertsContext: AlertsContextType
-  ) {
+  function updateEvent(event: Event) {
+    if (event.id === eventActions.eventState.editingEvent?.id) {
+      eventActions.eventDispatch({
+        type: 'UPDATE_EDIT_EVENT',
+        payload: event,
+      })
+    }
+
+    if (event.id !== -1) {
+      const alert = new Alert({ title: 'Saving Event..', isLoading: true })
+      alertsContext.addAlert(alert)
+
+      // TODO: Queue overrides from server to prevent race condition.
+      updateEventReq(getAuthToken(), event)
+        .then((newEvent) => {
+          eventActions.eventDispatch({
+            type: 'UPDATE_EVENT',
+            payload: { event: newEvent, replaceEventId: event.id },
+          })
+        })
+        .then(() => {
+          alertsContext.addAlert(
+            new Alert({
+              title: 'Event Updated.',
+              icon: FiCheck,
+              removeAlertId: alert.id,
+              autoDismiss: true,
+            })
+          )
+        })
+    }
+  }
+
+  function saveEvent(event: Event) {
     const token = getAuthToken()
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
 
@@ -72,7 +91,7 @@ function withEventEditor<P extends InjectedEventEditProps>(
         payload: { event: event, replaceEventId: event.id },
       })
 
-      updateEvent(token, event)
+      updateEventReq(token, event)
         .then((event) => {
           eventActions.eventDispatch({
             type: 'UPDATE_EVENT',
@@ -116,25 +135,5 @@ function withEventEditor<P extends InjectedEventEditProps>(
     }
   }
 
-  return class WithEventEditor extends React.Component<Subtract<P, InjectedEventEditProps>, {}> {
-    render() {
-      return (
-        <AlertsContext.Consumer>
-          {(alertsContext) => (
-            <EventActionContext.Consumer>
-              {(eventActions) => (
-                <WrappedComponent
-                  {...(this.props as P)}
-                  onSaveEvent={(event) => onSaveEvent(event, eventActions, alertsContext)}
-                  onDeleteEvent={(event) => onDeleteEvent(event, eventActions, alertsContext)}
-                />
-              )}
-            </EventActionContext.Consumer>
-          )}
-        </AlertsContext.Consumer>
-      )
-    }
-  }
+  return { saveEvent, deleteEvent, updateEvent }
 }
-
-export default withEventEditor

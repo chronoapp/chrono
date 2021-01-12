@@ -12,32 +12,30 @@ import { CalendarsContext } from '../../components/CalendarsContext'
 import Event from '../../models/Event'
 import { Label } from '../../models/Label'
 
-import { format, fullDayFormat } from '../../util/localizer'
+import { format } from '../../util/localizer'
 import { addNewLabels } from '../utils/LabelUtils'
 import ContentEditable from '../../lib/ContentEditable'
 import { LabelTag } from '../../components/LabelTag'
 import { LabelContext, LabelContextType } from '../../components/LabelsContext'
 
-import withEventEditor, { InjectedEventEditProps } from './withEventEditor'
 import SelectCalendar from './SelectCalendar'
 import RecurringEventEditor from './RecurringEventEditor'
 import TaggableInput from './TaggableInput'
 import TimeSelect from './TimeSelect'
 import TimeSelectFullDay from './TimeSelectFullDay'
 
-interface IProps extends InjectedEventEditProps {
-  event: Event
-}
+import useEventService from './useEventService'
 
 /**
  * Full view for event editing.
  */
-function EventEditFull(props: IProps) {
+export default function EventEditFull(props: { event: Event }) {
   const eventActions = useContext(EventActionContext)
   const calendarContext = useContext(CalendarsContext)
   const [recurringEventModalEnabled, setRecurringEventModalEnabled] = useState(false)
   const { labelState } = useContext<LabelContextType>(LabelContext)
   const recurringEditRef = useRef()
+  const { saveEvent } = useEventService()
 
   const [event, setEvent] = useState(props.event)
   const [tmpFullDays, setFullDays] = useState(1)
@@ -253,7 +251,7 @@ function EventEditFull(props: IProps) {
           <button
             className="button is-primary"
             onClick={() => {
-              props.onSaveEvent(event)
+              saveEvent(event)
             }}
           >
             Save changes
@@ -271,5 +269,3 @@ function EventEditFull(props: IProps) {
     </div>
   )
 }
-
-export default withEventEditor(EventEditFull)

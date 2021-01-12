@@ -19,14 +19,13 @@ import { LabelContext, LabelContextType } from '../../components/LabelsContext'
 import { LabelTag } from '../../components/LabelTag'
 import LabelTree from '../../components/LabelTree'
 
-import withEventEditor, { InjectedEventEditProps } from './withEventEditor'
 import TimeSelect from './TimeSelect'
 import TimeSelectFullDay from './TimeSelectFullDay'
 import SelectCalendar from './SelectCalendar'
 import ContentEditable from '../../lib/ContentEditable'
 import TaggableInput from './TaggableInput'
-
-interface IProps extends InjectedEventEditProps {
+import useEventService from './useEventService'
+interface IProps {
   event: Event
 }
 
@@ -50,6 +49,7 @@ function EventPopover(props: IProps) {
   const eventActions = useContext(EventActionContext)
   const calendarContext = useContext(CalendarsContext)
   const { labelState } = useContext<LabelContextType>(LabelContext)
+  const { saveEvent, deleteEvent } = useEventService()
 
   const [eventFields, setEventFields] = useState(
     new EventFields(
@@ -89,7 +89,7 @@ function EventPopover(props: IProps) {
   function keyboardEvents(e: KeyboardEvent) {
     if (e.key === 'Enter') {
       if (contentEditableRef.current && document.activeElement !== contentEditableRef.current) {
-        props.onSaveEvent(getUpdatedEvent(props.event, eventFields))
+        saveEvent(getUpdatedEvent(props.event, eventFields))
       }
     }
   }
@@ -214,7 +214,7 @@ function EventPopover(props: IProps) {
 
               <button
                 className="button is-small is-light ml-2"
-                onClick={() => props.onDeleteEvent(props.event.id)}
+                onClick={() => deleteEvent(props.event.id)}
               >
                 <FiTrash className="mr-1" />
                 Delete{' '}
@@ -395,7 +395,7 @@ function EventPopover(props: IProps) {
             <div className="is-flex">
               <button
                 className="button is-small is-primary"
-                onClick={() => props.onSaveEvent(getUpdatedEvent(props.event, eventFields))}
+                onClick={() => saveEvent(getUpdatedEvent(props.event, eventFields))}
               >
                 Save
               </button>
@@ -403,7 +403,7 @@ function EventPopover(props: IProps) {
               {isExistingEvent ? (
                 <button
                   className="button is-small is-light ml-2"
-                  onClick={() => props.onDeleteEvent(props.event.id)}
+                  onClick={() => deleteEvent(props.event.id)}
                 >
                   <FiTrash className="mr-1" />
                   Delete{' '}
@@ -439,4 +439,4 @@ function EventPopover(props: IProps) {
   }
 }
 
-export default withEventEditor(EventPopover)
+export default EventPopover
