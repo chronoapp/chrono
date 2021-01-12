@@ -156,9 +156,14 @@ class DayColumn extends React.Component<IProps, IState> {
     return styledEvents.map(({ event, style }, idx) => {
       const label = timeRangeFormat(event.start, event.end)
       const isInteracting = dnd && dnd.interacting && dnd.event.id === event.id
-      const isEditing = editingEvent?.id === event.id && editingEvent?.editMode !== 'FULL_EDIT'
+      const isTailSegment = this.isTailEndofMultiDayEvent(event)
+      const isSegmentSelected =
+        (editingEvent?.selectTailSegment && isTailSegment) ||
+        (!editingEvent?.selectTailSegment && !isTailSegment)
+      const isEditing =
+        editingEvent?.id === event.id && editingEvent?.editMode !== 'FULL_EDIT' && isSegmentSelected
 
-      if (isEditing && !isInteracting && !this.isTailEndofMultiDayEvent(event)) {
+      if (isEditing && !isInteracting) {
         return (
           <Popover
             key={`evt_${idx}`}
@@ -174,6 +179,7 @@ class DayColumn extends React.Component<IProps, IState> {
               label={label}
               style={style}
               isPreview={false}
+              isTailSegment={isTailSegment}
               getContainerRef={this.getContainerRef}
             />
           </Popover>
@@ -187,6 +193,7 @@ class DayColumn extends React.Component<IProps, IState> {
             label={label}
             style={style}
             isPreview={false}
+            isTailSegment={isTailSegment}
             getContainerRef={this.getContainerRef}
           />
         )

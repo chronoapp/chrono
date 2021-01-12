@@ -27,7 +27,7 @@ function EventItem(props: { event: Event; isPreview: boolean }) {
 
   function handleClickEvent(e) {
     if (props.event.id !== eventActionContext.eventState.editingEvent?.id) {
-      eventActionContext.eventDispatch({ type: 'INIT_EDIT_EVENT', payload: event })
+      eventActionContext.eventDispatch({ type: 'INIT_EDIT_EVENT', payload: { event: event } })
     }
   }
 

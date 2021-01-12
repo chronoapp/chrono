@@ -14,6 +14,7 @@ interface IProps {
   label: string
   isPreview: boolean
   now: Date
+  isTailSegment?: boolean
   innerRef?: React.Ref<HTMLDivElement>
   getContainerRef?: () => React.RefObject<HTMLDivElement>
 }
@@ -49,8 +50,15 @@ function TimeGridEvent(props: IProps) {
   }
 
   function handleClickEvent(e) {
-    if (props.event.id !== eventActionContext.eventState.editingEvent?.id) {
-      eventActionContext?.eventDispatch({ type: 'INIT_EDIT_EVENT', payload: props.event })
+    const curEventNotSelected = props.event.id !== eventActionContext.eventState.editingEvent?.id
+    const changedSelection =
+      eventActionContext.eventState.editingEvent?.selectTailSegment !== props.isTailSegment
+
+    if (curEventNotSelected || changedSelection) {
+      eventActionContext?.eventDispatch({
+        type: 'INIT_EDIT_EVENT',
+        payload: { event: props.event, selectTailSegment: props.isTailSegment },
+      })
     }
   }
 

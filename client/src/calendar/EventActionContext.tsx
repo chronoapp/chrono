@@ -41,13 +41,18 @@ export const EventActionContext = createContext<EventActionContextType>(undefine
 export interface EventState {
   loading: boolean
   eventsById: Record<number, Event>
-  editingEvent: { id: number; moreOptions: boolean; editMode: EditMode; event: Event } | null
+  editingEvent: {
+    id: number
+    editMode: EditMode
+    selectTailSegment: boolean
+    event: Event
+  } | null
 }
 
 type ActionType =
   | { type: 'INIT'; payload: Event[] }
   | { type: 'INIT_EDIT_NEW_EVENT'; payload: Event }
-  | { type: 'INIT_EDIT_EVENT'; payload: Event }
+  | { type: 'INIT_EDIT_EVENT'; payload: { event: Event; selectTailSegment?: boolean } }
   | { type: 'INIT_NEW_EVENT_AT_DATE'; payload: { date: Date; allDay: boolean } }
   | { type: 'CREATE_EVENT'; payload: Event }
   | { type: 'DELETE_EVENT'; payload: { eventId: number } }
@@ -74,23 +79,24 @@ function eventReducer(state: EventState, action: ActionType) {
         eventsById: { ...eventsById, [action.payload.id]: action.payload },
         editingEvent: {
           id: action.payload.id,
-          moreOptions: false,
           editMode: 'EDIT' as EditMode,
           event: action.payload,
+          selectTailSegment: false,
         },
       }
 
     case 'INIT_EDIT_EVENT':
+      const { selectTailSegment } = action.payload
       return {
         ...state,
         eventsById: {
           ...update(eventsById, { $unset: [-1] }),
         },
         editingEvent: {
-          id: action.payload.id,
-          moreOptions: false,
+          id: action.payload.event.id,
           editMode: 'READ' as EditMode,
-          event: action.payload,
+          event: action.payload.event,
+          selectTailSegment: !!selectTailSegment,
         },
       }
 
@@ -104,7 +110,12 @@ function eventReducer(state: EventState, action: ActionType) {
       return {
         ...state,
         eventsById: { ...eventsById, [event.id]: event },
-        editingEvent: { id: event.id, moreOptions: false, editMode: 'EDIT' as EditMode, event },
+        editingEvent: {
+          id: event.id,
+          editMode: 'EDIT' as EditMode,
+          event,
+          selectTailSegment: false,
+        },
       }
 
     /**
