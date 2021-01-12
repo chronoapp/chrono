@@ -12,6 +12,7 @@ import { GlobalEvent } from '../util/global'
 import MiniCalendar from '../calendar/MiniCalendar'
 import LabelPanel from './LabelPanel'
 import CalendarsPanel from './CalendarsPanel'
+import Plugins from './Plugins'
 import { AlertsContext } from '../components/AlertsContext'
 import { EventActionContext } from '../calendar/EventActionContext'
 
@@ -110,16 +111,6 @@ function Layout(props: Props) {
               Events
             </a>
           </Link>
-          <Link href="/trends">
-            <a
-              className={clsx({
-                'navbar-item': true,
-                'is-active': router.pathname == '/trends',
-              })}
-            >
-              Trends
-            </a>
-          </Link>
         </div>
 
         <div className="navbar-end">
@@ -178,6 +169,7 @@ function Layout(props: Props) {
           </div>
         )}
         {props.children}
+        <Plugins />
       </div>
 
       <footer></footer>
