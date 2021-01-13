@@ -12,7 +12,12 @@ from app.core.logger import logger
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
 
-from app.api.events.event_utils import EventBaseVM, EventInDBVM, createOrUpdateEvent
+from app.api.events.event_utils import (
+    EventBaseVM,
+    EventInDBVM,
+    createOrUpdateEvent,
+    getAllExpandedRecurringEvents,
+)
 from app.api.endpoints.labels import LabelInDbVM, Label, combineLabels
 from app.calendar.google import (
     insertGoogleEvent,
@@ -45,12 +50,15 @@ async def getEvents(
     end_date: Optional[str] = None,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
-) -> List[Event]:
-
-    startFilter = (
+) -> List[EventInDBVM]:
+    """
+    TODO: Validate fields: date
+    TODO: Filter queries for recurring events
+    """
+    startDate = (
         datetime.fromisoformat(start_date) if start_date else datetime.now() - timedelta(days=365)
     )
-    endFilter = datetime.fromisoformat(end_date) if end_date else datetime.now()
+    endDate = datetime.fromisoformat(end_date) if end_date else datetime.now()
 
     logger.info(f'getEvents:{user.id}')
     logger.info(f'query:{query}')
@@ -65,13 +73,15 @@ async def getEvents(
         tsQuery = ' & '.join(query.split())
         return Event.search(session, user.id, tsQuery, limit=limit).all()
     else:
-        return (
+        expandedRecurringEvents = getAllExpandedRecurringEvents(user, startDate, endDate)
+        singleEvents = (
             user.getEvents()
-            .filter(and_(Event.start >= startFilter, Event.start <= endFilter))
+            .filter(and_(Event.start >= startDate, Event.start <= endDate))
             .order_by(desc(Event.start))
             .limit(limit)
             .all()
         )
+        return list(expandedRecurringEvents) + [EventInDBVM.from_orm(e) for e in singleEvents]
 
 
 @router.post('/events/', response_model=EventInDBVM)

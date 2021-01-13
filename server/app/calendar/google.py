@@ -16,9 +16,8 @@ from app.core.logger import logger
 from app.core import config
 from app.api.events.event_utils import (
     EventBaseVM,
-    createRecurringEvents,
     createOrUpdateEvent,
-    deleteRecurringEvent,
+    getRecurringEventId,
 )
 
 """
@@ -54,6 +53,7 @@ OLD_COLORS = [
     '#cd74e6',
     '#a47ae2',
 ]
+
 NEW_COLORS = [
     '#795548',
     '#e67c73',
@@ -84,6 +84,7 @@ NEW_COLORS = [
 
 class GoogleEventVM(EventBaseVM):
     g_id: str
+    recurring_event_g_id: Optional[str]
 
 
 def convertToLocalTime(dateTime: datetime, timeZone: Optional[str]):
@@ -213,7 +214,20 @@ def syncCalendar(calendar: Calendar, session: Session, fullSync: bool = False) -
     session.commit()
 
 
-def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
+def getEventWithCache(
+    user: User, addedEventsCache: Dict[str, Event], googleEventId: str
+) -> Optional[Event]:
+    """Since we aren't committing on every event insert, store
+    added / updated events in memory.
+    """
+
+    if googleEventId in addedEventsCache:
+        return addedEventsCache[googleEventId]
+    else:
+        return user.events.filter(Event.g_id == googleEventId).one_or_none()
+
+
+def syncEventsToDb(calendar: Calendar, eventItems: List[Dict[str, str]], session: Session) -> None:
     """Sync items from google to the calendar.
 
     Events could have been moved from one calendar to another.
@@ -226,45 +240,19 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
     """
 
     # Keep track of added events this session while the models have not been added to the db yet.
-    addedEvents: Dict[str, Event] = {}
+    addedEventsCache: Dict[str, Event] = {}
 
     for eventItem in eventItems:
-        eventId = eventItem['id']
         user = calendar.user
-
-        event: Optional[Event]
-        if eventId in addedEvents:
-            event = addedEvents[eventId]
-        else:
-            event = user.events.filter(Event.g_id == eventId).first()
+        googleEventId = eventItem['id']
+        existingEvent = getEventWithCache(user, addedEventsCache, googleEventId)
 
         if eventItem['status'] == 'cancelled':
-            print(f'DELETE: {eventId}')
-
-            if event and calendar.id == event.calendar_id:
-                event.status = 'deleted'
-
-            if not event and eventItem.get('recurringEventId'):
-                event = Event(
-                    eventId,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    calendar.id,
-                    None,
-                    None,
-                )
-                calendar.user.events.append(event)
-
+            syncDeletedEvent(calendar, existingEvent, eventItem, addedEventsCache, session)
         else:
-            print(f'UPDATE: {eventId}')
-            eventVM = googleEventToEventVM(calendar.id, eventItem)
-            event, _ = createOrUpdateEvent(event, eventVM)
-            calendar.user.events.append(event)
-            event.g_id = eventVM.g_id
+            event = syncCreatedOrUpdatedGoogleEvent(
+                calendar, existingEvent, eventItem, addedEventsCache, session
+            )
 
             # Auto Labelling
             if event.title:
@@ -273,9 +261,139 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
                     if rule.label not in event.labels:
                         event.labels.append(rule.label)
 
-            addedEvents[event.g_id] = event
+            addedEventsCache[event.g_id] = event
 
     session.commit()
+
+
+def syncDeletedEvent(
+    calendar: Calendar,
+    existingEvent: Optional[Event],
+    eventItem,
+    addedEventsCache: Dict[str, Event],
+    session: Session,
+):
+    """Sync deleted events to the DB.
+    If the base event has not been created at this point, add a temporary event to the DB
+    so that we can add a foreign key reference.
+    """
+    user = calendar.user
+
+    if existingEvent and calendar.id == existingEvent.calendar_id:
+        existingEvent.status = 'deleted'
+
+    googleRecurringEventId = eventItem.get('recurringEventId')
+    if not existingEvent and googleRecurringEventId:
+        baseRecurringEvent = getOrCreateBaseRecurringEvent(
+            calendar, addedEventsCache, googleRecurringEventId, session
+        )
+
+        googleEventId = eventItem.get('id')
+        event = Event(
+            googleEventId,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            calendar.id,
+            None,
+            None,
+            status=convertStatus(eventItem['status']),
+        )
+
+        startDateTime = eventItem['originalStartTime']
+        if startDateTime.get('dateTime'):
+            recurringEventId = getRecurringEventId(
+                baseRecurringEvent.id, datetime.fromisoformat(startDateTime.get('dateTime')), False
+            )
+        else:
+            recurringEventId = getRecurringEventId(
+                baseRecurringEvent.id, datetime.fromisoformat(startDateTime.get('date')), True
+            )
+
+        event.id = recurringEventId
+        event.recurring_event = baseRecurringEvent
+
+        user.events.append(event)
+        addedEventsCache[event.g_id] = event
+
+
+def getOrCreateBaseRecurringEvent(
+    calendar: Calendar,
+    addedEventsCache: Dict[str, Event],
+    googleRecurringEventId: str,
+    session: Session,
+) -> Event:
+    user = calendar.user
+    baseRecurringEvent = getEventWithCache(user, addedEventsCache, googleRecurringEventId)
+
+    if not baseRecurringEvent:
+        baseRecurringEvent = Event(
+            googleRecurringEventId,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            calendar.id,
+            None,
+            None,
+            status='active',
+        )
+        user.events.append(baseRecurringEvent)
+        addedEventsCache[baseRecurringEvent.g_id] = baseRecurringEvent
+
+    if not baseRecurringEvent.id:
+        print(f'Add ID for Base: {baseRecurringEvent}')
+        session.commit()
+
+    return baseRecurringEvent
+
+
+def syncCreatedOrUpdatedGoogleEvent(
+    calendar: Calendar,
+    existingEvent: Optional[Event],
+    eventItem,
+    addedEventsCache: Dict[str, Event],
+    session: Session,
+) -> Event:
+    """Syncs new event, or update existing from Google.
+    For recurring events, translate the google reference to the internal event reference.
+    """
+    eventVM = googleEventToEventVM(calendar.id, eventItem)
+
+    baseRecurringEvent = None
+    if eventVM.recurring_event_g_id:
+        baseRecurringEvent = getOrCreateBaseRecurringEvent(
+            calendar, addedEventsCache, eventVM.recurring_event_g_id, session
+        )
+        eventVM.recurring_event_id = baseRecurringEvent.id
+
+    event, _ = createOrUpdateEvent(existingEvent, eventVM)
+    calendar.user.events.append(event)
+    event.g_id = eventVM.g_id
+
+    if baseRecurringEvent:
+        recurringEventId = None
+        if eventVM.original_start_datetime:
+            recurringEventId = getRecurringEventId(
+                baseRecurringEvent.id,
+                eventVM.original_start_datetime,
+                False,
+            )
+        elif eventVM.original_start_day:
+            recurringEventId = getRecurringEventId(
+                baseRecurringEvent.id, eventVM.original_start_day, True
+            )
+        else:
+            raise Exception(f'No start time for event: {eventVM.g_id}')
+
+        event.id = recurringEventId
+
+    return event
 
 
 def convertStatus(status: str):
@@ -305,7 +423,16 @@ def googleEventToEventVM(calendarId: str, eventItem) -> GoogleEventVM:
     timeZone = eventItem['start'].get('timeZone')
 
     originalStartTime = eventItem.get('originalStartTime')
+    originalStartDateTime = None
+    originalStartDay = None
+    if originalStartTime:
+        if originalStartTime.get('dateTime'):
+            originalStartDateTime = datetime.fromisoformat(originalStartTime.get('dateTime'))
+        if originalStartTime.get('date'):
+            originalStartDay = datetime.fromisoformat(originalStartTime.get('date'))
+
     recurrence = eventItem.get('recurrence')
+    recurringEventGId = eventItem.get('recurringEventId')
     status = convertStatus(eventItem['status'])
 
     eventVM = GoogleEventVM(
@@ -320,53 +447,11 @@ def googleEventToEventVM(calendarId: str, eventItem) -> GoogleEventVM:
         calendar_id=calendarId,
         timezone=timeZone,
         recurrences=recurrence,
+        recurring_event_g_id=recurringEventGId,
+        original_start_datetime=originalStartDateTime,
+        original_start_day=originalStartDay,
     )
     return eventVM
-
-
-def syncDeletedEvent(calendar: Calendar, event: Event, session: Session):
-    if event.is_parent_recurring_event:
-        deleteRecurringEvent(calendar.user, event, 'ALL', session)
-    else:
-        session.delete(event)
-
-
-def syncCreatedOrUpdatedGoogleEvent(
-    calendar: Calendar, event: Optional[Event], eventItem, session: Session
-) -> Tuple[Event, List[Event]]:
-    """Syncs new event, or update existing from Google.
-
-    For recurring events: create instances in DB based on the RRULE
-    We'll also need to create IDs matching google's.
-    """
-    eventVM = googleEventToEventVM(calendar.id, eventItem)
-    timeZone = eventVM.timezone if eventVM.timezone else calendar.timezone
-
-    if eventVM.recurrences:
-        if event:
-            deleteRecurringEvent(calendar.user, event, 'ALL', session)
-            session.commit()
-
-        rules = eventVM.getRRules(timeZone)
-        logger.info(f'Expand Recurring Event: {eventVM.g_id}')
-
-        baseEvent, recurringEvents = createRecurringEvents(calendar.user, rules, eventVM, timeZone)
-        baseEvent.g_id = eventVM.g_id
-
-        for e in recurringEvents:
-            dtStr = e.start.astimezone(ZoneInfo('UTC')).strftime(
-                "%Y%m%d" if e.all_day else "%Y%m%dT%H%M%SZ"
-            )
-            e.g_id = f'{baseEvent.g_id}_{dtStr}'
-
-        return baseEvent, recurringEvents
-
-    else:
-        resultEvent, _ = createOrUpdateEvent(event, eventVM)
-        calendar.user.events.append(resultEvent)
-        resultEvent.g_id = eventVM.g_id
-
-        return resultEvent, []
 
 
 """Handle writes from Timecouncil => Google

@@ -112,7 +112,9 @@ class Event(Base):
         calendar_id: str,
         timezone: Optional[str],
         recurrences: Optional[List[str]],
+        status: EventStatus = 'active',
         copyOriginalStart=False,
+        recurringEventId: Optional[str] = None,
     ):
         self.g_id = g_id
         self.title = title
@@ -124,6 +126,8 @@ class Event(Base):
         self.calendar_id = calendar_id
         self.time_zone = timezone
         self.recurrences = recurrences
+        self.recurring_event_id = recurringEventId
+        self.status = status
 
         if copyOriginalStart:
             self.original_start = start

@@ -3,7 +3,7 @@ from itertools import islice
 
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
-from typing import List, Optional, Literal, Tuple, Generator
+from typing import List, Dict, Optional, Literal, Tuple, Generator
 from dateutil.rrule import rrule, rruleset, rrulestr
 from datetime import timedelta
 from backports.zoneinfo import ZoneInfo
@@ -24,7 +24,7 @@ class EventBaseVM(BaseModel):
 
     title: Optional[str]
     description: Optional[str] = None
-    status: Optional[EventStatus] = 'active'
+    status: EventStatus = 'active'
     start: datetime
     end: datetime
     start_day: Optional[str]
@@ -38,11 +38,16 @@ class EventBaseVM(BaseModel):
     recurrences: Optional[List[str]]
     recurring_event_id: Optional[str]
 
-    def isAllDay(self) -> Optional[bool]:
+    original_start_datetime: Optional[datetime]
+    original_start_day: Optional[datetime]
+
+    def isAllDay(self) -> bool:
         return self.start_day is not None and self.end_day is not None
 
     def getRRules(self, timeZone: str) -> List[rrule]:
-        """Gets the rrule objects from recurrence string array."""
+        """Gets the rrule objects from recurrence string array
+        Converts to the local datetime in the timezone.
+        """
         if not self.recurrences:
             return []
 
@@ -229,11 +234,16 @@ def deleteRecurringEvent(user: User, event: Event, updateOption: UpdateOption, s
 
     elif updateOption == 'ALL':
         if event.is_parent_recurring_event:
-            user.events.filter(Event.recurring_event_id == event.id).delete()
+            for e in user.events.filter(Event.recurring_event_id == event.id):
+                session.delete(e)
             session.delete(event)
+
         elif event.recurring_event_id:
-            user.events.filter(Event.recurring_event_id == event.recurring_event_id).delete()
-            user.events.filter(Event.id == event.recurring_event_id).delete()
+            for e in user.events.filter(Event.recurring_event_id == event.recurring_event_id):
+                session.delete(e)
+            baseEvent = user.events.filter(Event.id == event.recurring_event_id).first()
+            if baseEvent:
+                session.delete(baseEvent)
 
     elif updateOption == 'FOLLOWING':
         # TODO: Could update the recurrence instead.
@@ -252,31 +262,95 @@ def deleteRecurringEvent(user: User, event: Event, updateOption: UpdateOption, s
 
 
 def createOrUpdateEvent(
-    eventDb: Optional[Event], event: EventBaseVM
+    eventDb: Optional[Event], eventVM: EventBaseVM
 ) -> Tuple[Event, Optional[str]]:
     prevCalendarId = None
+
     if not eventDb:
         eventDb = Event(
             None,
-            event.title,
-            event.description,
-            event.start,
-            event.end,
-            event.start_day,
-            event.end_day,
-            event.calendar_id,
-            event.timezone,
+            eventVM.title,
+            eventVM.description,
+            eventVM.start,
+            eventVM.end,
+            eventVM.start_day,
+            eventVM.end_day,
+            eventVM.calendar_id,
+            eventVM.timezone,
+            eventVM.recurrences,
+            status=eventVM.status,
+            recurringEventId=eventVM.recurring_event_id,
         )
     else:
-        if event.title:
-            eventDb.title = event.title
-            eventDb.description = event.description
-            eventDb.start = event.start
-            eventDb.end = event.end
-            eventDb.start_day = event.start_day
-            eventDb.end_day = event.end_day
+        if eventVM.title:
+            eventDb.title = eventVM.title
+            eventDb.description = eventVM.description
+            eventDb.start = eventVM.start
+            eventDb.end = eventVM.end
+            eventDb.start_day = eventVM.start_day
+            eventDb.end_day = eventVM.end_day
             prevCalendarId = eventDb.calendar_id
-            eventDb.calendar_id = event.calendar_id
-            # TODO: Update other fields
+            eventDb.calendar_id = eventVM.calendar_id
+            eventDb.recurring_event_id = eventVM.recurring_event_id
+            eventDb.recurrences = eventVM.recurrences
 
     return eventDb, prevCalendarId
+
+
+def getRecurringEventId(baseEventId: str, startDate: datetime, isAllDay: bool) -> str:
+    """Returns a composite ID for the recurring event, based on the original
+    event ID and the start date.
+    """
+    dtStr = startDate.astimezone(ZoneInfo('UTC')).strftime(
+        "%Y%m%d" if isAllDay else "%Y%m%dT%H%M%SZ"
+    )
+    return f'{baseEventId}_{dtStr}'
+
+
+def getAllExpandedRecurringEvents(
+    user: User, startDate: datetime, endDate: datetime
+) -> Generator[EventInDBVM, None, None]:
+    """Expands the rule in the event to get all events between the start and end."""
+    baseRecurringEvents = user.getRecurringEvents()
+    startDate = startDate.replace(tzinfo=None)
+    endDate = endDate.replace(tzinfo=None)
+
+    for baseRecurringEvent in baseRecurringEvents:
+        eventOverridesMap: Dict[str, Event] = {e.id: e for e in baseRecurringEvent.recurring_events}
+
+        duration = baseRecurringEvent.end - baseRecurringEvent.start
+        timezone = baseRecurringEvent.getTimezone()
+        isAllDay = baseRecurringEvent.all_day
+        baseEventVM = EventInDBVM.from_orm(baseRecurringEvent)
+
+        ruleSet = rruleset()
+        rrules = baseEventVM.getRRules(timezone)
+        for r in rrules:
+            ruleSet.rrule(r)
+
+        # Expand events, hack for inclusive
+        for date in islice(
+            ruleSet.between(startDate - timedelta(seconds=1), endDate + timedelta(seconds=1)),
+            MAX_RECURRING_EVENT_COUNT,
+        ):
+            start = date.replace(tzinfo=ZoneInfo(timezone))
+            end = start + duration
+
+            eventId = getRecurringEventId(baseEventVM.id, start, isAllDay)
+
+            if eventId in eventOverridesMap:
+                eventOverride = eventOverridesMap[eventId]
+                if eventOverride.status != 'deleted':
+                    yield EventInDBVM.from_orm(eventOverride)
+            else:
+                yield baseEventVM.copy(
+                    update={
+                        'id': eventId,
+                        'start': start,
+                        'end': end,
+                        'start_day': start.strftime('%Y-%m-%d') if isAllDay else None,
+                        'end_day': end.strftime('%Y-%m-%d') if isAllDay else None,
+                        'recurring_event_id': baseRecurringEvent.id,
+                        'recurrences': None,
+                    }
+                )
