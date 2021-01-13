@@ -22,6 +22,7 @@ class EventBaseVM(BaseModel):
 
     title: Optional[str]
     description: Optional[str] = None
+    status: str
     start: datetime
     end: datetime
     start_day: Optional[str]
@@ -55,7 +56,7 @@ class EventBaseVM(BaseModel):
 
 
 class EventInDBVM(EventBaseVM):
-    id: int
+    id: str
 
 
 MAX_RECURRING_EVENT_COUNT = 1000

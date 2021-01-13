@@ -29,6 +29,9 @@ class Calendar(Base):
 
     webhook = relationship("Webhook", uselist=False, back_populates="calendar")
 
+    def __repr__(self):
+        return f'<Calendar id={self.id} summary={self.summary}/>'
+
     def __init__(
         self,
         id: str,

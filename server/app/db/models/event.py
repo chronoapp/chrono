@@ -1,12 +1,12 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Literal
+import shortuuid
 
 from sqlalchemy import (
     Column,
     Integer,
     String,
     ForeignKey,
-    BigInteger,
     Table,
     Text,
     DateTime,
@@ -23,14 +23,16 @@ from app.db.session import engine
 event_label_association_table = Table(
     'event_label',
     Base.metadata,
-    Column('event_id', BigInteger, ForeignKey('event.id')),
+    Column('event_id', String, ForeignKey('event.id')),
     Column('label_id', Integer, ForeignKey('label.id')),
 )
+
+EventStatus = Literal['deleted', 'tentative', 'active']
 
 
 class Event(Base):
     __tablename__ = 'event'
-    id = Column(BigInteger, primary_key=True, nullable=False, index=True)
+    id = Column(String, primary_key=True, default=shortuuid.uuid, nullable=False)
 
     # Google-specific
     g_id = Column(String(255), unique=True)
@@ -48,9 +50,10 @@ class Event(Base):
 
     title = Column(String(255), index=True)
     description = Column(Text())
+    status = Column(String(20), server_default='active')
 
-    start = Column(DateTime(timezone=True))
-    end = Column(DateTime(timezone=True))
+    start = Column(DateTime(timezone=True), nullable=True)
+    end = Column(DateTime(timezone=True), nullable=True)
 
     # TODO: Validate these fields.
     start_day = Column(String(10), nullable=True)  # YYYY-MM-DD date if full day
@@ -61,7 +64,7 @@ class Event(Base):
 
     # Recurring Events.
     recurrences = Column(ARRAY(String), nullable=True)
-    recurring_event_id = Column(BigInteger, ForeignKey('event.id'), nullable=True)
+    recurring_event_id = Column(String, ForeignKey('event.id'), nullable=True)
     recurring_event = relationship(lambda: Event, remote_side=id, backref='recurring_events')
 
     # Original time (For recurring events).
@@ -70,16 +73,14 @@ class Event(Base):
     original_timezone = Column(String(255))
 
     @classmethod
-    def search(
-        cls, session: Session, userId: str, searchQuery: str, limit: int = 250
-    ) -> List['Event']:
+    def search(cls, session: Session, userId: str, searchQuery: str, limit: int = 250):
         rows = engine.execute(
             text(EVENT_SEARCH_QUERY), query=searchQuery, userId=userId, limit=limit
         )
 
         rowIds = [r[0] for r in rows]
 
-        return session.query(Event).filter(Event.id.in_(rowIds)).order_by(desc(Event.end)).all()
+        return session.query(Event).filter(Event.id.in_(rowIds)).order_by(desc(Event.end))
 
     @property
     def background_color(self):
@@ -110,6 +111,7 @@ class Event(Base):
         end_day: Optional[str],
         calendar_id: str,
         timezone: Optional[str],
+        recurrences: Optional[List[str]],
         copyOriginalStart=False,
     ):
         self.g_id = g_id
@@ -121,6 +123,7 @@ class Event(Base):
         self.end_day = end_day
         self.calendar_id = calendar_id
         self.time_zone = timezone
+        self.recurrences = recurrences
 
         if copyOriginalStart:
             self.original_start = start

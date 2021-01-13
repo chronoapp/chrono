@@ -20,10 +20,12 @@ class User(Base):
     picture_url = Column(String(255))
 
     google_oauth_state = Column(String(255), nullable=True)
-    credentials = relationship('UserCredential',
-                               cascade='save-update, merge, delete, delete-orphan',
-                               uselist=False,
-                               backref='user')
+    credentials = relationship(
+        'UserCredential',
+        cascade='save-update, merge, delete, delete-orphan',
+        uselist=False,
+        backref='user',
+    )
 
     def __init__(self, email: str, name: str, pictureUrl: Optional[str]):
         self.email = email
@@ -35,12 +37,17 @@ class User(Base):
 
     def syncWithGoogle(self) -> bool:
         # TODO: sync on a per-calendar basis.
-        return self.credentials\
-            and self.credentials.provider == ProviderType.Google\
+        return (
+            self.credentials
+            and self.credentials.provider == ProviderType.Google
             and self.credentials.token_data
+        )
 
     def getPrimaryCalendar(self) -> Calendar:
         return self.calendars.filter_by(primary=True).one()
+
+    def getRecurringEvents(self):
+        return self.events.filter(Event.recurrences != None)
 
     def getEvents(self, expandSingleEvents: bool = True):
         if expandSingleEvents:
