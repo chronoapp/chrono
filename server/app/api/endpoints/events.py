@@ -63,7 +63,7 @@ async def getEvents(
         )
     elif query:
         tsQuery = ' & '.join(query.split())
-        return Event.search(session, user.id, tsQuery)
+        return Event.search(session, user.id, tsQuery, limit=limit).all()
     else:
         return (
             user.getEvents()
@@ -90,6 +90,7 @@ async def createEvent(
             event.end_day,
             event.calendar_id,
             None,
+            event.recurrences,
         )
 
         eventDb.labels = getCombinedLabels(user, event.labels)
@@ -114,7 +115,7 @@ async def createEvent(
 
 @router.get('/events/{event_id}', response_model=EventInDBVM)
 async def getEvent(
-    event_id: int, user: User = Depends(get_current_user), session: Session = Depends(get_db)
+    event_id: str, user: User = Depends(get_current_user), session: Session = Depends(get_db)
 ) -> Event:
 
     event = user.events.filter_by(id=event_id).one_or_none()
@@ -127,7 +128,7 @@ async def getEvent(
 @router.put('/events/{event_id}', response_model=EventInDBVM)
 async def updateEvent(
     event: EventBaseVM,
-    event_id: int,
+    event_id: str,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> Event:

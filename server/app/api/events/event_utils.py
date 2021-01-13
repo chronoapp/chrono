@@ -22,7 +22,7 @@ class EventBaseVM(BaseModel):
 
     title: Optional[str]
     description: Optional[str] = None
-    status: str
+    status: Optional[EventStatus] = 'active'
     start: datetime
     end: datetime
     start_day: Optional[str]

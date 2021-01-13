@@ -14,8 +14,13 @@ from app.db.session import scoped_session
 from app.db.models import User, Event, LabelRule, Calendar, Webhook
 from app.core.logger import logger
 from app.core import config
-from app.api.events.event_utils import EventBaseVM, \
-    createRecurringEvents, createOrUpdateEvent, deleteRecurringEvent
+from app.api.events.event_utils import (
+    EventBaseVM,
+    createRecurringEvents,
+    createOrUpdateEvent,
+    deleteRecurringEvent,
+)
+
 """
 Adapter to sync to and from google calendar.
 Perhaps separate a common interface, ie.
@@ -24,14 +29,56 @@ Perhaps separate a common interface, ie.
 """
 
 OLD_COLORS = [
-    '#ac725e', '#d06b64', '#f83a22', '#fa573c', '#ff7537', '#ffad46', '#42d692', '#16a765',
-    '#7bd148', '#b3dc6c', '#fbe983', '#fad165', '#92e1c0', '#9fe1e7', '#9fc6e7', '#4986e7',
-    '#9a9cff', '#b99aff', '#c2c2c2', '#cabdbf', '#cca6ac', '#f691b2', '#cd74e6', '#a47ae2'
+    '#ac725e',
+    '#d06b64',
+    '#f83a22',
+    '#fa573c',
+    '#ff7537',
+    '#ffad46',
+    '#42d692',
+    '#16a765',
+    '#7bd148',
+    '#b3dc6c',
+    '#fbe983',
+    '#fad165',
+    '#92e1c0',
+    '#9fe1e7',
+    '#9fc6e7',
+    '#4986e7',
+    '#9a9cff',
+    '#b99aff',
+    '#c2c2c2',
+    '#cabdbf',
+    '#cca6ac',
+    '#f691b2',
+    '#cd74e6',
+    '#a47ae2',
 ]
 NEW_COLORS = [
-    '#795548', '#e67c73', '#d50000', '#f4511e', '#ef6c00', '#f09300', '#009688', '#0b8043',
-    '#7cb342', '#c0ca33', '#e4c441', '#f6bf26', '#33b679', '#039be5', '#4285f4', '#3f51b5',
-    '#7986cb', '#b39ddb', '#616161', '#a79b8e', '#ad1457', '#d81b60', '#8e24aa', '#9e69af'
+    '#795548',
+    '#e67c73',
+    '#d50000',
+    '#f4511e',
+    '#ef6c00',
+    '#f09300',
+    '#009688',
+    '#0b8043',
+    '#7cb342',
+    '#c0ca33',
+    '#e4c441',
+    '#f6bf26',
+    '#33b679',
+    '#039be5',
+    '#4285f4',
+    '#3f51b5',
+    '#7986cb',
+    '#b39ddb',
+    '#616161',
+    '#a79b8e',
+    '#ad1457',
+    '#d81b60',
+    '#8e24aa',
+    '#9e69af',
 ]
 
 
@@ -63,41 +110,52 @@ def getService(user: User):
     return service
 
 
+def syncGoogleCalendars(user: User):
+    service = getService(user)
+    calendarList = service.calendarList().list().execute()
+
+    for calendar in calendarList.get('items'):
+        calId = calendar.get('id')
+        calSummary = calendar.get('summary')
+
+        print(f'Update Calendar: {calId}: {calSummary}')
+        backgroundColor = mapGoogleColor(calendar.get('backgroundColor'))
+
+        userCalendar = user.calendars.filter_by(id=calId).first()
+        if userCalendar:
+            userCalendar.timezone = calendar.get('timeZone')
+            userCalendar.summary = calSummary
+            userCalendar.description = calendar.get('description')
+            userCalendar.background_color = backgroundColor
+            userCalendar.foreground_color = calendar.get('foregroundColor')
+            userCalendar.selected = calendar.get('selected')
+            userCalendar.access_role = calendar.get('accessRole')
+            userCalendar.primary = calendar.get('primary')
+            userCalendar.deleted = calendar.get('deleted')
+        else:
+            userCalendar = Calendar(
+                calId,
+                calendar.get('timeZone'),
+                calSummary,
+                calendar.get('description'),
+                backgroundColor,
+                calendar.get('foregroundColor'),
+                calendar.get('selected'),
+                calendar.get('accessRole'),
+                calendar.get('primary'),
+                calendar.get('deleted'),
+            )
+            user.calendars.append(userCalendar)
+
+
 def syncAllEvents(userId: int, fullSync: bool = False):
-    """Syncs events from google calendar.
-    """
+    """Syncs events from google calendar."""
     with scoped_session() as session:
         user = session.query(User).filter(User.id == userId).first()
-        service = getService(user)
-        calendarList = service.calendarList().list().execute()
+        syncGoogleCalendars(user)
 
-        for calendar in calendarList.get('items'):
-            calId = calendar.get('id')
-            calSummary = calendar.get('summary')
-
-            print(f'Update Calendar: {calId}: {calSummary}')
-            backgroundColor = mapGoogleColor(calendar.get('backgroundColor'))
-
-            userCalendar = user.calendars.filter_by(id=calId).first()
-            if userCalendar:
-                userCalendar.timezone = calendar.get('timeZone')
-                userCalendar.summary = calSummary
-                userCalendar.description = calendar.get('description')
-                userCalendar.background_color = backgroundColor
-                userCalendar.foreground_color = calendar.get('foregroundColor')
-                userCalendar.selected = calendar.get('selected')
-                userCalendar.access_role = calendar.get('accessRole')
-                userCalendar.primary = calendar.get('primary')
-                userCalendar.deleted = calendar.get('deleted')
-            else:
-                userCalendar = Calendar(calId, calendar.get('timeZone'), calSummary,
-                                        calendar.get('description'), backgroundColor,
-                                        calendar.get('foregroundColor'), calendar.get('selected'),
-                                        calendar.get('accessRole'), calendar.get('primary'),
-                                        calendar.get('deleted'))
-                user.calendars.append(userCalendar)
-
-            syncCalendar(userCalendar, session, fullSync=fullSync)
+        for calendar in user.calendars:
+            syncCalendar(calendar, session, fullSync=fullSync)
 
 
 def syncCalendar(calendar: Calendar, session: Session, fullSync: bool = False) -> None:
@@ -110,12 +168,18 @@ def syncCalendar(calendar: Calendar, session: Session, fullSync: bool = False) -
     while True:
         if calendar.sync_token and not fullSync:
             try:
-                eventsResult = service.events().list(calendarId=calendar.id,
-                                                     timeMax=None if calendar.sync_token else end,
-                                                     maxResults=250,
-                                                     singleEvents=False,
-                                                     syncToken=calendar.sync_token,
-                                                     pageToken=nextPageToken).execute()
+                eventsResult = (
+                    service.events()
+                    .list(
+                        calendarId=calendar.id,
+                        timeMax=None if calendar.sync_token else end,
+                        maxResults=250,
+                        singleEvents=False,
+                        syncToken=calendar.sync_token,
+                        pageToken=nextPageToken,
+                    )
+                    .execute()
+                )
             except HttpError as e:
                 if e.resp.status == 410:
                     # Indicates the sync token is invalid => do a full sync.
@@ -124,11 +188,17 @@ def syncCalendar(calendar: Calendar, session: Session, fullSync: bool = False) -
                 else:
                     raise
         else:
-            eventsResult = service.events().list(calendarId=calendar.id,
-                                                 timeMax=end,
-                                                 maxResults=250,
-                                                 singleEvents=False,
-                                                 pageToken=nextPageToken).execute()
+            eventsResult = (
+                service.events()
+                .list(
+                    calendarId=calendar.id,
+                    timeMax=end,
+                    maxResults=250,
+                    singleEvents=False,
+                    pageToken=nextPageToken,
+                )
+                .execute()
+            )
 
         events = eventsResult.get('items', [])
         nextPageToken = eventsResult.get('nextPageToken')
@@ -149,14 +219,14 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
     Events could have been moved from one calendar to another.
     E.g. Move event E from calendar C1 to C2, but either could be synced first.
         If C1 first: Delete it, then added in sync(C2)
-        If C2 first: Update the calendar ID, then sync(C1) skips the delete.
+        If C2 first: Update the calendar ID, then sync(C1) skips the delete (calendar id does not match).
+
+    TODO: There's no guarantee that the recurring event is expanded first.
+    We know which recurring event it is with the composite id of {id}_{start_date}.
     """
-    newEvents = 0
-    updatedEvents = 0
-    deletedEvents = 0
 
     # Keep track of added events this session while the models have not been added to the db yet.
-    addedEvents: Dict[int, Event] = {}
+    addedEvents: Dict[str, Event] = {}
 
     for eventItem in eventItems:
         eventId = eventItem['id']
@@ -169,45 +239,57 @@ def syncEventsToDb(calendar: Calendar, eventItems, session: Session) -> None:
             event = user.events.filter(Event.g_id == eventId).first()
 
         if eventItem['status'] == 'cancelled':
-            # Only delete event if it's from this calendar.
+            print(f'DELETE: {eventId}')
+
             if event and calendar.id == event.calendar_id:
-                addedEvents[eventId] = event
-                deletedEvents += 1
-                syncDeletedEvent(calendar, event, session)
-            continue
+                event.status = 'deleted'
 
-        isNewEvent = not event
-        event, recurringEvents = syncCreatedOrUpdatedGoogleEvent(calendar, event, eventItem,
-                                                                 session)
+            if not event and eventItem.get('recurringEventId'):
+                event = Event(
+                    eventId,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    calendar.id,
+                    None,
+                    None,
+                )
+                calendar.user.events.append(event)
 
-        # Commit new recurring events.
-        if len(recurringEvents) > 0:
-            session.commit()
-
-        numEvents = len(recurringEvents) + 1
-        if isNewEvent:
-            newEvents += numEvents
         else:
-            updatedEvents += numEvents
+            print(f'UPDATE: {eventId}')
+            eventVM = googleEventToEventVM(calendar.id, eventItem)
+            event, _ = createOrUpdateEvent(event, eventVM)
+            calendar.user.events.append(event)
+            event.g_id = eventVM.g_id
 
-        # Auto Labelling
-        if event.title:
-            labelRules = user.label_rules.filter(LabelRule.text.ilike(event.title))
-            for rule in labelRules:
-                if rule.label not in event.labels:
-                    event.labels.append(rule.label)
+            # Auto Labelling
+            if event.title:
+                labelRules = user.label_rules.filter(LabelRule.text.ilike(event.title))
+                for rule in labelRules:
+                    if rule.label not in event.labels:
+                        event.labels.append(rule.label)
 
-        addedEvents[event.g_id] = event
+            addedEvents[event.g_id] = event
 
     session.commit()
-    logger.info(f'Updated {updatedEvents} events.')
-    logger.info(f'Deleted {deletedEvents} events.')
-    logger.info(f'Added {newEvents} events.')
+
+
+def convertStatus(status: str):
+    if status == 'tentative':
+        return 'tentative'
+    elif status == 'cancelled':
+        return 'deleted'
+    else:
+        return 'active'
 
 
 def googleEventToEventVM(calendarId: str, eventItem) -> GoogleEventVM:
-    """Converts the google event to our ViewModel.
-    """
+    """Converts the google event to our ViewModel."""
+
     eventId = eventItem.get('id')
 
     # Fix: There's no timezones for all day events..
@@ -224,17 +306,21 @@ def googleEventToEventVM(calendarId: str, eventItem) -> GoogleEventVM:
 
     originalStartTime = eventItem.get('originalStartTime')
     recurrence = eventItem.get('recurrence')
+    status = convertStatus(eventItem['status'])
 
-    eventVM = GoogleEventVM(g_id=eventId,
-                            title=eventSummary,
-                            description=eventDescription,
-                            start=eventStart,
-                            end=eventEnd,
-                            start_day=eventFullDayStart,
-                            end_day=eventFullDayEnd,
-                            calendar_id=calendarId,
-                            timezone=timeZone,
-                            recurrences=recurrence)
+    eventVM = GoogleEventVM(
+        g_id=eventId,
+        title=eventSummary,
+        status=status,
+        description=eventDescription,
+        start=eventStart,
+        end=eventEnd,
+        start_day=eventFullDayStart,
+        end_day=eventFullDayEnd,
+        calendar_id=calendarId,
+        timezone=timeZone,
+        recurrences=recurrence,
+    )
     return eventVM
 
 
@@ -245,8 +331,9 @@ def syncDeletedEvent(calendar: Calendar, event: Event, session: Session):
         session.delete(event)
 
 
-def syncCreatedOrUpdatedGoogleEvent(calendar: Calendar, event: Optional[Event], eventItem,
-                                    session: Session) -> Tuple[Event, List[Event]]:
+def syncCreatedOrUpdatedGoogleEvent(
+    calendar: Calendar, event: Optional[Event], eventItem, session: Session
+) -> Tuple[Event, List[Event]]:
     """Syncs new event, or update existing from Google.
 
     For recurring events: create instances in DB based on the RRULE
@@ -267,8 +354,9 @@ def syncCreatedOrUpdatedGoogleEvent(calendar: Calendar, event: Optional[Event], 
         baseEvent.g_id = eventVM.g_id
 
         for e in recurringEvents:
-            dtStr = e.start.astimezone(
-                ZoneInfo('UTC')).strftime("%Y%m%d" if e.all_day else "%Y%m%dT%H%M%SZ")
+            dtStr = e.start.astimezone(ZoneInfo('UTC')).strftime(
+                "%Y%m%d" if e.all_day else "%Y%m%dT%H%M%SZ"
+            )
             e.g_id = f'{baseEvent.g_id}_{dtStr}'
 
         return baseEvent, recurringEvents
@@ -293,38 +381,43 @@ def insertGoogleEvent(user: User, event: Event):
 
 
 def moveGoogleEvent(user: User, event: Event, prevCalendarId: str):
-    """Moves an event to another calendar, i.e. changes an event's organizer.
-    """
-    return getService(user).events().move(calendarId=prevCalendarId,
-                                          eventId=event.g_id,
-                                          destination=event.calendar_id).execute()
+    """Moves an event to another calendar, i.e. changes an event's organizer."""
+    return (
+        getService(user)
+        .events()
+        .move(calendarId=prevCalendarId, eventId=event.g_id, destination=event.calendar_id)
+        .execute()
+    )
 
 
 def updateGoogleEvent(user: User, event: Event):
     timeZone = event.calendar.timezone
     eventBody = getEventBody(event, timeZone)
-    return getService(user).events().patch(calendarId=event.calendar_id,
-                                           eventId=event.g_id,
-                                           body=eventBody).execute()
+    return (
+        getService(user)
+        .events()
+        .patch(calendarId=event.calendar_id, eventId=event.g_id, body=eventBody)
+        .execute()
+    )
 
 
 def deleteGoogleEvent(user: User, event: Event):
-    return getService(user).events().delete(calendarId=event.calendar_id,
-                                            eventId=event.g_id).execute()
+    return (
+        getService(user).events().delete(calendarId=event.calendar_id, eventId=event.g_id).execute()
+    )
 
 
 def updateCalendar(user: User, calendar: Calendar):
     body = {
         'selected': calendar.selected or False,
         'foregroundColor': calendar.foreground_color,
-        'backgroundColor': calendar.background_color
+        'backgroundColor': calendar.background_color,
     }
     return getService(user).calendarList().patch(calendarId=calendar.id, body=body).execute()
 
 
 def createWebhook(calendar: Calendar) -> None:
-    """Create a webhook for the calendar to watche for event updates.
-    """
+    """Create a webhook for the calendar to watche for event updates."""
     if not config.API_URL:
         logger.debug(f'No API URL specified.')
         return
@@ -371,12 +464,12 @@ def getEventBody(event: Event, timeZone: str):
         eventBody['start'] = {
             'dateTime': convertToLocalTime(event.start, timeZone).isoformat(),
             'timeZone': timeZone,
-            'date': None
+            'date': None,
         }
         eventBody['end'] = {
             'dateTime': convertToLocalTime(event.end, timeZone).isoformat(),
             'timeZone': timeZone,
-            'date': None
+            'date': None,
         }
 
     logger.info(eventBody)

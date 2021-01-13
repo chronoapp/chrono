@@ -49,9 +49,14 @@ class User(Base):
     def getRecurringEvents(self):
         return self.events.filter(Event.recurrences != None)
 
-    def getEvents(self, expandSingleEvents: bool = True):
+    def getEvents(self, expandSingleEvents: bool = True, showDeleted=False):
         if expandSingleEvents:
-            return self.events.filter_by(recurrences=None)
+            eventsResult = self.events.filter_by(recurrences=None)
         else:
             # TODO: modified recurring events
-            return self.events.filter_by(recurring_event_id=None)
+            eventsResult = self.events.filter_by(recurring_event_id=None)
+
+        if showDeleted:
+            return eventsResult
+        else:
+            return eventsResult.filter(Event.status != 'deleted')
