@@ -3,13 +3,15 @@ from itertools import islice
 
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
-from typing import List, Optional, Literal, Tuple
+from typing import List, Optional, Literal, Tuple, Generator
 from dateutil.rrule import rrule, rruleset, rrulestr
+from datetime import timedelta
 from backports.zoneinfo import ZoneInfo
 
 from pydantic import BaseModel
 from app.api.endpoints.labels import LabelInDbVM
 from app.db.models import Event, User
+from app.db.models.event import EventStatus
 
 """Event models and helpers to manage Recurring Events.
 """
@@ -34,7 +36,7 @@ class EventBaseVM(BaseModel):
     timezone: Optional[str]
     calendar_id: str
     recurrences: Optional[List[str]]
-    recurring_event_id: Optional[int]
+    recurring_event_id: Optional[str]
 
     def isAllDay(self) -> Optional[bool]:
         return self.start_day is not None and self.end_day is not None
@@ -128,9 +130,9 @@ def createRecurringEvents(
         event.end_day,
         event.calendar_id,
         timezone,
+        [str(r) for r in rules],
         copyOriginalStart=True,
     )
-    recurringEvent.recurrences = [str(r) for r in rules]
     user.events.append(recurringEvent)
 
     ruleSet = rruleset()
@@ -153,6 +155,7 @@ def createRecurringEvents(
             end.strftime('%Y-%m-%d') if isAllDay else None,
             event.calendar_id,
             timezone,
+            None,
             copyOriginalStart=True,
         )
         event.recurring_event = recurringEvent

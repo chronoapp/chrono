@@ -168,7 +168,7 @@ async def updateEvent(
 
 @router.delete('/events/{eventId}')
 async def deleteEvent(
-    eventId: int, user: User = Depends(get_current_user), session: Session = Depends(get_db)
+    eventId: str, user: User = Depends(get_current_user), session: Session = Depends(get_db)
 ):
     """Delete an event.
     TODO: Handle recurring events.
