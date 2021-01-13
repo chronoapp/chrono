@@ -10,7 +10,7 @@
   transition: $fade-in-transition;
 
   svg {
-    color: lighten($link, 10%) !important;
+    color: lighten($secondary, 10%) !important;
   }
   span {
     color: $grey-dark !important;
