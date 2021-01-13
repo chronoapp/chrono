@@ -10,7 +10,7 @@ import { FiCalendar, FiClock, FiAlignLeft, FiTrash } from 'react-icons/fi'
 import { format, fullDayFormat } from '../../util/localizer'
 import { addNewLabels } from '../utils/LabelUtils'
 
-import Event from '../../models/Event'
+import Event, { UNSAVED_EVENT_ID } from '../../models/Event'
 import Calendar from '../../models/Calendar'
 import { Label } from '../../models/Label'
 import { EventActionContext } from '../EventActionContext'
@@ -64,7 +64,7 @@ function EventPopover(props: IProps) {
     )
   )
 
-  const isExistingEvent = props.event.id !== -1
+  const isExistingEvent = props.event.id !== UNSAVED_EVENT_ID
   const contentEditableRef = createRef<HTMLInputElement>()
   const [addTagDropdownActive, setAddTagDropdownActive] = useState(false)
 

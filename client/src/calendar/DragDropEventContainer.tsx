@@ -12,7 +12,7 @@ import TimeGridEvent from './TimeGridEvent'
 import * as dates from '../util/dates'
 import { timeRangeFormat } from '../util/localizer'
 import { EventActionContext, DragDropAction } from './EventActionContext'
-import Event from '../models/Event'
+import Event, { UNSAVED_EVENT_ID } from '../models/Event'
 import SlotMetrics from './utils/SlotMetrics'
 import { GlobalEvent } from '../util/global'
 
@@ -220,7 +220,7 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
         this.props.onEventUpdated(event)
         this.context.onEnd(event)
 
-        if (event.start < this.props.slotMetrics.start && event.id < 0) {
+        if (event.start < this.props.slotMetrics.start && event.id == UNSAVED_EVENT_ID) {
           document.dispatchEvent(
             new CustomEvent(GlobalEvent.scrollToEvent, { detail: event.start })
           )

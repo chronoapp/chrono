@@ -3,7 +3,7 @@ import update from 'immutability-helper'
 import { normalizeArr } from '../lib/normalizer'
 
 import * as dates from '../util/dates'
-import Event from '../models/Event'
+import Event, { UNSAVED_EVENT_ID } from '../models/Event'
 
 export type Action = 'MOVE' | 'RESIZE'
 export type Direction = 'UP' | 'DOWN'
@@ -40,9 +40,9 @@ export const EventActionContext = createContext<EventActionContextType>(undefine
 
 export interface EventState {
   loading: boolean
-  eventsById: Record<number, Event>
+  eventsById: Record<string, Event>
   editingEvent: {
-    id: number
+    id: string
     editMode: EditMode
     selectTailSegment: boolean
     event: Event
@@ -55,9 +55,9 @@ type ActionType =
   | { type: 'INIT_EDIT_EVENT'; payload: { event: Event; selectTailSegment?: boolean } }
   | { type: 'INIT_NEW_EVENT_AT_DATE'; payload: { date: Date; allDay: boolean } }
   | { type: 'CREATE_EVENT'; payload: Event }
-  | { type: 'DELETE_EVENT'; payload: { eventId: number } }
+  | { type: 'DELETE_EVENT'; payload: { eventId: string } }
   | { type: 'CANCEL_SELECT' }
-  | { type: 'UPDATE_EVENT'; payload: { event: Event; replaceEventId: number } }
+  | { type: 'UPDATE_EVENT'; payload: { event: Event; replaceEventId: string } }
   | { type: 'UPDATE_EDIT_EVENT'; payload: Event }
   | { type: 'UPDATE_EDIT_MODE'; payload: EditMode }
 
@@ -90,7 +90,7 @@ function eventReducer(state: EventState, action: ActionType) {
       return {
         ...state,
         eventsById: {
-          ...update(eventsById, { $unset: [-1] }),
+          ...update(eventsById, { $unset: [UNSAVED_EVENT_ID] }),
         },
         editingEvent: {
           id: action.payload.event.id,
@@ -148,7 +148,7 @@ function eventReducer(state: EventState, action: ActionType) {
       }
 
     case 'CANCEL_SELECT':
-      let eventsUnselected = update(eventsById, { $unset: [-1] })
+      let eventsUnselected = update(eventsById, { $unset: [UNSAVED_EVENT_ID] })
 
       return {
         ...state,

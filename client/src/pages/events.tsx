@@ -11,7 +11,7 @@ import {
   putLabelRule,
   auth,
 } from '../util/Api'
-import Event from '../models/Event'
+import Event, { UNSAVED_EVENT_ID } from '../models/Event'
 import { Label } from '../models/Label'
 import { LabelRule } from '../models/LabelRule'
 import Layout from '../components/Layout'
@@ -34,7 +34,7 @@ interface LabelRuleState {
 }
 
 interface State {
-  dropdownEventId: number
+  dropdownEventId: string
   searchValue: string
   events: Event[]
   labels: Label[]
@@ -48,7 +48,7 @@ interface State {
 function LabelTagSolid(props: {
   event: Event
   label: Label
-  onRemoveLabel: (eventId: number, labelId: number) => void
+  onRemoveLabel: (eventId: string, labelId: number) => void
 }) {
   const labelStyle = {
     backgroundColor: props.label.color_hex,
@@ -73,7 +73,7 @@ class EventList extends Component<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
-      dropdownEventId: 0,
+      dropdownEventId: UNSAVED_EVENT_ID,
       searchValue: '',
       events: [],
       labels: [],
@@ -105,15 +105,15 @@ class EventList extends Component<Props, State> {
     })
   }
 
-  toggleAddLabelDropdown(eventId: number) {
+  toggleAddLabelDropdown(eventId: string) {
     if (this.state.dropdownEventId == eventId) {
-      this.setState({ dropdownEventId: 0 })
+      this.setState({ dropdownEventId: UNSAVED_EVENT_ID })
     } else {
       this.setState({ dropdownEventId: eventId })
     }
   }
 
-  async addLabel(eventId: number, labelId: number) {
+  async addLabel(eventId: string, labelId: number) {
     const event = this.state.events.find((e) => e.id == eventId)
     if (!event) return
     if (event.labels.find((l) => l.id === labelId)) {
@@ -168,7 +168,7 @@ class EventList extends Component<Props, State> {
     this.setState({ labelRuleState: null })
   }
 
-  removeLabel(eventId: number, labelId: number) {
+  removeLabel(eventId: string, labelId: number) {
     const event = this.state.events.find((e) => e.id == eventId)
     if (event) {
       const remainingLabels = event.labels.filter((l) => l.id !== labelId)
@@ -197,7 +197,7 @@ class EventList extends Component<Props, State> {
     }
   }
 
-  renderDropdown(eventId: number) {
+  renderDropdown(eventId: string) {
     return (
       <div className={`dropdown ${eventId == this.state.dropdownEventId ? 'is-active' : ''}`}>
         <div onClick={(_evt) => this.toggleAddLabelDropdown(eventId)} className="dropdown-trigger">

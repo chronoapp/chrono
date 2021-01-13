@@ -3,6 +3,7 @@ import { hexToHSL } from '../calendar/utils/Colors'
 import { localFullDate, fullDayFormat } from '../util/localizer'
 
 const today = new Date()
+export const UNSAVED_EVENT_ID = 'unsaved-event'
 
 /**
  * Contains fields only because it is copied for drag & drop.
@@ -11,8 +12,8 @@ export default class Event {
   public labels: Label[]
 
   constructor(
-    readonly id: number,
-    readonly recurring_event_id: number,
+    readonly id: string,
+    readonly recurring_event_id: string,
     readonly calendar_id: string,
     readonly title: string,
     readonly title_short: string,
@@ -49,7 +50,7 @@ export default class Event {
   }
 
   static isNewEvent(event: Event) {
-    return event.id == -1
+    return event.id == UNSAVED_EVENT_ID
   }
 
   static getBackgroundColor(event: Event, defaultColor: string) {
@@ -68,8 +69,8 @@ export default class Event {
 
   static newDefaultEvent(startDate: Date, endDate: Date, allDay: boolean) {
     return new Event(
-      -1,
-      -1,
+      UNSAVED_EVENT_ID,
+      UNSAVED_EVENT_ID,
       '',
       '',
       '',

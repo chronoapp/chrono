@@ -153,7 +153,7 @@ export async function updateEvent(authToken: string, event: Event): Promise<Even
     .then((resp) => Event.fromJson(resp))
 }
 
-export async function deleteEvent(authToken: string, eventId: number): Promise<{}> {
+export async function deleteEvent(authToken: string, eventId: string): Promise<{}> {
   return fetch(`${API_URL}/events/${eventId}`, {
     method: 'DELETE',
     headers: { Authorization: authToken },

@@ -8,7 +8,7 @@ import {
   updateEvent as updateEventReq,
   deleteEvent as deleteEventReq,
 } from '../../util/Api'
-import Event from '../../models/Event'
+import Event, { UNSAVED_EVENT_ID } from '../../models/Event'
 import Alert from '../../models/Alert'
 
 import { EventActionContext } from '../EventActionContext'
@@ -22,7 +22,7 @@ export default function useEventService() {
   const alertsContext = React.useContext(AlertsContext)
   const eventActions = React.useContext(EventActionContext)
 
-  function deleteEvent(eventId: number) {
+  function deleteEvent(eventId: string) {
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
     eventActions.eventDispatch({
       type: 'DELETE_EVENT',
@@ -53,7 +53,7 @@ export default function useEventService() {
       })
     }
 
-    if (event.id !== -1) {
+    if (event.id !== UNSAVED_EVENT_ID) {
       const alert = new Alert({ title: 'Saving Event..', isLoading: true })
       alertsContext.addAlert(alert)
 
@@ -85,7 +85,7 @@ export default function useEventService() {
     const savingAlert = new Alert({ title: 'Saving Event..', isLoading: true })
     alertsContext.addAlert(savingAlert)
 
-    const isExistingEvent = event.id !== -1
+    const isExistingEvent = event.id !== UNSAVED_EVENT_ID
     if (isExistingEvent) {
       eventActions.eventDispatch({
         type: 'UPDATE_EVENT',
@@ -96,7 +96,7 @@ export default function useEventService() {
         .then((event) => {
           eventActions.eventDispatch({
             type: 'UPDATE_EVENT',
-            payload: { event, replaceEventId: -1 },
+            payload: { event, replaceEventId: UNSAVED_EVENT_ID },
           })
 
           return event
@@ -122,7 +122,7 @@ export default function useEventService() {
         console.log(`Created event in db: ${event.id}`)
         eventActions.eventDispatch({
           type: 'UPDATE_EVENT',
-          payload: { event, replaceEventId: -1 },
+          payload: { event, replaceEventId: UNSAVED_EVENT_ID },
         })
         alertsContext.addAlert(
           new Alert({
