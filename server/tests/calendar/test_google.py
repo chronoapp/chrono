@@ -14,28 +14,14 @@ EVENT_ITEM_RECURRING = {
     'created': '2020-12-09T03:29:26.000Z',
     'updated': '2020-12-09T03:29:26.646Z',
     'summary': 'Test Recur',
-    'creator': {
-        'email': 'test-email@example.com',
-        'self': True
-    },
-    'organizer': {
-        'email': 'test-email@example.com',
-        'self': True
-    },
-    'start': {
-        'dateTime': '2020-12-09T11:00:00-05:00',
-        'timeZone': 'America/Toronto'
-    },
-    'end': {
-        'dateTime': '2020-12-09T12:00:00-05:00',
-        'timeZone': 'America/Toronto'
-    },
+    'creator': {'email': 'test-email@example.com', 'self': True},
+    'organizer': {'email': 'test-email@example.com', 'self': True},
+    'start': {'dateTime': '2020-12-09T11:00:00-05:00', 'timeZone': 'America/Toronto'},
+    'end': {'dateTime': '2020-12-09T12:00:00-05:00', 'timeZone': 'America/Toronto'},
     'recurrence': ['RRULE:FREQ=DAILY;COUNT=5'],
     'iCalUID': '02kan06ornak4vngjaeem1rjhl@google.com',
     'sequence': 0,
-    'reminders': {
-        'useDefault': True
-    }
+    'reminders': {'useDefault': True},
 }
 
 

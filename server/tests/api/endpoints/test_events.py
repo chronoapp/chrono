@@ -1,19 +1,8 @@
 from uuid import uuid4
-
 from datetime import datetime, timedelta
 
-from app.db.models.event import Event
-from app.db.models.calendar import Calendar
 from app.api.endpoints.authentication import getAuthToken
-
-
-def createEvent(calendar: Calendar, start: datetime, end: datetime):
-    eventId = uuid4().hex
-    event = Event(eventId, f'Event {eventId}', f'Event description {eventId}', start, end, None,
-                  None, calendar.id, None)
-    event.calendar = calendar
-    event.user = calendar.user
-    return event
+from tests.utils import createEvent
 
 
 def test_getEventsBasic(userSession, test_client):
@@ -28,9 +17,9 @@ def test_getEventsBasic(userSession, test_client):
 
     token = getAuthToken(user)
     startFilter = (start - timedelta(days=1)).isoformat()
-    resp = test_client.get(f'/api/v1/events/',
-                           headers={'Authorization': token},
-                           params={'start_date': startFilter})
+    resp = test_client.get(
+        f'/api/v1/events/', headers={'Authorization': token}, params={'start_date': startFilter}
+    )
 
     events = resp.json()
     assert len(events) == 2
