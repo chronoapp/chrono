@@ -31,6 +31,8 @@ EventStatus = Literal['deleted', 'tentative', 'active']
 
 
 class Event(Base):
+    """Recurring events are modelled as an adjacency list."""
+
     __tablename__ = 'event'
     id = Column(String, primary_key=True, default=shortuuid.uuid, nullable=False)
 
@@ -65,7 +67,7 @@ class Event(Base):
     # Recurring Events.
     recurrences = Column(ARRAY(String), nullable=True)
     recurring_event_id = Column(String, ForeignKey('event.id'), nullable=True)
-    recurring_event = relationship(lambda: Event, remote_side=id, backref='recurring_events')
+    recurring_event = relationship("Event", remote_side=[id], backref='recurring_events')
 
     # Original time (For recurring events).
     original_start = Column(DateTime(timezone=True))
@@ -135,7 +137,7 @@ class Event(Base):
             self.original_timezone = timezone
 
     def __repr__(self):
-        return f'<Event {self.id} {self.title} start:{self.start} end:{self.end}/>'
+        return f'<Event {self.id} {self.title} start:{self.start} end:{self.end} {self.status}/>'
 
     def isWritable(self) -> bool:
         return self.calendar.access_role == 'writer' or self.calendar.access_role == 'owner'

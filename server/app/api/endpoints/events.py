@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy import desc, and_
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Union
 from googleapiclient.errors import HttpError
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -50,7 +50,7 @@ async def getEvents(
     end_date: Optional[str] = None,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
-) -> List[EventInDBVM]:
+) -> List[Union[EventInDBVM, Event]]:
     """
     TODO: Validate fields: date
     TODO: Filter queries for recurring events
@@ -73,7 +73,6 @@ async def getEvents(
         tsQuery = ' & '.join(query.split())
         return Event.search(session, user.id, tsQuery, limit=limit).all()
     else:
-        expandedRecurringEvents = getAllExpandedRecurringEvents(user, startDate, endDate)
         singleEvents = (
             user.getEvents()
             .filter(and_(Event.start >= startDate, Event.start <= endDate))
@@ -81,7 +80,9 @@ async def getEvents(
             .limit(limit)
             .all()
         )
-        return list(expandedRecurringEvents) + [EventInDBVM.from_orm(e) for e in singleEvents]
+        expandedRecurringEvents = getAllExpandedRecurringEvents(user, startDate, endDate, session)
+
+        return list(expandedRecurringEvents) + singleEvents
 
 
 @router.post('/events/', response_model=EventInDBVM)

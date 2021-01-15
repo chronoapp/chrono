@@ -2,7 +2,7 @@ from datetime import datetime
 from itertools import islice
 
 from sqlalchemy import and_, or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 from typing import List, Dict, Optional, Literal, Tuple, Generator
 from dateutil.rrule import rrule, rruleset, rrulestr
 from datetime import timedelta
@@ -308,16 +308,25 @@ def getRecurringEventId(baseEventId: str, startDate: datetime, isAllDay: bool) -
 
 
 def getAllExpandedRecurringEvents(
-    user: User, startDate: datetime, endDate: datetime
+    user: User, startDate: datetime, endDate: datetime, session
 ) -> Generator[EventInDBVM, None, None]:
-    """Expands the rule in the event to get all events between the start and end."""
+    """Expands the rule in the event to get all events between the start and end.
+    TODO: Remove extra baseRecurringEvent expansions with filters
+    TODO: add start & end dates properties to recurring events.
+    """
+    E1 = aliased(Event)
+    eventOverrides = (
+        user.getEvents(showDeleted=True)
+        .filter(or_(and_(Event.start >= startDate, Event.end <= endDate)), Event.start == None)
+        .join(Event.recurring_event.of_type(E1))
+    )
+    eventOverridesMap = {e.id: e for e in eventOverrides}
+
     baseRecurringEvents = user.getRecurringEvents()
     startDate = startDate.replace(tzinfo=None)
     endDate = endDate.replace(tzinfo=None)
 
     for baseRecurringEvent in baseRecurringEvents:
-        eventOverridesMap: Dict[str, Event] = {e.id: e for e in baseRecurringEvent.recurring_events}
-
         duration = baseRecurringEvent.end - baseRecurringEvent.start
         timezone = baseRecurringEvent.getTimezone()
         isAllDay = baseRecurringEvent.all_day
@@ -328,7 +337,7 @@ def getAllExpandedRecurringEvents(
         for r in rrules:
             ruleSet.rrule(r)
 
-        # Expand events, hack for inclusive
+        # Expand events, inclusive
         for date in islice(
             ruleSet.between(startDate - timedelta(seconds=1), endDate + timedelta(seconds=1)),
             MAX_RECURRING_EVENT_COUNT,
