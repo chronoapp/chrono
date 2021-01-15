@@ -1,5 +1,5 @@
 from uuid import uuid4
-from typing import Optional, Dict, Tuple, List
+from typing import Optional, Dict, Tuple, List, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
@@ -227,7 +227,7 @@ def getEventWithCache(
         return user.events.filter(Event.g_id == googleEventId).one_or_none()
 
 
-def syncEventsToDb(calendar: Calendar, eventItems: List[Dict[str, str]], session: Session) -> None:
+def syncEventsToDb(calendar: Calendar, eventItems: List[Dict[str, Any]], session: Session) -> None:
     """Sync items from google to the calendar.
 
     Events could have been moved from one calendar to another.
@@ -246,7 +246,6 @@ def syncEventsToDb(calendar: Calendar, eventItems: List[Dict[str, str]], session
         user = calendar.user
         googleEventId = eventItem['id']
         existingEvent = getEventWithCache(user, addedEventsCache, googleEventId)
-
         if eventItem['status'] == 'cancelled':
             syncDeletedEvent(calendar, existingEvent, eventItem, addedEventsCache, session)
         else:
@@ -269,7 +268,7 @@ def syncEventsToDb(calendar: Calendar, eventItems: List[Dict[str, str]], session
 def syncDeletedEvent(
     calendar: Calendar,
     existingEvent: Optional[Event],
-    eventItem,
+    eventItem: Dict[str, Any],
     addedEventsCache: Dict[str, Event],
     session: Session,
 ):
@@ -356,7 +355,7 @@ def getOrCreateBaseRecurringEvent(
 def syncCreatedOrUpdatedGoogleEvent(
     calendar: Calendar,
     existingEvent: Optional[Event],
-    eventItem,
+    eventItem: Dict[str, Any],
     addedEventsCache: Dict[str, Event],
     session: Session,
 ) -> Event:
@@ -405,7 +404,7 @@ def convertStatus(status: str):
         return 'active'
 
 
-def googleEventToEventVM(calendarId: str, eventItem) -> GoogleEventVM:
+def googleEventToEventVM(calendarId: str, eventItem: Dict[str, Any]) -> GoogleEventVM:
     """Converts the google event to our ViewModel."""
 
     eventId = eventItem.get('id')
