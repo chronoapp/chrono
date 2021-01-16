@@ -110,7 +110,6 @@ async def createEvent(
             logger.info(resp.get('id'))
             eventDb.g_id = resp.get('id')
 
-        session.add(eventDb)
         session.commit()
 
         return eventDb
@@ -209,7 +208,7 @@ async def updateEvent(
 @router.delete('/events/{eventId}')
 async def deleteEvent(
     eventId: str, user: User = Depends(get_current_user), session: Session = Depends(get_db)
-):
+) -> Event:
     """Delete an event.
     If the ID does not exist in the DB, it could be a "virtual ID" for a recurring event,
     in which case we'd need to create an override Event to model a deleted event.
@@ -234,7 +233,7 @@ async def deleteEvent(
         event.status = 'deleted'
         session.commit()
 
-    return {}
+    return event
 
 
 def getCombinedLabels(user: User, labelVMs: List[LabelInDbVM]) -> List[Label]:

@@ -38,7 +38,7 @@ class User(Base):
     def syncWithGoogle(self) -> bool:
         # TODO: sync on a per-calendar basis.
         return (
-            self.credentials
+            self.credentials is not None
             and self.credentials.provider == ProviderType.Google
             and self.credentials.token_data
         )

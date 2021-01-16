@@ -7,8 +7,13 @@ from app.db.models.event import Event
 from app.db.models.calendar import Calendar
 
 
-def createEvent(calendar: Calendar, start: datetime, end: datetime, timezone: Optional[str] = None):
-    googleId = uuid4().hex
+def createEvent(
+    calendar: Calendar,
+    start: datetime,
+    end: datetime,
+    googleId: Optional[str] = None,
+    timezone: Optional[str] = None,
+):
     event = Event(
         googleId,
         f'Event',
