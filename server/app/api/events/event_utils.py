@@ -246,20 +246,44 @@ def getExpandedRecurringEvents(
                 )
 
 
-def verifyRecurringEvent(user, eventId: str, parentEvent: Event):
+def verifyAndGetRecurringEventParent(eventId: str, session: Session) -> Tuple[Event, datetime]:
+    """Returns the parent from the virtual eventId.
+    Returns tuple of (parent event, datetime)
+    """
+    parts = eventId.split('_')
+    if not len(parts) >= 2:
+        raise InputError(f'Invalid Event ID: {eventId}')
+
+    parentId = ''.join(parts[:-1])
+    parentEvent = session.query(Event).filter(Event.id == parentId).one_or_none()
+
+    if not parentEvent:
+        raise InputError(f'Invalid Event ID: {eventId}')
+
+    _, date = verifyRecurringEvent(eventId, parentEvent)
+
+    return parentEvent, date
+
+
+def verifyRecurringEvent(eventId: str, parentEvent: Event) -> Tuple[str, datetime]:
     """Makes sure the eventId is part of the parent Event ID.
+    Returns tuple of (parent event ID, datetime)
     Raises InputError otherwise.
     """
     parts = eventId.split('_')
     if not len(parts) >= 2:
         raise InputError(f'Invalid Event ID: {eventId}')
 
+    parentEventId = ''.join(parts[:-1])
+    if not parentEventId == parentEvent.id:
+        raise InputError(f'Invalid Event ID: {eventId} parent {parentEvent.id}')
+
     datePart = parts[-1]
     try:
-        date = datetime.strptime(datePart, "%Y%m%dT%H%M%SZ")
-        for e in getExpandedRecurringEvents(parentEvent, {}, date, date):
+        dt = datetime.strptime(datePart, "%Y%m%dT%H%M%SZ")
+        for e in getExpandedRecurringEvents(parentEvent, {}, dt, dt):
             if e.id == eventId:
-                return
+                return ''.join(parts[:-1]), dt
 
         raise InputError('Invalid Event ID.')
 
