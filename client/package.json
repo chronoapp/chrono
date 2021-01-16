@@ -16,6 +16,7 @@
     "date-arithmetic": "^4.1.0",
     "immer": "^8.0.0",
     "immutability-helper": "^3.1.1",
+    "linkifyjs": "^2.1.9",
     "lodash": "^4.17.15",
     "moment": "^2.27.0",
     "next": "^10.0.0",

@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect, createRef } from 'react'
 import clsx from 'clsx'
 import produce from 'immer'
 import moment from 'moment'
+import linkifyHtml from 'linkifyjs/html'
 
 import * as dates from '../../util/dates'
 import { MdClose } from 'react-icons/md'
@@ -164,8 +165,8 @@ function EventPopover(props: IProps) {
       <div>
         <div className="cal-event-modal-header has-background-white-ter">
           <span
-            className="mr-2"
-            style={{ height: '100%', display: 'flex', alignItems: 'center' }}
+            className="mr-2 is-flex is-align-center"
+            style={{ height: '100%' }}
             onClick={(e) => {
               eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
             }}
@@ -174,7 +175,7 @@ function EventPopover(props: IProps) {
           </span>
         </div>
 
-        <div className="cal-event-modal" style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="cal-event-modal is-flex is-flex-direction-column">
           <div className="has-text-grey-darker is-size-5">{eventFields.title}</div>
 
           {props.event.labels && (
@@ -185,8 +186,8 @@ function EventPopover(props: IProps) {
             </div>
           )}
 
-          <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
-            <FiClock className="mr-2" />
+          <div className="mt-2 is-flex is-align-center">
+            <FiClock className="mr-2 is-flex-shrink-0" />
             <span>
               {format(eventFields.start, 'YYYY-MM-DD')} {format(eventFields.start, 'hh:mm')} -{' '}
               {format(eventFields.end, 'hh:mm')}
@@ -195,19 +196,19 @@ function EventPopover(props: IProps) {
           </div>
 
           {props.event.description && (
-            <div className="mt-2" style={{ display: 'flex', alignItems: 'flex-start' }}>
-              <FiAlignLeft className="mr-2" />
-              <div dangerouslySetInnerHTML={{ __html: props.event.description }}></div>
+            <div className="mt-2 is-flex is-align-items-flex-start">
+              <FiAlignLeft className="mr-2 is-flex-shrink-0" />
+              <div dangerouslySetInnerHTML={{ __html: linkifyHtml(props.event.description) }}></div>
             </div>
           )}
 
-          <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
-            <FiCalendar className="mr-2" />
+          <div className="mt-2 is-flex is-align-center">
+            <FiCalendar className="mr-2 is-flex-shrink-0" />
             <span>{calendar.summary}</span>
           </div>
 
           {calendar.isWritable() && (
-            <div className="mt-4" style={{ display: 'flex' }}>
+            <div className="mt-4 is-flex">
               <button className="button is-small is-primary" onClick={() => setReadOnly(false)}>
                 Edit
               </button>
