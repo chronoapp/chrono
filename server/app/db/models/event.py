@@ -114,10 +114,14 @@ class Event(Base):
         calendar_id: str,
         timezone: Optional[str],
         recurrences: Optional[List[str]],
+        overrideId: Optional[str] = None,
         status: EventStatus = 'active',
         copyOriginalStart=False,
         recurringEventId: Optional[str] = None,
     ):
+        if overrideId:
+            self.id = overrideId
+
         self.g_id = g_id
         self.title = title
         self.description = description

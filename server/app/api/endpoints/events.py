@@ -13,10 +13,14 @@ from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
 
 from app.api.events.event_utils import (
+    InputError,
     EventBaseVM,
     EventInDBVM,
     createOrUpdateEvent,
     getAllExpandedRecurringEvents,
+    getRecurringEventId,
+    verifyRecurringEvent,
+    verifyAndGetRecurringEventParent,
 )
 from app.api.endpoints.labels import LabelInDbVM, Label, combineLabels
 from app.calendar.google import (
@@ -28,17 +32,6 @@ from app.calendar.google import (
 from app.db.models import Event, User
 
 router = APIRouter()
-
-
-def getCombinedLabels(user: User, labelVMs: List[LabelInDbVM]) -> List[Label]:
-    """"List of labels, with parents removed if the list includes the child"""
-    labels: List[Label] = []
-    for labelVM in labelVMs:
-        label = user.labels.filter_by(id=labelVM.id).one_or_none()
-        if label:
-            labels.append(label)
-
-    return combineLabels(labels)
 
 
 @router.get('/events/', response_model=List[EventInDBVM])
@@ -91,6 +84,9 @@ async def createEvent(
 ) -> Event:
     try:
         calendarDb = user.calendars.filter_by(id=event.calendar_id).one_or_none()
+        if not calendarDb:
+            raise HTTPException(HTTP_400_BAD_REQUEST, detail='Calendar not found.')
+
         eventDb = Event(
             None,
             event.title,
@@ -143,13 +139,47 @@ async def updateEvent(
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> Event:
+    """Update an existing event. For recurring events, create the "override" event
+    in the DB with the composite id of {baseId}_{date}.
+    """
+    curEvent = user.events.filter_by(id=event_id).one_or_none()
 
-    existingEvent = user.events.filter_by(id=event_id).one_or_none()
-
-    if existingEvent and not existingEvent.isWritable():
+    if curEvent and not curEvent.isWritable():
         raise HTTPException(HTTP_403_FORBIDDEN, detail='Can not update event.')
 
-    eventDb, prevCalendarId = createOrUpdateEvent(existingEvent, event)
+    # Not found in DB.
+    elif not curEvent and not event.recurring_event_id:
+        raise HTTPException(HTTP_404_NOT_FOUND, detail='Event not found.')
+
+    # New recurring event with override.
+    elif not curEvent and event.recurring_event_id:
+        parentEvent = user.events.filter_by(id=event.recurring_event_id).one_or_none()
+        if not parentEvent:
+            raise HTTPException(
+                HTTP_404_NOT_FOUND, detail=f'Invalid parent event {event.recurring_event_id}.'
+            )
+
+        try:
+            _, dt = verifyRecurringEvent(event_id, parentEvent)
+        except InputError as err:
+            raise HTTPException(HTTP_404_NOT_FOUND, detail=str(err))
+
+        googleId = None
+        if parentEvent.g_id:
+            googleId = getRecurringEventId(parentEvent.g_id, dt, event.isAllDay())
+
+        prevCalendarId = None
+        eventDb = createOrUpdateEvent(None, event, overrideId=event_id, googleId=googleId)
+        user.events.append(eventDb)
+        session.commit()
+        session.refresh(eventDb)
+        logger.info(f'Created Override: {eventDb}')
+
+    # Update normal event.
+    else:
+        prevCalendarId = curEvent.calendar_id if curEvent else None
+        eventDb = createOrUpdateEvent(curEvent, event)
+        logger.info(f'Updated Event: {eventDb}')
 
     eventDb.labels.clear()
     eventDb.labels = getCombinedLabels(user, event.labels)
@@ -172,7 +202,6 @@ async def updateEvent(
         updateGoogleEvent(user, eventDb)
 
     session.commit()
-    session.refresh(eventDb)
 
     return eventDb
 
@@ -182,11 +211,19 @@ async def deleteEvent(
     eventId: str, user: User = Depends(get_current_user), session: Session = Depends(get_db)
 ):
     """Delete an event.
-    TODO: Handle recurring events.
-    - Option to delete this event only.
+    If the ID does not exist in the DB, it could be a "virtual ID" for a recurring event,
+    in which case we'd need to create an override Event to model a deleted event.
     """
     logger.info(f'Delete Event {eventId}')
     event = user.events.filter_by(id=eventId).one_or_none()
+
+    if not event:
+        try:
+            event = createOverrideDeletedEvent(user, eventId, session)
+            user.events.append(event)
+        except InputError as e:
+            raise HTTPException(HTTP_404_NOT_FOUND, detail=str(e))
+
     if event:
         if event.g_id:
             try:
@@ -194,7 +231,45 @@ async def deleteEvent(
             except HttpError as e:
                 logger.error(e)
 
-        session.delete(event)
+        event.status = 'deleted'
         session.commit()
 
     return {}
+
+
+def getCombinedLabels(user: User, labelVMs: List[LabelInDbVM]) -> List[Label]:
+    """"List of labels, with parents removed if the list includes the child"""
+    labels: List[Label] = []
+    for labelVM in labelVMs:
+        label = user.labels.filter_by(id=labelVM.id).one_or_none()
+        if label:
+            labels.append(label)
+
+    return combineLabels(labels)
+
+
+def createOverrideDeletedEvent(user: User, eventId: str, session):
+    # Override as a deleted event.
+    parentEvent, dt = verifyAndGetRecurringEventParent(eventId, session)
+
+    googleId = None
+    if parentEvent.g_id:
+        googleId = getRecurringEventId(parentEvent.g_id, dt, parentEvent.all_day)
+
+    event = Event(
+        googleId,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        parentEvent.calendar.id,
+        None,
+        None,
+        overrideId=eventId,
+        recurringEventId=parentEvent.id,
+        status='deleted',
+    )
+
+    return event

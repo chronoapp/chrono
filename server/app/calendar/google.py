@@ -371,9 +371,8 @@ def syncCreatedOrUpdatedGoogleEvent(
         )
         eventVM.recurring_event_id = baseRecurringEvent.id
 
-    event, _ = createOrUpdateEvent(existingEvent, eventVM)
+    event = createOrUpdateEvent(existingEvent, eventVM, googleId=eventVM.g_id)
     calendar.user.events.append(event)
-    event.g_id = eventVM.g_id
 
     if baseRecurringEvent:
         recurringEventId = None
