@@ -179,30 +179,44 @@ def getAllExpandedRecurringEvents(
         .join(Event.recurring_event.of_type(E1))
     )
 
-    eventOverridesMap = {e.id: e for e in eventOverrides}
+    eventOverridesMap: Dict[str, Event] = {e.id: e for e in eventOverrides}
     baseRecurringEvents = user.getRecurringEvents()
 
     for baseRecurringEvent in baseRecurringEvents:
-        duration = baseRecurringEvent.end - baseRecurringEvent.start
-        timezone = baseRecurringEvent.getTimezone()
-        isAllDay = baseRecurringEvent.all_day
-        baseEventVM = EventInDBVM.from_orm(baseRecurringEvent)
+        for e in getExpandedRecurringEvents(
+            baseRecurringEvent, eventOverridesMap, startDate, endDate
+        ):
+            yield e
 
-        if isAllDay:
-            # All day events use naiive dates.
+
+def getExpandedRecurringEvents(
+    baseRecurringEvent: Event,
+    eventOverridesMap: Dict[str, Event],
+    startDate: datetime,
+    endDate: datetime,
+) -> Generator[EventInDBVM, None, None]:
+    duration = baseRecurringEvent.end - baseRecurringEvent.start
+    timezone = baseRecurringEvent.getTimezone()
+    isAllDay = baseRecurringEvent.all_day
+    baseEventVM = EventInDBVM.from_orm(baseRecurringEvent)
+
+    if not baseEventVM.recurrences:
+        logging.error(f'Empty Recurrence: {baseEventVM.id}')
+
+    else:
+        ruleSet = recurrenceToRuleSet(
+            baseEventVM.recurrences, timezone, baseEventVM.start, baseEventVM.start_day
+        )
+
+        # All day events use naiive dates.
+        # Events from google are represented with UTC times, so we need the timezone aware
+        # start & end filters. Pretty hacky.
+        if isAllDay or (hasattr(ruleSet, '_dtstart') and not ruleSet._dtstart.tzinfo):  # type: ignore
             startDate = startDate.replace(tzinfo=None)
             endDate = endDate.replace(tzinfo=None)
         else:
             startDate = startDate.replace(tzinfo=None).astimezone(ZoneInfo('UTC'))
             endDate = endDate.replace(tzinfo=None).astimezone(ZoneInfo('UTC'))
-
-        if not baseEventVM.recurrences:
-            logging.error(f'Empty Recurrence: {baseEventVM.id}')
-            continue
-
-        ruleSet = recurrenceToRuleSet(
-            baseEventVM.recurrences, timezone, baseEventVM.start, baseEventVM.start_day
-        )
 
         # Expand events, inclusive
         for date in islice(
@@ -230,3 +244,24 @@ def getAllExpandedRecurringEvents(
                         'recurrences': None,
                     }
                 )
+
+
+def verifyRecurringEvent(user, eventId: str, parentEvent: Event):
+    """Makes sure the eventId is part of the parent Event ID.
+    Raises InputError otherwise.
+    """
+    parts = eventId.split('_')
+    if not len(parts) >= 2:
+        raise InputError(f'Invalid Event ID: {eventId}')
+
+    datePart = parts[-1]
+    try:
+        date = datetime.strptime(datePart, "%Y%m%dT%H%M%SZ")
+        for e in getExpandedRecurringEvents(parentEvent, {}, date, date):
+            if e.id == eventId:
+                return
+
+        raise InputError('Invalid Event ID.')
+
+    except ValueError:
+        raise InputError('Invalid Event ID.')

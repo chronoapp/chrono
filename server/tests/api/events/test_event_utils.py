@@ -1,4 +1,5 @@
-from uuid import uuid4
+import pytest
+
 
 from typing import Tuple
 from sqlalchemy.orm import Session
@@ -11,6 +12,8 @@ from app.api.events.event_utils import (
     EventBaseVM,
     getAllExpandedRecurringEvents,
     createOrUpdateEvent,
+    verifyRecurringEvent,
+    InputError,
 )
 
 from tests.utils import createEvent
@@ -23,14 +26,10 @@ def test_getAllExpandedRecurringEvents_override(userSession: Tuple[User, Session
     # Create a new recurring event.
     start = datetime.fromisoformat('2020-01-02T12:00:00-05:00')
     recurringEvent = createEvent(calendar, start, start + timedelta(hours=1))
-    rule = getRRule(start, DAILY, 1, None, (start + timedelta(days=5)))
 
     # TODO: Write the rule with timezone?
-    recurrence = """
-    DTSTART:20200102T120000Z
-    RRULE:FREQ=DAILY;UNTIL=20200107T120000Z
-    """
-    recurringEvent.recurrences = [recurrence]
+    recurrences = ['DTSTART:20200102T120000Z', 'RRULE:FREQ=DAILY;UNTIL=20200107T120000Z']
+    recurringEvent.recurrences = recurrences
     user.events.append(recurringEvent)
 
     # Expanded recurring events between 2 dates.
@@ -88,3 +87,31 @@ def test_getAllExpandedRecurringEvents_fullDay(userSession: Tuple[User, Session]
         assert e.start_day == expectedStart.strftime('%Y-%m-%d')
         expectedEnd = expectedStart + timedelta(days=1)
         assert e.end_day == expectedEnd.strftime('%Y-%m-%d')
+
+
+def test_verifyRecurringEvent(userSession: Tuple[User, Session]):
+    user, session = userSession
+    calendar = user.getPrimaryCalendar()
+
+    # Create a new recurring event.
+    start = datetime.fromisoformat('2020-12-01T12:00:00')
+    print(start.tzinfo)
+    recurringEvent = createEvent(calendar, start, start + timedelta(hours=1), timezone='UTC')
+
+    rule = getRRule(start, DAILY, 1, 5, None)
+    recurringEvent.recurrences = [str(rule)]
+    user.events.append(recurringEvent)
+    session.commit()
+
+    # Assert that verifyRecurringEvent raises exceptions if the ID is invalid.
+    validEventId = f'{recurringEvent.id}_20201202T120000Z'
+    invalidEventId1 = f'{recurringEvent.id}_1212'
+    invalidEventId2 = f'{recurringEvent.id}_20211202T120000Z'
+
+    verifyRecurringEvent(user, validEventId, recurringEvent)
+
+    with pytest.raises(InputError):
+        verifyRecurringEvent(user, invalidEventId1, recurringEvent)
+
+    with pytest.raises(InputError):
+        verifyRecurringEvent(user, invalidEventId2, recurringEvent)
