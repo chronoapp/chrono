@@ -1,5 +1,6 @@
 from datetime import datetime
 from itertools import islice
+import logging
 
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session, aliased
@@ -44,20 +45,6 @@ class EventBaseVM(BaseModel):
     def isAllDay(self) -> bool:
         return self.start_day is not None and self.end_day is not None
 
-    def getRRules(self, timeZone: str) -> List[rrule]:
-        """Gets the rrule objects from recurrence string array
-        Converts to the local datetime in the timezone.
-        """
-        if not self.recurrences:
-            return []
-
-        if self.isAllDay() and self.start_day is not None:
-            localDate = datetime.strptime(self.start_day, "%Y-%m-%d")
-        else:
-            localDate = self.start.astimezone(ZoneInfo(timeZone)).replace(tzinfo=None)
-
-        return [rrulestr(r, dtstart=localDate, ignoretz=True) for r in self.recurrences]
-
     class Config:
         orm_mode = True
 
@@ -83,9 +70,24 @@ class InputError(Error):
     pass
 
 
-def convertToLocalTime(dateTime: datetime, timeZone: str):
-    localAware = dateTime.astimezone(ZoneInfo(timeZone))  # convert
-    return localAware
+def recurrenceToRuleSet(
+    recurrence: List[str], timezone: str, start: datetime, startDay: Optional[str]
+) -> rruleset:
+    """Gets the rrule objects from recurrence string array
+    Converts to the local datetime in the timezone.
+    """
+    if not start and not startDay:
+        raise InputError('Either until or occurrences must be set.')
+
+    if not recurrence or len(recurrence) == 0:
+        raise InputError('Recurrence array must be non-empty.')
+
+    if startDay is not None:
+        localDate = datetime.strptime(startDay, "%Y-%m-%d")
+        return rrulestr('\n'.join(recurrence), dtstart=localDate, ignoretz=True)
+    else:
+        localizedDate = start.astimezone(ZoneInfo(timezone))
+        return rrulestr('\n'.join(recurrence), dtstart=localizedDate)
 
 
 def getRRule(
@@ -116,159 +118,15 @@ def getRRule(
     return rule
 
 
-def createRecurringEvents(
-    user: User, rules: List[rrule], event: EventBaseVM, timezone: str
-) -> Tuple[Event, List[Event]]:
-    """Creates all recurring events with this rule. We create one "virtual" base event,
-    and concrete events with a reference to the base event.
-    """
-    duration = event.end - event.start
-
-    # Base event.
-    recurringEvent = Event(
-        None,
-        event.title,
-        event.description,
-        event.start,
-        event.end,
-        event.start_day,
-        event.end_day,
-        event.calendar_id,
-        timezone,
-        [str(r) for r in rules],
-        copyOriginalStart=True,
-    )
-    user.events.append(recurringEvent)
-
-    ruleSet = rruleset()
-    for r in rules:
-        ruleSet.rrule(r)
-
-    isAllDay = event.isAllDay()
-    events = []
-    for date in islice(ruleSet, MAX_RECURRING_EVENT_COUNT):
-        start = date.replace(tzinfo=ZoneInfo(timezone))
-        end = start + duration
-
-        event = Event(
-            None,
-            event.title,
-            event.description,
-            start,
-            end,
-            start.strftime('%Y-%m-%d') if isAllDay else None,
-            end.strftime('%Y-%m-%d') if isAllDay else None,
-            event.calendar_id,
-            timezone,
-            None,
-            copyOriginalStart=True,
-        )
-        event.recurring_event = recurringEvent
-        user.events.append(event)
-        events.append(event)
-
-    return recurringEvent, events
-
-
-def updateRecurringEvent(
-    user: User, event: Event, updateEvent: EventBaseVM, updateOption: UpdateOption, session: Session
-):
-    """Bulk updates for recurring events."""
-    if updateOption == 'SINGLE':
-        createOrUpdateEvent(event, updateEvent)
-
-    elif updateOption == 'ALL':
-        if event.is_parent_recurring_event:
-            baseEvent = event
-        else:
-            baseEvent = user.events.filter(Event.id == event.recurring_event_id).one_or_none()
-
-        # normalize datetime to the base event.
-        startDiff = updateEvent.start - event.original_start
-        duration = updateEvent.end - updateEvent.start
-        newStart = baseEvent.original_start + startDiff
-
-        if baseEvent:
-            updateRecurringEvent(
-                user,
-                baseEvent,
-                updateEvent.copy(update={'start': newStart, 'end': newStart + duration}),
-                'FOLLOWING',
-                session,
-            )
-
-    elif updateOption == 'FOLLOWING':
-        # Alternatively, create a new Recurring event with a different RRULE.
-        if event.is_parent_recurring_event:
-            followingEvents = user.events.filter(
-                and_(
-                    or_(Event.recurring_event_id == event.id, Event.id == event.id),
-                    Event.start >= event.start,
-                )
-            )
-        else:
-            followingEvents = user.events.filter(
-                and_(
-                    Event.recurring_event_id == event.recurring_event_id, Event.start >= event.start
-                )
-            )
-
-        # Shift from the original time.
-        startDiff = updateEvent.start - event.original_start
-        duration = updateEvent.end - updateEvent.start
-        for e in followingEvents:
-            newStart = e.original_start + startDiff
-            createOrUpdateEvent(
-                e, updateEvent.copy(update={'start': newStart, 'end': newStart + duration})
-            )
-    else:
-        raise InputError(f'updateOption must be {UpdateOption}')
-
-
-def deleteRecurringEvent(user: User, event: Event, updateOption: UpdateOption, session: Session):
-    if updateOption == 'SINGLE':
-        if event.is_parent_recurring_event:
-            deleteRecurringEvent(user, event, 'ALL', session)
-        else:
-            session.delete(event)
-
-    elif updateOption == 'ALL':
-        if event.is_parent_recurring_event:
-            for e in user.events.filter(Event.recurring_event_id == event.id):
-                session.delete(e)
-            session.delete(event)
-
-        elif event.recurring_event_id:
-            for e in user.events.filter(Event.recurring_event_id == event.recurring_event_id):
-                session.delete(e)
-            baseEvent = user.events.filter(Event.id == event.recurring_event_id).first()
-            if baseEvent:
-                session.delete(baseEvent)
-
-    elif updateOption == 'FOLLOWING':
-        # TODO: Could update the recurrence instead.
-        if event.is_parent_recurring_event:
-            deleteRecurringEvent(user, event, 'ALL', session)
-
-        if event.recurring_event_id:
-            user.events.filter(
-                and_(
-                    Event.recurring_event_id == event.recurring_event_id, Event.start >= event.start
-                )
-            ).delete()
-
-    else:
-        raise InputError(f'updateOption must be {UpdateOption}')
-
-
 def createOrUpdateEvent(
-    eventDb: Optional[Event], eventVM: EventBaseVM
-) -> Tuple[Event, Optional[str]]:
-    prevCalendarId = None
-
+    eventDb: Optional[Event],
+    eventVM: EventBaseVM,
+    overrideId: Optional[str] = None,
+    googleId: Optional[str] = None,
+) -> Event:
     if not eventDb:
-        eventDb = Event(
-            None,
+        return Event(
+            googleId,
             eventVM.title,
             eventVM.description,
             eventVM.start,
@@ -280,6 +138,7 @@ def createOrUpdateEvent(
             eventVM.recurrences,
             status=eventVM.status,
             recurringEventId=eventVM.recurring_event_id,
+            overrideId=overrideId,
         )
     else:
         if eventVM.title:
@@ -289,12 +148,11 @@ def createOrUpdateEvent(
             eventDb.end = eventVM.end
             eventDb.start_day = eventVM.start_day
             eventDb.end_day = eventVM.end_day
-            prevCalendarId = eventDb.calendar_id
             eventDb.calendar_id = eventVM.calendar_id
             eventDb.recurring_event_id = eventVM.recurring_event_id
             eventDb.recurrences = eventVM.recurrences
 
-    return eventDb, prevCalendarId
+        return eventDb
 
 
 def getRecurringEventId(baseEventId: str, startDate: datetime, isAllDay: bool) -> str:
@@ -311,20 +169,18 @@ def getAllExpandedRecurringEvents(
     user: User, startDate: datetime, endDate: datetime, session
 ) -> Generator[EventInDBVM, None, None]:
     """Expands the rule in the event to get all events between the start and end.
-    TODO: Remove extra baseRecurringEvent expansions with filters
+    TODO: Don't need to expand ALL baseRecurringEvents, just ones in between the range.
     TODO: add start & end dates properties to recurring events.
     """
     E1 = aliased(Event)
     eventOverrides = (
         user.getEvents(showDeleted=True)
-        .filter(or_(and_(Event.start >= startDate, Event.end <= endDate)), Event.start == None)
+        .filter(or_(and_(Event.start >= startDate, Event.start <= endDate), Event.start == None))
         .join(Event.recurring_event.of_type(E1))
     )
-    eventOverridesMap = {e.id: e for e in eventOverrides}
 
+    eventOverridesMap = {e.id: e for e in eventOverrides}
     baseRecurringEvents = user.getRecurringEvents()
-    startDate = startDate.replace(tzinfo=None)
-    endDate = endDate.replace(tzinfo=None)
 
     for baseRecurringEvent in baseRecurringEvents:
         duration = baseRecurringEvent.end - baseRecurringEvent.start
@@ -332,10 +188,21 @@ def getAllExpandedRecurringEvents(
         isAllDay = baseRecurringEvent.all_day
         baseEventVM = EventInDBVM.from_orm(baseRecurringEvent)
 
-        ruleSet = rruleset()
-        rrules = baseEventVM.getRRules(timezone)
-        for r in rrules:
-            ruleSet.rrule(r)
+        if isAllDay:
+            # All day events use naiive dates.
+            startDate = startDate.replace(tzinfo=None)
+            endDate = endDate.replace(tzinfo=None)
+        else:
+            startDate = startDate.replace(tzinfo=None).astimezone(ZoneInfo('UTC'))
+            endDate = endDate.replace(tzinfo=None).astimezone(ZoneInfo('UTC'))
+
+        if not baseEventVM.recurrences:
+            logging.error(f'Empty Recurrence: {baseEventVM.id}')
+            continue
+
+        ruleSet = recurrenceToRuleSet(
+            baseEventVM.recurrences, timezone, baseEventVM.start, baseEventVM.start_day
+        )
 
         # Expand events, inclusive
         for date in islice(
