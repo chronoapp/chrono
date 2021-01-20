@@ -5,14 +5,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional, Union
 from googleapiclient.errors import HttpError
 
-from fastapi import APIRouter, Depends, HTTPException
-from starlette.status import (
-    HTTP_400_BAD_REQUEST,
-    HTTP_403_FORBIDDEN,
-    HTTP_404_NOT_FOUND,
-    HTTP_422_UNPROCESSABLE_ENTITY,
-)
-
+from fastapi import APIRouter, Depends, HTTPException, status
 from app.core.logger import logger
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
@@ -90,11 +83,11 @@ async def createEvent(
     try:
         calendarDb = user.calendars.filter_by(id=event.calendar_id).one_or_none()
         if not calendarDb:
-            raise HTTPException(HTTP_422_UNPROCESSABLE_ENTITY, detail='Calendar not found.')
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail='Calendar not found.')
 
         if event.recurring_event_id:
             raise HTTPException(
-                HTTP_422_UNPROCESSABLE_ENTITY,
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail='Can not modify recurring event from this endpoint.',
             )
 
@@ -115,7 +108,7 @@ async def createEvent(
 
     except Exception as e:
         logger.error(e)
-        raise HTTPException(HTTP_400_BAD_REQUEST)
+        raise HTTPException(status.HTTP_400_BAD_REQUEST)
 
 
 @router.get('/events/{event_id}', response_model=EventInDBVM)
@@ -125,7 +118,7 @@ async def getEvent(
     """TODO: Fetch recurring event."""
     event = user.events.filter_by(id=event_id).one_or_none()
     if not event:
-        raise HTTPException(HTTP_404_NOT_FOUND)
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     return event
 
@@ -143,24 +136,25 @@ async def updateEvent(
     curEvent = user.events.filter_by(id=event_id).one_or_none()
 
     if curEvent and not curEvent.isWritable():
-        raise HTTPException(HTTP_403_FORBIDDEN, detail='Can not update event.')
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail='Can not update event.')
 
     # Not found in DB.
     elif not curEvent and not event.recurring_event_id:
-        raise HTTPException(HTTP_404_NOT_FOUND, detail='Event not found.')
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail='Event not found.')
 
     # New recurring event with override.
     elif not curEvent and event.recurring_event_id:
         parentEvent = user.events.filter_by(id=event.recurring_event_id).one_or_none()
         if not parentEvent:
             raise HTTPException(
-                HTTP_404_NOT_FOUND, detail=f'Invalid parent event {event.recurring_event_id}.'
+                status.HTTP_404_NOT_FOUND,
+                detail=f'Invalid parent event {event.recurring_event_id}.',
             )
 
         try:
             _, dt = verifyRecurringEvent(event_id, parentEvent)
         except InputError as err:
-            raise HTTPException(HTTP_404_NOT_FOUND, detail=str(err))
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(err))
 
         googleId = None
         if parentEvent.g_id:
@@ -211,10 +205,10 @@ async def updateEvent(
     return eventDb
 
 
-@router.delete('/events/{eventId}', response_model=EventInDBVM)
+@router.delete('/events/{eventId}', status_code=status.HTTP_204_NO_CONTENT)
 async def deleteEvent(
     eventId: str, user: User = Depends(get_current_user), session: Session = Depends(get_db)
-) -> Event:
+):
     """Delete an event.
     If the ID does not exist in the DB, it could be a "virtual ID" for a recurring event,
     in which case we'd need to create an override Event to model a deleted event.
@@ -226,8 +220,9 @@ async def deleteEvent(
         try:
             event = createOverrideDeletedEvent(user, eventId, session)
             user.events.append(event)
+
         except InputError as e:
-            raise HTTPException(HTTP_404_NOT_FOUND, detail=str(e))
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
 
     if event:
         if event.g_id:
@@ -243,7 +238,7 @@ async def deleteEvent(
 
         session.commit()
 
-    return event
+    return {}
 
 
 def getCombinedLabels(user: User, labelVMs: List[LabelInDbVM]) -> List[Label]:

@@ -162,6 +162,5 @@ def test_deleteEvent(userSession, test_client):
         f'/api/v1/events/{event.id}', headers={'Authorization': getAuthToken(user)}
     )
     assert resp.ok
-    assert resp.json().get('id') == event.id
-
+    assert resp.status_code == 204
     assert user.getSingleEvents().count() == 0
