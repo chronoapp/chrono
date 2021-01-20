@@ -25,7 +25,8 @@ export default class Event {
     labels: Label[],
     readonly all_day: boolean,
     readonly backgroundColor: string,
-    readonly foregroundColor: string
+    readonly foregroundColor: string,
+    readonly recurrences: string[] | null
   ) {
     this.labels = labels
   }
@@ -45,7 +46,8 @@ export default class Event {
       eventJson.labels.map((labelJson) => Label.fromJson(labelJson)),
       eventJson.all_day,
       eventJson.background_color,
-      eventJson.foreground_color
+      eventJson.foreground_color,
+      eventJson.recurrences
     )
   }
 
@@ -82,7 +84,8 @@ export default class Event {
       [],
       allDay,
       '',
-      '#fff'
+      '#fff',
+      null
     )
   }
 

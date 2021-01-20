@@ -11,7 +11,7 @@ import {
 import Event, { UNSAVED_EVENT_ID } from '../../models/Event'
 import Alert from '../../models/Alert'
 
-import { EventActionContext } from '../EventActionContext'
+import { EventActionContext, DeleteMethod } from '../EventActionContext'
 import { AlertsContext } from '../../components/AlertsContext'
 
 /**
@@ -22,16 +22,17 @@ export default function useEventService() {
   const alertsContext = React.useContext(AlertsContext)
   const eventActions = React.useContext(EventActionContext)
 
-  function deleteEvent(eventId: string) {
+  function deleteEvent(eventId: string, deleteMethod: DeleteMethod = 'SINGLE') {
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
     eventActions.eventDispatch({
       type: 'DELETE_EVENT',
-      payload: { eventId: eventId },
+      payload: { eventId, deleteMethod },
     })
     const token = getAuthToken()
 
     const savingAlert = new Alert({ title: 'Deleting Event..', isLoading: true })
     alertsContext.addAlert(savingAlert)
+
     deleteEventReq(token, eventId).then(() => {
       alertsContext.addAlert(
         new Alert({
@@ -120,10 +121,16 @@ export default function useEventService() {
       eventActions.eventDispatch({ type: 'CREATE_EVENT', payload: event })
       createEvent(token, event).then((event) => {
         console.log(`Created event in db: ${event.id}`)
-        eventActions.eventDispatch({
-          type: 'UPDATE_EVENT',
-          payload: { event, replaceEventId: UNSAVED_EVENT_ID },
-        })
+
+        if (event.recurrences) {
+          document.dispatchEvent(new CustomEvent(GlobalEvent.refreshCalendar))
+        } else {
+          eventActions.eventDispatch({
+            type: 'UPDATE_EVENT',
+            payload: { event, replaceEventId: UNSAVED_EVENT_ID },
+          })
+        }
+
         alertsContext.addAlert(
           new Alert({
             title: 'Event Created.',

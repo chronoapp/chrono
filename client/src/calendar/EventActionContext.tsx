@@ -1,5 +1,7 @@
 import { createContext, useReducer, useState } from 'react'
 import update from 'immutability-helper'
+import { produce } from 'immer'
+
 import { normalizeArr } from '../lib/normalizer'
 
 import * as dates from '../util/dates'
@@ -9,6 +11,7 @@ export type Action = 'MOVE' | 'RESIZE'
 export type Direction = 'UP' | 'DOWN'
 
 export type Display = 'Day' | 'Week' | 'WorkWeek' | 'Month'
+export type DeleteMethod = 'SINGLE' | 'ALL'
 type EditMode = 'READ' | 'EDIT' | 'FULL_EDIT'
 
 export interface DragDropAction {
@@ -59,7 +62,7 @@ type ActionType =
   | { type: 'INIT_EDIT_EVENT'; payload: { event: Event; selectTailSegment?: boolean } }
   | { type: 'INIT_NEW_EVENT_AT_DATE'; payload: { date: Date; allDay: boolean } }
   | { type: 'CREATE_EVENT'; payload: Event }
-  | { type: 'DELETE_EVENT'; payload: { eventId: string } }
+  | { type: 'DELETE_EVENT'; payload: { eventId: string; deleteMethod?: DeleteMethod } }
   | { type: 'CANCEL_SELECT' }
   | { type: 'UPDATE_EVENT'; payload: { event: Event; replaceEventId: string } }
   | { type: 'UPDATE_EDIT_EVENT'; payload: Event }
@@ -148,9 +151,25 @@ function eventReducer(state: EventState, action: ActionType) {
 
     case 'DELETE_EVENT':
       const delEventId = action.payload.eventId
-      return {
-        ...state,
-        eventsById: update(eventsById, { $unset: [delEventId] }),
+      const deleteMethod = action.payload.deleteMethod || 'SINGLE'
+
+      if (deleteMethod === 'ALL') {
+        return {
+          ...state,
+          eventsById: produce(eventsById, (draft) => {
+            delete draft[delEventId]
+            Object.values(draft).map((event) => {
+              if (event.recurring_event_id === delEventId) {
+                delete draft[event.id]
+              }
+            })
+          }),
+        }
+      } else {
+        return {
+          ...state,
+          eventsById: update(eventsById, { $unset: [delEventId] }),
+        }
       }
 
     case 'CANCEL_SELECT':

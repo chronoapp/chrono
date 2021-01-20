@@ -10,6 +10,7 @@ import { FiCalendar, FiClock, FiAlignLeft, FiTrash } from 'react-icons/fi'
 
 import { format, fullDayFormat } from '../../util/localizer'
 import { addNewLabels } from '../utils/LabelUtils'
+import Popover from '../../lib/popover/Popover'
 
 import Event, { UNSAVED_EVENT_ID } from '../../models/Event'
 import Calendar from '../../models/Calendar'
@@ -51,6 +52,9 @@ function EventPopover(props: IProps) {
   const calendarContext = useContext(CalendarsContext)
   const { labelState } = useContext<LabelContextType>(LabelContext)
   const { saveEvent, deleteEvent } = useEventService()
+
+  const [confirmDeleteActive, setConfirmDeleteActive] = useState<boolean>(false)
+  const deleteModalRef = React.useRef()
 
   const [eventFields, setEventFields] = useState(
     new EventFields(
@@ -120,6 +124,31 @@ function EventPopover(props: IProps) {
     }
 
     return event
+  }
+
+  function onClickDeleteEvent() {
+    if (props.event.recurring_event_id) {
+      setConfirmDeleteActive(!confirmDeleteActive)
+    } else {
+      deleteEvent(props.event.id)
+    }
+  }
+
+  function renderDeleteEventButton() {
+    return (
+      <Popover
+        content={renderConfirmDeleteModal}
+        isOpen={confirmDeleteActive}
+        containerClassName={'z-index-50'}
+        position={['bottom', 'top', 'right']}
+        align={'start'}
+      >
+        <button className="button is-small is-light ml-2" onClick={onClickDeleteEvent}>
+          <FiTrash className="mr-1" />
+          Delete{' '}
+        </button>
+      </Popover>
+    )
   }
 
   function getSelectedCalendar(calendarId: string): Calendar {
@@ -213,13 +242,7 @@ function EventPopover(props: IProps) {
                 Edit
               </button>
 
-              <button
-                className="button is-small is-light ml-2"
-                onClick={() => deleteEvent(props.event.id)}
-              >
-                <FiTrash className="mr-1" />
-                Delete{' '}
-              </button>
+              {renderDeleteEventButton()}
             </div>
           )}
         </div>
@@ -402,13 +425,7 @@ function EventPopover(props: IProps) {
               </button>
 
               {isExistingEvent ? (
-                <button
-                  className="button is-small is-light ml-2"
-                  onClick={() => deleteEvent(props.event.id)}
-                >
-                  <FiTrash className="mr-1" />
-                  Delete{' '}
-                </button>
+                renderDeleteEventButton()
               ) : (
                 <button
                   className="button is-small is-light ml-2"
@@ -436,6 +453,33 @@ function EventPopover(props: IProps) {
           </div>
         </div>
       </>
+    )
+  }
+
+  function renderConfirmDeleteModal() {
+    return (
+      <div
+        className="dropdown-menu"
+        role="menu"
+        style={{ display: 'block', position: 'unset', zIndex: 50 }}
+      >
+        <div className="dropdown-content">
+          <a
+            className="dropdown-item is-flex is-align-items-center"
+            onClick={() => deleteEvent(props.event.id)}
+          >
+            This event
+          </a>
+          <a
+            className="dropdown-item is-flex is-align-items-center"
+            onClick={() => {
+              props.event.recurring_event_id && deleteEvent(props.event.recurring_event_id, 'ALL')
+            }}
+          >
+            All events
+          </a>
+        </div>
+      </div>
     )
   }
 }
