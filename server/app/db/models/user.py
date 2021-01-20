@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, and_
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
@@ -47,10 +47,10 @@ class User(Base):
         return self.calendars.filter_by(primary=True).one()
 
     def getRecurringEvents(self):
-        return self.events.filter(Event.recurrences != None)
+        return self.events.filter(and_(Event.recurrences != None, Event.status != 'deleted'))
 
-    def getEvents(self, showDeleted=False):
-        # Don't show the base recurring event.
+    def getSingleEvents(self, showDeleted=False):
+        """Events query without the base recurring events."""
         eventsResult = self.events.filter_by(recurrences=None)
 
         if showDeleted:

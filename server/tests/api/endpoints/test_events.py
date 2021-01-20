@@ -156,7 +156,7 @@ def test_deleteEvent(userSession, test_client):
     event = createEvent(calendar, start, end)
     session.commit()
 
-    assert user.getEvents().count() == 1
+    assert user.getSingleEvents().count() == 1
 
     resp = test_client.delete(
         f'/api/v1/events/{event.id}', headers={'Authorization': getAuthToken(user)}
@@ -164,4 +164,4 @@ def test_deleteEvent(userSession, test_client):
     assert resp.ok
     assert resp.json().get('id') == event.id
 
-    assert user.getEvents().count() == 0
+    assert user.getSingleEvents().count() == 0

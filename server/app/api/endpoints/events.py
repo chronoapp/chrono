@@ -63,7 +63,7 @@ async def getEvents(
 
     if title:
         return (
-            user.getEvents()
+            user.getSingleEvents()
             .filter(and_(Event.start <= datetime.now(), Event.title.ilike(title)))
             .all()
         )
@@ -72,7 +72,7 @@ async def getEvents(
         return Event.search(session, user.id, tsQuery, limit=limit).all()
     else:
         singleEvents = (
-            user.getEvents()
+            user.getSingleEvents()
             .filter(and_(Event.start >= startDate, Event.start <= endDate))
             .order_by(desc(Event.start))
             .limit(limit)
@@ -211,7 +211,7 @@ async def updateEvent(
     return eventDb
 
 
-@router.delete('/events/{eventId}')
+@router.delete('/events/{eventId}', response_model=EventInDBVM)
 async def deleteEvent(
     eventId: str, user: User = Depends(get_current_user), session: Session = Depends(get_db)
 ) -> Event:
@@ -220,7 +220,7 @@ async def deleteEvent(
     in which case we'd need to create an override Event to model a deleted event.
     """
     logger.info(f'Delete Event {eventId}')
-    event = user.events.filter_by(id=eventId).one_or_none()
+    event = user.events.filter(and_(Event.id == eventId, Event.status != 'deleted')).one_or_none()
 
     if not event:
         try:
@@ -237,6 +237,10 @@ async def deleteEvent(
                 logger.error(e)
 
         event.status = 'deleted'
+
+        for recurringEvent in event.recurring_events:
+            recurringEvent.status = 'deleted'
+
         session.commit()
 
     return event

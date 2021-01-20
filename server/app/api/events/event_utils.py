@@ -106,7 +106,7 @@ def recurrenceToRuleSet(
 
 
 def getRRule(
-    startDate: datetime,
+    startDate: Optional[datetime],
     freq: int,
     interval: int,
     occurrences: Optional[int],
@@ -192,7 +192,7 @@ def getAllExpandedRecurringEvents(
     """
     E1 = aliased(Event)
     eventOverrides = (
-        user.getEvents(showDeleted=True)
+        user.getSingleEvents(showDeleted=True)
         .filter(
             or_(
                 Event.original_start == None,

@@ -131,7 +131,7 @@ def test_syncEventsToDb_recurring(userSession: Tuple[User, Session]):
     syncEventsToDb(calendar, eventItems, session)
 
     parent = user.events.filter_by(g_id='7bpp8ujgsitkcuk6h1er0nadfn').first()
-    events = user.getEvents(showDeleted=True).all()
+    events = user.getSingleEvents(showDeleted=True).all()
     assert len(events) == 2
 
     for e in events:

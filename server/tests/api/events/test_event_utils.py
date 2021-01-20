@@ -8,7 +8,6 @@ from dateutil.rrule import DAILY, WEEKLY
 
 from app.db.models import User
 from app.api.events.event_utils import (
-    getRRule,
     EventBaseVM,
     getAllExpandedRecurringEvents,
     createOrUpdateEvent,
@@ -24,12 +23,10 @@ def test_getAllExpandedRecurringEvents_override(userSession: Tuple[User, Session
     calendar = user.getPrimaryCalendar()
 
     # Create a new recurring event.
-    start = datetime.fromisoformat('2020-01-02T12:00:00-05:00')
+    start = datetime.fromisoformat('2020-01-02T12:00:00')
     recurringEvent = createEvent(calendar, start, start + timedelta(hours=1))
 
-    # TODO: Write the rule with timezone?
-    recurrences = ['DTSTART:20200102T120000Z', 'RRULE:FREQ=DAILY;UNTIL=20200107T120000Z']
-    recurringEvent.recurrences = recurrences
+    recurringEvent.recurrences = ['RRULE:FREQ=DAILY;UNTIL=20200107T120000Z']
     user.events.append(recurringEvent)
 
     # Expanded recurring events between 2 dates.
@@ -95,11 +92,9 @@ def test_verifyRecurringEvent(userSession: Tuple[User, Session]):
 
     # Create a new recurring event.
     start = datetime.fromisoformat('2020-12-01T12:00:00')
-    print(start.tzinfo)
     recurringEvent = createEvent(calendar, start, start + timedelta(hours=1), timezone='UTC')
 
-    rule = getRRule(start, DAILY, 1, 5, None)
-    recurringEvent.recurrences = [str(rule)]
+    recurringEvent.recurrences = ['RRULE:FREQ=DAILY;COUNT=5']
     user.events.append(recurringEvent)
     session.commit()
 
@@ -115,22 +110,3 @@ def test_verifyRecurringEvent(userSession: Tuple[User, Session]):
 
     with pytest.raises(InputError):
         verifyRecurringEvent(invalidEventId2, recurringEvent)
-
-
-def test_rrules():
-    """TODO: Timezone aware vs unaware recurrences."""
-    from dateutil.rrule import rrule, rruleset, rrulestr
-    from datetime import datetime
-
-    start = datetime.fromisoformat("2021-01-09T23:00:00-05:00")
-    print(f'START: {start}')
-    rules1 = rrulestr(
-        """RRULE:FREQ=DAILY;UNTIL=20210113T045959Z\n
-    EXDATE;TZID=America/Toronto:20210111T230000""",
-        dtstart=start,
-    )
-
-    start = datetime.fromisoformat("2021-01-09T23:00:00-05:00")
-    end = datetime.fromisoformat("2021-01-11T23:00:00-05:00")
-    for x in rules1.between(start, end):
-        print(x.tzinfo)

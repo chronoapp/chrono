@@ -550,6 +550,7 @@ def getEventBody(event: Event, timeZone: str):
     eventBody = {
         'summary': event.title,
         'description': event.description,
+        'recurrence': event.recurrences,
     }
 
     if event.all_day:
@@ -566,7 +567,5 @@ def getEventBody(event: Event, timeZone: str):
             'timeZone': timeZone,
             'date': None,
         }
-
-    logger.info(eventBody)
 
     return eventBody
