@@ -4,12 +4,13 @@ import logging
 
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session, aliased
-from typing import List, Dict, Optional, Literal, Tuple, Generator
+from typing import List, Dict, Optional, Literal, Tuple, Generator, Any
+
 from dateutil.rrule import rrule, rruleset, rrulestr
 from datetime import timedelta
 from backports.zoneinfo import ZoneInfo
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from app.api.endpoints.labels import LabelInDbVM
 from app.db.models import Event, User
 from app.db.models.event import EventStatus
@@ -42,6 +43,14 @@ class EventBaseVM(BaseModel):
     original_start: Optional[datetime]
     original_start_day: Optional[str]
     original_timezone: Optional[str]
+
+    @validator('recurrences')
+    def isValidRecurrence(cls, recurrences: Optional[List[str]], values: Dict[str, Any]):
+        if recurrences and len(recurrences) > 0 and 'start' in values:
+            recurrenceToRuleSet(
+                recurrences, values['timezone'] or 'UTC', values['start'], values['start_day']
+            )
+        return recurrences
 
     def isAllDay(self) -> bool:
         return self.start_day is not None and self.end_day is not None

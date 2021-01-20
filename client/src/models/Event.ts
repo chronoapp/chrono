@@ -13,7 +13,7 @@ export default class Event {
 
   constructor(
     readonly id: string,
-    readonly recurring_event_id: string,
+    readonly recurring_event_id: string | null,
     readonly calendar_id: string,
     readonly title: string,
     readonly title_short: string,
@@ -70,7 +70,7 @@ export default class Event {
   static newDefaultEvent(startDate: Date, endDate: Date, allDay: boolean) {
     return new Event(
       UNSAVED_EVENT_ID,
-      UNSAVED_EVENT_ID,
+      null,
       '',
       '',
       '',

@@ -122,8 +122,7 @@ async def createEvent(
 async def getEvent(
     event_id: str, user: User = Depends(get_current_user), session: Session = Depends(get_db)
 ) -> Event:
-    """TODO: Fetch recurring event.
-    """
+    """TODO: Fetch recurring event."""
     event = user.events.filter_by(id=event_id).one_or_none()
     if not event:
         raise HTTPException(HTTP_404_NOT_FOUND)

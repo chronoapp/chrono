@@ -2,6 +2,7 @@ import json
 from uuid import uuid4
 from datetime import datetime, timedelta
 
+from app.api.events.event_utils import getExpandedRecurringEvents
 from app.api.endpoints.authentication import getAuthToken
 from tests.utils import createEvent
 
@@ -57,6 +58,67 @@ def test_createEvent(userSession, test_client):
     assert not eventDb.all_day
 
 
+def test_createEvent_recurring_invalid(userSession, test_client):
+    user, _ = userSession
+    calendar = user.getPrimaryCalendar()
+    start = datetime.fromisoformat("2021-01-11T05:00:00+00:00")
+    end = start + timedelta(hours=1)
+
+    rule = """
+        DTSTART:20210111T050000Z
+        RRULE:FREQ=DAILY;INTERVAL=1;COUNT=invalid
+    """
+    recurrences = [r.strip() for r in rule.split('\n') if r.strip()]
+
+    event = {
+        "title": "laundry",
+        "start": '20210111T050000Z',  # start.isoformat(),
+        "end": end.isoformat(),
+        "calendar_id": calendar.id,
+        "recurrences": recurrences,
+    }
+
+    resp = test_client.post(
+        f'/api/v1/events/', headers={'Authorization': getAuthToken(user)}, data=json.dumps(event)
+    )
+    assert not resp.ok
+    assert resp.status_code == 422
+
+
+def test_createEvent_recurring(userSession, test_client):
+    user, _ = userSession
+    calendar = user.getPrimaryCalendar()
+
+    start = datetime.fromisoformat("2021-01-11T05:00:00+00:00")
+    end = start + timedelta(hours=1)
+
+    rule = """
+        DTSTART:20210111T050000Z
+        RRULE:FREQ=DAILY;INTERVAL=1;COUNT=3
+    """
+    recurrences = [r.strip() for r in rule.split('\n') if r.strip()]
+
+    event = {
+        "title": "laundry",
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "calendar_id": calendar.id,
+        "recurrences": recurrences,
+    }
+
+    resp = test_client.post(
+        f'/api/v1/events/', headers={'Authorization': getAuthToken(user)}, data=json.dumps(event)
+    )
+    assert resp.ok
+    print(resp.json())
+
+    eventDb = user.events.first()
+    assert eventDb.recurrences == recurrences
+
+    events = list(getExpandedRecurringEvents(eventDb, {}, start, start + timedelta(days=5)))
+    assert len(events) == 3
+
+
 def test_createEvent_allDay(userSession, test_client):
     """TODO: API Should only need one of start / end and start_day / end_day"""
     user, _ = userSession
@@ -98,5 +160,7 @@ def test_deleteEvent(userSession, test_client):
     resp = test_client.delete(
         f'/api/v1/events/{event.id}', headers={'Authorization': getAuthToken(user)}
     )
+    assert resp.ok
+    assert resp.json().get('id') == event.id
 
     assert user.getEvents().count() == 0
