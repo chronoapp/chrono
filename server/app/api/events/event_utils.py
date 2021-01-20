@@ -47,9 +47,14 @@ class EventBaseVM(BaseModel):
     @validator('recurrences')
     def isValidRecurrence(cls, recurrences: Optional[List[str]], values: Dict[str, Any]):
         if recurrences and len(recurrences) > 0 and 'start' in values:
+            recurrenceString = '\n'.join(recurrences)
+            if 'DTSTART' in recurrenceString or 'DTEND' in recurrenceString:
+                raise ValueError('Recurrence should not have DTSTART or DTEND')
+
             recurrenceToRuleSet(
-                recurrences, values['timezone'] or 'UTC', values['start'], values['start_day']
+                recurrenceString, values['timezone'] or 'UTC', values['start'], values['start_day']
             )
+
         return recurrences
 
     def isAllDay(self) -> bool:
@@ -81,23 +86,23 @@ class InputError(Error):
 
 
 def recurrenceToRuleSet(
-    recurrence: List[str], timezone: str, start: datetime, startDay: Optional[str]
+    recurrence: str, timezone: str, start: datetime, startDay: Optional[str]
 ) -> rruleset:
     """Gets the rrule objects from recurrence string array
     Converts to the local datetime in the timezone.
     """
     if not start and not startDay:
-        raise InputError('Either until or occurrences must be set.')
+        raise ValueError('Either until or occurrences must be set.')
 
-    if not recurrence or len(recurrence) == 0:
-        raise InputError('Recurrence array must be non-empty.')
+    if recurrence == '':
+        raise ValueError('Recurrences must be non-empty.')
 
     if startDay is not None:
         localDate = datetime.strptime(startDay, "%Y-%m-%d")
-        return rrulestr('\n'.join(recurrence), dtstart=localDate, ignoretz=True)
+        return rrulestr(recurrence, dtstart=localDate, ignoretz=True)
     else:
         localizedDate = start.astimezone(ZoneInfo(timezone))
-        return rrulestr('\n'.join(recurrence), dtstart=localizedDate)
+        return rrulestr(recurrence, dtstart=localizedDate)
 
 
 def getRRule(
@@ -226,7 +231,7 @@ def getExpandedRecurringEvents(
 
     else:
         ruleSet = recurrenceToRuleSet(
-            baseEventVM.recurrences, timezone, baseEventVM.start, baseEventVM.start_day
+            '\n'.join(baseEventVM.recurrences), timezone, baseEventVM.start, baseEventVM.start_day
         )
 
         # All day events use naiive dates.

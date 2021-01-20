@@ -59,25 +59,30 @@ def test_createEvent(userSession, test_client):
 
 
 def test_createEvent_recurring_invalid(userSession, test_client):
+    """Malformed recurrence string."""
     user, _ = userSession
     calendar = user.getPrimaryCalendar()
     start = datetime.fromisoformat("2021-01-11T05:00:00+00:00")
     end = start + timedelta(hours=1)
-
-    rule = """
-        DTSTART:20210111T050000Z
-        RRULE:FREQ=DAILY;INTERVAL=1;COUNT=invalid
-    """
-    recurrences = [r.strip() for r in rule.split('\n') if r.strip()]
-
     event = {
         "title": "laundry",
         "start": '20210111T050000Z',  # start.isoformat(),
         "end": end.isoformat(),
         "calendar_id": calendar.id,
-        "recurrences": recurrences,
     }
 
+    rule = """
+        DTSTART:20210111T050000Z
+        RRULE:FREQ=DAILY;INTERVAL=1;COUNT=5
+    """
+    event['recurrences'] = [r.strip() for r in rule.split('\n') if r.strip()]
+    resp = test_client.post(
+        f'/api/v1/events/', headers={'Authorization': getAuthToken(user)}, data=json.dumps(event)
+    )
+    assert not resp.ok
+    assert resp.status_code == 422
+
+    event['recurrences'] = ['RRULE:FREQ=DAILY;INTERVAL=1;COUNT=invalid']
     resp = test_client.post(
         f'/api/v1/events/', headers={'Authorization': getAuthToken(user)}, data=json.dumps(event)
     )
@@ -92,10 +97,7 @@ def test_createEvent_recurring(userSession, test_client):
     start = datetime.fromisoformat("2021-01-11T05:00:00+00:00")
     end = start + timedelta(hours=1)
 
-    rule = """
-        DTSTART:20210111T050000Z
-        RRULE:FREQ=DAILY;INTERVAL=1;COUNT=3
-    """
+    rule = """RRULE:FREQ=DAILY;INTERVAL=1;COUNT=3"""
     recurrences = [r.strip() for r in rule.split('\n') if r.strip()]
 
     event = {
@@ -110,7 +112,6 @@ def test_createEvent_recurring(userSession, test_client):
         f'/api/v1/events/', headers={'Authorization': getAuthToken(user)}, data=json.dumps(event)
     )
     assert resp.ok
-    print(resp.json())
 
     eventDb = user.events.first()
     assert eventDb.recurrences == recurrences

@@ -116,3 +116,21 @@ def test_verifyRecurringEvent(userSession: Tuple[User, Session]):
     with pytest.raises(InputError):
         verifyRecurringEvent(invalidEventId2, recurringEvent)
 
+
+def test_rrules():
+    """TODO: Timezone aware vs unaware recurrences."""
+    from dateutil.rrule import rrule, rruleset, rrulestr
+    from datetime import datetime
+
+    start = datetime.fromisoformat("2021-01-09T23:00:00-05:00")
+    print(f'START: {start}')
+    rules1 = rrulestr(
+        """RRULE:FREQ=DAILY;UNTIL=20210113T045959Z\n
+    EXDATE;TZID=America/Toronto:20210111T230000""",
+        dtstart=start,
+    )
+
+    start = datetime.fromisoformat("2021-01-09T23:00:00-05:00")
+    end = datetime.fromisoformat("2021-01-11T23:00:00-05:00")
+    for x in rules1.between(start, end):
+        print(x.tzinfo)
