@@ -7,6 +7,8 @@ import Event, { UNSAVED_EVENT_ID } from '../models/Event'
 
 export type Action = 'MOVE' | 'RESIZE'
 export type Direction = 'UP' | 'DOWN'
+
+export type Display = 'Day' | 'Week' | 'WorkWeek' | 'Month'
 type EditMode = 'READ' | 'EDIT' | 'FULL_EDIT'
 
 export interface DragDropAction {
@@ -25,6 +27,8 @@ export interface EventActionContextType {
   eventState: EventState
   eventDispatch: React.Dispatch<ActionType>
 
+  display: Display
+  setDisplay: (display: Display) => void
   selectedDate: Date
   setSelectedDate: (date: Date) => void
 }
@@ -86,6 +90,8 @@ function eventReducer(state: EventState, action: ActionType) {
       }
 
     case 'INIT_EDIT_EVENT':
+      console.log('INIT_EDIT_EVENT')
+
       const { selectTailSegment } = action.payload
       return {
         ...state,
@@ -179,6 +185,7 @@ export function EventActionProvider(props: any) {
   // Handles Drag & Drop Events.
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [dragDropAction, setDragDropAction] = useState<DragDropAction | undefined>(undefined)
+  const [display, setDisplay] = useState<Display>('Week')
   const [eventState, eventDispatch] = useReducer(eventReducer, {
     loading: true,
     eventsById: {},
@@ -211,6 +218,8 @@ export function EventActionProvider(props: any) {
     dragAndDropAction: dragDropAction,
     onBeginAction: handleBeginAction,
 
+    display,
+    setDisplay,
     selectedDate,
     setSelectedDate,
     eventState,

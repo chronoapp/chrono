@@ -16,6 +16,7 @@ import Plugins from './Plugins'
 import { AlertsContext } from '../components/AlertsContext'
 import { EventActionContext } from '../calendar/EventActionContext'
 
+import Header from '../calendar/Header'
 import '../style/index.scss'
 
 interface Props {
@@ -94,23 +95,36 @@ function Layout(props: Props) {
     const router = useRouter()
 
     return (
-      <div id="navbar" className="navbar-menu">
-        <div className="navbar-start">
-          <Link href="/">
-            <a className={clsx('pl-0', 'navbar-item', router.pathname == '/' && 'is-active')}>
-              Calendar
+      <nav className="navbar" role="navigation" aria-label="main navigation">
+        <div className="is-flex has-width-100">
+          <div className="navbar-menu">
+            <a className="navbar-item" href="#">
+              <img
+                src={'./timecouncil-symbol.png'}
+                style={{ maxHeight: '2.5rem', width: '2.5rem' }}
+              />
             </a>
-          </Link>
-          <Link href="/events">
-            <a
-              className={clsx({
-                'navbar-item': true,
-                'is-active': router.pathname == '/events',
-              })}
-            >
-              Events
-            </a>
-          </Link>
+
+            <div className="is-flex">
+              <Link href="/">
+                <a className={clsx('pl-0', 'navbar-item', router.pathname == '/' && 'is-active')}>
+                  Calendar
+                </a>
+              </Link>
+              <Link href="/events">
+                <a
+                  className={clsx({
+                    'navbar-item': true,
+                    'is-active': router.pathname == '/events',
+                  })}
+                >
+                  Events
+                </a>
+              </Link>
+            </div>
+          </div>
+
+          {props.canCreateEvent && <Header />}
         </div>
 
         <div className="navbar-end">
@@ -118,7 +132,7 @@ function Layout(props: Props) {
             <Settings />
           </div>
         </div>
-      </div>
+      </nav>
     )
   }
 
@@ -132,30 +146,7 @@ function Layout(props: Props) {
         <link rel="icon" href="/favicon-128.ico" type="image/x-icon" />
       </Head>
 
-      <nav className="navbar" role="navigation" aria-label="main navigation">
-        <div className="navbar-brand">
-          <a className="navbar-item" href="#">
-            <img
-              src={'./timecouncil-symbol.png'}
-              style={{ maxHeight: '2.5rem', width: '2.5rem' }}
-            />
-          </a>
-
-          <a
-            role="button"
-            className="navbar-burger burger"
-            aria-label="menu"
-            aria-expanded="false"
-            data-target="navbar"
-          >
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-          </a>
-        </div>
-
-        {renderNavItems()}
-      </nav>
+      {renderNavItems()}
 
       <div className="app-content">
         {props.includeLeftPanel && (

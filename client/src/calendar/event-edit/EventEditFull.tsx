@@ -91,7 +91,7 @@ export default function EventEditFull(props: { event: Event }) {
             <TaggableInput
               labels={labels}
               title={event.title}
-              wrapperCls={'is-fullwidth'}
+              wrapperCls={'has-width-100'}
               portalCls={'.cal-event-modal-container'}
               isHeading={false}
               placeholder={!event.title ? Event.getDefaultTitle(event) : ''}
