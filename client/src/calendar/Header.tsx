@@ -65,7 +65,7 @@ export default function Header() {
   function titleForDisplay(display: Display) {
     switch (display) {
       case 'WorkWeek': {
-        return 'Work week (X)'
+        return 'Work week'
       }
       default: {
         return display

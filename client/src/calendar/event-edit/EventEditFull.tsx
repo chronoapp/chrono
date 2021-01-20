@@ -50,7 +50,12 @@ export default function EventEditFull(props: { event: Event }) {
         <div className="modal-background"></div>
         <div ref={recurringEditRef.current} className="modal-card" style={{ width: 300 }}>
           <section className="modal-card-body has-text-left pb-2">
-            <RecurringEventEditor initialDate={event.start} />
+            <RecurringEventEditor
+              initialDate={event.start}
+              onChange={(rule) => {
+                console.log(`Rule Updated: ${rule}`)
+              }}
+            />
 
             <div className="mt-2 is-flex is-justify-content-flex-end">
               <button className="button is-small is-primary is-ghost">Done</button>
