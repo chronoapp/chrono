@@ -288,6 +288,17 @@ def syncDeletedEvent(
         )
 
         googleEventId = eventItem.get('id')
+        startDateTime = eventItem['originalStartTime']
+        originalTimezone = startDateTime.get('timeZone')
+        if startDateTime.get('dateTime'):
+            startDt = datetime.fromisoformat(startDateTime.get('dateTime'))
+            startDay = None
+            recurringEventId = getRecurringEventId(baseRecurringEvent.id, startDt, False)
+        else:
+            startDt = datetime.fromisoformat(startDateTime.get('date'))
+            startDay = startDt.strftime('%Y-%m-%d')
+            recurringEventId = getRecurringEventId(baseRecurringEvent.id, startDt, True)
+
         event = Event(
             googleEventId,
             None,
@@ -299,19 +310,11 @@ def syncDeletedEvent(
             calendar.id,
             None,
             None,
+            startDt,
+            startDay,
+            originalTimezone,
             status=convertStatus(eventItem['status']),
         )
-
-        startDateTime = eventItem['originalStartTime']
-        if startDateTime.get('dateTime'):
-            recurringEventId = getRecurringEventId(
-                baseRecurringEvent.id, datetime.fromisoformat(startDateTime.get('dateTime')), False
-            )
-        else:
-            recurringEventId = getRecurringEventId(
-                baseRecurringEvent.id, datetime.fromisoformat(startDateTime.get('date')), True
-            )
-
         event.id = recurringEventId
         event.recurring_event = baseRecurringEvent
 
@@ -325,6 +328,10 @@ def getOrCreateBaseRecurringEvent(
     googleRecurringEventId: str,
     session: Session,
 ) -> Event:
+    """Retrieves the existing base recurring event, or make a stub event in case
+    the parent has not been created yet. For the stub parent event, we only need a primary ID,
+    since the rest of the info will be populated then the parent is synced.
+    """
     user = calendar.user
     baseRecurringEvent = getEventWithCache(user, addedEventsCache, googleRecurringEventId)
 
@@ -338,6 +345,9 @@ def getOrCreateBaseRecurringEvent(
             None,
             None,
             calendar.id,
+            None,
+            None,
+            None,
             None,
             None,
             status='active',
@@ -376,15 +386,17 @@ def syncCreatedOrUpdatedGoogleEvent(
 
     if baseRecurringEvent:
         recurringEventId = None
-        if eventVM.original_start_datetime:
+        if eventVM.original_start:
             recurringEventId = getRecurringEventId(
                 baseRecurringEvent.id,
-                eventVM.original_start_datetime,
+                eventVM.original_start,
                 False,
             )
         elif eventVM.original_start_day:
             recurringEventId = getRecurringEventId(
-                baseRecurringEvent.id, eventVM.original_start_day, True
+                baseRecurringEvent.id,
+                datetime.fromisoformat(eventVM.original_start_day),
+                True,
             )
         else:
             raise Exception(f'No start time for event: {eventVM.g_id}')
@@ -446,7 +458,7 @@ def googleEventToEventVM(calendarId: str, eventItem: Dict[str, Any]) -> GoogleEv
         timezone=timeZone,
         recurrences=recurrence,
         recurring_event_g_id=recurringEventGId,
-        original_start_datetime=originalStartDateTime,
+        original_start=originalStartDateTime,
         original_start_day=originalStartDay,
     )
     return eventVM

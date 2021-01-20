@@ -6,7 +6,12 @@ from typing import List, Optional, Union
 from googleapiclient.errors import HttpError
 
 from fastapi import APIRouter, Depends, HTTPException
-from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
+from starlette.status import (
+    HTTP_400_BAD_REQUEST,
+    HTTP_403_FORBIDDEN,
+    HTTP_404_NOT_FOUND,
+    HTTP_422_UNPROCESSABLE_ENTITY,
+)
 
 from app.core.logger import logger
 from app.api.utils.db import get_db
@@ -85,21 +90,15 @@ async def createEvent(
     try:
         calendarDb = user.calendars.filter_by(id=event.calendar_id).one_or_none()
         if not calendarDb:
-            raise HTTPException(HTTP_400_BAD_REQUEST, detail='Calendar not found.')
+            raise HTTPException(HTTP_422_UNPROCESSABLE_ENTITY, detail='Calendar not found.')
 
-        eventDb = Event(
-            None,
-            event.title,
-            event.description,
-            event.start,
-            event.end,
-            event.start_day,
-            event.end_day,
-            event.calendar_id,
-            None,
-            event.recurrences,
-        )
+        if event.recurring_event_id:
+            raise HTTPException(
+                HTTP_422_UNPROCESSABLE_ENTITY,
+                detail='Can not modify recurring event from this endpoint.',
+            )
 
+        eventDb = createOrUpdateEvent(None, event)
         eventDb.labels = getCombinedLabels(user, event.labels)
         eventDb.calendar = calendarDb
         user.events.append(eventDb)
@@ -123,7 +122,8 @@ async def createEvent(
 async def getEvent(
     event_id: str, user: User = Depends(get_current_user), session: Session = Depends(get_db)
 ) -> Event:
-
+    """TODO: Fetch recurring event.
+    """
     event = user.events.filter_by(id=event_id).one_or_none()
     if not event:
         raise HTTPException(HTTP_404_NOT_FOUND)
@@ -168,7 +168,14 @@ async def updateEvent(
             googleId = getRecurringEventId(parentEvent.g_id, dt, event.isAllDay())
 
         prevCalendarId = None
+
+        # Store original starts
+        event.original_start = dt
+        event.original_start_day = dt.strftime('%Y-%m-%d') if event.isAllDay() else None
+        event.original_timezone = event.timezone
+
         eventDb = createOrUpdateEvent(None, event, overrideId=event_id, googleId=googleId)
+
         user.events.append(eventDb)
         session.commit()
         session.refresh(eventDb)
@@ -266,6 +273,9 @@ def createOverrideDeletedEvent(user: User, eventId: str, session):
         parentEvent.calendar.id,
         None,
         None,
+        dt,
+        dt.strftime('%Y-%m-%d') if parentEvent.all_day else None,
+        parentEvent.time_zone,
         overrideId=eventId,
         recurringEventId=parentEvent.id,
         status='deleted',

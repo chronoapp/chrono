@@ -39,8 +39,9 @@ class EventBaseVM(BaseModel):
     recurrences: Optional[List[str]]
     recurring_event_id: Optional[str]
 
-    original_start_datetime: Optional[datetime]
-    original_start_day: Optional[datetime]
+    original_start: Optional[datetime]
+    original_start_day: Optional[str]
+    original_timezone: Optional[str]
 
     def isAllDay(self) -> bool:
         return self.start_day is not None and self.end_day is not None
@@ -136,6 +137,9 @@ def createOrUpdateEvent(
             eventVM.calendar_id,
             eventVM.timezone,
             eventVM.recurrences,
+            eventVM.original_start,
+            eventVM.original_start_day,
+            eventVM.original_timezone,
             status=eventVM.status,
             recurringEventId=eventVM.recurring_event_id,
             overrideId=overrideId,
@@ -175,7 +179,15 @@ def getAllExpandedRecurringEvents(
     E1 = aliased(Event)
     eventOverrides = (
         user.getEvents(showDeleted=True)
-        .filter(or_(and_(Event.start >= startDate, Event.start <= endDate), Event.start == None))
+        .filter(
+            or_(
+                Event.original_start == None,
+                and_(
+                    Event.original_start >= startDate,
+                    Event.original_start <= endDate,
+                ),
+            )
+        )
         .join(Event.recurring_event.of_type(E1))
     )
 

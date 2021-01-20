@@ -25,6 +25,9 @@ def createEvent(
         calendar.id,
         timezone,
         None,
+        None,
+        None,
+        None,
     )
     event.calendar = calendar
     event.user = calendar.user

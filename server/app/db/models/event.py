@@ -114,9 +114,11 @@ class Event(Base):
         calendar_id: str,
         timezone: Optional[str],
         recurrences: Optional[List[str]],
+        originalStart: Optional[datetime],
+        originalStartDay: Optional[str],
+        originalTimezone: Optional[str],
         overrideId: Optional[str] = None,
         status: EventStatus = 'active',
-        copyOriginalStart=False,
         recurringEventId: Optional[str] = None,
     ):
         if overrideId:
@@ -135,10 +137,9 @@ class Event(Base):
         self.recurring_event_id = recurringEventId
         self.status = status
 
-        if copyOriginalStart:
-            self.original_start = start
-            self.original_start_day = start_day
-            self.original_timezone = timezone
+        self.original_start = originalStart
+        self.original_start_day = originalStartDay
+        self.original_timezone = originalTimezone
 
     def __repr__(self):
         return f'<Event {self.id} {self.title} start:{self.start} end:{self.end} {self.status}/>'
