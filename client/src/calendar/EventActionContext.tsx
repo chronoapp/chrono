@@ -229,6 +229,10 @@ export function EventActionProvider(props: any) {
     console.log('handleBeginAction')
     const interacting = dragDropAction ? dragDropAction.interacting : false
     setDragDropAction({ event, action, direction, interacting })
+
+    if (event.id !== eventState.editingEvent?.id) {
+      eventDispatch({ type: 'CANCEL_SELECT' })
+    }
   }
 
   const defaultContext: EventActionContextType = {

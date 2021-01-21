@@ -157,10 +157,10 @@ export default function Header() {
         </div>
       </div>
 
-      <div className="calendar-dropdown">
+      <div className="calendar-dropdown is-flex is-align-items-center">
         <div className="dropdown-trigger">
           <button
-            className="button button-underline is-small"
+            className="button is-light is-small"
             aria-haspopup="true"
             aria-controls="dropdown-menu"
             onClick={() => setDisplayToggleActive(!displayToggleActive)}
@@ -176,7 +176,7 @@ export default function Header() {
           className="dropdown-menu is-small"
           id="dropdown-menu"
           role="menu"
-          style={{ left: 'auto', minWidth: '10rem', right: '1em' }}
+          style={{ left: 'auto', minWidth: '10rem', right: 0, top: '100%' }}
         >
           <div className="dropdown-content has-text-left">
             <a onClick={() => selectDisplay('Day')} className="dropdown-item">

@@ -75,7 +75,7 @@ function Calendar() {
       .map((cal) => cal.id)
 
     const eventByIdWithEditingEvent = produce(eventsById, (draft) => {
-      if (editingEvent && draft[editingEvent.id]) {
+      if (editingEvent) {
         draft[editingEvent.id] = editingEvent.event
       }
     })
