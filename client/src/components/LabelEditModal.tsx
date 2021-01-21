@@ -136,7 +136,7 @@ function EditLabelModal() {
         </section>
         <footer className="modal-card-foot" style={{ justifyContent: 'flex-end' }}>
           <button
-            className="button is-link"
+            className="button is-primary"
             onClick={() => {
               onClickSaveLabel(newLabelModal, selectedColor)
             }}

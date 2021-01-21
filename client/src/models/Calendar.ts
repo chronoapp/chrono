@@ -1,13 +1,9 @@
-type AccessRole = 'reader' | 'writer' | 'owner' | 'freeBusyReader'
+import { immerable } from 'immer'
+
+export type AccessRole = 'reader' | 'writer' | 'owner' | 'freeBusyReader'
 
 export default class Calendar {
-  public id: string
-  public summary: string
-  public description: string
-  public backgroundColor: string
-  public foregroundColor: string
-  public selected: boolean
-  public primary: boolean
+  [immerable] = true
 
   static fromJson(json): Calendar {
     return new Calendar(
@@ -18,29 +14,22 @@ export default class Calendar {
       json.foregroundColor,
       json.selected,
       json.primary,
-      json.accessRole
+      json.accessRole,
+      json.isGoogleCalendar
     )
   }
 
   constructor(
-    id: string,
-    summary: string,
-    description: string,
-    backgroundColor: string,
-    foregroundColor: string,
-    selected: boolean,
-    primary: boolean,
-    readonly accessRole: AccessRole
-  ) {
-    this.id = id
-    this.summary = summary
-    this.description = description
-    this.backgroundColor = backgroundColor
-    this.foregroundColor = foregroundColor
-    this.selected = selected
-    this.primary = primary
-    this.accessRole = accessRole
-  }
+    readonly id: string,
+    readonly summary: string,
+    readonly description: string,
+    readonly backgroundColor: string,
+    readonly foregroundColor: string,
+    readonly selected: boolean,
+    readonly primary: boolean,
+    readonly accessRole: AccessRole,
+    readonly isGoogleCalendar: boolean
+  ) {}
 
   public isWritable(): boolean {
     return this.accessRole == 'writer' || this.accessRole == 'owner'
