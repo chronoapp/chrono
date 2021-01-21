@@ -39,8 +39,18 @@ def userSession():
     """
     with scoped_session() as session:
         user = User('test@example.com', 'Test User', None)
-        calendar = Calendar('default', 'America/Toronto', 'Default Calendar', 'description',
-                            '#ffffff', '#000000', True, 'owner', True, False)
+        calendar = Calendar(
+            'default',
+            'America/Toronto',
+            'Default Calendar',
+            'description',
+            '#ffffff',
+            '#000000',
+            True,
+            'owner',
+            True,
+            False,
+        )
         user.calendars.append(calendar)
         session.add(user)
         session.commit()
@@ -48,6 +58,10 @@ def userSession():
         def override_get_user():
             return user
 
+        def getDbSession():
+            return session
+
+        app.dependency_overrides[get_db] = getDbSession
         app.dependency_overrides[get_current_user] = override_get_user
 
         yield user, session

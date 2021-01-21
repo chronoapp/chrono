@@ -205,7 +205,7 @@ async def updateEvent(
     return eventDb
 
 
-@router.delete('/events/{eventId}', status_code=status.HTTP_204_NO_CONTENT)
+@router.delete('/events/{eventId}')
 async def deleteEvent(
     eventId: str, user: User = Depends(get_current_user), session: Session = Depends(get_db)
 ):
@@ -234,7 +234,7 @@ async def deleteEvent(
         event.status = 'deleted'
 
         for recurringEvent in event.recurring_events:
-            recurringEvent.status = 'deleted'
+            session.delete(recurringEvent)
 
         session.commit()
 
