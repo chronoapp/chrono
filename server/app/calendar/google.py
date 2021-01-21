@@ -131,7 +131,7 @@ def syncGoogleCalendars(user: User):
             userCalendar.foreground_color = calendar.get('foregroundColor')
             userCalendar.selected = calendar.get('selected')
             userCalendar.access_role = calendar.get('accessRole')
-            userCalendar.primary = calendar.get('primary')
+            userCalendar.primary = calendar.get('primary', False)
             userCalendar.deleted = calendar.get('deleted')
         else:
             userCalendar = Calendar(
@@ -439,7 +439,7 @@ def googleEventToEventVM(calendarId: str, eventItem: Dict[str, Any]) -> GoogleEv
         if originalStartTime.get('dateTime'):
             originalStartDateTime = datetime.fromisoformat(originalStartTime.get('dateTime'))
         if originalStartTime.get('date'):
-            originalStartDay = datetime.fromisoformat(originalStartTime.get('date'))
+            originalStartDay = originalStartTime.get('date')
 
     recurrence = eventItem.get('recurrence')
     recurringEventGId = eventItem.get('recurringEventId')

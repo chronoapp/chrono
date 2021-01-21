@@ -1,4 +1,5 @@
-from typing import Literal
+from typing import Literal, Optional
+import shortuuid
 
 from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship, backref
@@ -14,7 +15,7 @@ class Calendar(Base):
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     user = relationship('User', backref=backref('calendars', lazy='dynamic', cascade='all,delete'))
 
-    id = Column(String(255), unique=True, primary_key=True)
+    id = Column(String(255), unique=True, primary_key=True, default=shortuuid.uuid)
     timezone = Column(String(255))
     summary = Column(String(255))
     description = Column(Text())
@@ -25,6 +26,7 @@ class Calendar(Base):
     primary = Column(Boolean)
     deleted = Column(Boolean)
 
+    # TODO: Rename to google_sync_token.
     sync_token = Column(String())
 
     webhook = relationship("Webhook", uselist=False, back_populates="calendar")
@@ -35,11 +37,11 @@ class Calendar(Base):
     def __init__(
         self,
         id: str,
-        timezone: str,
+        timezone: Optional[str],
         summary: str,
-        description: str,
-        background_color: str,
-        foreground_color: str,
+        description: Optional[str],
+        background_color: Optional[str],
+        foreground_color: Optional[str],
         selected: bool,
         access_role: AccessRole,
         primary: bool,
@@ -62,3 +64,7 @@ class Calendar(Base):
         else:
             # TODO: modified recurring events
             return self.events.filter(Event.recurring_event_id == None)
+
+    @property
+    def isGoogleCalendar(self) -> bool:
+        return self.sync_token is not None

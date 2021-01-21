@@ -1,6 +1,6 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 from sqlalchemy.orm import Session
 from app.api.utils.db import get_db
@@ -17,6 +17,13 @@ class LabelVM(BaseModel):
     key: Optional[str]
     parent_id: Optional[int]
     position: int
+
+    @validator('title')
+    def titleIsNonEmpty(cls, title: str):
+        if title is '':
+            raise ValueError('Title not specified.')
+
+        return title
 
     class Config:
         orm_mode = True
