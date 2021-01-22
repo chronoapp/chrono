@@ -26,19 +26,25 @@ function TimeGridHeader(props: IProps) {
       return (
         <div key={i} className={clsx('cal-header', dates.eq(date, today, 'day') && 'cal-today')}>
           <span className={clsx(isToday && 'cal-header-day-selected', 'cal-header-day')}>
-            <div className={clsx(isToday && 'cal-today-bg')}>
-              <span className={clsx('is-size-5')}>{dayNumber}</span>{' '}
-              <span className={clsx('is-size-7')}>{dateString}</span>
+            <div
+              className={clsx(
+                'cal-header-day-rectangle',
+                !isToday && 'has-text-grey-dark',
+                isToday && 'cal-today-bg'
+              )}
+            >
+              <span className="is-size-5">{dayNumber}</span>{' '}
+              <span className="is-size-7">{dateString}</span>
             </div>
           </span>
+          <span className="cal-divider"></span>
         </div>
       )
     })
   }
 
-  // TODO: Add space for gutter
   return (
-    <div style={{ marginRight: props.marginRight }} className={clsx('cal-time-header')}>
+    <div style={{ marginRight: props.marginRight }} className={clsx('cal-time-header', 'mt-2')}>
       <div style={{ width: props.leftPad }} className="rbc-label cal-time-header-gutter" />
       <div className="cal-time-header-content">
         <div className="cal-row">{renderHeaderCells()}</div>

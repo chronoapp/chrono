@@ -96,13 +96,11 @@
 
 .cal-header {
   text-align: center;
-  border-left: 1px solid $cell-border;
   border-top: none;
   flex: 1;
   min-width: $min-column-width;
   display: flex;
   flex-direction: column;
-  padding-bottom: 12px;
 }
 
 .cal-header-day {
@@ -120,4 +118,9 @@
   width: 100%;
   height: 100%;
   position: relative;
+}
+
+.cal-divider {
+  border-left: 1px solid $cell-border;
+  height: 8px;
 }
