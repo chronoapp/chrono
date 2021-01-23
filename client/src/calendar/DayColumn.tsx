@@ -6,7 +6,7 @@ import Popover from '../lib/popover/Popover'
 
 import SlotMetrics from './utils/SlotMetrics'
 import getStyledEvents from './utils/DayEventLayout'
-import { timeRangeFormat } from '../util/localizer'
+import { timeRangeFormat, timeFormatShort } from '../util/localizer'
 import * as dates from '../util/dates'
 import { Selection, SelectRect, EventData, getBoundsForNode, isEvent } from '../util/Selection'
 import { updateEvent, getAuthToken } from '../util/Api'
@@ -14,7 +14,7 @@ import { updateEvent, getAuthToken } from '../util/Api'
 import TimeSlotGroup from './TimeSlotGroup'
 import TimeGridEvent from './TimeGridEvent'
 import EventPopover from './event-edit/EventPopover'
-import Event from '../models/Event'
+import Event, { EMPTY_TITLE } from '../models/Event'
 import Alert from '../models/Alert'
 
 import DragDropEventContainer from './DragDropEventContainer'
@@ -368,17 +368,45 @@ class DayColumn extends React.Component<IProps, IState> {
   }
 
   renderSelection(selectRange: SelectRange) {
-    const diffMinutes = (selectRange.endDate.getTime() - selectRange.startDate.getTime()) / 60000
+    const diffMin = (selectRange.endDate.getTime() - selectRange.startDate.getTime()) / 60000
+    let inner
+    if (diffMin <= 30) {
+      inner = (
+        <div
+          className={clsx(
+            'cal-event-content',
+            'is-flex',
+            diffMin <= 15 && 'cal-small-event',
+            'cal-ellipsis'
+          )}
+          style={{ lineHeight: '12px' }}
+        >
+          <span>{EMPTY_TITLE}</span>
+          <span style={{ fontSize: '90%', flex: 1 }}>
+            {`, ${timeFormatShort(selectRange.startDate)}`}
+          </span>
+        </div>
+      )
+    } else {
+      inner = [
+        <div key="1" className="cal-event-content">
+          {EMPTY_TITLE}
+        </div>,
+        <div key="2" className="cal-event-label">
+          {timeRangeFormat(selectRange.startDate, selectRange.endDate)}
+        </div>,
+      ]
+    }
+
     return (
       <div
-        className={clsx(
-          'cal-slot-selection',
-          'is-dragging',
-          diffMinutes <= 15 && 'cal-small-event'
-        )}
-        style={{ top: `${selectRange.top}%`, height: `${selectRange.height}%` }}
+        className={'cal-slot-selection'}
+        style={{
+          top: `${selectRange.top}%`,
+          height: `${selectRange.height}%`,
+        }}
       >
-        <span>{timeRangeFormat(selectRange.startDate, selectRange.endDate)}</span>
+        {inner}
       </div>
     )
   }

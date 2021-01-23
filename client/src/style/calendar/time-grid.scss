@@ -5,12 +5,14 @@
   color: $time-selection-color;
   font-size: 75%;
   width: 100%;
-  padding: 3px;
   box-shadow: $event-shadow;
   border-radius: $event-border-radius;
+  padding: 2px 5px;
+  text-align: left;
 
   &.cal-small-event {
     font-size: 0.7rem;
+    margin-top: -2px;
     padding: 0;
   }
 }

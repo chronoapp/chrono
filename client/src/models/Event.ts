@@ -4,6 +4,7 @@ import { localFullDate, fullDayFormat } from '../util/localizer'
 
 const today = new Date()
 export const UNSAVED_EVENT_ID = 'unsaved-event'
+export const EMPTY_TITLE = '(No title)'
 
 /**
  * Contains fields only because it is copied for drag & drop.
@@ -90,6 +91,6 @@ export default class Event {
   }
 
   static getDefaultTitle(event: Event) {
-    return event.title ? event.title : '(No title)'
+    return event.title ? event.title : EMPTY_TITLE
   }
 }
