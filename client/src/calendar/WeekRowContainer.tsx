@@ -21,7 +21,7 @@ import { fullDayFormat } from '../util/localizer'
 interface IProps {
   children: any
   dayMetrics: DateSlotMetrics
-  onUpdatedEvent: (Event) => void
+  onUpdatedEvent: (e: Event) => void
   rowClassname: string
   wrapperClassname: string
   ignoreNewEventYBoundCheck: boolean

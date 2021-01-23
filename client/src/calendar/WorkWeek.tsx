@@ -6,13 +6,14 @@ import Event from '../models/Event'
 interface IProps {
   events: Event[]
   date: Date
+  updateEvent: (event: Event) => void
 }
 
 function WorkWeek(props: IProps) {
   const range = getWorkWeekRange(props.date)
   const now = new Date()
 
-  return <TimeGrid now={now} events={props.events} range={range} />
+  return <TimeGrid now={now} events={props.events} range={range} updateEvent={props.updateEvent} />
 }
 
 WorkWeek.getTitle = function (date: Date): string {

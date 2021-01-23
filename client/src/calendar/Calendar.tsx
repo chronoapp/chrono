@@ -14,10 +14,12 @@ import { getAuthToken, getEvents } from '../util/Api'
 import { CalendarsContext, CalendarsContextType } from '../components/CalendarsContext'
 import { EventActionContext } from './EventActionContext'
 import { GlobalEvent } from '../util/global'
+import useEventService from './event-edit/useEventService'
 
 function Calendar() {
   const firstOfWeek = startOfWeek()
   const today = new Date()
+  const { updateEvent } = useEventService()
 
   // TODO: Store startDate and endDate to prevent unnecessary refreshes.
   const calendarContext = useContext<CalendarsContextType>(CalendarsContext)
@@ -87,6 +89,7 @@ function Calendar() {
     if (eventsContext.display == 'Day') {
       return (
         <TimeGrid
+          updateEvent={updateEvent}
           now={eventsContext.selectedDate}
           events={events}
           range={[eventsContext.selectedDate]}
@@ -94,9 +97,11 @@ function Calendar() {
         />
       )
     } else if (eventsContext.display == 'Week') {
-      return <Week date={eventsContext.selectedDate} events={events} />
+      return <Week date={eventsContext.selectedDate} events={events} updateEvent={updateEvent} />
     } else if (eventsContext.display == 'WorkWeek') {
-      return <WorkWeek date={eventsContext.selectedDate} events={events} />
+      return (
+        <WorkWeek date={eventsContext.selectedDate} events={events} updateEvent={updateEvent} />
+      )
     } else if (eventsContext.display == 'Month') {
       return (
         <Month today={today} loading={loading} date={eventsContext.selectedDate} events={events} />

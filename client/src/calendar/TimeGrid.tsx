@@ -23,6 +23,7 @@ interface IProps {
   events: Event[]
   now: Date
   renderHeader: boolean
+  updateEvent: (event: Event) => void
 }
 
 interface IState {
@@ -163,6 +164,7 @@ class TimeGrid extends React.Component<IProps, IState> {
           max={dates.merge(date, this.props.max)}
           isCurrentDay={dates.eq(date, this.props.now, 'day')}
           now={this.props.now}
+          updateEvent={this.props.updateEvent}
         />
       )
     })

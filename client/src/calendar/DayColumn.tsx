@@ -1,6 +1,5 @@
 import React from 'react'
 import clsx from 'clsx'
-import { FiCheck } from 'react-icons/fi'
 
 import Popover from '../lib/popover/Popover'
 
@@ -9,17 +8,14 @@ import getStyledEvents from './utils/DayEventLayout'
 import { timeRangeFormat, timeFormatShort } from '../util/localizer'
 import * as dates from '../util/dates'
 import { Selection, SelectRect, EventData, getBoundsForNode, isEvent } from '../util/Selection'
-import { updateEvent, getAuthToken } from '../util/Api'
 
 import TimeSlotGroup from './TimeSlotGroup'
 import TimeGridEvent from './TimeGridEvent'
 import EventPopover from './event-edit/EventPopover'
 import Event, { EMPTY_TITLE } from '../models/Event'
-import Alert from '../models/Alert'
 
 import DragDropEventContainer from './DragDropEventContainer'
 import { EventActionContext } from './EventActionContext'
-import { AlertsContext, AlertsContextType } from '../components/AlertsContext'
 
 interface IProps {
   date: Date
@@ -30,6 +26,7 @@ interface IProps {
   events: Event[]
   isCurrentDay: boolean
   now: Date
+  updateEvent: (event: Event) => void
 }
 
 interface IState {
@@ -259,42 +256,6 @@ class DayColumn extends React.Component<IProps, IState> {
     }
   }
 
-  onEventUpdated(event: Event, alertsContext: AlertsContextType) {
-    if (event.id === this.context.eventState.editingEvent?.id) {
-      this.context.eventDispatch({
-        type: 'UPDATE_EDIT_EVENT',
-        payload: event,
-      })
-    }
-
-    if (!Event.isNewEvent(event)) {
-      const eventToUpdate: Event = this.context.eventState.eventsById[event.id]
-      if (dates.eq(eventToUpdate.start, event.start) && dates.eq(eventToUpdate.end, event.end)) {
-        return
-      }
-
-      const alert = new Alert({ title: 'Saving Event..', isLoading: true })
-      alertsContext.addAlert(alert)
-      updateEvent(getAuthToken(), event)
-        .then((newEvent) => {
-          this.context.eventDispatch({
-            type: 'UPDATE_EVENT',
-            payload: { event: newEvent, replaceEventId: event.id },
-          })
-        })
-        .then(() => {
-          alertsContext.addAlert(
-            new Alert({
-              title: 'Event Updated.',
-              icon: FiCheck,
-              removeAlertId: alert.id,
-              autoDismiss: true,
-            })
-          )
-        })
-    }
-  }
-
   initSelection() {
     const { current } = this.dayRef
 
@@ -420,16 +381,12 @@ class DayColumn extends React.Component<IProps, IState> {
           <TimeSlotGroup key={`timeslot-${idx}`} group={group} />
         ))}
 
-        <AlertsContext.Consumer>
-          {(alertsContext) => (
-            <DragDropEventContainer
-              onEventUpdated={(event) => this.onEventUpdated(event, alertsContext)}
-              slotMetrics={this.slotMetrics}
-            >
-              <div className="cal-events-container">{this.renderEvents(this.slotMetrics)}</div>
-            </DragDropEventContainer>
-          )}
-        </AlertsContext.Consumer>
+        <DragDropEventContainer
+          onEventUpdated={this.props.updateEvent}
+          slotMetrics={this.slotMetrics}
+        >
+          <div className="cal-events-container">{this.renderEvents(this.slotMetrics)}</div>
+        </DragDropEventContainer>
 
         {selecting && selectRange && this.renderSelection(selectRange)}
         {this.props.isCurrentDay && this.intervalTriggered && (
