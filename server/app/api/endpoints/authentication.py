@@ -11,6 +11,7 @@ from datetime import datetime
 from urllib.parse import unquote
 from requests_oauthlib import OAuth2Session
 from google_auth_oauthlib.flow import Flow
+from google.oauth2.credentials import Credentials
 
 from sqlalchemy.orm import Session
 
@@ -29,26 +30,32 @@ class AuthData(BaseModel):
     code: str
 
 
+def getCredentialsDict(credentials: Credentials):
+    return {
+        'token': credentials.token,
+        'refresh_token': credentials.refresh_token,
+        'token_uri': credentials.token_uri,
+        'client_id': credentials.client_id,
+        'client_secret': credentials.client_secret,
+        'scopes': credentials.scopes,
+    }
+
+
 def getAuthFlow(scopes):
     credentials = {
         "web": {
-            "client_id":
-            config.GOOGLE_CLIENT_ID,
-            "project_id":
-            config.PROJECT_ID,
-            "auth_uri":
-            "https://accounts.google.com/o/oauth2/auth",
-            "token_uri":
-            "https://oauth2.googleapis.com/token",
-            "auth_provider_x509_cert_url":
-            "https://www.googleapis.com/oauth2/v1/certs",
-            "client_secret":
-            config.GOOGLE_CLIENT_SECRET,
+            "client_id": config.GOOGLE_CLIENT_ID,
+            "project_id": config.PROJECT_ID,
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+            "client_secret": config.GOOGLE_CLIENT_SECRET,
             "redirect_uris": [
                 "https://test.timecouncil.com/oauth/callback",
-                "https://api.timecouncil.com/oauth/callback", 'http://localhost:3000/auth'
+                "https://api.timecouncil.com/oauth/callback",
+                'http://localhost:3000/auth',
             ],
-            "javascript_origins": ["https://test.timecouncil.com"]
+            "javascript_origins": ["https://test.timecouncil.com"],
         }
     }
     flow = Flow.from_client_config(credentials, scopes=scopes)
@@ -65,9 +72,9 @@ def googleAuth():
 
     scopes = ['https://www.googleapis.com/auth/calendar']
     flow = getAuthFlow(scopes)
-    authorization_url, state = flow.authorization_url(access_type='offline',
-                                                      prompt='consent',
-                                                      include_granted_scopes='true')
+    authorization_url, state = flow.authorization_url(
+        access_type='offline', prompt='consent', include_granted_scopes='true'
+    )
 
     response = RedirectResponse(url=unquote(authorization_url))
     response.set_cookie(key='auth_state', value=state)
@@ -98,14 +105,7 @@ def googleAuthCallback(authData: AuthData, session: Session = Depends(get_db)):
             user.name = name
             user.picture_url = pictureUrl
 
-        creds = {
-            'token': flow.credentials.token,
-            'refresh_token': flow.credentials.refresh_token,
-            'token_uri': flow.credentials.token_uri,
-            'client_id': flow.credentials.client_id,
-            'client_secret': flow.credentials.client_secret,
-            'scopes': flow.credentials.scopes
-        }
+        creds = getCredentialsDict(flow.credentials)
         user.credentials = UserCredential(creds, ProviderType.Google)
         session.commit()
 
@@ -117,26 +117,22 @@ def googleAuthCallback(authData: AuthData, session: Session = Depends(get_db)):
 
 
 def getAuthToken(user: User) -> str:
-    return jwt.encode({
-        'user_id': user.id,
-        'iat': datetime.utcnow()
-    },
-                      config.TOKEN_SECRET,
-                      algorithm='HS256').decode('utf-8')
+    return jwt.encode(
+        {'user_id': user.id, 'iat': datetime.utcnow()}, config.TOKEN_SECRET, algorithm='HS256'
+    ).decode('utf-8')
 
 
 # ================================== Microsoft Graph OAuth2 ==================================
 
 
 def getMsftSignInUrl() -> Tuple[str, str]:
-    """Generates a sign in url for microsoft.
-    """
+    """Generates a sign in url for microsoft."""
     settings = getMsftSettings()
 
     # Initialize the OAuth client
-    session = OAuth2Session(settings['app_id'],
-                            scope=settings['scopes'],
-                            redirect_uri=settings['redirect'])
+    session = OAuth2Session(
+        settings['app_id'], scope=settings['scopes'], redirect_uri=settings['redirect']
+    )
 
     authorizeUrl = '{0}{1}'.format(settings['authority'], settings['authorize_endpoint'])
     signInUrl, state = session.authorization_url(authorizeUrl, prompt='login')
@@ -162,15 +158,17 @@ def msftCallback(request: Request, session: Session = Depends(get_db)):
     callbackUrl = f'{request.url.path}?{request.query_params}'
 
     # 1) Get token from code.
-    oauth = OAuth2Session(settings['app_id'],
-                          state=expectedState,
-                          scope=settings['scopes'],
-                          redirect_uri=settings['redirect'])
+    oauth = OAuth2Session(
+        settings['app_id'],
+        state=expectedState,
+        scope=settings['scopes'],
+        redirect_uri=settings['redirect'],
+    )
 
     tokenUrl = '{0}{1}'.format(settings['authority'], settings['token_endpoint'])
-    tokenResult = oauth.fetch_token(tokenUrl,
-                                    client_secret=settings['app_secret'],
-                                    authorization_response=callbackUrl)
+    tokenResult = oauth.fetch_token(
+        tokenUrl, client_secret=settings['app_secret'], authorization_response=callbackUrl
+    )
 
     userJson = getMsftUser(tokenResult)
     email = userJson.get('mail')
@@ -187,12 +185,9 @@ def msftCallback(request: Request, session: Session = Depends(get_db)):
     user.credentials = UserCredential(tokenResult, ProviderType.Microsoft)
     session.commit()
 
-    authToken = jwt.encode({
-        'user_id': user.id,
-        'iat': datetime.utcnow()
-    },
-                           config.TOKEN_SECRET,
-                           algorithm='HS256').decode('utf-8')
+    authToken = jwt.encode(
+        {'user_id': user.id, 'iat': datetime.utcnow()}, config.TOKEN_SECRET, algorithm='HS256'
+    ).decode('utf-8')
 
     response = RedirectResponse(config.APP_URL)
     response.set_cookie(key='auth_token', value=authToken)

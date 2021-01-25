@@ -15,7 +15,7 @@ from tests.utils import createEvent
 from app.db.models import User
 
 
-def test_getEventsBasic(userSession, test_client):
+def test_getEventsBasic(userSession: Tuple[User, Session], test_client):
     user, _ = userSession
     calendar = user.getPrimaryCalendar()
 
@@ -37,7 +37,7 @@ def test_getEventsBasic(userSession, test_client):
     assert events[1].get('id') == event1.id
 
 
-def test_createEvent(userSession, test_client):
+def test_createEvent(userSession: Tuple[User, Session], test_client):
     user, _ = userSession
     calendar = user.getPrimaryCalendar()
 
@@ -66,7 +66,7 @@ def test_createEvent(userSession, test_client):
     assert not eventDb.all_day
 
 
-def test_createEvent_recurring_invalid(userSession, test_client):
+def test_createEvent_recurring_invalid(userSession: Tuple[User, Session], test_client):
     """Malformed recurrence string."""
     user, _ = userSession
     calendar = user.getPrimaryCalendar()
@@ -98,7 +98,7 @@ def test_createEvent_recurring_invalid(userSession, test_client):
     assert resp.status_code == 422
 
 
-def test_createEvent_recurring(userSession, test_client):
+def test_createEvent_recurring(userSession: Tuple[User, Session], test_client):
     user, _ = userSession
     calendar = user.getPrimaryCalendar()
 
@@ -128,7 +128,7 @@ def test_createEvent_recurring(userSession, test_client):
     assert len(events) == 3
 
 
-def test_createEvent_allDay(userSession, test_client):
+def test_createEvent_allDay(userSession: Tuple[User, Session], test_client):
     """TODO: API Should only need one of start / end and start_day / end_day"""
     user, _ = userSession
     calendar = user.getPrimaryCalendar()

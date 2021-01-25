@@ -60,12 +60,6 @@ export default function useEventService() {
 
       // TODO: Queue overrides from server to prevent race condition.
       updateEventReq(getAuthToken(), event)
-        .then((newEvent) => {
-          eventActions.eventDispatch({
-            type: 'UPDATE_EVENT',
-            payload: { event: newEvent, replaceEventId: event.id },
-          })
-        })
         .then(() => {
           alertsContext.addAlert(
             new Alert({
@@ -75,6 +69,9 @@ export default function useEventService() {
               autoDismiss: true,
             })
           )
+        })
+        .catch((err) => {
+          // TODO: Revert to Original
         })
     }
   }
