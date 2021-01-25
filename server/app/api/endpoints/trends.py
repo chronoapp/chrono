@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 
 from app.api.utils.security import get_current_user
 from app.db.session import scoped_session
+from app.db.models import User
 from app.core.logger import logger
 
 DAY_SECONDS = 24 * 60 * 60
@@ -32,25 +33,27 @@ def getUserTrends(
     startTime = datetime.fromisoformat(start)
     endTime = datetime.fromisoformat(end)
 
-    labels, durations = getTrendsDataResult(userId, labelId, startTime, endTime, time_period)
+    labels, durations = getTrendsDataResult(user, labelId, startTime, endTime, time_period)
 
     return {'labels': labels, 'values': durations}
 
 
 def getTrendsDataResult(
-    userId: int, labelId: int, startTime: datetime, endTime: datetime, timePeriod: TimePeriod
+    user: User, labelId: int, startTime: datetime, endTime: datetime, timePeriod: TimePeriod
 ):
     """Executes the DB query for time spent on the activity label,
     grouped by TimePeriod.
     """
+    userId = user.id
+    timezone = user.timezone
     labels, durations = [], []
 
     with scoped_session() as session:
         query = """
             with filtered_events as (
                     SELECT
-                        event.start,
-                        event.end as end,
+                        event.start at time zone :timezone as start,
+                        event.end at time zone :timezone as end,
                         label.key as label
                     FROM event
                     INNER JOIN event_label ON event_label.event_id = event.id
@@ -83,6 +86,7 @@ def getTrendsDataResult(
                 'labelId': labelId,
                 'time_period': timePeriod,
                 'time_interval': f'1 {timePeriod}',
+                'timezone': timezone,
             },
         )
 
