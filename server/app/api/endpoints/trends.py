@@ -1,4 +1,5 @@
 import enum
+from typing import Literal
 
 from sqlalchemy import text
 from fastapi import APIRouter, Depends
@@ -13,26 +14,25 @@ WEEK_SECONDS = DAY_SECONDS * 7
 
 router = APIRouter()
 
-
-class TimePeriod(enum.Enum):
-    DAY = 'DAY'
-    WEEK = 'WEEK'
-    MONTH = 'MONTH'
+TimePeriod = Literal['DAY', 'WEEK', 'MONTH']
 
 
 @router.get('/trends/{labelId}')
 def getUserTrends(
-    labelId: int, start: str, end: str, time_period: str = "WEEK", user=Depends(get_current_user)
+    labelId: int,
+    start: str,
+    end: str,
+    time_period: TimePeriod = "WEEK",
+    user=Depends(get_current_user),
 ):
     """TODO: start time, end time as"""
     userId = user.id
     logger.info(f'{userId} {time_period}')
 
-    timePeriod = TimePeriod[time_period]
     startTime = datetime.fromisoformat(start)
     endTime = datetime.fromisoformat(end)
 
-    labels, durations = getTrendsDataResult(userId, labelId, startTime, endTime, timePeriod)
+    labels, durations = getTrendsDataResult(userId, labelId, startTime, endTime, time_period)
 
     return {'labels': labels, 'values': durations}
 
@@ -46,7 +46,6 @@ def getTrendsDataResult(
     labels, durations = [], []
 
     with scoped_session() as session:
-        timePeriodValue = timePeriod.value.lower()
         query = """
             with filtered_events as (
                     SELECT
@@ -56,10 +55,11 @@ def getTrendsDataResult(
                     FROM event
                     INNER JOIN event_label ON event_label.event_id = event.id
                     INNER JOIN label ON label.id = event_label.label_id
-                    WHERE label.id = :labelId\
-                    AND event.start >= :start_time\
-                    AND event.end <= :end_time\
-                    AND event.user_id = :userId\
+                    WHERE label.id = :labelId
+                    AND event.status != 'deleted'
+                    AND event.start >= :start_time
+                    AND event.end <= :end_time
+                    AND event.user_id = :userId
                 )
             SELECT starting,
                 coalesce(sum(EXTRACT(EPOCH FROM (e.end - e.start))), 0),
@@ -81,8 +81,8 @@ def getTrendsDataResult(
                 'start_time': startTime,
                 'end_time': endTime,
                 'labelId': labelId,
-                'time_period': timePeriodValue,
-                'time_interval': f'1 {timePeriodValue}',
+                'time_period': timePeriod,
+                'time_interval': f'1 {timePeriod}',
             },
         )
 
