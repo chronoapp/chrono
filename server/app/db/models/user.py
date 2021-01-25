@@ -27,6 +27,8 @@ class User(Base):
         backref='user',
     )
 
+    timezone = Column(String(255), nullable=False, server_default='UTC')
+
     def __init__(self, email: str, name: str, pictureUrl: Optional[str]):
         self.email = email
         self.name = name
