@@ -96,6 +96,13 @@ class Event(Base):
     def is_parent_recurring_event(self) -> bool:
         return self.recurrences is not None and len(self.recurrences) > 0
 
+    @property
+    def recurring_event_gId(self) -> str:
+        if self.is_parent_recurring_event:
+            return ''.join(self.g_id.split('_')[:-1])
+        else:
+            return self.g_id
+
     def getTimezone(self) -> str:
         if self.time_zone:
             return self.time_zone

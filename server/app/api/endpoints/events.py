@@ -60,9 +60,11 @@ async def getEvents(
             .filter(and_(Event.start <= datetime.now(), Event.title.ilike(title)))
             .all()
         )
+
     elif query:
         tsQuery = ' & '.join(query.split())
         return Event.search(session, user.id, tsQuery, limit=limit).all()
+
     else:
         singleEvents = (
             user.getSingleEvents()
@@ -158,7 +160,7 @@ async def updateEvent(
 
         googleId = None
         if parentEvent.g_id:
-            googleId = getRecurringEventId(parentEvent.g_id, dt, event.isAllDay())
+            googleId = getRecurringEventId(parentEvent.recurring_event_gId, dt, event.isAllDay())
 
         prevCalendarId = None
 
@@ -258,7 +260,7 @@ def createOverrideDeletedEvent(user: User, eventId: str, session):
 
     googleId = None
     if parentEvent.g_id:
-        googleId = getRecurringEventId(parentEvent.g_id, dt, parentEvent.all_day)
+        googleId = getRecurringEventId(parentEvent.recurring_event_gId, dt, parentEvent.all_day)
 
     event = Event(
         googleId,
