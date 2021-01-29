@@ -7,6 +7,8 @@ import { FiMail } from 'react-icons/fi'
 import { BsArrowRepeat } from 'react-icons/bs'
 import { FiCalendar, FiAlignLeft, FiClock } from 'react-icons/fi'
 
+import { RRule } from 'rrule'
+
 import { EventActionContext } from '../EventActionContext'
 import { CalendarsContext } from '../../components/CalendarsContext'
 import Event from '../../models/Event'
@@ -32,44 +34,23 @@ import useEventService from './useEventService'
 export default function EventEditFull(props: { event: Event }) {
   const eventActions = useContext(EventActionContext)
   const calendarContext = useContext(CalendarsContext)
-  const [recurringEventModalEnabled, setRecurringEventModalEnabled] = useState(false)
   const { labelState } = useContext<LabelContextType>(LabelContext)
-  const recurringEditRef = useRef()
   const { saveEvent } = useEventService()
 
+  // Event data and overrides
   const [event, setEvent] = useState(props.event)
   const [tmpFullDays, setFullDays] = useState(1)
+  // const [rrules, setRrules] = useState<RRule | undefined>()
+  const [recurrences, setRecurrences] = useState<string | null>(
+    event.recurrences ? event.recurrences.join('\n') : null
+  )
 
-  function renderRecurringEventModal() {
-    if (!recurringEventModalEnabled) {
-      return
+  function getEventData() {
+    if (recurrences) {
+      return { ...event, recurrences: [recurrences] }
+    } else {
+      return event
     }
-
-    return (
-      <div className="modal is-active">
-        <div className="modal-background"></div>
-        <div ref={recurringEditRef.current} className="modal-card" style={{ width: 300 }}>
-          <section className="modal-card-body has-text-left pb-2">
-            <RecurringEventEditor
-              initialDate={event.start}
-              onChange={(rule) => {
-                console.log(`Rule Updated: ${rule}`)
-              }}
-            />
-
-            <div className="mt-2 is-flex is-justify-content-flex-end">
-              <button className="button is-small is-primary is-ghost">Done</button>
-              <button
-                className="button is-small is-light is-ghost mr-1"
-                onClick={() => setRecurringEventModalEnabled(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </section>
-        </div>
-      </div>
-    )
   }
 
   const labels: Label[] = Object.values(labelState.labelsById)
@@ -206,23 +187,18 @@ export default function EventEditFull(props: { event: Event }) {
             </label>
           </div>
 
-          <div className="mt-2 is-flex is-align-items-center">
-            <BsArrowRepeat className="mr-2" size={'1.25em'} />
-            <label className="cal-checkbox-container has-text-left tag-block">
-              <input
-                type="checkbox"
-                checked={recurringEventModalEnabled}
-                className="cal-checkbox"
-                onChange={(v) => {
-                  setRecurringEventModalEnabled(!recurringEventModalEnabled)
-                }}
-              />
-              <span className="cal-checkmark"></span>
-              <span style={{ paddingLeft: '5px' }}>Repeating</span>
-            </label>
-          </div>
-
-          {renderRecurringEventModal()}
+          <RecurringEventEditor
+            initialDate={event.start}
+            initialRulestr={recurrences}
+            onChange={(rules) => {
+              console.log(`Rule Updated: ${rules}`)
+              if (rules) {
+                setRecurrences(rules.toString())
+              } else {
+                setRecurrences(null)
+              }
+            }}
+          />
 
           <div className="mt-2 is-flex is-align-items-center">
             <FiCalendar size={'1.25em'} />
@@ -256,7 +232,7 @@ export default function EventEditFull(props: { event: Event }) {
           <button
             className="button is-primary"
             onClick={() => {
-              saveEvent(event)
+              saveEvent(getEventData())
             }}
           >
             Save changes
