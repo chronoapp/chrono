@@ -1,4 +1,4 @@
-import React, { useContext, useState, useRef } from 'react'
+import React, { useContext, useState } from 'react'
 import produce from 'immer'
 import * as dates from '../../util/dates'
 
@@ -6,8 +6,6 @@ import { MdClose } from 'react-icons/md'
 import { FiMail } from 'react-icons/fi'
 import { BsArrowRepeat } from 'react-icons/bs'
 import { FiCalendar, FiAlignLeft, FiClock } from 'react-icons/fi'
-
-import { RRule } from 'rrule'
 
 import { EventActionContext } from '../EventActionContext'
 import { CalendarsContext } from '../../components/CalendarsContext'

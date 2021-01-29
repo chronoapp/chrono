@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import clsx from 'clsx'
 import produce from 'immer'
 import { BsArrowRepeat } from 'react-icons/bs'
 import { FiChevronDown } from 'react-icons/fi'
+import useClickOutside from '../../lib/hooks/useClickOutside'
 
 import * as dates from '../../util/dates'
 import { format, getWeekRange, localFullDate } from '../../util/localizer'
@@ -93,7 +94,13 @@ function RecurringEventEditor(props: IProps) {
 
   const weekRange = getWeekRange(new Date())
   const rule: RRule | undefined = getRRule(recurringOptions, endCondition)
-  const recurringEditRef = useRef()
+  const eventEditModalRef = React.useRef<HTMLDivElement>(null)
+
+  useClickOutside(eventEditModalRef, () => {
+    if (modalEnabled) {
+      setModalEnabled(false)
+    }
+  })
 
   /**
    * Updates the end conditions when the recurrence frequency changes.
@@ -289,7 +296,7 @@ function RecurringEventEditor(props: IProps) {
     return (
       <div className="modal z-index-50 is-active">
         <div className="modal-background"></div>
-        <div className="modal-card" style={{ width: 300 }}>
+        <div className="modal-card" ref={eventEditModalRef} style={{ width: 300 }}>
           <section className="modal-card-body has-text-left pb-2">
             {renderEditor()}
 
