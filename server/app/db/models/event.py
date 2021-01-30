@@ -99,7 +99,8 @@ class Event(Base):
     @property
     def recurring_event_gId(self) -> str:
         if self.is_parent_recurring_event:
-            return ''.join(self.g_id.split('_')[:-1])
+            parts = self.g_id.split('_')
+            return ''.join(parts[:-1]) if len(parts) >= 2 else self.g_id
         else:
             return self.g_id
 
