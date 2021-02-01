@@ -33,8 +33,8 @@ def test_getEventsBasic(userSession: Tuple[User, Session], test_client):
 
     events = resp.json()
     assert len(events) == 2
-    assert events[0].get('id') == event2.id
-    assert events[1].get('id') == event1.id
+    assert events[0].get('id') == event1.id
+    assert events[1].get('id') == event2.id
 
 
 def test_createEvent(userSession: Tuple[User, Session], test_client):

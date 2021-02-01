@@ -46,6 +46,9 @@ class EventBaseVM(BaseModel):
 
     @validator('recurrences')
     def isValidRecurrence(cls, recurrences: Optional[List[str]], values: Dict[str, Any]):
+        """Makes sure the start and end dates aren't included in the recurrence, since they
+        the event itself has these fields.
+        """
         if recurrences and len(recurrences) > 0 and 'start' in values:
             recurrenceString = '\n'.join(recurrences)
             if 'DTSTART' in recurrenceString or 'DTEND' in recurrenceString:
@@ -169,6 +172,9 @@ def createOrUpdateEvent(
             eventDb.calendar_id = eventVM.calendar_id
             eventDb.recurring_event_id = eventVM.recurring_event_id
             eventDb.recurrences = eventVM.recurrences
+            eventDb.original_start = eventVM.original_start
+            eventDb.original_start_day = eventVM.original_start_day
+            eventDb.original_timezone = eventVM.original_timezone
 
         return eventDb
 
@@ -241,8 +247,9 @@ def getExpandedRecurringEvents(
             startDate = startDate.replace(tzinfo=None)
             endDate = endDate.replace(tzinfo=None)
         else:
-            startDate = startDate.replace(tzinfo=None).astimezone(ZoneInfo('UTC'))
-            endDate = endDate.replace(tzinfo=None).astimezone(ZoneInfo('UTC'))
+            zone = baseRecurringEvent.getTimezone() or 'UTC'
+            startDate = startDate.astimezone(ZoneInfo(zone))
+            endDate = endDate.astimezone(ZoneInfo(zone))
 
         # Expand events, inclusive
         for date in islice(

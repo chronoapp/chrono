@@ -75,7 +75,7 @@ class Event(Base):
     original_timezone = Column(String(255))
 
     @classmethod
-    def search(cls, session: Session, userId: str, searchQuery: str, limit: int = 250):
+    def search(cls, session: Session, userId: int, searchQuery: str, limit: int = 250):
         rows = engine.execute(
             text(EVENT_SEARCH_QUERY), query=searchQuery, userId=userId, limit=limit
         )
@@ -97,8 +97,8 @@ class Event(Base):
         return self.recurrences is not None and len(self.recurrences) > 0
 
     @property
-    def recurring_event_gId(self) -> str:
-        if self.is_parent_recurring_event:
+    def recurring_event_gId(self) -> Optional[str]:
+        if self.is_parent_recurring_event and self.g_id:
             parts = self.g_id.split('_')
             return ''.join(parts[:-1]) if len(parts) >= 2 else self.g_id
         else:
