@@ -116,11 +116,11 @@ class Event(Base):
         else:
             return self.g_id
 
-    def getTimezone(self) -> str:
+    def getTimezone(self, userDefault: str) -> str:
         if self.time_zone:
             return self.time_zone
         else:
-            return self.calendar.timezone
+            return self.calendar.timezone or userDefault
 
     def __init__(
         self,

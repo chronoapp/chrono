@@ -229,7 +229,7 @@ def getExpandedRecurringEvents(
     endDate: datetime,
 ) -> Generator[EventInDBVM, None, None]:
     duration = baseRecurringEvent.end - baseRecurringEvent.start
-    timezone = baseRecurringEvent.getTimezone()
+    timezone = baseRecurringEvent.getTimezone(user.timezone)
     isAllDay = baseRecurringEvent.all_day
     baseEventVM = EventInDBVM.from_orm(baseRecurringEvent)
 
@@ -248,7 +248,7 @@ def getExpandedRecurringEvents(
             startDate = startDate.replace(tzinfo=None)
             endDate = endDate.replace(tzinfo=None)
         else:
-            zone = baseRecurringEvent.getTimezone() or user.timezone
+            zone = baseRecurringEvent.getTimezone(user.timezone)
             startDate = startDate.astimezone(ZoneInfo(zone))
             endDate = endDate.astimezone(ZoneInfo(zone))
 
