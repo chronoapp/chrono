@@ -124,7 +124,7 @@ def test_createEvent_recurring(userSession: Tuple[User, Session], test_client):
     eventDb = user.events.first()
     assert eventDb.recurrences == recurrences
 
-    events = list(getExpandedRecurringEvents(eventDb, {}, start, start + timedelta(days=5)))
+    events = list(getExpandedRecurringEvents(user, eventDb, {}, start, start + timedelta(days=5)))
     assert len(events) == 3
 
 

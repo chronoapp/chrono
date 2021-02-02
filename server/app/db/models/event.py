@@ -1,6 +1,7 @@
 from datetime import datetime
-from typing import Optional, List, Literal
+from typing import Optional, List, Literal, TYPE_CHECKING
 import shortuuid
+from backports.zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import (
     Column,
@@ -29,6 +30,17 @@ event_label_association_table = Table(
 
 EventStatus = Literal['deleted', 'tentative', 'active']
 
+if TYPE_CHECKING:
+    from app.db.models import Calendar
+
+
+def isValidTimezone(timeZone: str):
+    try:
+        ZoneInfo(timeZone)
+        return True
+    except ZoneInfoNotFoundError:
+        return False
+
 
 class Event(Base):
     """Recurring events are modelled as an adjacency list."""
@@ -43,7 +55,7 @@ class Event(Base):
     user = relationship('User', backref=backref('events', lazy='dynamic', cascade='all,delete'))
 
     calendar_id = Column(String(255), ForeignKey('calendar.id'), nullable=False)
-    calendar = relationship(
+    calendar: 'Calendar' = relationship(
         'Calendar',
         backref=backref(
             'events', lazy='dynamic', cascade='all,delete', order_by='Event.start.asc()'

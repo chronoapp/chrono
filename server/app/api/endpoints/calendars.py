@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from starlette.status import HTTP_404_NOT_FOUND
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import shortuuid
@@ -8,8 +8,10 @@ import shortuuid
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
 from app.db.models import User, Calendar
-from app.calendar.google import updateCalendar
+from app.db.models.event import isValidTimezone
 from app.core.logger import logger
+
+from app.calendar.google import updateCalendar, createCalendar
 
 router = APIRouter()
 
@@ -17,11 +19,21 @@ router = APIRouter()
 class CalendarBaseVM(BaseModel):
     summary: str
     description: Optional[str]
-    background_color: Optional[str] = Field(alias='backgroundColor')
-    foreground_color: Optional[str] = Field(alias='foregroundColor')
+    background_color: str = Field(alias='backgroundColor')
+    foreground_color: str = Field(alias='foregroundColor')
     selected: Optional[bool]
     primary: Optional[bool]
+    isGoogleCalendar: bool = False
+    timezone: Optional[str]
     access_role: Optional[str] = Field(alias='accessRole')
+
+    @validator('timezone')
+    def validateTimezone(cls, timezone: Optional[str]):
+        if timezone:
+            if not isValidTimezone(timezone):
+                raise ValueError(f'Invalid timezone {timezone}')
+
+        return timezone
 
     class Config:
         orm_mode = True
@@ -29,7 +41,6 @@ class CalendarBaseVM(BaseModel):
 
 
 class CalendarVM(CalendarBaseVM):
-    isGoogleCalendar: bool
     id: str
 
 
@@ -64,6 +75,10 @@ async def postCalendar(
         False,
     )
     user.calendars.append(calendarDb)
+
+    if calendar.isGoogleCalendar:
+        resp = createCalendar(user, calendarDb)
+        calendarDb.google_id = resp['id']
 
     return calendarDb
 

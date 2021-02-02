@@ -38,7 +38,6 @@ class User(Base):
         return f'/var/lib/model_data/{self.username}.pkl'
 
     def syncWithGoogle(self) -> bool:
-        # TODO: sync on a per-calendar basis.
         return (
             self.credentials is not None
             and self.credentials.provider == ProviderType.Google
@@ -51,9 +50,12 @@ class User(Base):
     def getRecurringEvents(self):
         return self.events.filter(and_(Event.recurrences != None, Event.status != 'deleted'))
 
-    def getSingleEvents(self, showDeleted=False):
+    def getSingleEvents(self, showDeleted=False, showRecurring=True):
         """Events query without the base recurring events."""
         eventsResult = self.events.filter_by(recurrences=None)
+
+        if not showRecurring:
+            eventsResult = eventsResult.filter_by(recurring_event_id=None)
 
         if showDeleted:
             return eventsResult

@@ -27,7 +27,7 @@ from app.calendar.google import (
     updateGoogleEvent,
     moveGoogleEvent,
 )
-from app.db.models import Event, User
+from app.db.models import Event, User, Calendar
 
 router = APIRouter()
 
@@ -56,8 +56,11 @@ async def getEvents(
 
     if title:
         return (
-            user.getSingleEvents()
-            .filter(and_(Event.start <= datetime.now(), Event.title.ilike(title)))
+            user.getSingleEvents(showRecurring=False)
+            .filter(
+                and_(Event.start >= startDate, Event.start <= endDate, Event.title.ilike(title))
+            )
+            .limit(limit)
             .all()
         )
 
@@ -67,15 +70,16 @@ async def getEvents(
 
     else:
         singleEvents = (
-            user.getSingleEvents()
+            user.getSingleEvents(showRecurring=False)
             .filter(and_(Event.start >= startDate, Event.start <= endDate))
             .order_by(desc(Event.start))
             .limit(limit)
             .all()
         )
         expandedRecurringEvents = getAllExpandedRecurringEvents(user, startDate, endDate, session)
+        allEvents = list(expandedRecurringEvents) + singleEvents
 
-        return list(expandedRecurringEvents) + singleEvents
+        return sorted(allEvents, key=lambda event: event.start)
 
 
 @router.post('/events/', response_model=EventInDBVM)
@@ -83,7 +87,7 @@ async def createEvent(
     event: EventBaseVM, user: User = Depends(get_current_user), session: Session = Depends(get_db)
 ) -> Event:
     try:
-        calendarDb = user.calendars.filter_by(id=event.calendar_id).one_or_none()
+        calendarDb: Calendar = user.calendars.filter_by(id=event.calendar_id).one_or_none()
         if not calendarDb:
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail='Calendar not found.')
 
@@ -98,10 +102,8 @@ async def createEvent(
         eventDb.calendar = calendarDb
         user.events.append(eventDb)
 
-        if user.syncWithGoogle():
+        if calendarDb.google_id:
             resp = insertGoogleEvent(user, eventDb)
-            logger.info(resp.get('start'))
-            logger.info(resp.get('id'))
             eventDb.g_id = resp.get('id')
 
         session.commit()
@@ -135,7 +137,7 @@ async def updateEvent(
     """Update an existing event. For recurring events, create the "override" event
     in the DB with the composite id of {baseId}_{date}.
     """
-    curEvent = user.events.filter_by(id=event_id).one_or_none()
+    curEvent: Optional[Event] = user.events.filter_by(id=event_id).one_or_none()
 
     if curEvent and not curEvent.isWritable():
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail='Can not update event.')
@@ -154,7 +156,7 @@ async def updateEvent(
             )
 
         try:
-            _, dt = verifyRecurringEvent(event_id, parentEvent)
+            _, dt = verifyRecurringEvent(user, event_id, parentEvent)
         except InputError as err:
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(err))
 
@@ -185,7 +187,7 @@ async def updateEvent(
     eventDb.labels.clear()
     eventDb.labels = getCombinedLabels(user, event.labels)
 
-    if user.syncWithGoogle():
+    if eventDb.calendar.google_id:
         if prevCalendarId and prevCalendarId != eventDb.calendar_id:
             if eventDb.recurring_event:
                 # Move one event => all events.
@@ -256,10 +258,10 @@ def getCombinedLabels(user: User, labelVMs: List[LabelInDbVM]) -> List[Label]:
 
 def createOverrideDeletedEvent(user: User, eventId: str, session):
     # Override as a deleted event.
-    parentEvent, dt = verifyAndGetRecurringEventParent(eventId, session)
+    parentEvent, dt = verifyAndGetRecurringEventParent(user, eventId, session)
 
     googleId = None
-    if parentEvent.g_id:
+    if parentEvent.recurring_event_gId:
         googleId = getRecurringEventId(parentEvent.recurring_event_gId, dt, parentEvent.all_day)
 
     event = Event(

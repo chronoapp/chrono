@@ -16,7 +16,11 @@ class Calendar(Base):
     user = relationship('User', backref=backref('calendars', lazy='dynamic', cascade='all,delete'))
 
     id = Column(String(255), unique=True, primary_key=True, default=shortuuid.uuid)
-    timezone = Column(String(255))
+
+    # IDs for google / msft / aapl.
+    google_id = Column(String(255), unique=True, nullable=True)
+
+    timezone = Column(String(255), nullable=True)
     summary = Column(String(255))
     description = Column(Text())
     background_color = Column(String(10))
@@ -57,6 +61,9 @@ class Calendar(Base):
         self.access_role = access_role
         self.primary = primary
         self.deleted = deleted
+
+    def getTimezone(self) -> str:
+        return self.timezone if self.timezone else self.user.timezone
 
     def getEvents(self, expandSingleEvents: bool = True):
         if expandSingleEvents:

@@ -103,10 +103,10 @@ def test_verifyRecurringEvent(userSession: Tuple[User, Session]):
     invalidEventId1 = f'{recurringEvent.id}_1212'
     invalidEventId2 = f'{recurringEvent.id}_20211202T120000Z'
 
-    verifyRecurringEvent(validEventId, recurringEvent)
+    verifyRecurringEvent(user, validEventId, recurringEvent)
 
     with pytest.raises(InputError):
-        verifyRecurringEvent(invalidEventId1, recurringEvent)
+        verifyRecurringEvent(user, invalidEventId1, recurringEvent)
 
     with pytest.raises(InputError):
-        verifyRecurringEvent(invalidEventId2, recurringEvent)
+        verifyRecurringEvent(user, invalidEventId2, recurringEvent)

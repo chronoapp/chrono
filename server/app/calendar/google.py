@@ -502,6 +502,16 @@ def deleteGoogleEvent(user: User, event: Event):
     )
 
 
+def createCalendar(user: User, calendar: Calendar):
+    """Creates a calendar and adds it to my list."""
+    body = {
+        'summary': calendar.summary,
+        'description': calendar.description,
+        'timeZone': calendar.timezone,
+    }
+    return getService(user).calendars().insert(body=body).execute()
+
+
 def updateCalendar(user: User, calendar: Calendar):
     body = {
         'selected': calendar.selected or False,

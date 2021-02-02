@@ -216,12 +216,13 @@ def getAllExpandedRecurringEvents(
 
     for baseRecurringEvent in baseRecurringEvents:
         for e in getExpandedRecurringEvents(
-            baseRecurringEvent, eventOverridesMap, startDate, endDate
+            user, baseRecurringEvent, eventOverridesMap, startDate, endDate
         ):
             yield e
 
 
 def getExpandedRecurringEvents(
+    user: User,
     baseRecurringEvent: Event,
     eventOverridesMap: Dict[str, Event],
     startDate: datetime,
@@ -247,7 +248,7 @@ def getExpandedRecurringEvents(
             startDate = startDate.replace(tzinfo=None)
             endDate = endDate.replace(tzinfo=None)
         else:
-            zone = baseRecurringEvent.getTimezone() or 'UTC'
+            zone = baseRecurringEvent.getTimezone() or user.timezone
             startDate = startDate.astimezone(ZoneInfo(zone))
             endDate = endDate.astimezone(ZoneInfo(zone))
 
@@ -279,7 +280,9 @@ def getExpandedRecurringEvents(
                 )
 
 
-def verifyAndGetRecurringEventParent(eventId: str, session: Session) -> Tuple[Event, datetime]:
+def verifyAndGetRecurringEventParent(
+    user: User, eventId: str, session: Session
+) -> Tuple[Event, datetime]:
     """Returns the parent from the virtual eventId.
     Returns tuple of (parent event, datetime)
     """
@@ -293,12 +296,12 @@ def verifyAndGetRecurringEventParent(eventId: str, session: Session) -> Tuple[Ev
     if not parentEvent:
         raise InputError(f'Invalid Event ID: {eventId}')
 
-    _, date = verifyRecurringEvent(eventId, parentEvent)
+    _, date = verifyRecurringEvent(user, eventId, parentEvent)
 
     return parentEvent, date
 
 
-def verifyRecurringEvent(eventId: str, parentEvent: Event) -> Tuple[str, datetime]:
+def verifyRecurringEvent(user: User, eventId: str, parentEvent: Event) -> Tuple[str, datetime]:
     """Makes sure the eventId is part of the parent Event ID.
     Returns tuple of (parent event ID, datetime)
     Raises InputError otherwise.
@@ -314,7 +317,7 @@ def verifyRecurringEvent(eventId: str, parentEvent: Event) -> Tuple[str, datetim
     datePart = parts[-1]
     try:
         dt = datetime.strptime(datePart, "%Y%m%dT%H%M%SZ")
-        for e in getExpandedRecurringEvents(parentEvent, {}, dt, dt):
+        for e in getExpandedRecurringEvents(user, parentEvent, {}, dt, dt):
             if e.id == eventId:
                 return ''.join(parts[:-1]), dt
 

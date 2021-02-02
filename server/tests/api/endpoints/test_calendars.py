@@ -21,6 +21,8 @@ def test_postCalendar(userSession: Tuple[User, Session], test_client):
 
     calendarData = {
         'summary': 'my calendar',
+        'backgroundColor': '#cccccc',
+        'foregroundColor': '#ffffff',
         'description': 'this is an amazing calendar.',
         'selected': True,
         'primary': True,
