@@ -1,16 +1,17 @@
 import React from 'react'
 import clsx from 'clsx'
 
-import Week from './Week'
-import Month from './Month'
-import WorkWeek from './WorkWeek'
-
 import { FiChevronDown, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 import { EventActionContext, Display } from './EventActionContext'
 import { LabelContext } from '../components/LabelsContext'
 import { format } from '../util/localizer'
 import { GlobalEvent } from '../util/global'
 import * as dates from '../util/dates'
+import useClickOutside from '../lib/hooks/useClickOutside'
+
+import Week from './Week'
+import Month from './Month'
+import WorkWeek from './WorkWeek'
 
 /**
  * Calendar header for date selection.
@@ -20,10 +21,17 @@ export default function Header() {
   const labelsContext = React.useContext(LabelContext)
 
   const [displayToggleActive, setDisplayToggleActive] = React.useState<boolean>(false)
+  const displayToggleRef = React.useRef<HTMLDivElement>(null)
 
   const today = new Date()
   const display = eventsContext.display
   const title = getViewTitle(display)
+
+  useClickOutside(displayToggleRef, () => {
+    if (displayToggleActive) {
+      setDisplayToggleActive(false)
+    }
+  })
 
   React.useEffect(() => {
     document.addEventListener('keydown', handleKeyboardShortcuts)
@@ -173,6 +181,7 @@ export default function Header() {
         </div>
 
         <div
+          ref={displayToggleRef}
           className="dropdown-menu is-small"
           id="dropdown-menu"
           role="menu"
