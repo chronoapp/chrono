@@ -297,7 +297,10 @@ class EventList extends Component<Props, State> {
             </tr>
           </thead>
           <tbody>
-            {events.map((event) => {
+            {events.map((_, idx, arr) => {
+              // Reverse order without copy.
+              const event = arr[arr.length - 1 - idx]
+
               return (
                 <tr key={`event-${event.id}`}>
                   <td>{format(event.start, 'MMM DD')}</td>
