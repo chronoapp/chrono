@@ -1,9 +1,10 @@
-import React, { useContext, useEffect } from 'react'
+import React from 'react'
 import { FiPlus } from 'react-icons/fi'
 
 import { CalendarsContext, CalendarsContextType } from './CalendarsContext'
-import { getAuthToken, getCalendars, putCalendar } from '../util/Api'
+import { getAuthToken, getCalendars, putCalendar, createCalendar } from '../util/Api'
 import Calendar, { AccessRole } from '../models/Calendar'
+import CalendarEditModal from './CalendarEditModal'
 
 import produce from 'immer'
 
@@ -13,11 +14,15 @@ import produce from 'immer'
  * TODO: Update selected calendars to server.
  */
 export default function CalendarsPanel() {
-  const { calendarsById, loadCalendars, updateCalendarSelect } = useContext<CalendarsContextType>(
-    CalendarsContext
-  )
+  const {
+    calendarsById,
+    loadCalendars,
+    updateCalendarSelect,
+    addCalendar,
+  } = React.useContext<CalendarsContextType>(CalendarsContext)
+  const [modalActive, setModalActive] = React.useState(false)
 
-  useEffect(() => {
+  React.useEffect(() => {
     async function init() {
       const authToken = getAuthToken()
       const calendars = await getCalendars(authToken)
@@ -36,8 +41,6 @@ export default function CalendarsPanel() {
     putCalendar(updated, getAuthToken())
   }
 
-  function onClickAddCalendar(Calendar) {}
-
   function accessRolePrecedence(accessRole: AccessRole) {
     if (accessRole === 'owner') {
       return 0
@@ -51,6 +54,10 @@ export default function CalendarsPanel() {
   }
 
   const calendars = Object.values(calendarsById).sort((a, b) => {
+    if (a.isGoogleCalendar && !b.isGoogleCalendar) {
+      return 5
+    }
+
     if (a.primary && !b.primary) {
       return -5
     } else {
@@ -60,10 +67,32 @@ export default function CalendarsPanel() {
 
   return (
     <>
-      <span className="has-text-left has-text-weight-medium mt-3">Calendars</span>
+      <CalendarEditModal
+        isActive={modalActive}
+        onCancel={() => setModalActive(false)}
+        onSave={async (summary, description, timezone, backgroundColor, isGoogleCalendar) => {
+          try {
+            const calendar = await createCalendar(
+              getAuthToken(),
+              summary,
+              backgroundColor,
+              isGoogleCalendar,
+              description,
+              timezone
+            )
+            addCalendar(calendar)
+          } catch (err) {
+            // TODO: Display errors
+          }
 
+          setModalActive(false)
+        }}
+      />
+
+      <span className="has-text-left has-text-weight-medium mt-3">Calendars</span>
       {calendars.length > 0 &&
         calendars.map((calendar, idx) => {
+          const selected = calendar.selected || false
           return (
             <label
               key={idx}
@@ -71,7 +100,7 @@ export default function CalendarsPanel() {
             >
               <input
                 type="checkbox"
-                checked={calendar.selected}
+                checked={selected}
                 className="cal-checkbox"
                 onChange={(v) => {
                   onSelectCalendar(calendar, v.target.checked)
@@ -79,7 +108,7 @@ export default function CalendarsPanel() {
               />
               <span
                 className="cal-checkmark"
-                style={{ backgroundColor: calendar.selected ? calendar.backgroundColor : '#eee' }}
+                style={{ backgroundColor: selected ? calendar.backgroundColor : '#eee' }}
               ></span>
 
               <div className="is-flex is-justify-content-space-between has-width-100">
@@ -98,7 +127,7 @@ export default function CalendarsPanel() {
 
       <button
         className="button is-text"
-        onClick={onClickAddCalendar}
+        onClick={() => setModalActive(true)}
         style={{ justifyContent: 'left' }}
       >
         <FiPlus /> add calendar

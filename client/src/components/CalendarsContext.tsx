@@ -1,5 +1,5 @@
 import React, { createContext, useState } from 'react'
-import update from 'immutability-helper'
+import produce from 'immer'
 import { normalizeArr } from '../lib/normalizer'
 
 import Calendar from '../models/Calendar'
@@ -11,6 +11,7 @@ export interface CalendarsContextType {
   getPrimaryCalendar: () => Calendar
   getDefaultCalendar: (calendarId: string) => Calendar
   getCalendarColor: (calendarId: string) => string
+  addCalendar: (calendar: Calendar) => void
 }
 
 export const CalendarsContext = createContext<CalendarsContextType>(undefined!)
@@ -24,10 +25,11 @@ export function CalendarsContextProvider(props: any) {
       setCalendarsById(normalizeArr(calendars, 'id'))
     },
     updateCalendarSelect: (calendarId: string, selected: boolean) => {
-      const updatedCalendars = update(calendarsById, {
-        [calendarId]: { $merge: { selected: selected } },
-      })
-      setCalendarsById(updatedCalendars)
+      setCalendarsById(
+        produce(calendarsById, (draft) => {
+          draft[calendarId].selected = selected
+        })
+      )
     },
     getPrimaryCalendar: () => {
       const k = Object.keys(calendarsById).find((key) => calendarsById[key].primary == true)
@@ -50,6 +52,13 @@ export function CalendarsContextProvider(props: any) {
       }
 
       return color
+    },
+    addCalendar: (calendar: Calendar) => {
+      setCalendarsById(
+        produce(calendarsById, (draft) => {
+          draft[calendar.id] = calendar
+        })
+      )
     },
   }
 

@@ -84,6 +84,33 @@ export async function authenticate(code: string, state: string) {
   }).then(handleErrors)
 }
 
+export async function createCalendar(
+  authToken: string,
+  summary: string,
+  backgroundColor: string,
+  isGoogleCalendar: boolean,
+  description: string,
+  timezone?: string,
+  foregroundColor: string = '#ffffff'
+): Promise<Calendar> {
+  return fetch(`${API_URL}/calendars/`, {
+    method: 'POST',
+    body: JSON.stringify({
+      summary,
+      description,
+      timezone,
+      backgroundColor,
+      isGoogleCalendar,
+      foregroundColor,
+    }),
+    headers: { Authorization: authToken },
+  })
+    .then(handleErrors)
+    .then((resp) => {
+      return Calendar.fromJson(resp)
+    })
+}
+
 export async function getCalendars(authToken: string): Promise<Calendar[]> {
   return fetch(`${API_URL}/calendars/`, {
     headers: { Authorization: authToken },

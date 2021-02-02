@@ -165,3 +165,7 @@ code {
 .z-index-50 {
   z-index: 50;
 }
+
+.has-shadow {
+  box-shadow: $event-shadow;
+}
