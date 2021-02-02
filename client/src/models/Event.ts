@@ -2,7 +2,6 @@ import { Label } from './Label'
 import { hexToHSL } from '../calendar/utils/Colors'
 import { localFullDate, fullDayFormat } from '../util/localizer'
 
-const today = new Date()
 export const UNSAVED_EVENT_ID = 'unsaved-event'
 export const EMPTY_TITLE = '(No title)'
 
@@ -56,7 +55,7 @@ export default class Event {
     return event.id == UNSAVED_EVENT_ID
   }
 
-  static getBackgroundColor(event: Event, defaultColor: string) {
+  static getBackgroundColor(event: Event, defaultColor: string, today: Date) {
     if (event.end < today) {
       const { h, s } = hexToHSL(defaultColor)
       const hsl = `hsl(${h}, ${s}%, 85%)`
@@ -66,7 +65,7 @@ export default class Event {
     }
   }
 
-  static getForegroundColor(event: Event) {
+  static getForegroundColor(event: Event, today: Date) {
     return event.end < today ? 'hsl(0, 0%, 45%)' : event.foregroundColor
   }
 

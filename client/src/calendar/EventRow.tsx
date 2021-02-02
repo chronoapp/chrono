@@ -12,7 +12,7 @@ import Event from '../models/Event'
 import { CalendarsContext } from '../components/CalendarsContext'
 import { EventActionContext } from './EventActionContext'
 
-function EventItem(props: { event: Event; isPreview: boolean }) {
+function EventItem(props: { event: Event; isPreview: boolean; now: Date }) {
   const calendarsContext = useContext(CalendarsContext)
   const eventActionContext = useContext(EventActionContext)
   const { event } = props
@@ -34,13 +34,12 @@ function EventItem(props: { event: Event; isPreview: boolean }) {
   let eventDisplay
   if (event.all_day) {
     let color: string = calendarsContext.getCalendarColor(event.calendar_id)
-
     eventDisplay = (
       <div
         className={clsx('cal-event', props.isPreview && 'cal-event-preview-full')}
         style={{
-          backgroundColor: Event.getBackgroundColor(event, color),
-          color: Event.getForegroundColor(event),
+          backgroundColor: Event.getBackgroundColor(event, color, props.now),
+          color: Event.getForegroundColor(event, props.now),
         }}
         onMouseDown={handleStartDragging}
         onTouchStart={handleStartDragging}
@@ -114,6 +113,7 @@ export default function EventRow(props: IProps) {
 
   let lastEnd = 1
   const numSlots = props.slotMetrics.range.length
+  const now = new Date()
 
   return (
     <div className={clsx(props.className, 'cal-row')}>
@@ -121,7 +121,7 @@ export default function EventRow(props: IProps) {
         const key = '_lvl_' + idx
         const gap = segment.left - lastEnd
 
-        const content = <EventItem isPreview={props.isPreview} event={segment.event} />
+        const content = <EventItem isPreview={props.isPreview} event={segment.event} now={now} />
         if (gap > 0) {
           row.push(renderSpan(numSlots, gap, `gap_${key}`))
         }

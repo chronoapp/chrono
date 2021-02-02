@@ -32,10 +32,6 @@ function TimeGridEvent(props: IProps) {
   const event = props.event
   const calendar = calendarsContext.getDefaultCalendar(event.calendar_id)
 
-  function foregroundColor() {
-    return event.end < props.now ? 'hsl(0, 0%, 45%)' : event.foregroundColor
-  }
-
   function handleResize(e, direction: Direction) {
     if (e.button === 0 && calendar.isWritable()) {
       e.stopPropagation()
@@ -152,13 +148,13 @@ function TimeGridEvent(props: IProps) {
         props.isPreview && 'is-dragging'
       )}
       style={{
-        backgroundColor: Event.getBackgroundColor(event, calendarColor),
+        backgroundColor: Event.getBackgroundColor(event, calendarColor, props.now),
         top: stringifyPercent(props.style.top),
         left: stringifyPercent(props.style.xOffset),
         width: stringifyPercent(props.style.width),
         height: stringifyPercent(eventHeight),
         border: props.style.border,
-        color: Event.getForegroundColor(event),
+        color: Event.getForegroundColor(event, props.now),
         zIndex: isEditing ? 5 : 0,
       }}
       onMouseDown={handleStartDragging}
