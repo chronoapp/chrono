@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 import { getGoogleOauthUrl, getMsftOauthUrl } from '../util/Api'
 import '../style/index.scss'
 

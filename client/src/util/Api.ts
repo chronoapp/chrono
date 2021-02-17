@@ -6,13 +6,18 @@ import { LabelRule } from '../models/LabelRule'
 import Calendar from '../models/Calendar'
 import { formatDateTime } from '../util/localizer'
 
-const API_URL = 'http://localhost:8888/api/v1'
+const API_URL = '/api/v1'
 
 function handleErrors(response: any) {
   if (!response.ok) {
-    response.json().then((r: any) => {
-      console.log(r)
-    })
+    if (response.status === 401) {
+      new Cookies().set('auth_token', null)
+      Router.push('/login')
+    } else {
+      response.json().then((r: any) => {
+        console.log(r)
+      })
+    }
 
     throw response
   }

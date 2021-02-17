@@ -1,8 +1,7 @@
 import jwt
 from jwt import PyJWTError
 
-from fastapi import Depends, HTTPException, Header
-from starlette.status import HTTP_403_FORBIDDEN
+from fastapi import Depends, HTTPException, Header, status
 
 from app.api.utils.db import get_db
 from app.db.models import User, UserCredential
@@ -23,7 +22,7 @@ def get_current_user(session=Depends(get_db), authorization: str = Header(None))
             tokenData = jwt.decode(authorization, config.TOKEN_SECRET, algorithm='HS256')
         except PyJWTError:
             raise HTTPException(
-                status_code=HTTP_403_FORBIDDEN, detail="Could not validate credentials"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials"
             )
 
         userId = tokenData.get('user_id')
@@ -32,4 +31,4 @@ def get_current_user(session=Depends(get_db), authorization: str = Header(None))
         if user:
             return user
 
-    raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="User not found")
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not found")
