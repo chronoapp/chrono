@@ -155,7 +155,7 @@ def syncAllEvents(userId: int, fullSync: bool = False):
         user = session.query(User).filter(User.id == userId).first()
         syncGoogleCalendars(user)
 
-        for calendar in user.calendars:
+        for calendar in user.calendars.filter(Calendar.google_id != None):
             syncCalendar(calendar, session, fullSync=fullSync)
 
 

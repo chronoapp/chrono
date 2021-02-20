@@ -6,7 +6,7 @@ import linkifyHtml from 'linkifyjs/html'
 
 import * as dates from '../../util/dates'
 import { MdClose } from 'react-icons/md'
-import { FiCalendar, FiClock, FiAlignLeft, FiTrash } from 'react-icons/fi'
+import { FiCalendar, FiClock, FiAlignLeft, FiTrash, FiChevronDown } from 'react-icons/fi'
 
 import { format, fullDayFormat } from '../../util/localizer'
 import { addNewLabels } from '../utils/LabelUtils'
@@ -53,9 +53,6 @@ function EventPopover(props: IProps) {
   const { labelState } = useContext<LabelContextType>(LabelContext)
   const { saveEvent, deleteEvent } = useEventService()
 
-  const [confirmDeleteActive, setConfirmDeleteActive] = useState<boolean>(false)
-  const deleteModalRef = React.useRef()
-
   const [eventFields, setEventFields] = useState(
     new EventFields(
       props.event.title,
@@ -72,6 +69,9 @@ function EventPopover(props: IProps) {
   const isExistingEvent = props.event.id !== UNSAVED_EVENT_ID
   const contentEditableRef = createRef<HTMLInputElement>()
   const [addTagDropdownActive, setAddTagDropdownActive] = useState(false)
+
+  const [confirmDeleteActive, setConfirmDeleteActive] = useState<boolean>(false)
+  const deleteEventDropdownRef = React.useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     document.addEventListener('keydown', keyboardEvents)
@@ -135,20 +135,29 @@ function EventPopover(props: IProps) {
   }
 
   function renderDeleteEventButton() {
-    return (
-      <Popover
-        content={renderConfirmDeleteModal}
-        isOpen={confirmDeleteActive}
-        containerClassName={'z-index-50'}
-        position={['bottom', 'top', 'right']}
-        align={'start'}
-      >
+    if (props.event.recurring_event_id) {
+      return (
+        <Popover
+          content={renderConfirmDeleteDropdown}
+          isOpen={confirmDeleteActive}
+          containerClassName={'z-index-50'}
+          position={['bottom', 'top', 'right']}
+          align={'start'}
+        >
+          <button className="button is-small is-light ml-2" onClick={onClickDeleteEvent}>
+            <FiTrash className="mr-1" />
+            Delete <FiChevronDown className="mr-1" />
+          </button>
+        </Popover>
+      )
+    } else {
+      return (
         <button className="button is-small is-light ml-2" onClick={onClickDeleteEvent}>
           <FiTrash className="mr-1" />
-          Delete{' '}
+          Delete
         </button>
-      </Popover>
-    )
+      )
+    }
   }
 
   function getSelectedCalendar(calendarId: string): Calendar {
@@ -194,7 +203,7 @@ function EventPopover(props: IProps) {
       <div>
         <div className="cal-event-modal-header has-background-white-ter">
           <span
-            className="mr-2 is-flex is-align-center"
+            className="mr-2 is-flex is-align-items-center"
             style={{ height: '100%' }}
             onClick={(e) => {
               eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
@@ -215,7 +224,7 @@ function EventPopover(props: IProps) {
             </div>
           )}
 
-          <div className="mt-2 is-flex is-align-center">
+          <div className="mt-2 is-flex is-align-items-center">
             <FiClock className="mr-2 is-flex-shrink-0" />
             <span>
               {format(eventFields.start, 'YYYY-MM-DD')} {format(eventFields.start, 'hh:mm')} -{' '}
@@ -231,7 +240,7 @@ function EventPopover(props: IProps) {
             </div>
           )}
 
-          <div className="mt-2 is-flex is-align-center">
+          <div className="mt-2 is-flex is-align-items-center">
             <FiCalendar className="mr-2 is-flex-shrink-0" />
             <span>{calendar.summary}</span>
           </div>
@@ -410,7 +419,14 @@ function EventPopover(props: IProps) {
               innerRef={contentEditableRef}
               className="cal-event-edit-description"
               html={eventFields.description}
-              onChange={(e) => setEventFields({ ...eventFields, description: e.target.value })}
+              onChange={(e) => {}}
+              onBlur={(e) => {
+                const description = contentEditableRef.current?.innerHTML || ''
+                setEventFields({
+                  ...eventFields,
+                  description: description,
+                })
+              }}
               style={{ minHeight: '3em' }}
             />
           </div>
@@ -456,12 +472,19 @@ function EventPopover(props: IProps) {
     )
   }
 
-  function renderConfirmDeleteModal() {
+  function renderConfirmDeleteDropdown() {
     return (
       <div
         className="dropdown-menu"
         role="menu"
-        style={{ display: 'block', position: 'unset', zIndex: 50 }}
+        ref={deleteEventDropdownRef}
+        style={{
+          display: 'block',
+          position: 'unset',
+          zIndex: 50,
+          marginTop: '-0.5em',
+          paddingBottom: 0,
+        }}
       >
         <div className="dropdown-content">
           <a
@@ -470,6 +493,17 @@ function EventPopover(props: IProps) {
           >
             This event
           </a>
+          <hr className="dropdown-divider" style={{ margin: 0 }} />
+          <a
+            className="dropdown-item is-flex is-align-items-center"
+            onClick={() => {
+              // Modify first recurring event w/ end date
+              // Delete all overrides?
+            }}
+          >
+            This and following events
+          </a>
+          <hr className="dropdown-divider" style={{ margin: 0 }} />
           <a
             className="dropdown-item is-flex is-align-items-center"
             onClick={() => {

@@ -1,23 +1,23 @@
 import React, { useContext, useState } from 'react'
 import produce from 'immer'
-import * as dates from '../../util/dates'
+import * as dates from '@/util/dates'
 
 import { MdClose } from 'react-icons/md'
 import { FiMail } from 'react-icons/fi'
 import { BsArrowRepeat } from 'react-icons/bs'
 import { FiCalendar, FiAlignLeft, FiClock } from 'react-icons/fi'
 
-import { EventActionContext } from '../EventActionContext'
-import { CalendarsContext } from '../../components/CalendarsContext'
-import Event from '../../models/Event'
-import { Label } from '../../models/Label'
+import { EventActionContext } from '@/calendar/EventActionContext'
+import { CalendarsContext } from '@/components/CalendarsContext'
+import Event from '@/models/Event'
+import { Label } from '@/models/Label'
 
-import { format } from '../../util/localizer'
+import { format } from '@/util/localizer'
+import ContentEditable from '@/lib/ContentEditable'
+import { LabelTag } from '@/components/LabelTag'
+import { LabelContext, LabelContextType } from '@/components/LabelsContext'
+
 import { addNewLabels } from '../utils/LabelUtils'
-import ContentEditable from '../../lib/ContentEditable'
-import { LabelTag } from '../../components/LabelTag'
-import { LabelContext, LabelContextType } from '../../components/LabelsContext'
-
 import SelectCalendar from './SelectCalendar'
 import RecurringEventEditor from './RecurringEventEditor'
 import TaggableInput from './TaggableInput'

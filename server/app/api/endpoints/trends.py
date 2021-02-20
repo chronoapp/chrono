@@ -43,6 +43,8 @@ def getTrendsDataResult(
 ):
     """Executes the DB query for time spent on the activity label,
     grouped by TimePeriod.
+
+    TODO: Expand recurring events.
     """
     userId = user.id
     timezone = user.timezone
