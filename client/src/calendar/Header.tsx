@@ -1,4 +1,6 @@
 import React from 'react'
+import { Flex, Text, IconButton } from '@chakra-ui/react'
+
 import clsx from 'clsx'
 
 import { FiChevronDown, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
@@ -125,8 +127,12 @@ export default function Header() {
         >
           Today
         </div>
-        <button
-          className="button is-text is-small is-size-6"
+        <IconButton
+          ml="1"
+          aria-label="previous date range"
+          variant="ghost"
+          icon={<FiChevronLeft />}
+          size={'lg'}
           onClick={() => {
             if (display == 'Day') {
               eventsContext.setSelectedDate(dates.subtract(eventsContext.selectedDate, 1, 'day'))
@@ -138,13 +144,13 @@ export default function Header() {
               eventsContext.setSelectedDate(dates.subtract(eventsContext.selectedDate, 1, 'month'))
             }
           }}
-        >
-          <span className="icon">
-            <FiChevronLeft size={'1.25em'} />
-          </span>
-        </button>
-        <button
-          className="button is-text is-small is-size-6"
+        />
+
+        <IconButton
+          aria-label="next date range"
+          variant="ghost"
+          size={'lg'}
+          icon={<FiChevronRight />}
           onClick={() => {
             if (display == 'Day') {
               eventsContext.setSelectedDate(dates.add(eventsContext.selectedDate, 1, 'day'))
@@ -155,11 +161,8 @@ export default function Header() {
               eventsContext.setSelectedDate(dates.add(eventsContext.selectedDate, 1, 'month'))
             }
           }}
-        >
-          <span className="icon">
-            <FiChevronRight size={'1.25em'} />
-          </span>
-        </button>
+        />
+
         <div className="has-text-grey-dark pl-2" style={{ display: 'flex', alignItems: 'center' }}>
           {title}
         </div>
@@ -173,10 +176,10 @@ export default function Header() {
             aria-controls="dropdown-menu"
             onClick={() => setDisplayToggleActive(!displayToggleActive)}
           >
-            <span>{titleForDisplay(display)}</span>
-            <span className="icon is-small">
+            <Flex alignItems="center">
+              <Text mr="1">{titleForDisplay(display)}</Text>
               <FiChevronDown />
-            </span>
+            </Flex>
           </button>
         </div>
 
