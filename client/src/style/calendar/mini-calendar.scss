@@ -1,17 +1,5 @@
 // Mini Calendar
 
-.cal-mini-month-header {
-  display: flex;
-  justify-content: space-between;
-}
-
-.cal-mini-month-row {
-  display: flex;
-  position: relative;
-  overflow: hidden;
-  width: 100%;
-}
-
 .cal-mini-month-day {
   text-align: center;
   flex: 1;

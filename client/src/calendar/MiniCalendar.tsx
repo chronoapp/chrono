@@ -1,4 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react'
+import { Box, Flex, Text } from '@chakra-ui/react'
+
 import clsx from 'clsx'
 import chunk from 'lodash/chunk'
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi'
@@ -39,7 +41,7 @@ export default function MiniCalendar() {
 
   function renderWeek(week: Date[], idx: number) {
     return (
-      <div key={idx} className="cal-mini-month-row">
+      <Flex key={idx} width={'100%'}>
         {week.map((day: Date, idx) => {
           const label = format(day, 'D')
           const isToday = dates.eq(day, today, 'day')
@@ -61,15 +63,15 @@ export default function MiniCalendar() {
             </div>
           )
         })}
-      </div>
+      </Flex>
     )
   }
 
   return (
-    <div className="mt-3">
-      <div className="cal-mini-month-header has-text-left pl-1">
-        <span>{format(viewDate, 'MMMM YYYY')}</span>
-        <span>
+    <Box mt={3}>
+      <Flex pl="1" justifyContent="space-between">
+        <Text>{format(viewDate, 'MMMM YYYY')}</Text>
+        <Flex>
           <span
             className="icon-button"
             onClick={() => {
@@ -81,7 +83,6 @@ export default function MiniCalendar() {
             <FiChevronUp size={'1.25em'} />
           </span>
           <span
-            className="icon-button ml-1"
             onClick={() => {
               setAnimateDirection('FROM_BOTTOM')
               setViewDate(dates.add(viewDate, 1, 'month'))
@@ -90,9 +91,9 @@ export default function MiniCalendar() {
           >
             <FiChevronDown size={'1.25em'} />
           </span>
-        </span>
-      </div>
-      <div className="cal-mini-month-row">{renderHeader()}</div>
+        </Flex>
+      </Flex>
+      <Flex>{renderHeader()}</Flex>
       <div
         className={clsx(
           animateDirection === 'FROM_BOTTOM' && 'animate-bottom',
@@ -101,6 +102,6 @@ export default function MiniCalendar() {
       >
         {weeks.map(renderWeek)}
       </div>
-    </div>
+    </Box>
   )
 }

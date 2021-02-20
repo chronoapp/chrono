@@ -1,5 +1,17 @@
 import React from 'react'
-import clsx from 'clsx'
+import {
+  Button,
+  FormControl,
+  FormLabel,
+  Input,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+} from '@chakra-ui/react'
 
 interface IProps {
   isActive: boolean
@@ -26,56 +38,52 @@ export default function CalendarEditModal(props: IProps) {
   const [backgroundColor, setBackgroundColor] = React.useState<string>(DEFAULT_CALENDAR_BG_COLOR)
 
   return (
-    <div className={clsx(props.isActive && 'is-active', 'modal')}>
-      <div className="modal-background"></div>
-      <div className="modal-card" style={{ maxWidth: '30em' }}>
-        <header className="modal-card-head">
-          <p className="modal-card-title">New Calendar</p>
-        </header>
-        <section className="modal-card-body">
-          <div className="field">
-            <label className="label has-text-left">Title</label>
-            <div className="control">
-              <input
-                className="input"
-                type="text"
-                placeholder=""
-                value={calendarName}
-                onChange={(e) => {
-                  setCalendarName(e.target.value)
-                }}
-              />
-            </div>
-          </div>
-          <div className="field">
-            <label className="label has-text-left">Description</label>
-            <div className="control">
-              <input
-                className="input"
-                type="text"
-                placeholder=""
-                value={description}
-                onChange={(e) => {
-                  setDescription(e.target.value)
-                }}
-              />
-            </div>
-          </div>
-        </section>
-        <footer className="modal-card-foot" style={{ justifyContent: 'flex-end' }}>
-          <button
-            className="button is-primary"
+    <Modal isOpen={props.isActive} onClose={props.onCancel}>
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>New Calendar</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody>
+          <FormControl id="calendar-title" isRequired>
+            <FormLabel>Title</FormLabel>
+            <Input
+              type="text"
+              placeholder=""
+              value={calendarName}
+              onChange={(e) => {
+                setCalendarName(e.target.value)
+              }}
+            />
+          </FormControl>
+
+          <FormControl id="calendar-description" mt="2">
+            <FormLabel>Description</FormLabel>
+            <Input
+              className="input"
+              type="text"
+              placeholder=""
+              value={description}
+              onChange={(e) => {
+                setDescription(e.target.value)
+              }}
+            />
+          </FormControl>
+        </ModalBody>
+
+        <ModalFooter>
+          <Button variant={'ghost'} mr={3} onClick={props.onCancel}>
+            Cancel
+          </Button>
+          <Button
+            colorScheme="blue"
             onClick={() =>
               props.onSave(calendarName, description, timezone, backgroundColor, isGoogleCalendar)
             }
           >
             Save
-          </button>
-          <button className="button" onClick={props.onCancel}>
-            Cancel
-          </button>
-        </footer>
-      </div>
-    </div>
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   )
 }

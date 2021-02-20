@@ -1,5 +1,19 @@
 import React, { useContext } from 'react'
 import clsx from 'clsx'
+import {
+  Button,
+  Text,
+  FormControl,
+  FormLabel,
+  Input,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+} from '@chakra-ui/react'
 
 import { getAuthToken, putLabel, createLabel } from '../util/Api'
 import { getSortedLabelColors, LabelColor } from '../models/LabelColors'
@@ -50,34 +64,45 @@ function EditLabelModal() {
     }
   }
 
-  return (
-    <div className={`modal ${newLabelModal.active ? 'is-active' : null}`}>
-      <div className="modal-background"></div>
-      <div className="modal-card" style={{ maxWidth: '30em' }}>
-        <header className="modal-card-head">
-          <p className="modal-card-title">Add Project</p>
-        </header>
-        <section className="modal-card-body">
-          <div className="field">
-            <label className="label has-text-left">Project Name</label>
-            <div className="control">
-              <input
-                className="input"
-                type="text"
-                placeholder=""
-                value={newLabelModal.labelTitle}
-                onChange={(e) => {
-                  dispatch({
-                    type: 'UPDATE_EDIT_LABEL',
-                    payload: { ...newLabelModal, labelTitle: e.target.value },
-                  })
-                }}
-              />
-            </div>
-          </div>
+  function onCloseModal() {
+    dispatch({
+      type: 'UPDATE_EDIT_LABEL',
+      payload: {
+        ...newLabelModal,
+        active: false,
+        colorPickerActive: false,
+        labelTitle: '',
+        labelId: undefined,
+        labelColor: undefined,
+      },
+    })
+  }
 
-          <div className="field">
-            <label className="label has-text-left">Project Color</label>
+  return (
+    <Modal isOpen={true} onClose={onCloseModal}>
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>Add Tag</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody>
+          <FormControl id="tag-name" isRequired>
+            <FormLabel>Tag Name</FormLabel>
+            <Input
+              type="text"
+              placeholder=""
+              value={newLabelModal.labelTitle}
+              onChange={(e) => {
+                dispatch({
+                  type: 'UPDATE_EDIT_LABEL',
+                  payload: { ...newLabelModal, labelTitle: e.target.value },
+                })
+              }}
+            />
+          </FormControl>
+
+          <FormControl id="tag-color" mt="2">
+            <FormLabel>Tag Color</FormLabel>
+
             <div className="control has-text-left">
               <div className="select">
                 <div className={clsx('dropdown', newLabelModal.colorPickerActive && 'is-active')}>
@@ -102,6 +127,7 @@ function EditLabelModal() {
                       </span>
                     </button>
                   </div>
+
                   <div className="dropdown-menu" role="menu" style={{ maxHeight: '16em' }}>
                     <div
                       className="dropdown-content"
@@ -132,38 +158,19 @@ function EditLabelModal() {
                 </div>
               </div>
             </div>
-          </div>
-        </section>
-        <footer className="modal-card-foot" style={{ justifyContent: 'flex-end' }}>
-          <button
-            className="button is-primary"
-            onClick={() => {
-              onClickSaveLabel(newLabelModal, selectedColor)
-            }}
-          >
-            Save
-          </button>
-          <button
-            className="button"
-            onClick={() => {
-              dispatch({
-                type: 'UPDATE_EDIT_LABEL',
-                payload: {
-                  ...newLabelModal,
-                  active: false,
-                  colorPickerActive: false,
-                  labelTitle: '',
-                  labelId: undefined,
-                  labelColor: undefined,
-                },
-              })
-            }}
-          >
+          </FormControl>
+        </ModalBody>
+
+        <ModalFooter>
+          <Button variant={'ghost'} mr={3} onClick={onCloseModal}>
             Cancel
-          </button>
-        </footer>
-      </div>
-    </div>
+          </Button>
+          <Button colorScheme="blue" onClick={() => onClickSaveLabel(newLabelModal, selectedColor)}>
+            Save
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   )
 }
 
