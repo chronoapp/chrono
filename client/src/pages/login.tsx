@@ -1,11 +1,13 @@
 import React from 'react'
+import { FormControl, FormLabel, Input, Flex, Box, Button, Text } from '@chakra-ui/react'
+
 import { getGoogleOauthUrl, getMsftOauthUrl } from '../util/Api'
 import '../style/index.scss'
 
 /**
  * TODO: Redirect to home if already logged in.
  */
-function Login(props) {
+function Login() {
   return (
     <div
       style={{
@@ -16,66 +18,54 @@ function Login(props) {
         transform: 'translate(-50%, -30%)',
       }}
     >
-      <div className="has-text-centered">
+      <Flex justifyContent="center">
         <img src={'./timecouncil-logo-250.jpg'} style={{ width: '15em' }} />
-      </div>
-      <div className="card mt-3">
-        <div className="card-content">
-          <h2 className="has-text-centered is-size-6">Sign in to Timecouncil</h2>
-          <br />
+      </Flex>
+      <Box boxShadow="lg" padding="5">
+        <Text textAlign="center" mt="2">
+          Sign in to Timecouncil
+        </Text>
 
-          <button
-            onClick={() => (window.location.href = getGoogleOauthUrl())}
-            className="button is-size-6"
-            style={{ width: '100%' }}
-          >
-            <img src={'./google.svg'} style={{ width: '40px', paddingRight: 5 }}></img> Continue
-            with Google
-          </button>
+        <br />
 
-          <button
-            onClick={() => (window.location.href = getMsftOauthUrl())}
-            className="button is-size-6 mt-2"
-            style={{ width: '100%' }}
-          >
-            <img src={'./microsoft-logo.png'} style={{ width: '32px', paddingRight: 5 }}></img>{' '}
-            Continue with Microsoft
-          </button>
-          <hr />
+        <Button
+          variant="outline"
+          w="100%"
+          onClick={() => (window.location.href = getGoogleOauthUrl())}
+        >
+          <img src={'./google.svg'} style={{ width: '40px', paddingRight: 5 }}></img> Continue with
+          Google
+        </Button>
 
-          <p className="has-text-centered has-text-grey">Or, sign in with email</p>
+        <Button
+          variant="outline"
+          mt="2"
+          w="100%"
+          onClick={() => (window.location.href = getMsftOauthUrl())}
+        >
+          <img src={'./microsoft-logo.png'} style={{ width: '32px', paddingRight: 5 }}></img>{' '}
+          Continue with Microsoft
+        </Button>
 
-          <div className="field">
-            <label className="label">Email</label>
-            <div className="control has-icons-left has-icons-right">
-              <input className="input is-success" type="text" placeholder="Email" />
-              <span className="icon is-small is-left">
-                <i className="fas fa-user"></i>
-              </span>
-              <span className="icon is-small is-right">
-                <i className="fas fa-check"></i>
-              </span>
-            </div>
-          </div>
+        <hr />
 
-          <div className="field">
-            <label className="label">Password</label>
-            <div className="control has-icons-left has-icons-right">
-              <input className="input is-success" type="text" placeholder="Password" />
-              <span className="icon is-small is-left">
-                <i className="fas fa-user"></i>
-              </span>
-              <span className="icon is-small is-right">
-                <i className="fas fa-check"></i>
-              </span>
-            </div>
-          </div>
+        <Text textAlign="center" color="gray.500" mt="2">
+          Or, sign in with email
+        </Text>
 
-          <button className="button is-size-6 is-primary" style={{ width: '100%' }}>
-            Sign in
-          </button>
-        </div>
-      </div>
+        <FormControl id="calendar-description" mt="2">
+          <FormLabel>Email</FormLabel>
+          <Input className="input" type="text" placeholder="Email" />
+        </FormControl>
+        <FormControl id="calendar-description" mt="2">
+          <FormLabel>Password</FormLabel>
+          <Input className="input" type="password" placeholder="Password" />
+        </FormControl>
+
+        <Button colorScheme="blue" w="100%" mt="2">
+          Sign in
+        </Button>
+      </Box>
     </div>
   )
 }
