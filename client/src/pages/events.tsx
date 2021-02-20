@@ -7,12 +7,16 @@ import {
   ModalHeader,
   ModalFooter,
   ModalBody,
+  Box,
   Table,
   Thead,
   Tr,
   Th,
   Td,
   Tbody,
+  Tag,
+  TagLabel,
+  TagCloseButton,
 } from '@chakra-ui/react'
 
 import tinycolor from 'tinycolor2'
@@ -69,19 +73,14 @@ function LabelTagSolid(props: {
   const labelStyle = {
     backgroundColor: props.label.color_hex,
     marginRight: '0.25em',
-    paddingRight: 0,
     color: tinycolor(props.label.color_hex).getLuminance() < 0.5 ? 'white' : '#4a4a4a',
   }
 
   return (
-    <span style={labelStyle} className="tag">
-      {props.label.title}
-      <a
-        style={labelStyle}
-        onClick={(e) => props.onRemoveLabel(props.event.id, props.label.id)}
-        className="tag is-delete is-delete-solid"
-      ></a>
-    </span>
+    <Tag size={'md'} borderRadius="sm" variant="solid" style={labelStyle}>
+      <TagLabel>{props.label.title}</TagLabel>
+      <TagCloseButton onClick={() => props.onRemoveLabel(props.event.id, props.label.id)} />
+    </Tag>
   )
 }
 
@@ -330,15 +329,17 @@ class EventList extends Component<Props, State> {
                   <Td>{getDurationDisplay(event.start, event.end)}</Td>
                   <Td>{Event.getDefaultTitle(event)}</Td>
                   <Td>
-                    {event.labels.map((label) => (
-                      <LabelTagSolid
-                        key={`${event.id}-${label.id}`}
-                        event={event}
-                        label={label}
-                        onRemoveLabel={this.removeLabel}
-                      />
-                    ))}
-                    {this.renderDropdown(event.id)}
+                    <Box display="flex" alignItems="center">
+                      {event.labels.map((label) => (
+                        <LabelTagSolid
+                          key={`${event.id}-${label.id}`}
+                          event={event}
+                          label={label}
+                          onRemoveLabel={this.removeLabel}
+                        />
+                      ))}
+                      {this.renderDropdown(event.id)}
+                    </Box>
                   </Td>
                 </Tr>
               )

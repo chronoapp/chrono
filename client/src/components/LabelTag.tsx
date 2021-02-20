@@ -1,4 +1,6 @@
 import React from 'react'
+import { Tag, TagCloseButton } from '@chakra-ui/react'
+
 import clsx from 'clsx'
 import { Label } from '../models/Label'
 
@@ -44,11 +46,11 @@ export function LabelTag(props: LabelTagProps) {
       <span style={{ display: 'inline-block' }} className="pl-1">
         {props.label.title}
       </span>
+
       {props.allowEdit && (
-        <a
-          onClick={(e) => props.onClickDelete && props.onClickDelete(e)}
-          className="tag is-delete"
-        ></a>
+        <Tag size={'md'} borderRadius="sm" pl="0">
+          <TagCloseButton onClick={(e) => props.onClickDelete && props.onClickDelete(e)} />
+        </Tag>
       )}
     </div>
   )

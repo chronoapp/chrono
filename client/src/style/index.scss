@@ -9,8 +9,8 @@
 
 @import '../../node_modules/bulma/sass/elements/button.sass';
 @import '../../node_modules/bulma/sass/elements/container.sass';
-@import '../../node_modules/bulma/sass/elements/tag.sass';
 
+// TODO: Replace this and react-select with downshift
 @import '../../node_modules/bulma/sass/components/dropdown.sass';
 
 @import 'app.scss';
