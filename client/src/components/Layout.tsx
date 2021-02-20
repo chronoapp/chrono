@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react'
 import clsx from 'clsx'
-import { Box, Flex, Link as StyledLink } from '@chakra-ui/react'
+import { Box, Flex, Button } from '@chakra-ui/react'
 
 import Link from 'next/link'
 import Head from 'next/head'
@@ -109,30 +109,29 @@ function Layout(props: Props) {
 
             <Flex>
               <Link href="/">
-                <StyledLink
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
+                <Button
+                  variant="unstyled"
+                  borderRadius="0"
                   ml="2"
                   padding="2"
                   pl="0"
-                  fontWeight={router.pathname == '/' ? 'medium' : 'normal'}
+                  height="100%"
+                  fontWeight={router.pathname === '/' ? 'medium' : 'normal'}
                 >
                   Calendar
-                </StyledLink>
+                </Button>
               </Link>
               <Link href="/events">
-                <StyledLink
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
+                <Button
+                  variant="unstyled"
+                  borderRadius="0"
                   ml="2"
                   padding="2"
-                  pl="0"
-                  fontWeight={router.pathname == '/events' ? 'medium' : 'normal'}
+                  height="100%"
+                  fontWeight={router.pathname === '/events' ? 'medium' : 'normal'}
                 >
                   Events
-                </StyledLink>
+                </Button>
               </Link>
             </Flex>
           </Flex>
