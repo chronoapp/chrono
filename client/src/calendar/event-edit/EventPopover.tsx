@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect, createRef } from 'react'
+
 import clsx from 'clsx'
 import produce from 'immer'
 import moment from 'moment'
@@ -201,7 +202,7 @@ function EventPopover(props: IProps) {
 
     return (
       <div>
-        <div className="cal-event-modal-header has-background-white-ter">
+        <div className="cal-event-modal-header">
           <span
             className="mr-2 is-flex is-align-items-center"
             style={{ height: '100%' }}
@@ -264,7 +265,7 @@ function EventPopover(props: IProps) {
 
     return (
       <>
-        <div className="cal-event-modal-header has-background-white-ter">
+        <div className="cal-event-modal-header">
           <div
             className="mr-2 is-flex is-align-items-center"
             style={{ height: '100%' }}

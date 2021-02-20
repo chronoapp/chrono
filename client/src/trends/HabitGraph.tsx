@@ -114,7 +114,7 @@ function HabitGraph(props: IProps) {
   }
 
   return (
-    <Box centerContent className="container is-max-desktop" mt="2">
+    <Box className="container is-max-desktop" mt="2">
       <div>
         <Flex justifyContent="space-between">
           <Flex ml="2" alignItems="center" justifyContent="flex-start">

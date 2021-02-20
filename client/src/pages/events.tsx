@@ -1,4 +1,20 @@
 import React, { Component } from 'react'
+import {
+  Button,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  Table,
+  Thead,
+  Tr,
+  Th,
+  Td,
+  Tbody,
+} from '@chakra-ui/react'
+
 import tinycolor from 'tinycolor2'
 
 import { format, getDurationDisplay } from '../util/localizer'
@@ -226,13 +242,18 @@ class EventList extends Component<Props, State> {
     }
 
     return (
-      <div className={`modal ${labelRuleState.addLabelRuleModalActive ? 'is-active' : null}`}>
-        <div className="modal-background"></div>
-        <div className="modal-card">
-          <header className="modal-card-head">
-            <p className="modal-card-title">Add tag to event</p>
-          </header>
-          <section className="modal-card-body">
+      <Modal
+        isOpen={labelRuleState.addLabelRuleModalActive}
+        onClose={() => {
+          labelRuleState.addLabelRuleModalActive = false
+          this.setState({ labelRuleState })
+        }}
+      >
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Add tag to event</ModalHeader>
+
+          <ModalBody>
             <div className="control radio-list">
               <label className="radio">
                 <input
@@ -262,23 +283,25 @@ class EventList extends Component<Props, State> {
                 </span>
               </label>
             </div>
-          </section>
-          <footer className="modal-card-foot">
-            <button className="button is-link" onClick={this.applyLabelToEvent}>
-              Apply
-            </button>
-            <button
-              className="button"
+          </ModalBody>
+
+          <ModalFooter>
+            <Button
+              variant={'ghost'}
+              mr={3}
               onClick={() => {
                 labelRuleState.addLabelRuleModalActive = false
                 this.setState({ labelRuleState })
               }}
             >
               Cancel
-            </button>
-          </footer>
-        </div>
-      </div>
+            </Button>
+            <Button colorScheme="blue" onClick={this.applyLabelToEvent}>
+              Save
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     )
   }
 
@@ -287,26 +310,26 @@ class EventList extends Component<Props, State> {
 
     return (
       events.length > 0 && (
-        <table className="table has-text-left">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Duration</th>
-              <th>Event</th>
-              <th>Tag</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table variant="simple" textAlign="left">
+          <Thead>
+            <Tr>
+              <Th>Date</Th>
+              <Th>Duration</Th>
+              <Th>Event</Th>
+              <Th>Tag</Th>
+            </Tr>
+          </Thead>
+          <Tbody>
             {events.map((_, idx, arr) => {
               // Reverse order without copy.
               const event = arr[arr.length - 1 - idx]
 
               return (
-                <tr key={`event-${event.id}`}>
-                  <td>{format(event.start, 'MMM DD')}</td>
-                  <td>{getDurationDisplay(event.start, event.end)}</td>
-                  <td>{Event.getDefaultTitle(event)}</td>
-                  <td>
+                <Tr key={`event-${event.id}`}>
+                  <Td>{format(event.start, 'MMM DD')}</Td>
+                  <Td>{getDurationDisplay(event.start, event.end)}</Td>
+                  <Td>{Event.getDefaultTitle(event)}</Td>
+                  <Td>
                     {event.labels.map((label) => (
                       <LabelTagSolid
                         key={`${event.id}-${label.id}`}
@@ -316,12 +339,12 @@ class EventList extends Component<Props, State> {
                       />
                     ))}
                     {this.renderDropdown(event.id)}
-                  </td>
-                </tr>
+                  </Td>
+                </Tr>
               )
             })}
-          </tbody>
-        </table>
+          </Tbody>
+        </Table>
       )
     )
   }

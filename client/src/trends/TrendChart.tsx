@@ -209,7 +209,7 @@ function TrendChart(props: IProps) {
           return renderEmpty()
         } else {
           return (
-            <Box centerContent className="container is-max-desktop" mt="2">
+            <Box className="container is-max-desktop" mt="2">
               <Flex justifyContent="space-between">
                 <Flex ml="2" alignItems="center" justifyContent="flex-start">
                   Time spent on {renderTagDropdown(labelsById)} per {renderTimePeriodSelections()}

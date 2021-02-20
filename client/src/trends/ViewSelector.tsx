@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { Box } from '@chakra-ui/react'
 import { FiBarChart2, FiGrid } from 'react-icons/fi'
 
 export type TrendView = 'CHART' | 'HABIT_GRAPH'
@@ -10,7 +11,7 @@ interface IProps {
 
 function ViewSelector(props: IProps) {
   return (
-    <div className="level-right mr-2">
+    <Box mr="2">
       <button
         onClick={() => props.setSelectedView('CHART')}
         className={clsx(
@@ -36,7 +37,7 @@ function ViewSelector(props: IProps) {
       >
         <FiGrid size={'1.25em'} />
       </button>
-    </div>
+    </Box>
   )
 }
 

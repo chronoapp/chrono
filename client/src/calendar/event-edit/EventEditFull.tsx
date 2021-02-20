@@ -1,4 +1,15 @@
 import React, { useContext, useState } from 'react'
+import {
+  Button,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+} from '@chakra-ui/react'
+
 import produce from 'immer'
 import * as dates from '@/util/dates'
 
@@ -54,22 +65,19 @@ export default function EventEditFull(props: { event: Event }) {
   const labels: Label[] = Object.values(labelState.labelsById)
 
   return (
-    <div className="modal is-active">
-      <div className="modal-background"></div>
+    <Modal
+      size="2xl"
+      isOpen={true}
+      onClose={() => {
+        eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
+      }}
+    >
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>Edit Event</ModalHeader>
+        <ModalCloseButton />
 
-      <div className="modal-card">
-        <div className="modal-card-head cal-event-modal-header has-background-white-ter">
-          <span
-            style={{ height: '100%', display: 'flex', alignItems: 'center' }}
-            onClick={(e) => {
-              eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
-            }}
-          >
-            <MdClose className="has-text-grey-light" style={{ cursor: 'pointer' }} />
-          </span>
-        </div>
-
-        <section className="modal-card-body has-text-left">
+        <ModalBody>
           <div className="is-flex is-align-items-center">
             <span className="mr-2" style={{ width: '1.25em' }} />
             <TaggableInput
@@ -224,27 +232,20 @@ export default function EventEditFull(props: { event: Event }) {
               style={{ minHeight: '4em' }}
             />
           </div>
-        </section>
+        </ModalBody>
 
-        <footer className="modal-card-foot">
-          <button
-            className="button is-primary"
-            onClick={() => {
-              saveEvent(getEventData())
-            }}
-          >
-            Save changes
-          </button>
-          <button
-            className="button"
-            onClick={() => {
-              eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
-            }}
+        <ModalFooter>
+          <Button
+            variant={'ghost'}
+            mr={3}
+            onClick={() => eventActions.eventDispatch({ type: 'CANCEL_SELECT' })}
           >
             Cancel
-          </button>
-        </footer>
-      </div>
-    </div>
+          </Button>
+
+          <Button onClick={() => saveEvent(getEventData())}>Save changes</Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   )
 }
