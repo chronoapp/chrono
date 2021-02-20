@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react'
 import chunk from 'lodash/chunk'
 import clsx from 'clsx'
+import { Flex } from '@chakra-ui/react'
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 
 import ViewSelector, { TrendView } from './ViewSelector'
@@ -64,7 +65,7 @@ function HabitGraph(props: IProps) {
     const { h, s, l } = hexToHSL(props.selectedLabel!.color_hex)
 
     return (
-      <div key={idx} className="cal-mini-month-row">
+      <Flex key={idx}>
         {week.map((day: Date, idx: number) => {
           const label = format(day, 'D')
           const dayKey = format(day, 'YYYY-MM-DD')
@@ -94,7 +95,7 @@ function HabitGraph(props: IProps) {
             </div>
           )
         })}
-      </div>
+      </Flex>
     )
   }
 
@@ -105,7 +106,7 @@ function HabitGraph(props: IProps) {
 
     return (
       <div>
-        <div className="cal-mini-month-row">{renderHeader()}</div>
+        <Flex>{renderHeader()}</Flex>
         {weeks.map(renderWeek)}
       </div>
     )

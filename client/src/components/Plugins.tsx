@@ -1,5 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
+import { Box, Flex } from '@chakra-ui/react'
 import { useRouter } from 'next/router'
 import clsx from 'clsx'
 import { BsBarChartFill } from 'react-icons/bs'
@@ -16,10 +17,12 @@ export default function Plugins() {
         )}
       >
         <Link href="/trends">
-          <a>
-            <BsBarChartFill size={25} className="has-text-grey-light" />
+          <Box>
+            <Flex justifyContent="center">
+              <BsBarChartFill size={25} className="has-text-grey-light" />
+            </Flex>
             <span className="cal-plugin-text is-size-7 has-text-grey">Trends</span>
-          </a>
+          </Box>
         </Link>
       </div>
     </div>

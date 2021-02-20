@@ -1,5 +1,7 @@
 import React, { useState, useContext } from 'react'
 import clsx from 'clsx'
+import { Box, Flex, Link as StyledLink } from '@chakra-ui/react'
+
 import Link from 'next/link'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
@@ -95,44 +97,55 @@ function Layout(props: Props) {
     const router = useRouter()
 
     return (
-      <nav className="navbar" role="navigation" aria-label="main navigation">
-        <div className="is-flex has-width-100">
-          <div className="navbar-menu">
-            <a className="navbar-item" href="#">
+      <Flex height="3.25rem" borderBottom="1px solid #dfdfdf">
+        <Box w="100%" display="flex">
+          <Flex alignItems="stretch" className="navbar-menu">
+            <Flex href="#" alignItems="center" justifyContent="center" padding="2">
               <img
                 src={'./timecouncil-symbol.png'}
                 style={{ maxHeight: '2.5rem', width: '2.5rem' }}
               />
-            </a>
+            </Flex>
 
-            <div className="is-flex">
+            <Flex>
               <Link href="/">
-                <a className={clsx('pl-0', 'navbar-item', router.pathname == '/' && 'is-active')}>
+                <StyledLink
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  ml="2"
+                  padding="2"
+                  pl="0"
+                  fontWeight={router.pathname == '/' ? 'medium' : 'normal'}
+                >
                   Calendar
-                </a>
+                </StyledLink>
               </Link>
               <Link href="/events">
-                <a
-                  className={clsx({
-                    'navbar-item': true,
-                    'is-active': router.pathname == '/events',
-                  })}
+                <StyledLink
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  ml="2"
+                  padding="2"
+                  pl="0"
+                  fontWeight={router.pathname == '/events' ? 'medium' : 'normal'}
                 >
                   Events
-                </a>
+                </StyledLink>
               </Link>
-            </div>
-          </div>
+            </Flex>
+          </Flex>
 
           {props.canCreateEvent && <Header />}
-        </div>
+        </Box>
 
-        <div className="navbar-end">
-          <div className="navbar-item">
+        <Flex justifyContent="flex-end">
+          <Flex alignItems="center" justifyContent="center" padding="2">
             <Settings />
-          </div>
-        </div>
-      </nav>
+          </Flex>
+        </Flex>
+      </Flex>
     )
   }
 
