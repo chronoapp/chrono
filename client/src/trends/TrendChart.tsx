@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react'
+import { Flex, Box } from '@chakra-ui/react'
+
 import { Bar } from 'react-chartjs-2'
 import { FiChevronDown } from 'react-icons/fi'
 import clsx from 'clsx'
@@ -207,19 +209,17 @@ function TrendChart(props: IProps) {
           return renderEmpty()
         } else {
           return (
-            <div className="container is-centered is-max-desktop mt-2">
-              <div>
-                <div className="level">
-                  <div className="level-left ml-2">
-                    Time spent on {renderTagDropdown(labelsById)} per {renderTimePeriodSelections()}
-                  </div>
+            <Box centerContent className="container is-max-desktop" mt="2">
+              <Flex justifyContent="space-between">
+                <Flex ml="2" alignItems="center" justifyContent="flex-start">
+                  Time spent on {renderTagDropdown(labelsById)} per {renderTimePeriodSelections()}
+                </Flex>
 
-                  <ViewSelector setSelectedView={props.setSelectedView} selectedView={'CHART'} />
-                </div>
-              </div>
+                <ViewSelector setSelectedView={props.setSelectedView} selectedView={'CHART'} />
+              </Flex>
 
-              <div className="card-content">{renderChart(labelsById)}</div>
-            </div>
+              <Box mt="2">{renderChart(labelsById)}</Box>
+            </Box>
           )
         }
       }}

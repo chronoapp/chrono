@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react'
+import { Flex, Box, Text } from '@chakra-ui/react'
+
 import chunk from 'lodash/chunk'
 import clsx from 'clsx'
-import { Flex } from '@chakra-ui/react'
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 
 import ViewSelector, { TrendView } from './ViewSelector'
@@ -113,11 +114,13 @@ function HabitGraph(props: IProps) {
   }
 
   return (
-    <div className="container is-centered is-max-desktop mt-2">
+    <Box centerContent className="container is-max-desktop" mt="2">
       <div>
-        <div className="level">
-          <div className="level-left">
-            <span className="ml-2">Habit Chart</span>
+        <Flex justifyContent="space-between">
+          <Flex ml="2" alignItems="center" justifyContent="flex-start">
+            <Text ml="2" mr="2">
+              Habit Chart
+            </Text>
             <button
               className="button is-text is-small is-size-6"
               onClick={() => setViewDate(dates.subtract(viewDate, 1, 'month'))}
@@ -134,14 +137,14 @@ function HabitGraph(props: IProps) {
                 <FiChevronRight size={'1.25em'} />
               </span>
             </button>
-            <span className="ml-2">{format(viewDate, 'MMMM YYYY')}</span>
-          </div>
+            <Text ml="2">{format(viewDate, 'MMMM YYYY')}</Text>
+          </Flex>
           <ViewSelector setSelectedView={props.setSelectedView} selectedView={'HABIT_GRAPH'} />
-        </div>
+        </Flex>
       </div>
 
-      <div className="card-content">{renderGraph()}</div>
-    </div>
+      <Box mt="2">{renderGraph()}</Box>
+    </Box>
   )
 }
 
