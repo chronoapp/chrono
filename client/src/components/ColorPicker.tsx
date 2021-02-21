@@ -1,4 +1,5 @@
 import React from 'react'
+import { Flex, Box } from '@chakra-ui/react'
 import { getSortedLabelColors } from '../models/LabelColors'
 
 interface IProps {
@@ -12,32 +13,32 @@ function ColorPicker(props: IProps) {
   return (
     <div ref={props.innerRef} style={{ maxWidth: '12em' }}>
       <div className="dropdown-content">
-        <div className="columns" style={{ paddingLeft: '1.5em', marginBottom: 0 }}>
+        <Flex pl="1">
           {colors.slice(0, colors.length / 2).map((color) => {
             return (
-              <div key={color} className="column is-1">
+              <Box key={color} pl="1">
                 <div
                   style={{ backgroundColor: color }}
                   onClick={() => props.onSelectLabelColor(color)}
                   className="event-label event-label--hoverable"
                 ></div>
-              </div>
+              </Box>
             )
           })}
-        </div>
-        <div className="columns" style={{ paddingLeft: '1.5em' }}>
+        </Flex>
+        <Flex pl="1" mt="1">
           {colors.slice(6, colors.length).map((color) => {
             return (
-              <div key={color} className="column is-1">
+              <Box key={color} pl="1">
                 <div
                   style={{ backgroundColor: color }}
                   onClick={() => props.onSelectLabelColor(color)}
                   className="event-label event-label--hoverable"
                 ></div>
-              </div>
+              </Box>
             )
           })}
-        </div>
+        </Flex>
       </div>
     </div>
   )
