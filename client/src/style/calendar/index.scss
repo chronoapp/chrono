@@ -50,20 +50,6 @@
   margin-right: auto;
 }
 
-.calendar-dropdown {
-  .dropdown-menu {
-    top: auto;
-  }
-}
-
-.calendar-header {
-  display: flex;
-  justify-content: space-between;
-  padding-bottom: 0.25rem;
-  padding-top: 0.25rem;
-  padding-left: 0.5rem;
-}
-
 .cal-has-shadow {
   box-shadow: $event-shadow !important;
   z-index: 1;

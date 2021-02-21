@@ -14,6 +14,20 @@ const theme = extendTheme({
     body: `-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Ubuntu', 'Cantarell',
     'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;`,
   },
+  colors: {
+    primary: {
+      100: '#ebedff',
+      200: '#c7cdef',
+      300: '#a2acde',
+      400: '#7d8ace',
+      500: '#5969bf',
+      600: '#404fa6',
+      700: '#313e82',
+      800: '#232c5e',
+      900: '#131a3b',
+      1000: '#04091a',
+    },
+  },
 })
 
 /**

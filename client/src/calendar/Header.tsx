@@ -1,7 +1,15 @@
 import React from 'react'
-import { Flex, Text, IconButton } from '@chakra-ui/react'
-
-import clsx from 'clsx'
+import {
+  Flex,
+  Text,
+  IconButton,
+  Button,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuDivider,
+} from '@chakra-ui/react'
 
 import { FiChevronDown, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 import { EventActionContext, Display } from './EventActionContext'
@@ -106,17 +114,13 @@ export default function Header() {
   }
 
   return (
-    <div
-      className={clsx(
-        'has-width-100',
-        'dropdown',
-        'calendar-header',
-        displayToggleActive && 'is-active'
-      )}
-    >
-      <div className="is-flex is-align-items-center">
-        <div
-          className="button is-small is-light"
+    <Flex w="100%" pl="2" justifyContent="space-between" alignItems="center">
+      <Flex alignItems="center">
+        <Button
+          color="gray.600"
+          size="sm"
+          fontWeight="normal"
+          borderRadius="xs"
           onClick={() => {
             if (dates.eq(eventsContext.selectedDate, today, 'day')) {
               document.dispatchEvent(new Event(GlobalEvent.scrollToEvent))
@@ -126,13 +130,15 @@ export default function Header() {
           }}
         >
           Today
-        </div>
+        </Button>
+
         <IconButton
           ml="1"
+          borderRadius="xs"
           aria-label="previous date range"
           variant="ghost"
           icon={<FiChevronLeft />}
-          size={'lg'}
+          size="md"
           onClick={() => {
             if (display == 'Day') {
               eventsContext.setSelectedDate(dates.subtract(eventsContext.selectedDate, 1, 'day'))
@@ -147,9 +153,10 @@ export default function Header() {
         />
 
         <IconButton
+          borderRadius="xs"
           aria-label="next date range"
           variant="ghost"
-          size={'lg'}
+          size="md"
           icon={<FiChevronRight />}
           onClick={() => {
             if (display == 'Day') {
@@ -163,49 +170,33 @@ export default function Header() {
           }}
         />
 
-        <div className="has-text-grey-dark pl-2" style={{ display: 'flex', alignItems: 'center' }}>
+        <Text pl="2" color="gray.600">
           {title}
-        </div>
-      </div>
+        </Text>
+      </Flex>
 
-      <div className="calendar-dropdown is-flex is-align-items-center">
-        <div className="dropdown-trigger">
-          <button
-            className="button is-light is-small"
-            aria-haspopup="true"
-            aria-controls="dropdown-menu"
-            onClick={() => setDisplayToggleActive(!displayToggleActive)}
-          >
-            <Flex alignItems="center">
-              <Text mr="1">{titleForDisplay(display)}</Text>
-              <FiChevronDown />
-            </Flex>
-          </button>
-        </div>
-
-        <div
-          ref={displayToggleRef}
-          className="dropdown-menu is-small"
-          id="dropdown-menu"
-          role="menu"
-          style={{ left: 'auto', minWidth: '10rem', right: 0, top: '100%' }}
+      <Menu>
+        <MenuButton
+          color="gray.600"
+          borderRadius="xs"
+          size="sm"
+          as={Button}
+          rightIcon={<FiChevronDown />}
+          fontWeight="normal"
         >
-          <div className="dropdown-content has-text-left">
-            <a onClick={() => selectDisplay('Day')} className="dropdown-item">
-              Day (d)
-            </a>
-            <a onClick={() => selectDisplay('Week')} className="dropdown-item">
-              Week (w)
-            </a>
-            <a onClick={() => selectDisplay('WorkWeek')} className="dropdown-item">
-              Work week (x)
-            </a>
-            <a onClick={() => selectDisplay('Month')} className="dropdown-item">
-              Month (m)
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
+          {titleForDisplay(display)}
+        </MenuButton>
+
+        <MenuList zIndex={2}>
+          <MenuItem onClick={() => selectDisplay('Day')}>Day (d)</MenuItem>
+          <MenuDivider m="0" />
+          <MenuItem onClick={() => selectDisplay('Week')}>Week (w)</MenuItem>
+          <MenuDivider m="0" />
+          <MenuItem onClick={() => selectDisplay('WorkWeek')}>Work week (x)</MenuItem>
+          <MenuDivider m="0" />
+          <MenuItem onClick={() => selectDisplay('Month')}>Month (m)</MenuItem>
+        </MenuList>
+      </Menu>
+    </Flex>
   )
 }

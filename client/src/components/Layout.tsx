@@ -1,11 +1,19 @@
-import React, { useState, useContext } from 'react'
-import clsx from 'clsx'
-import { Box, Flex, Button } from '@chakra-ui/react'
+import React from 'react'
+import {
+  Box,
+  Flex,
+  Avatar,
+  Button,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuDivider,
+} from '@chakra-ui/react'
 
 import Link from 'next/link'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import { FiMoreHorizontal } from 'react-icons/fi'
 
 import { getAuthToken, signOut, syncCalendar } from '../util/Api'
 import { roundNext15Min } from '../util/localizer'
@@ -29,13 +37,17 @@ interface Props {
 }
 
 function NewEventButton() {
-  const eventsContext = useContext(EventActionContext)
-
+  const eventsContext = React.useContext(EventActionContext)
   // TODO: Scroll to the event if it's off-screen.
+
   return (
-    <button
-      className="button is-small is-primary mt-3"
-      style={{ maxWidth: '8em', maxHeight: '2.2em' }}
+    <Button
+      borderRadius="sm"
+      colorScheme="primary"
+      maxHeight="2.2em"
+      maxWidth="8em"
+      mt="2"
+      size="sm"
       onClick={() => {
         eventsContext.eventDispatch({
           type: 'INIT_NEW_EVENT_AT_DATE',
@@ -44,7 +56,7 @@ function NewEventButton() {
       }}
     >
       Create Event
-    </button>
+    </Button>
   )
 }
 
@@ -53,11 +65,9 @@ function NewEventButton() {
  */
 // export default class Layout extends React.Component<Props, {}> {
 function Layout(props: Props) {
-  const [settingsActive, setSettingsActive] = useState(false)
-  const alertsContext = useContext(AlertsContext)
+  const alertsContext = React.useContext(AlertsContext)
 
   async function refreshCalendar() {
-    setSettingsActive(false)
     alertsContext.addMessage('Updating calendar..')
     await syncCalendar(getAuthToken())
     alertsContext.addMessage('Calendar updated.')
@@ -68,28 +78,18 @@ function Layout(props: Props) {
     const router = useRouter()
 
     return (
-      <div className={clsx('dropdown', settingsActive && 'is-active')}>
-        <div className="dropdown-trigger" onClick={() => setSettingsActive(!settingsActive)}>
-          <button className="button is-text">
-            <FiMoreHorizontal size={'1.25em'} />
-          </button>
-        </div>
-        <div className="dropdown-menu" style={{ right: 0, left: 'auto' }}>
-          <div className="dropdown-content has-text-left">
-            <a className="dropdown-item" onClick={() => router.push('/settings')}>
-              Settings
-            </a>
-            <hr style={{ margin: 0 }} />
-            <a className="dropdown-item" onClick={refreshCalendar}>
-              Refresh Events
-            </a>
-            <hr style={{ margin: 0 }} />
-            <a className="dropdown-item" onClick={signOut}>
-              Sign Out
-            </a>
-          </div>
-        </div>
-      </div>
+      <Menu>
+        <MenuButton ml="2" mr="2">
+          <Avatar size="sm" />
+        </MenuButton>
+        <MenuList zIndex="2">
+          <MenuItem onClick={() => router.push('/settings')}>Settings</MenuItem>
+          <MenuDivider m="0" />
+          <MenuItem onClick={refreshCalendar}>Refresh Events</MenuItem>
+          <MenuDivider m="0" />
+          <MenuItem onClick={signOut}>Sign Out</MenuItem>
+        </MenuList>
+      </Menu>
     )
   }
 

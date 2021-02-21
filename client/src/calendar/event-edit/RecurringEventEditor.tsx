@@ -1,4 +1,14 @@
 import React, { useState, useEffect } from 'react'
+import {
+  Button,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+} from '@chakra-ui/react'
+
 import clsx from 'clsx'
 import produce from 'immer'
 import { BsArrowRepeat } from 'react-icons/bs'
@@ -294,15 +304,19 @@ function RecurringEventEditor(props: IProps) {
     }
 
     return (
-      <div className="modal z-index-50 is-active">
-        <div className="modal-background"></div>
-        <div className="modal-card" ref={eventEditModalRef} style={{ width: 300 }}>
-          <section className="modal-card-body has-text-left pb-2">
+      <Modal isOpen={modalEnabled} onClose={() => setModalEnabled(false)}>
+        <ModalOverlay />
+        <ModalContent pt="4">
+          <ModalCloseButton />
+          <ModalBody>
             {renderEditor()}
 
-            <div className="mt-2 is-flex is-justify-content-flex-end">
-              <button
-                className="button is-small is-primary"
+            <ModalFooter>
+              <Button variant={'ghost'} mr={3} onClick={() => setModalEnabled(false)}>
+                Cancel
+              </Button>
+
+              <Button
                 onClick={() => {
                   setModalEnabled(false)
                   setIsRecurring(true)
@@ -310,19 +324,11 @@ function RecurringEventEditor(props: IProps) {
                 }}
               >
                 Done
-              </button>
-              <button
-                className="button is-small is-light mr-1"
-                onClick={() => {
-                  setModalEnabled(false)
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </section>
-        </div>
-      </div>
+              </Button>
+            </ModalFooter>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     )
   }
 
