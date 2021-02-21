@@ -1,6 +1,9 @@
-import React, { Component } from 'react'
+import React from 'react'
 import {
+  Container,
   Button,
+  Flex,
+  Input,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -18,7 +21,7 @@ import {
   TagLabel,
   TagCloseButton,
 } from '@chakra-ui/react'
-
+import { FiSearch } from 'react-icons/fi'
 import tinycolor from 'tinycolor2'
 
 import { format, getDurationDisplay } from '../util/localizer'
@@ -84,7 +87,7 @@ function LabelTagSolid(props: {
   )
 }
 
-class EventList extends Component<Props, State> {
+class EventList extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
@@ -353,27 +356,28 @@ class EventList extends Component<Props, State> {
   renderSearchBar() {
     return (
       this.state.events.length > 0 && (
-        <div className="field has-addons mt-3">
-          <div className="control is-expanded">
-            <input
-              className="input"
-              type="text"
-              value={this.state.searchValue}
-              onChange={this.onSearchChange}
-              onKeyPress={(event) => {
-                if (event.key == 'Enter') {
-                  this.refreshEvents()
-                }
-              }}
-              placeholder="Find an event"
-            />
-          </div>
-          <div className="control">
-            <a className="button is-info" onClick={this.refreshEvents}>
-              Search
-            </a>
-          </div>
-        </div>
+        <Flex w="100%" mt="2">
+          <Input
+            borderRadius="0"
+            type="text"
+            value={this.state.searchValue}
+            onChange={this.onSearchChange}
+            onKeyPress={(event) => {
+              if (event.key == 'Enter') {
+                this.refreshEvents()
+              }
+            }}
+            placeholder="Find an event"
+          />
+          <Button
+            fontWeight="normal"
+            borderRadius="0"
+            onClick={this.refreshEvents}
+            leftIcon={<FiSearch />}
+          >
+            Search
+          </Button>
+        </Flex>
       )
     )
   }
@@ -381,13 +385,13 @@ class EventList extends Component<Props, State> {
   render() {
     return (
       <Layout>
-        <section className="ml-2" style={{ width: '100%', overflowY: 'scroll' }}>
-          <div className="container is-centered is-max-desktop">
+        <Box w="100%" overflowY="scroll">
+          <Container maxW="4xl" centerContent>
             {this.renderSearchBar()}
             {this.renderAddLabelRuleModal()}
             {this.renderTable()}
-          </div>
-        </section>
+          </Container>
+        </Box>
       </Layout>
     )
   }

@@ -47,7 +47,7 @@ async def getEvents(
     TODO: Filter queries for recurring events
     """
     startDate = (
-        datetime.fromisoformat(start_date) if start_date else datetime.now() - timedelta(days=365)
+        datetime.fromisoformat(start_date) if start_date else datetime.now() - timedelta(days=30)
     )
     endDate = datetime.fromisoformat(end_date) if end_date else datetime.now()
 

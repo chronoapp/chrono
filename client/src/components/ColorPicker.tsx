@@ -12,8 +12,8 @@ function ColorPicker(props: IProps) {
 
   return (
     <div ref={props.innerRef} style={{ maxWidth: '12em' }}>
-      <div className="dropdown-content">
-        <Flex pl="1">
+      <Box bg="white" p="2">
+        <Flex>
           {colors.slice(0, colors.length / 2).map((color) => {
             return (
               <Box key={color} pl="1">
@@ -26,7 +26,7 @@ function ColorPicker(props: IProps) {
             )
           })}
         </Flex>
-        <Flex pl="1" mt="1">
+        <Flex mt="1">
           {colors.slice(6, colors.length).map((color) => {
             return (
               <Box key={color} pl="1">
@@ -39,7 +39,7 @@ function ColorPicker(props: IProps) {
             )
           })}
         </Flex>
-      </div>
+      </Box>
     </div>
   )
 }
