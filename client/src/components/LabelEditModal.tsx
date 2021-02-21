@@ -165,7 +165,10 @@ function EditLabelModal() {
           <Button variant={'ghost'} mr={3} onClick={onCloseModal}>
             Cancel
           </Button>
-          <Button colorScheme="blue" onClick={() => onClickSaveLabel(newLabelModal, selectedColor)}>
+          <Button
+            colorScheme="primary"
+            onClick={() => onClickSaveLabel(newLabelModal, selectedColor)}
+          >
             Save
           </Button>
         </ModalFooter>

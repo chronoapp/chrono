@@ -75,7 +75,7 @@ export default function CalendarEditModal(props: IProps) {
             Cancel
           </Button>
           <Button
-            colorScheme="blue"
+            colorScheme="primary"
             onClick={() =>
               props.onSave(calendarName, description, timezone, backgroundColor, isGoogleCalendar)
             }

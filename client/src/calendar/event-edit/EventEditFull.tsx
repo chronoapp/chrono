@@ -243,7 +243,9 @@ export default function EventEditFull(props: { event: Event }) {
             Cancel
           </Button>
 
-          <Button onClick={() => saveEvent(getEventData())}>Save changes</Button>
+          <Button colorScheme="primary" onClick={() => saveEvent(getEventData())}>
+            Save changes
+          </Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
