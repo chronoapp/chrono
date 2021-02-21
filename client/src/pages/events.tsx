@@ -386,7 +386,7 @@ class EventList extends React.Component<Props, State> {
     return (
       <Layout>
         <Box w="100%" overflowY="scroll">
-          <Container maxW="4xl" centerContent>
+          <Container maxW="5xl" centerContent>
             {this.renderSearchBar()}
             {this.renderAddLabelRuleModal()}
             {this.renderTable()}

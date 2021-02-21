@@ -35,7 +35,15 @@ function Trends(props: IProps) {
       />
     )
   } else {
-    return <HabitGraph selectedLabel={selectedLabel} setSelectedView={setSelectedView} />
+    return (
+      <HabitGraph
+        setSelectedLabel={(label) => {
+          setSelectedLabel(label)
+        }}
+        selectedLabel={selectedLabel}
+        setSelectedView={setSelectedView}
+      />
+    )
   }
 }
 

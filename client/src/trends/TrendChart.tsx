@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from 'react'
-import { Flex, Box } from '@chakra-ui/react'
-
-import { Bar } from 'react-chartjs-2'
-import { FiChevronDown } from 'react-icons/fi'
+import React from 'react'
 import clsx from 'clsx'
+import { Container, Center, Flex, Box, Text } from '@chakra-ui/react'
+import { Bar } from 'react-chartjs-2'
 
-import * as dates from '../util/dates'
-import { getTrends, getAuthToken } from '../util/Api'
-import { Label, TimePeriod } from '../models/Label'
-import { LabelContext } from '../components/LabelsContext'
+import * as dates from '@/util/dates'
+import { getTrends, getAuthToken } from '@/util/Api'
+import { Label, TimePeriod } from '@/models/Label'
+import { LabelContext } from '@/components/LabelsContext'
+
 import ViewSelector, { TrendView } from './ViewSelector'
-import LabelTree from '../components/LabelTree'
+import TagDropdown from './TagDropdown'
 
 interface IProps {
   authToken: string
@@ -23,15 +22,15 @@ interface IProps {
  * List of trends.
  */
 function TrendChart(props: IProps) {
-  const [trends, setTrends] = useState<any>({})
-  const [selectedTimePeriod, setSelectedTimePeriod] = useState<TimePeriod>('WEEK')
-  const [labelTreeExpanded, setLabelTreeExpanded] = useState<boolean>(false)
+  const [trends, setTrends] = React.useState<any>({})
+  const [selectedTimePeriod, setSelectedTimePeriod] = React.useState<TimePeriod>('WEEK')
+  const labelsContext = React.useContext(LabelContext)
 
-  useEffect(() => {
+  React.useEffect(() => {
     updateTrendsData()
   }, [])
 
-  useEffect(() => {
+  React.useEffect(() => {
     updateTrendsData()
   }, [selectedTimePeriod, props.selectedLabel])
 
@@ -59,45 +58,6 @@ function TrendChart(props: IProps) {
       )
       setTrends(trends)
     }
-  }
-
-  function renderTagDropdown(labelsById: Record<number, Label>) {
-    const allLabels = Object.values(labelsById)
-    const label = props.selectedLabel ? props.selectedLabel : allLabels[0]
-
-    if (!label) {
-      return
-    }
-
-    return (
-      <div className={clsx('ml-2 mr-2 dropdown', labelTreeExpanded && 'is-active')}>
-        <div onClick={() => setLabelTreeExpanded(!labelTreeExpanded)} className="dropdown-trigger">
-          <button
-            className="button button-underline"
-            aria-haspopup="true"
-            aria-controls="dropdown-menu"
-          >
-            <span
-              className="event-label"
-              style={{ backgroundColor: label.color_hex, display: 'inline-block' }}
-            ></span>
-            <span className="ml-1">{label.title}</span>
-            <FiChevronDown className="mt-1" />
-          </button>
-        </div>
-        <div className="dropdown-menu" id="dropdown-menu" role="menu">
-          <div className="dropdown-content">
-            <LabelTree
-              allowEdit={false}
-              onSelect={(label) => {
-                props.setSelectedLabel(label)
-                setLabelTreeExpanded(false)
-              }}
-            />
-          </div>
-        </div>
-      </div>
-    )
   }
 
   function renderTimePeriodSelections() {
@@ -193,38 +153,43 @@ function TrendChart(props: IProps) {
 
   function renderEmpty() {
     return (
-      <div className="columns is-vcentered" style={{ width: '80%', height: '80%' }}>
-        <div className="column">
-          <h1 className="title">No labels</h1>
-          <h1 className="subtitle">Add labels to your events to view trends!</h1>
-        </div>
-      </div>
+      <Center width="80%">
+        <Box>
+          <Text fontSize="xl">No labels</Text>
+          <Text>Add labels to your events to view your trends.</Text>
+        </Box>
+      </Center>
     )
   }
 
-  return (
-    <LabelContext.Consumer>
-      {({ labelState: { labelsById, loading } }) => {
-        if (!loading && Object.keys(labelsById).length == 0) {
-          return renderEmpty()
-        } else {
-          return (
-            <Box className="container is-max-desktop" mt="2">
-              <Flex justifyContent="space-between">
-                <Flex ml="2" alignItems="center" justifyContent="flex-start">
-                  Time spent on {renderTagDropdown(labelsById)} per {renderTimePeriodSelections()}
-                </Flex>
+  const { labelState } = labelsContext
 
-                <ViewSelector setSelectedView={props.setSelectedView} selectedView={'CHART'} />
-              </Flex>
+  if (!labelState.loading && Object.keys(labelState.labelsById).length == 0) {
+    return renderEmpty()
+  } else {
+    return (
+      <Container minW="3xl" maxW="5xl" mt="2">
+        <Flex justifyContent="space-between">
+          <Flex ml="2" alignItems="center" justifyContent="flex-start">
+            <Text>Time spent on</Text>
+            {
+              <TagDropdown
+                labelsById={labelState.labelsById}
+                selectedLabel={props.selectedLabel}
+                onSelectLabel={(label) => props.setSelectedLabel(label)}
+              />
+            }
+            <Text>per</Text>
+            {renderTimePeriodSelections()}
+          </Flex>
 
-              <Box mt="2">{renderChart(labelsById)}</Box>
-            </Box>
-          )
-        }
-      }}
-    </LabelContext.Consumer>
-  )
+          <ViewSelector setSelectedView={props.setSelectedView} selectedView={'CHART'} />
+        </Flex>
+
+        <Box mt="2">{renderChart(labelState.labelsById)}</Box>
+      </Container>
+    )
+  }
 }
 
 export default TrendChart

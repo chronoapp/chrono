@@ -1,22 +1,22 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { Flex, Box, Text } from '@chakra-ui/react'
-
 import chunk from 'lodash/chunk'
 import clsx from 'clsx'
+import { Container, Flex, Box, Text, IconButton } from '@chakra-ui/react'
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 
+import { Label } from '@/models/Label'
+import { startOfWeek, format, getWeekRange } from '@/util/localizer'
+import { LabelContext } from '@/components/LabelsContext'
+
+import { hexToHSL } from '@/calendar/utils/Colors'
+import * as dates from '@/util/dates'
+import { getTrends, getAuthToken } from '@/util/Api'
 import ViewSelector, { TrendView } from './ViewSelector'
-import { Label, TimePeriod } from '../models/Label'
-import { startOfWeek, format, getWeekRange } from '../util/localizer'
-import { LabelContext } from '../components/LabelsContext'
-
-import { hexToHSL } from '../calendar/utils/Colors'
-import * as dates from '../util/dates'
-import { getTrends, getAuthToken } from '../util/Api'
-
+import TagDropdown from './TagDropdown'
 interface IProps {
   setSelectedView: (v: TrendView) => void
   selectedLabel?: Label
+  setSelectedLabel: (label: Label) => void
 }
 
 function HabitGraph(props: IProps) {
@@ -114,37 +114,39 @@ function HabitGraph(props: IProps) {
   }
 
   return (
-    <Box className="container is-max-desktop" mt="2">
-      <div>
-        <Flex justifyContent="space-between">
-          <Flex ml="2" alignItems="center" justifyContent="flex-start">
-            <Text ml="2" mr="2">
-              Habit Chart
-            </Text>
-            <button
-              className="button is-text is-small is-size-6"
-              onClick={() => setViewDate(dates.subtract(viewDate, 1, 'month'))}
-            >
-              <span className="icon">
-                <FiChevronLeft size={'1.25em'} />
-              </span>
-            </button>
-            <button
-              className="button is-text is-small is-size-6"
-              onClick={() => setViewDate(dates.add(viewDate, 1, 'month'))}
-            >
-              <span className="icon">
-                <FiChevronRight size={'1.25em'} />
-              </span>
-            </button>
-            <Text ml="2">{format(viewDate, 'MMMM YYYY')}</Text>
-          </Flex>
-          <ViewSelector setSelectedView={props.setSelectedView} selectedView={'HABIT_GRAPH'} />
+    <Container minW="3xl" maxW="5xl" mt="2">
+      <Flex justifyContent="space-between">
+        <Flex ml="2" alignItems="center" justifyContent="flex-start">
+          <Text ml="2" mr="2">
+            Habit Chart
+          </Text>
+
+          <TagDropdown
+            selectedLabel={props.selectedLabel}
+            onSelectLabel={(label) => props.setSelectedLabel(label)}
+            labelsById={labelsContext.labelState.labelsById}
+          />
+
+          <IconButton
+            aria-label="left"
+            variant="ghost"
+            icon={<FiChevronLeft />}
+            onClick={() => setViewDate(dates.subtract(viewDate, 1, 'month'))}
+          />
+          <IconButton
+            aria-label="right"
+            variant="ghost"
+            icon={<FiChevronRight />}
+            onClick={() => setViewDate(dates.add(viewDate, 1, 'month'))}
+          />
+
+          <Text ml="2">{format(viewDate, 'MMMM YYYY')}</Text>
         </Flex>
-      </div>
+        <ViewSelector setSelectedView={props.setSelectedView} selectedView={'HABIT_GRAPH'} />
+      </Flex>
 
       <Box mt="2">{renderGraph()}</Box>
-    </Box>
+    </Container>
   )
 }
 
