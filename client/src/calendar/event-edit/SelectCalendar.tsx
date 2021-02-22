@@ -1,83 +1,42 @@
 import React from 'react'
+import { Button, Box, Flex, Text, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react'
+import { FiChevronDown } from 'react-icons/fi'
 
-import Select from 'react-select'
 import Calendar from '../../models/Calendar'
 
 interface IProps {
   calendarsById: Record<number, Calendar>
   defaultCalendarId: string
-  onChange: (value: string) => void
+  onChange: (calendarId: string) => void
 }
 
 export default function SelectCalendar(props: IProps) {
-  const calendarValues = Object.values(props.calendarsById)
-    .filter((cal) => cal.isWritable())
-    .map((calendar) => {
-      return {
-        value: calendar.id,
-        label: calendar.summary,
-        color: calendar.backgroundColor,
-      }
-    })
-
-  const dot = (color = '#ccc') => ({
-    alignItems: 'center',
-    display: 'flex',
-
-    ':before': {
-      backgroundColor: color,
-      borderRadius: 3,
-      content: '" "',
-      display: 'block',
-      marginRight: 5,
-      marginLeft: 5,
-      height: 12,
-      width: 12,
-    },
-  })
-
-  const customStyles = {
-    option: (styles, { data }) => ({ ...styles, ...dot(data.color), height: 30 }),
-    container: (styles) => ({ ...styles, minWidth: '14em' }),
-    singleValue: (styles, { data }) => ({ ...styles, ...dot(data.color) }),
-    control: (provided, state) => ({
-      ...provided,
-      border: 0,
-      minHeight: 30,
-      height: 30,
-      boxShadow: state.isFocused ? null : null,
-    }),
-    valueContainer: (provided, state) => ({
-      ...provided,
-      height: 30,
-      padding: '0 6px',
-    }),
-    input: (provided, state) => ({
-      ...provided,
-      margin: '0px',
-    }),
-    indicatorSeparator: (state) => ({
-      display: 'none',
-    }),
-    indicatorsContainer: (provided, state) => ({
-      ...provided,
-      height: 30,
-    }),
+  function renderCalendarItem(calendar: Calendar) {
+    return (
+      <Flex alignItems="center">
+        <Box borderRadius="md" w="4" h="4" bg={calendar.backgroundColor} />
+        <Text fontWeight="normal" ml="1">
+          {calendar.summary}
+        </Text>
+      </Flex>
+    )
   }
 
-  const defaultCal = props.calendarsById[props.defaultCalendarId]
-  const defaultValue = {
-    value: defaultCal.id,
-    label: defaultCal.summary,
-    color: defaultCal.backgroundColor,
-  }
+  const calendars = Object.values(props.calendarsById).filter((cal) => cal.isWritable())
+  const selectedCal = props.calendarsById[props.defaultCalendarId]
 
   return (
-    <Select
-      defaultValue={defaultValue}
-      options={calendarValues}
-      styles={customStyles}
-      onChange={({ value }) => props.onChange(value)}
-    />
+    <Menu>
+      <MenuButton size="sm" as={Button} variant="ghost" rightIcon={<FiChevronDown />}>
+        {renderCalendarItem(selectedCal)}
+      </MenuButton>
+      <MenuList mt="-1" p="0" zIndex="10">
+        {calendars.map((calendar, idx) => (
+          <MenuItem key={idx} fontSize="sm" onClick={() => props.onChange(calendar.id)}>
+            {renderCalendarItem(calendar)}
+          </MenuItem>
+        ))}
+      </MenuList>
+    </Menu>
   )
 }

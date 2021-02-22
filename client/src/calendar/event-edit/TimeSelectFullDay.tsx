@@ -1,6 +1,6 @@
 import React from 'react'
-import SelectStyles from './SelectStyles'
-import Select from 'react-select'
+import { Button, Text, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react'
+import { FiChevronDown } from 'react-icons/fi'
 
 interface IProps {
   days: number
@@ -12,23 +12,32 @@ const MAX_DAYS = 5
 
 function TimeSelectFullDay(props: IProps) {
   const options: { value: number; label: string }[] = []
+  const dayText = (days: number) => `${days} day${days > 1 ? 's' : ''}`
 
   for (let i = 1; i < MAX_DAYS + 1; i++) {
-    options.push({ value: i, label: `${i} day${i > 1 ? 's' : ''}` })
+    options.push({ value: i, label: dayText(i) })
   }
 
   return (
-    <Select
-      components={{ IndicatorSeparator: () => null }}
-      styles={SelectStyles}
-      name="start-date"
-      className="cal-date-select"
-      value={options[props.days - 1]}
-      onChange={({ value }) => {
-        props.onSelectNumDays(value)
-      }}
-      options={options}
-    />
+    <Menu>
+      <MenuButton
+        size="sm"
+        borderRadius="sm"
+        as={Button}
+        fontWeight="normal"
+        variant="ghost"
+        rightIcon={<FiChevronDown />}
+      >
+        <Text>{dayText(props.days)}</Text>
+      </MenuButton>
+      <MenuList mt="-1" p="0">
+        {options.map((option, idx) => (
+          <MenuItem key={idx} fontSize="sm" onClick={() => props.onSelectNumDays(option.value)}>
+            {option.label}
+          </MenuItem>
+        ))}
+      </MenuList>
+    </Menu>
   )
 }
 

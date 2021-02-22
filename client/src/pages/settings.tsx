@@ -1,14 +1,17 @@
-import React, { useState } from 'react'
+import React from 'react'
+import { Text, Container } from '@chakra-ui/react'
 
 import Layout from '../components/Layout'
 
 function Settings() {
   return (
     <Layout canCreateEvent={true} includeLeftPanel={false}>
-      <div className="mt-2 container has-text-left is-max-desktop">
-        <h1 className="title">Settings</h1>
-        <h2 className="subtitle">Customize your calendar settings.</h2>
-      </div>
+      <Container maxW="4xl" textAlign="left" mt="4">
+        <Text fontWeight="medium" fontSize="2xl">
+          Settings
+        </Text>
+        <Text>Customize your calendar settings.</Text>
+      </Container>
     </Layout>
   )
 }

@@ -417,11 +417,11 @@ function EventPopover(props: IProps) {
             <SelectCalendar
               defaultCalendarId={eventFields.calendarId}
               calendarsById={calendarContext.calendarsById}
-              onChange={(value) => {
+              onChange={(calendarId) => {
                 // Forces a color change without an API request.
                 // TODO: Discard changes on close.
-                setEventFields({ ...eventFields, calendarId: value })
-                const event = { ...props.event, calendar_id: value }
+                setEventFields({ ...eventFields, calendarId: calendarId })
+                const event = { ...props.event, calendar_id: calendarId }
                 eventActions.eventDispatch({
                   type: 'UPDATE_EDIT_EVENT',
                   payload: event,
