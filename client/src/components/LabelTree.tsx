@@ -1,10 +1,11 @@
 import React, { useContext, useState, useEffect, useRef } from 'react'
+import { Button, Menu, MenuButton, MenuList, MenuItem, Portal } from '@chakra-ui/react'
+
 import Tree from 'rc-tree'
 import { EventDataNode, DataNode } from 'rc-tree/lib/interface'
 import { FiChevronDown, FiChevronRight, FiMoreHorizontal, FiTrash, FiEdit } from 'react-icons/fi'
 
 import clsx from 'clsx'
-import Popover from '../lib/popover/Popover'
 import Hoverable from '../lib/Hoverable'
 
 import { LABEL_COLORS } from '../models/LabelColors'
@@ -45,42 +46,11 @@ function LabelTree(props: IProps) {
   const [expandedKeys, setExpandedKeys] = useState([])
   const [autoExpandParent, setAutoExpandParent] = useState(false)
 
-  const colorPickerRef = useRef<HTMLDivElement>(null)
-  const labelOptionsRef = useRef<HTMLDivElement>(null)
   const [selectedLabelId, setSelectedLabelId] = useState<number | undefined>(undefined)
-  const [selectedLabelIdForColor, setSelectedLabelIdForColor] = useState<number | undefined>(
-    undefined
-  )
 
   const labelItems = getOrderedLabels(labelState.labelsById)
-
-  function handleClickOutside(event) {
-    if (labelOptionsRef.current && !labelOptionsRef.current?.contains(event.target)) {
-      setSelectedLabelId(undefined)
-    }
-
-    if (colorPickerRef.current && !colorPickerRef.current?.contains(event.target)) {
-      setSelectedLabelIdForColor(undefined)
-    }
-  }
-
-  function handleKeyboardShortcuts(e: KeyboardEvent) {
-    if (e.key === 'Escape') {
-      setSelectedLabelId(undefined)
-      setSelectedLabelIdForColor(undefined)
-    }
-  }
-
-  useEffect(() => {
-    document.addEventListener('click', handleClickOutside)
-    document.addEventListener('keydown', handleKeyboardShortcuts)
-    return () => {
-      document.removeEventListener('click', handleClickOutside)
-      document.removeEventListener('keydown', handleKeyboardShortcuts)
-    }
-  })
-
   const prevEditLabelModalOpen = usePrevious(labelState.editingLabel.active)
+
   useEffect(() => {
     if (prevEditLabelModalOpen && !labelState.editingLabel.active) {
       setSelectedLabelId(undefined)
@@ -189,58 +159,41 @@ function LabelTree(props: IProps) {
     })
   }
 
-  function toggleSelectedLabelId(labelId: number) {
-    if (labelId == selectedLabelIdForColor) {
-      setSelectedLabelIdForColor(undefined)
-    } else {
-      document.removeEventListener('click', handleClickOutside)
-      setSelectedLabelIdForColor(labelId)
-      document.addEventListener('click', handleClickOutside)
-    }
-  }
-
-  function onSelectLabelColor(color: string, label: Label) {
-    const updatedLabel = { ...label, color_hex: color }
-    updateLabel(updatedLabel)
-    setSelectedLabelIdForColor(undefined)
-  }
-
   function LabelView(label: Label, allowEdit: boolean) {
     return () => {
-      const selectedLabel = label.id === selectedLabelIdForColor
-
-      return (
-        <div className={clsx('dropdown', selectedLabel && 'is-active')}>
-          <Popover
-            content={() => (
-              <ColorPicker
-                ref={colorPickerRef}
-                onSelectLabelColor={(color) => onSelectLabelColor(color, label)}
-              />
+      if (allowEdit) {
+        return (
+          <Menu isLazy placement="bottom">
+            {({ onClose }) => (
+              <>
+                <MenuButton>
+                  <div
+                    style={{ backgroundColor: label.color_hex }}
+                    className={clsx('event-label', allowEdit && 'event-label--hoverable')}
+                  ></div>
+                </MenuButton>
+                <MenuList>
+                  <ColorPicker
+                    onSelectLabelColor={(color) => {
+                      const updatedLabel = { ...label, color_hex: color }
+                      updateLabel(updatedLabel)
+                      onClose()
+                    }}
+                  />
+                </MenuList>
+              </>
             )}
-            isOpen={selectedLabel}
-            position={['bottom', 'right']}
-            align={'start'}
-          >
-            <div
-              onClick={() => {
-                setSelectedLabelId(undefined)
-                if (allowEdit) {
-                  toggleSelectedLabelId(label.id)
-                } else {
-                  props.onSelect && props.onSelect(label)
-                }
-              }}
-              style={{ backgroundColor: label.color_hex }}
-              className={clsx(
-                'event-label',
-                allowEdit && 'event-label--hoverable',
-                'dropdown-trigger'
-              )}
-            ></div>
-          </Popover>
-        </div>
-      )
+          </Menu>
+        )
+      } else {
+        return (
+          <div
+            onClick={() => props.onSelect && props.onSelect(label)}
+            style={{ backgroundColor: label.color_hex }}
+            className={clsx('event-label', allowEdit && 'event-label--hoverable')}
+          ></div>
+        )
+      }
     }
   }
 
@@ -263,44 +216,6 @@ function LabelTree(props: IProps) {
         labelColor: labelColor,
       },
     })
-  }
-
-  function onClickDropdown(curMenuExpanded: boolean, item: TreeItem) {
-    setSelectedLabelIdForColor(undefined)
-    // HACK: In react 17, use e.stopPropagation()
-    document.removeEventListener('click', handleClickOutside)
-    if (curMenuExpanded) {
-      setSelectedLabelId(undefined)
-    } else {
-      setSelectedLabelId(item.key)
-    }
-    document.addEventListener('click', handleClickOutside)
-  }
-
-  function renderDropdownMenu(item: TreeItem) {
-    return (
-      <div
-        ref={labelOptionsRef}
-        className="dropdown-menu"
-        role="menu"
-        style={{ marginTop: '-0.5rem', display: 'block', position: 'unset' }}
-      >
-        <div className="dropdown-content">
-          <a
-            className="dropdown-item is-flex is-align-items-center"
-            onClick={() => onClickEditLabel(item)}
-          >
-            <FiEdit className="mr-1" /> Edit
-          </a>
-          <a
-            className="dropdown-item is-flex is-align-items-center"
-            onClick={() => onDeleteLabel(item)}
-          >
-            <FiTrash className="mr-1" /> Delete
-          </a>
-        </div>
-      </div>
-    )
   }
 
   function treeData(data: TreeItem[], allowEdit: boolean): DataNode[] {
@@ -327,22 +242,42 @@ function LabelTree(props: IProps) {
                 >
                   <span>{item.title}</span>
                   {(isMouseInside || curMenuExpanded) && (
-                    <div className={clsx('dropdown')}>
-                      <Popover
-                        content={() => renderDropdownMenu(item)}
-                        isOpen={curMenuExpanded}
-                        align={'start'}
-                        padding={-5}
-                        position={['bottom']}
+                    <Menu isLazy placement="bottom-end">
+                      <MenuButton
+                        variant="unstyled"
+                        color="gray.600"
+                        size="sm"
+                        pb="1"
+                        as={Button}
+                        fontWeight="normal"
                       >
-                        <div
-                          className="dropdown-trigger"
-                          onClick={(e) => onClickDropdown(curMenuExpanded, item)}
-                        >
-                          <FiMoreHorizontal size={'1.25em'} />
-                        </div>
-                      </Popover>
-                    </div>
+                        <FiMoreHorizontal size={'1.25em'} />
+                      </MenuButton>
+                      <Portal>
+                        <MenuList mt="-5">
+                          <MenuItem
+                            onClick={() => {
+                              onClickEditLabel(item)
+                              onMouseLeave()
+                            }}
+                            icon={<FiEdit />}
+                            iconSpacing="1"
+                          >
+                            Edit
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() => {
+                              onDeleteLabel(item)
+                              onMouseLeave()
+                            }}
+                            icon={<FiTrash />}
+                            iconSpacing="1"
+                          >
+                            Delete
+                          </MenuItem>
+                        </MenuList>
+                      </Portal>
+                    </Menu>
                   )}
                 </div>
               )}
