@@ -1,6 +1,6 @@
-import React, { useContext, useState } from 'react'
-import Select from 'react-select'
-import SelectStyles from './SelectStyles'
+import React from 'react'
+import { Flex, Select } from '@chakra-ui/react'
+import { FiChevronDown } from 'react-icons/fi'
 
 import { format } from '../../util/localizer'
 import * as dates from '../../util/dates'
@@ -30,15 +30,15 @@ function TimeSelect(props: IProps) {
   const dayStart: Date = dates.startOf(props.start, 'day')
   const dayEnd: Date = dates.endOf(props.start, 'day')
 
-  const startIdx = Math.round(dates.diff(dayStart, props.start, 'minutes') / INTERVAL) + 1
+  const startIdx = Math.round(dates.diff(dayStart, props.start, 'minutes') / INTERVAL)
   const startTimeOptions: { value: number; label: string }[] = []
 
   let startDate: Date = dayStart
   let idx = 0
-  while (dates.gt(dayEnd, startDate)) {
+  while (dates.lt(startDate, dates.subtract(props.end, INTERVAL, 'minutes'))) {
+    startDate = dates.add(dayStart, INTERVAL * idx, 'minutes')
     const option = { value: idx, label: format(startDate, 'h:mm A') }
     startTimeOptions.push(option)
-    startDate = dates.add(dayStart, INTERVAL * idx, 'minutes')
     idx += 1
   }
 
@@ -48,39 +48,50 @@ function TimeSelect(props: IProps) {
   idx = 0
   while (dates.gt(dayEnd, endDate)) {
     endDate = dates.add(endDate, INTERVAL, 'minutes')
-    const label = `${format(endDate, 'h:mm A')}`
-    const option = { value: idx, label: label }
+    const option = { value: idx, label: `${format(endDate, 'h:mm A')}` }
     endTimeOptions.push(option)
     idx += 1
   }
 
   return (
-    <div className="cal-time-select-wrapper ml-1">
+    <Flex mt="1" flex="1.5">
       <Select
-        components={{ IndicatorSeparator: () => null }}
-        styles={SelectStyles}
-        name="start-date"
-        className="cal-date-select"
-        value={startTimeOptions[startIdx]}
-        onChange={({ value }) => {
-          console.log(value)
-          const date = dates.add(dayStart, (value - 1) * INTERVAL, 'minutes')
+        size="sm"
+        maxHeight="12em"
+        border="none"
+        icon={<FiChevronDown />}
+        value={startTimeOptions[startIdx].value}
+        onChange={(e) => {
+          const idx = parseInt(e.target.value)
+          const date = dates.add(dayStart, idx * INTERVAL, 'minutes')
           props.onSelectStartDate(date)
         }}
-        options={startTimeOptions}
-      />
+      >
+        {startTimeOptions.map((option, idx) => (
+          <option key={`start_${idx}`} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </Select>
+
       <Select
-        components={{ IndicatorSeparator: () => null }}
-        styles={SelectStyles}
-        className="cal-date-select ml-1"
-        value={endTimeOptions[endIdx]}
-        onChange={({ value }) => {
-          const date = dates.add(props.start, (value + 1) * INTERVAL, 'minutes')
+        size="sm"
+        border="none"
+        icon={<FiChevronDown />}
+        value={endTimeOptions[endIdx].value}
+        onChange={(e) => {
+          const idx = parseInt(e.target.value)
+          const date = dates.add(props.start, (idx + 1) * INTERVAL, 'minutes')
           props.onSelectEndDate(date)
         }}
-        options={endTimeOptions}
-      />
-    </div>
+      >
+        {endTimeOptions.map((option, idx) => (
+          <option key={`end_${idx}`} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </Select>
+    </Flex>
   )
 }
 

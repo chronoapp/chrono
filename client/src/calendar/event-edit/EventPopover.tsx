@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect, createRef } from 'react'
-import { Box, Button } from '@chakra-ui/react'
+import { Box, Button, Input } from '@chakra-ui/react'
 
 import clsx from 'clsx'
 import produce from 'immer'
@@ -337,9 +337,10 @@ function EventPopover(props: IProps) {
 
           <div className="mt-2 is-flex is-align-items-center">
             <FiClock className="mr-2" size={'1.2em'} />
-            <input
-              className="button-underline input is-small"
+            <Input
+              variant="flushed"
               type="date"
+              size="sm"
               value={format(eventFields.start, 'YYYY-MM-DD')}
               onChange={(e) => {
                 const m = moment(e.target.value, 'YYYY-MM-DD')
@@ -358,6 +359,7 @@ function EventPopover(props: IProps) {
               }}
               style={{ flex: 1 }}
             />
+
             {eventFields.allDay && (
               <TimeSelectFullDay
                 days={eventFields.fullDays}
@@ -373,10 +375,9 @@ function EventPopover(props: IProps) {
                 end={eventFields.end}
                 onSelectStartDate={(date) => {
                   setEventFields({ ...eventFields, start: date })
-                  const event = { ...props.event, start: date }
                   eventActions.eventDispatch({
-                    type: 'UPDATE_EVENT',
-                    payload: { event: event, replaceEventId: event.id },
+                    type: 'UPDATE_EDIT_EVENT',
+                    payload: { ...props.event, start: date },
                   })
                 }}
                 onSelectEndDate={(date) => {
@@ -413,7 +414,9 @@ function EventPopover(props: IProps) {
           </div>
 
           <div className="mt-2 is-flex is-align-items-center">
-            <FiCalendar className="mr-2" size={'1.2em'} />
+            <Box mr="2">
+              <FiCalendar size={'1.2em'} />
+            </Box>
             <SelectCalendar
               defaultCalendarId={eventFields.calendarId}
               calendarsById={calendarContext.calendarsById}

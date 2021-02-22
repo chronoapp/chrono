@@ -1,6 +1,7 @@
 import React, { useContext, useState } from 'react'
 import {
   Button,
+  Box,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -207,7 +208,9 @@ export default function EventEditFull(props: { event: Event }) {
           />
 
           <div className="mt-2 is-flex is-align-items-center">
-            <FiCalendar size={'1.25em'} />
+            <Box mr="2">
+              <FiCalendar size={'1.25em'} />
+            </Box>
             <SelectCalendar
               defaultCalendarId={event.calendar_id}
               calendarsById={calendarContext.calendarsById}

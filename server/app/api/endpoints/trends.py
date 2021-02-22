@@ -121,7 +121,6 @@ def getTrendsDataResult(
                 'userId': userId,
                 'start_time': startTime,
                 'end_time': endTime,
-                'labelId': labelId,
                 'time_period': timePeriod,
                 'time_interval': f'1 {timePeriod}',
                 'timezone': timezone,
