@@ -9,6 +9,7 @@ import {
   ModalFooter,
   ModalBody,
   ModalCloseButton,
+  Checkbox,
 } from '@chakra-ui/react'
 
 import produce from 'immer'
@@ -172,26 +173,25 @@ export default function EventEditFull(props: { event: Event }) {
               />
             )}
 
-            <label className="checkbox">
-              <input
-                type="checkbox"
-                checked={event.all_day}
-                onChange={(e) => {
-                  const isAllDay = e.target.checked
-                  if (isAllDay) {
-                    const start = dates.startOf(event.start, 'day')
-                    const end = dates.endOf(event.start, 'day')
-                    setEvent({ ...event, all_day: isAllDay, start, end })
-                    setFullDays(1)
-                  } else {
-                    const start = dates.startOf(event.start, 'day')
-                    const end = dates.add(start, 1, 'hours')
-                    setEvent({ ...event, all_day: isAllDay, start, end })
-                  }
-                }}
-              />{' '}
+            <Checkbox
+              ml="1"
+              checked={event.all_day}
+              onChange={(e) => {
+                const isAllDay = e.target.checked
+                if (isAllDay) {
+                  const start = dates.startOf(event.start, 'day')
+                  const end = dates.endOf(event.start, 'day')
+                  setEvent({ ...event, all_day: isAllDay, start, end })
+                  setFullDays(1)
+                } else {
+                  const start = dates.startOf(event.start, 'day')
+                  const end = dates.add(start, 1, 'hours')
+                  setEvent({ ...event, all_day: isAllDay, start, end })
+                }
+              }}
+            >
               All day
-            </label>
+            </Checkbox>
           </div>
 
           <RecurringEventEditor

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Flex, Select } from '@chakra-ui/react'
+import { Flex, Select, Text } from '@chakra-ui/react'
 import { FiChevronDown } from 'react-icons/fi'
 
 import { format } from '../../util/localizer'
@@ -54,11 +54,11 @@ function TimeSelect(props: IProps) {
   }
 
   return (
-    <Flex mt="1" flex="1.5">
+    <Flex flex="1.5" alignItems="center">
       <Select
+        ml="1"
         size="sm"
         maxHeight="12em"
-        border="none"
         icon={<FiChevronDown />}
         value={startTimeOptions[startIdx].value}
         onChange={(e) => {
@@ -73,10 +73,10 @@ function TimeSelect(props: IProps) {
           </option>
         ))}
       </Select>
-
+      <Text ml="1">to</Text>
       <Select
+        ml="1"
         size="sm"
-        border="none"
         icon={<FiChevronDown />}
         value={endTimeOptions[endIdx].value}
         onChange={(e) => {

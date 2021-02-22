@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect, createRef } from 'react'
-import { Box, Button, Input } from '@chakra-ui/react'
+import { Box, Flex, Button, Input, Checkbox } from '@chakra-ui/react'
 
 import clsx from 'clsx'
 import produce from 'immer'
@@ -294,28 +294,26 @@ function EventPopover(props: IProps) {
         </div>
 
         <div className="cal-event-modal is-flex is-flex-direction-column">
-          <div>
-            <TaggableInput
-              labels={labels}
-              title={eventFields.title}
-              portalCls={'.cal-event-modal-container'}
-              isHeading={false}
-              onBlur={() => {
-                eventActions.eventDispatch({
-                  type: 'UPDATE_EDIT_EVENT',
-                  payload: getUpdatedEvent(props.event, eventFields),
-                })
-              }}
-              handleChange={(title, labelIds: number[]) => {
-                const updatedLabels = addNewLabels(
-                  labelState.labelsById,
-                  eventFields.labels,
-                  labelIds
-                )
-                setEventFields({ ...eventFields, title, labels: updatedLabels })
-              }}
-            />
-          </div>
+          <TaggableInput
+            labels={labels}
+            title={eventFields.title}
+            portalCls={'.cal-event-modal-container'}
+            isHeading={false}
+            onBlur={() => {
+              eventActions.eventDispatch({
+                type: 'UPDATE_EDIT_EVENT',
+                payload: getUpdatedEvent(props.event, eventFields),
+              })
+            }}
+            handleChange={(title, labelIds: number[]) => {
+              const updatedLabels = addNewLabels(
+                labelState.labelsById,
+                eventFields.labels,
+                labelIds
+              )
+              setEventFields({ ...eventFields, title, labels: updatedLabels })
+            }}
+          />
 
           <div className="mt-2" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
             {eventFields.labels.map((label) => (
@@ -335,12 +333,13 @@ function EventPopover(props: IProps) {
             {renderAddTagDropdown()}
           </div>
 
-          <div className="mt-2 is-flex is-align-items-center">
+          <Flex mt="2" alignItems="center">
             <FiClock className="mr-2" size={'1.2em'} />
             <Input
-              variant="flushed"
+              ml="1"
               type="date"
               size="sm"
+              maxWidth="15em"
               value={format(eventFields.start, 'YYYY-MM-DD')}
               onChange={(e) => {
                 const m = moment(e.target.value, 'YYYY-MM-DD')
@@ -357,9 +356,11 @@ function EventPopover(props: IProps) {
                   payload: getUpdatedEvent(props.event, updatedFields),
                 })
               }}
-              style={{ flex: 1 }}
             />
+          </Flex>
 
+          <Flex mt="2">
+            <Box w="1.7em" />
             {eventFields.allDay && (
               <TimeSelectFullDay
                 days={eventFields.fullDays}
@@ -389,29 +390,27 @@ function EventPopover(props: IProps) {
                 }}
               />
             )}
-          </div>
 
-          <div className="mt-2 is-flex is-justify-content-flex-end">
-            <label className="checkbox">
-              <input
-                type="checkbox"
-                checked={eventFields.allDay}
-                onChange={(e) => {
-                  const isAllDay = e.target.checked
-                  if (isAllDay) {
-                    const start = dates.startOf(eventFields.start, 'day')
-                    const end = dates.endOf(eventFields.start, 'day')
-                    setEventFields({ ...eventFields, allDay: isAllDay, start, end, fullDays: 1 })
-                  } else {
-                    const start = dates.startOf(eventFields.start, 'day')
-                    const end = dates.add(start, 1, 'hours')
-                    setEventFields({ ...eventFields, allDay: isAllDay, start, end })
-                  }
-                }}
-              />{' '}
-              All day
-            </label>
-          </div>
+            <Checkbox
+              ml="1"
+              checked={eventFields.allDay}
+              colorScheme="primary"
+              onChange={(e) => {
+                const isAllDay = e.target.checked
+                if (isAllDay) {
+                  const start = dates.startOf(eventFields.start, 'day')
+                  const end = dates.endOf(eventFields.start, 'day')
+                  setEventFields({ ...eventFields, allDay: isAllDay, start, end, fullDays: 1 })
+                } else {
+                  const start = dates.startOf(eventFields.start, 'day')
+                  const end = dates.add(start, 1, 'hours')
+                  setEventFields({ ...eventFields, allDay: isAllDay, start, end })
+                }
+              }}
+            >
+              All Day
+            </Checkbox>
+          </Flex>
 
           <div className="mt-2 is-flex is-align-items-center">
             <Box mr="2">
