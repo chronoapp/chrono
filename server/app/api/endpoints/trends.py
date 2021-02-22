@@ -1,13 +1,12 @@
-import enum
-from typing import Literal
-
+from typing import Literal, List, Dict
 from sqlalchemy import text
-from fastapi import APIRouter, Depends
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from datetime import datetime, timedelta
 
 from app.api.utils.security import get_current_user
 from app.db.session import scoped_session
-from app.db.models import User
+from app.db.models import User, Label
 from app.core.logger import logger
 
 DAY_SECONDS = 24 * 60 * 60
@@ -33,9 +32,43 @@ def getUserTrends(
     startTime = datetime.fromisoformat(start)
     endTime = datetime.fromisoformat(end)
 
-    labels, durations = getTrendsDataResult(user, labelId, startTime, endTime, time_period)
+    try:
+        labels, durations = getTrendsDataResult(user, labelId, startTime, endTime, time_period)
+    except ValueError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
 
     return {'labels': labels, 'values': durations}
+
+
+def getSubtreeLabelIds(user: User, labelId: int) -> List[int]:
+    """Gets all Label IDs in the subtree. Could also do this in SQL,
+    but this should be fast when we have O(100) labels.
+    """
+    labels: List[Label] = user.labels.all()
+    labelMap = {l.id: l for l in labels}
+    if labelId not in labelMap:
+        raise ValueError(f'Invalid Label {labelId}')
+
+    childIdsMap: Dict[int, List[int]] = {}
+    for l in labels:
+        if l.parent_id in childIdsMap:
+            childIdsMap[l.parent_id].append(l.id)
+        else:
+            childIdsMap[l.parent_id] = [l.id]
+
+    labelIds: List[int] = []
+    queue = [labelMap[labelId]]
+
+    while len(queue) > 0:
+        label = queue.pop()
+        labelIds.append(label.id)
+
+        if label.id in childIdsMap:
+            if (childIds := childIdsMap[label.id]) :
+                for childId in childIds:
+                    queue.append(labelMap[childId])
+
+    return labelIds
 
 
 def getTrendsDataResult(
@@ -44,14 +77,17 @@ def getTrendsDataResult(
     """Executes the DB query for time spent on the activity label,
     grouped by TimePeriod.
 
-    TODO: Expand recurring events.
+    TODO: Expand recurring events and merge.
     """
     userId = user.id
     timezone = user.timezone
     labels, durations = [], []
 
+    labelIds = getSubtreeLabelIds(user, labelId)
+    labelIdsFilter = ' OR '.join([f'label.id = {labelId}' for labelId in labelIds])
+
     with scoped_session() as session:
-        query = """
+        query = f"""
             with filtered_events as (
                     SELECT
                         event.start at time zone :timezone as start,
@@ -60,7 +96,7 @@ def getTrendsDataResult(
                     FROM event
                     INNER JOIN event_label ON event_label.event_id = event.id
                     INNER JOIN label ON label.id = event_label.label_id
-                    WHERE label.id = :labelId
+                    WHERE {labelIdsFilter}
                     AND event.status != 'deleted'
                     AND event.start >= :start_time
                     AND event.end <= :end_time

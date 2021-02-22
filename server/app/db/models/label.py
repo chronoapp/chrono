@@ -1,8 +1,4 @@
-from datetime import datetime
-from typing import Optional
-
-from sqlalchemy import Column, Integer,\
-    String, ForeignKey, BigInteger
+from sqlalchemy import Column, Integer, String, ForeignKey, BigInteger
 from sqlalchemy.orm import relationship, backref
 
 from app.db.base_class import Base
@@ -13,6 +9,8 @@ DEFAULT_TAG_COLOR = '#cecece'
 class Label(Base):
     __tablename__ = 'label'
     id = Column(BigInteger, primary_key=True, autoincrement=True, nullable=False)
+
+    parent = relationship('Label', remote_side=[id])
     parent_id = Column(BigInteger, ForeignKey('label.id'), nullable=True)
 
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
@@ -30,4 +28,4 @@ class Label(Base):
         self.position = 0
 
     def __repr__(self):
-        return f'<Label {self.id} {self.title}/>'
+        return f'<Label {self.id}-{self.parent_id} {self.title}/>'
