@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect, createRef } from 'react'
+import { Box, Button } from '@chakra-ui/react'
 
 import clsx from 'clsx'
 import produce from 'immer'
@@ -82,11 +83,7 @@ function EventPopover(props: IProps) {
   }, [eventFields])
 
   const isReadOnly = eventActions.eventState.editingEvent?.editMode == 'READ'
-  if (isReadOnly) {
-    return renderReadOnlyView()
-  } else {
-    return renderEditView()
-  }
+  return <Box boxShadow="2xl">{isReadOnly ? renderReadOnlyView() : renderEditView()}</Box>
 
   function setReadOnly(readOnly: boolean) {
     eventActions.eventDispatch({ type: 'UPDATE_EDIT_MODE', payload: readOnly ? 'READ' : 'EDIT' })
@@ -145,18 +142,31 @@ function EventPopover(props: IProps) {
           position={['bottom', 'top', 'right']}
           align={'start'}
         >
-          <button className="button is-small is-light ml-2" onClick={onClickDeleteEvent}>
-            <FiTrash className="mr-1" />
-            Delete <FiChevronDown className="mr-1" />
-          </button>
+          <Button
+            ml="2"
+            borderRadius="sm"
+            size="sm"
+            fontWeight="normal"
+            leftIcon={<FiTrash />}
+            rightIcon={<FiChevronDown />}
+            onClick={onClickDeleteEvent}
+          >
+            Delete
+          </Button>
         </Popover>
       )
     } else {
       return (
-        <button className="button is-small is-light ml-2" onClick={onClickDeleteEvent}>
-          <FiTrash className="mr-1" />
+        <Button
+          ml="2"
+          borderRadius="sm"
+          size="sm"
+          fontWeight="normal"
+          leftIcon={<FiTrash />}
+          onClick={onClickDeleteEvent}
+        >
           Delete
-        </button>
+        </Button>
       )
     }
   }
@@ -248,9 +258,15 @@ function EventPopover(props: IProps) {
 
           {calendar.isWritable() && (
             <div className="mt-4 is-flex">
-              <button className="button is-small is-primary" onClick={() => setReadOnly(false)}>
+              <Button
+                size="sm"
+                borderRadius="sm"
+                fontWeight="normal"
+                colorScheme="primary"
+                onClick={() => setReadOnly(false)}
+              >
                 Edit
-              </button>
+              </Button>
 
               {renderDeleteEventButton()}
             </div>
@@ -434,24 +450,28 @@ function EventPopover(props: IProps) {
 
           <div className="mt-4 is-flex is-justify-content-space-between">
             <div className="is-flex">
-              <button
-                className="button is-small is-primary"
+              <Button
+                size="sm"
+                borderRadius="sm"
+                fontWeight="normal"
+                colorScheme="primary"
                 onClick={() => saveEvent(getUpdatedEvent(props.event, eventFields))}
               >
                 Save
-              </button>
+              </Button>
 
               {isExistingEvent ? (
                 renderDeleteEventButton()
               ) : (
-                <button
-                  className="button is-small is-light ml-2"
-                  onClick={() => {
-                    eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
-                  }}
+                <Button
+                  ml="2"
+                  size="sm"
+                  borderRadius="sm"
+                  fontWeight="normal"
+                  onClick={() => eventActions.eventDispatch({ type: 'CANCEL_SELECT' })}
                 >
                   Discard
-                </button>
+                </Button>
               )}
             </div>
 
