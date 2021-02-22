@@ -1,5 +1,5 @@
 .cal-plugins {
-  width: 55px;
+  width: 60px;
   padding: 2px;
   border-left: 1px solid $grey-lighter;
 }
@@ -18,12 +18,6 @@
 }
 
 .cal-plugin-icon {
-  line-height: 0.8;
-  height: max-content;
-  width: 45px;
-  padding: 5px 3px;
-  border-radius: $border-radius-med;
-
   &:hover {
     @extend .cal-plugin-active;
   }
