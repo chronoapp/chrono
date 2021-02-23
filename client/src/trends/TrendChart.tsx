@@ -1,6 +1,6 @@
 import React from 'react'
 import clsx from 'clsx'
-import { Container, Center, Flex, Box, Text } from '@chakra-ui/react'
+import { Center, Flex, Box, Text } from '@chakra-ui/react'
 import { Bar } from 'react-chartjs-2'
 
 import * as dates from '@/util/dates'
@@ -168,7 +168,7 @@ function TrendChart(props: IProps) {
     return renderEmpty()
   } else {
     return (
-      <Container minW="3xl" maxW="5xl" mt="2">
+      <>
         <Flex justifyContent="space-between">
           <Flex ml="2" alignItems="center" justifyContent="flex-start">
             <Text>Time spent on</Text>
@@ -187,7 +187,7 @@ function TrendChart(props: IProps) {
         </Flex>
 
         <Box mt="2">{renderChart(labelState.labelsById)}</Box>
-      </Container>
+      </>
     )
   }
 }

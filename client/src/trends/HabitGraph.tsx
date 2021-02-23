@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react'
 import chunk from 'lodash/chunk'
 import clsx from 'clsx'
-import { Container, Flex, Box, Text, IconButton } from '@chakra-ui/react'
+import { Flex, Box, Text, IconButton } from '@chakra-ui/react'
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 
 import { Label } from '@/models/Label'
@@ -114,7 +114,7 @@ function HabitGraph(props: IProps) {
   }
 
   return (
-    <Container minW="3xl" maxW="5xl" mt="2">
+    <>
       <Flex justifyContent="space-between">
         <Flex ml="2" alignItems="center" justifyContent="flex-start">
           <Text ml="2" mr="2">
@@ -146,7 +146,7 @@ function HabitGraph(props: IProps) {
       </Flex>
 
       <Box mt="2">{renderGraph()}</Box>
-    </Container>
+    </>
   )
 }
 

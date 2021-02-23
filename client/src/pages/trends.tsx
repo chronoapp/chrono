@@ -1,13 +1,15 @@
 import React, { useState, useContext } from 'react'
+import { Container } from '@chakra-ui/react'
+import dynamic from 'next/dynamic'
 
-import { LabelContext, LabelContextType } from '../components/LabelsContext'
-import Layout from '../components/Layout'
-import { auth } from '../util/Api'
+import { LabelContext, LabelContextType } from '@/components/LabelsContext'
+import Layout from '@/components/Layout'
+import { auth } from '@/util/Api'
+import { TrendView } from '@/trends/ViewSelector'
+import { Label } from '@/models/Label'
 
-import HabitGraph from '../trends/HabitGraph'
-import TrendChart from '../trends/TrendChart'
-import { TrendView } from '../trends/ViewSelector'
-import { Label } from '../models/Label'
+const TrendChart = dynamic(() => import('@/trends/TrendChart'), { ssr: false })
+const HabitGraph = dynamic(() => import('@/trends/HabitGraph'), { ssr: false })
 
 interface IProps {
   authToken: string
@@ -56,7 +58,9 @@ class TrendsPage extends React.Component<{ authToken: string }, {}> {
   render() {
     return (
       <Layout>
-        <Trends authToken={this.props.authToken} />
+        <Container minW="3xl" maxW="5xl" mt="2">
+          <Trends authToken={this.props.authToken} />
+        </Container>
       </Layout>
     )
   }
