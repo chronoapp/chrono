@@ -1,5 +1,7 @@
 import React from 'react'
 import App from 'next/app'
+import Router from 'next/router'
+import NProgress from 'nprogress'
 
 import { ChakraProvider, extendTheme } from '@chakra-ui/react'
 
@@ -8,6 +10,14 @@ import { CalendarsContextProvider } from '../components/CalendarsContext'
 import { AlertsContextProvider } from '../components/AlertsContext'
 import { EventActionProvider } from '../calendar/EventActionContext'
 import { Alerts } from '../components/Alerts'
+
+Router.events.on('routeChangeStart', () => NProgress.start())
+Router.events.on('routeChangeComplete', () => NProgress.done())
+Router.events.on('routeChangeError', () => NProgress.done())
+NProgress.configure({ showSpinner: false })
+
+import 'nprogress/nprogress.css'
+import 'style/index.scss'
 
 const theme = extendTheme({
   fonts: {

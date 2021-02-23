@@ -2,7 +2,6 @@ import React from 'react'
 import { FormControl, FormLabel, Input, Flex, Box, Button, Text } from '@chakra-ui/react'
 
 import { getGoogleOauthUrl, getMsftOauthUrl } from '../util/Api'
-import '../style/index.scss'
 
 /**
  * TODO: Redirect to home if already logged in.

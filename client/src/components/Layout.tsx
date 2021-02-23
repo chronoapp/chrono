@@ -28,7 +28,6 @@ import { AlertsContext } from '../components/AlertsContext'
 import { EventActionContext } from '../calendar/EventActionContext'
 
 import Header from '../calendar/Header'
-import '../style/index.scss'
 
 interface Props {
   title: string
