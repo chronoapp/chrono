@@ -9,6 +9,7 @@ import {
   MenuList,
   MenuItem,
   MenuDivider,
+  Kbd,
 } from '@chakra-ui/react'
 
 import { FiChevronDown, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
@@ -188,13 +189,41 @@ export default function Header() {
         </MenuButton>
 
         <MenuList zIndex={2}>
-          <MenuItem onClick={() => selectDisplay('Day')}>Day (d)</MenuItem>
+          <MenuItem
+            onClick={() => selectDisplay('Day')}
+            display="flex"
+            justifyContent="space-between"
+          >
+            <Text>Day</Text>
+            <Kbd>d</Kbd>
+          </MenuItem>
           <MenuDivider m="0" />
-          <MenuItem onClick={() => selectDisplay('Week')}>Week (w)</MenuItem>
+          <MenuItem
+            display="flex"
+            justifyContent="space-between"
+            onClick={() => selectDisplay('Week')}
+          >
+            <Text>Week </Text>
+            <Kbd>w</Kbd>
+          </MenuItem>
           <MenuDivider m="0" />
-          <MenuItem onClick={() => selectDisplay('WorkWeek')}>Work week (x)</MenuItem>
+          <MenuItem
+            display="flex"
+            justifyContent="space-between"
+            onClick={() => selectDisplay('WorkWeek')}
+          >
+            <Text>Work week </Text>
+            <Kbd>x</Kbd>
+          </MenuItem>
           <MenuDivider m="0" />
-          <MenuItem onClick={() => selectDisplay('Month')}>Month (m)</MenuItem>
+          <MenuItem
+            display="flex"
+            justifyContent="space-between"
+            onClick={() => selectDisplay('Month')}
+          >
+            <Text>Month </Text>
+            <Kbd>m</Kbd>
+          </MenuItem>
         </MenuList>
       </Menu>
     </Flex>

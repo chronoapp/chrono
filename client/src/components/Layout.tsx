@@ -10,6 +10,7 @@ import {
   MenuItem,
   MenuDivider,
 } from '@chakra-ui/react'
+import { FiSettings, FiLogOut } from 'react-icons/fi'
 
 import Link from 'next/link'
 import Head from 'next/head'
@@ -83,11 +84,15 @@ function Layout(props: Props) {
           <Avatar size="sm" />
         </MenuButton>
         <MenuList zIndex="2">
-          <MenuItem onClick={() => router.push('/settings')}>Settings</MenuItem>
-          <MenuDivider m="0" />
           <MenuItem onClick={refreshCalendar}>Refresh Events</MenuItem>
           <MenuDivider m="0" />
-          <MenuItem onClick={signOut}>Sign Out</MenuItem>
+          <MenuItem icon={<FiSettings />} onClick={() => router.push('/settings')}>
+            Settings
+          </MenuItem>
+          <MenuDivider m="0" />
+          <MenuItem icon={<FiLogOut />} onClick={signOut}>
+            Sign Out
+          </MenuItem>
         </MenuList>
       </Menu>
     )
