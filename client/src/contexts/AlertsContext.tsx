@@ -1,6 +1,6 @@
 import React, { createContext, useState, useRef } from 'react'
 import update from 'immutability-helper'
-import Alert from '../models/Alert'
+import Alert from '@/models/Alert'
 
 export interface AlertsContextType {
   addMessage: (message: string) => void

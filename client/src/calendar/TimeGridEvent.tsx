@@ -5,7 +5,7 @@ import Event from '../models/Event'
 import { timeFormatShort } from '../util/localizer'
 
 import { Direction, EventActionContext } from './EventActionContext'
-import { CalendarsContext } from '../components/CalendarsContext'
+import { CalendarsContext } from '@/contexts/CalendarsContext'
 import { LabelTagColor } from '../components/LabelTag'
 
 interface IProps {

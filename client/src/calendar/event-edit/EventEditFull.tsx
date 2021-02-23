@@ -21,14 +21,14 @@ import { BsArrowRepeat } from 'react-icons/bs'
 import { FiCalendar, FiAlignLeft, FiClock } from 'react-icons/fi'
 
 import { EventActionContext } from '@/calendar/EventActionContext'
-import { CalendarsContext } from '@/components/CalendarsContext'
+import { CalendarsContext } from '@/contexts/CalendarsContext'
 import Event from '@/models/Event'
 import { Label } from '@/models/Label'
 
 import { format } from '@/util/localizer'
 import ContentEditable from '@/lib/ContentEditable'
 import { LabelTag } from '@/components/LabelTag'
-import { LabelContext, LabelContextType } from '@/components/LabelsContext'
+import { LabelContext, LabelContextType } from '@/contexts/LabelsContext'
 
 import { addNewLabels } from '../utils/LabelUtils'
 import SelectCalendar from './SelectCalendar'

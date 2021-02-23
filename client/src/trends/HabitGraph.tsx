@@ -6,13 +6,14 @@ import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 
 import { Label } from '@/models/Label'
 import { startOfWeek, format, getWeekRange } from '@/util/localizer'
-import { LabelContext } from '@/components/LabelsContext'
+import { LabelContext } from '@/contexts/LabelsContext'
 
 import { hexToHSL } from '@/calendar/utils/Colors'
 import * as dates from '@/util/dates'
 import { getTrends, getAuthToken } from '@/util/Api'
 import ViewSelector, { TrendView } from './ViewSelector'
 import TagDropdown from './TagDropdown'
+
 interface IProps {
   setSelectedView: (v: TrendView) => void
   selectedLabel?: Label
@@ -117,10 +118,6 @@ function HabitGraph(props: IProps) {
     <>
       <Flex justifyContent="space-between">
         <Flex ml="2" alignItems="center" justifyContent="flex-start">
-          <Text ml="2" mr="2">
-            Habit Chart
-          </Text>
-
           <TagDropdown
             selectedLabel={props.selectedLabel}
             onSelectLabel={(label) => props.setSelectedLabel(label)}

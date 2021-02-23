@@ -5,11 +5,11 @@ import NProgress from 'nprogress'
 
 import { ChakraProvider, extendTheme } from '@chakra-ui/react'
 
-import { LabelsContextProvider } from '../components/LabelsContext'
-import { CalendarsContextProvider } from '../components/CalendarsContext'
-import { AlertsContextProvider } from '../components/AlertsContext'
-import { EventActionProvider } from '../calendar/EventActionContext'
-import { Alerts } from '../components/Alerts'
+import { LabelsContextProvider } from '@/contexts/LabelsContext'
+import { CalendarsContextProvider } from '@/contexts/CalendarsContext'
+import { AlertsContextProvider } from '@/contexts/AlertsContext'
+import { EventActionProvider } from '@/calendar/EventActionContext'
+import { Alerts } from '@/components/Alerts'
 
 Router.events.on('routeChangeStart', () => NProgress.start())
 Router.events.on('routeChangeComplete', () => NProgress.done())

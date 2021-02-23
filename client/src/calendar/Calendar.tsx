@@ -11,7 +11,7 @@ import * as dates from '../util/dates'
 import { startOfWeek, formatDateTime } from '../util/localizer'
 import { getAuthToken, getEvents } from '../util/Api'
 
-import { CalendarsContext, CalendarsContextType } from '../components/CalendarsContext'
+import { CalendarsContext, CalendarsContextType } from '../contexts/CalendarsContext'
 import { EventActionContext } from './EventActionContext'
 import { GlobalEvent } from '../util/global'
 import useEventService from './event-edit/useEventService'

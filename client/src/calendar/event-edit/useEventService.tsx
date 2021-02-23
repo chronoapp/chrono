@@ -12,7 +12,7 @@ import Event, { UNSAVED_EVENT_ID } from '../../models/Event'
 import Alert from '../../models/Alert'
 
 import { EventActionContext, DeleteMethod } from '../EventActionContext'
-import { AlertsContext } from '../../components/AlertsContext'
+import { AlertsContext } from '@/contexts/AlertsContext'
 
 /**
  * Hook to provides CRUD Action that deal with the event server API.

@@ -6,7 +6,7 @@ import { Bar } from 'react-chartjs-2'
 import * as dates from '@/util/dates'
 import { getTrends, getAuthToken } from '@/util/Api'
 import { Label, TimePeriod } from '@/models/Label'
-import { LabelContext } from '@/components/LabelsContext'
+import { LabelContext } from '@/contexts/LabelsContext'
 
 import ViewSelector, { TrendView } from './ViewSelector'
 import TagDropdown from './TagDropdown'
@@ -171,7 +171,6 @@ function TrendChart(props: IProps) {
       <>
         <Flex justifyContent="space-between">
           <Flex ml="2" alignItems="center" justifyContent="flex-start">
-            <Text>Time spent on</Text>
             <TagDropdown
               labelsById={labelState.labelsById}
               selectedLabel={props.selectedLabel}

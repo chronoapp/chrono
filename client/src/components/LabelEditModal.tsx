@@ -15,10 +15,10 @@ import {
   ModalCloseButton,
 } from '@chakra-ui/react'
 
-import { getAuthToken, putLabel, createLabel } from '../util/Api'
-import { getSortedLabelColors, LabelColor } from '../models/LabelColors'
-import { AlertsContext } from '../components/AlertsContext'
-import { LabelContext, LabelContextType, LabelModalState } from './LabelsContext'
+import { getAuthToken, putLabel, createLabel } from '@/util/Api'
+import { getSortedLabelColors, LabelColor } from '@/models/LabelColors'
+import { AlertsContext } from '@/contexts/AlertsContext'
+import { LabelContext, LabelContextType, LabelModalState } from '@/contexts/LabelsContext'
 
 function EditLabelModal() {
   const alertsContext = useContext(AlertsContext)

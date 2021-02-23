@@ -9,7 +9,7 @@ import Popover from '../lib/popover/Popover'
 import EventPopover from './event-edit/EventPopover'
 
 import Event from '../models/Event'
-import { CalendarsContext } from '../components/CalendarsContext'
+import { CalendarsContext } from '@/contexts/CalendarsContext'
 import { EventActionContext } from './EventActionContext'
 
 function EventItem(props: { event: Event; isPreview: boolean; now: Date }) {

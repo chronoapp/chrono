@@ -1,8 +1,8 @@
 import React, { useContext, useEffect } from 'react'
 import { FiPlus } from 'react-icons/fi'
 
-import { getAuthToken, getLabels } from '../util/Api'
-import { LabelContext, LabelContextType } from './LabelsContext'
+import { getAuthToken, getLabels } from '@/util/Api'
+import { LabelContext, LabelContextType } from '@/contexts/LabelsContext'
 import LabelEditModal from './LabelEditModal'
 import LabelTree from './LabelTree'
 

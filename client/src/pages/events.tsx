@@ -27,7 +27,7 @@ import {
 import { FiSearch } from 'react-icons/fi'
 import tinycolor from 'tinycolor2'
 
-import { format, getDurationDisplay } from '../util/localizer'
+import { format, getDurationDisplay } from '@/util/localizer'
 import {
   getEvents,
   getLabels,
@@ -36,13 +36,13 @@ import {
   getLabelRules,
   putLabelRule,
   auth,
-} from '../util/Api'
-import Event from '../models/Event'
-import { Label } from '../models/Label'
-import { LabelRule } from '../models/LabelRule'
-import Layout from '../components/Layout'
-import LabelTree from '../components/LabelTree'
-import { LabelContext } from '@/components/LabelsContext'
+} from '@/util/Api'
+import Event from '@/models/Event'
+import { Label } from '@/models/Label'
+import { LabelRule } from '@/models/LabelRule'
+import Layout from '@/components/Layout'
+import LabelTree from '@/components/LabelTree'
+import { LabelContext } from '@/contexts/LabelsContext'
 interface Props {
   authToken: string
 }

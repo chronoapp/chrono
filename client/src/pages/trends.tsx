@@ -1,8 +1,8 @@
 import React, { useState, useContext } from 'react'
-import { Container } from '@chakra-ui/react'
+import { Container, Box, Heading, Text } from '@chakra-ui/react'
 import dynamic from 'next/dynamic'
 
-import { LabelContext, LabelContextType } from '@/components/LabelsContext'
+import { LabelContext, LabelContextType } from '@/contexts/LabelsContext'
 import Layout from '@/components/Layout'
 import { auth } from '@/util/Api'
 import { TrendView } from '@/trends/ViewSelector'
@@ -59,6 +59,10 @@ class TrendsPage extends React.Component<{ authToken: string }, {}> {
     return (
       <Layout>
         <Container minW="3xl" maxW="5xl" mt="2">
+          <Heading m="3" fontSize="2xl" align="left">
+            Trends
+          </Heading>
+
           <Trends authToken={this.props.authToken} />
         </Container>
       </Layout>

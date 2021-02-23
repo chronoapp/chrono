@@ -1,9 +1,9 @@
 import React, { createContext, useReducer } from 'react'
 
 import update from 'immutability-helper'
-import { Label } from '../models/Label'
-import { normalizeArr } from '../lib/normalizer'
-import { LabelColor } from '../models/LabelColors'
+import { Label } from '@/models/Label'
+import { normalizeArr } from '@/lib/normalizer'
+import { LabelColor } from '@/models/LabelColors'
 
 export interface LabelState {
   loading: boolean

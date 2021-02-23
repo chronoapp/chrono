@@ -14,11 +14,11 @@ import {
 
 import { FiChevronDown, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 import { EventActionContext, Display } from './EventActionContext'
-import { LabelContext } from '../components/LabelsContext'
-import { format } from '../util/localizer'
-import { GlobalEvent } from '../util/global'
-import * as dates from '../util/dates'
-import useClickOutside from '../lib/hooks/useClickOutside'
+import { LabelContext } from '@/contexts/LabelsContext'
+import { format } from '@/util/localizer'
+import { GlobalEvent } from '@/util/global'
+import * as dates from '@/util/dates'
+import useClickOutside from '@/lib/hooks/useClickOutside'
 
 import Week from './Week'
 import Month from './Month'

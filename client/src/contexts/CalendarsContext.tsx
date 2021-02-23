@@ -1,8 +1,8 @@
 import React, { createContext, useState } from 'react'
 import produce from 'immer'
-import { normalizeArr } from '../lib/normalizer'
+import { normalizeArr } from '@/lib/normalizer'
 
-import Calendar from '../models/Calendar'
+import Calendar from '@/models/Calendar'
 
 export interface CalendarsContextType {
   calendarsById: Record<number, Calendar>

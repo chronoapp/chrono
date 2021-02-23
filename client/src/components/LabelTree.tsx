@@ -6,12 +6,12 @@ import { EventDataNode, DataNode } from 'rc-tree/lib/interface'
 import { FiChevronDown, FiChevronRight, FiMoreHorizontal, FiTrash, FiEdit } from 'react-icons/fi'
 
 import clsx from 'clsx'
-import Hoverable from '../lib/Hoverable'
+import Hoverable from '@/lib/Hoverable'
 
-import { LABEL_COLORS } from '../models/LabelColors'
-import { AlertsContext } from '../components/AlertsContext'
-import { LabelContext, LabelContextType } from './LabelsContext'
-import { Label } from '../models/Label'
+import { LABEL_COLORS } from '@/models/LabelColors'
+import { AlertsContext } from '@/contexts/AlertsContext'
+import { LabelContext, LabelContextType } from '@/contexts/LabelsContext'
+import { Label } from '@/models/Label'
 import ColorPicker from './ColorPicker'
 
 import { getAuthToken, putLabel, putLabels, deleteLabel } from '../util/Api'

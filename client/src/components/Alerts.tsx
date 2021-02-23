@@ -4,7 +4,7 @@ import { FiX } from 'react-icons/fi'
 
 import CircularProgress from '@material-ui/core/CircularProgress'
 
-import { AlertsContext } from '../components/AlertsContext'
+import { AlertsContext } from '@/contexts/AlertsContext'
 
 export function Alerts() {
   const alertContext = useContext(AlertsContext)

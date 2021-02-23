@@ -1,7 +1,7 @@
 import React from 'react'
 import { FiPlus } from 'react-icons/fi'
 
-import { CalendarsContext, CalendarsContextType } from './CalendarsContext'
+import { CalendarsContext, CalendarsContextType } from '../contexts/CalendarsContext'
 import { getAuthToken, getCalendars, putCalendar, createCalendar } from '../util/Api'
 import Calendar, { AccessRole } from '../models/Calendar'
 import CalendarEditModal from './CalendarEditModal'

@@ -16,18 +16,18 @@ import Link from 'next/link'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 
-import { getAuthToken, signOut, syncCalendar } from '../util/Api'
-import { roundNext15Min } from '../util/localizer'
-import { GlobalEvent } from '../util/global'
+import { getAuthToken, signOut, syncCalendar } from '@/util/Api'
+import { roundNext15Min } from '@/util/localizer'
+import { GlobalEvent } from '@/util/global'
 
-import MiniCalendar from '../calendar/MiniCalendar'
+import MiniCalendar from '@/calendar/MiniCalendar'
 import LabelPanel from './LabelPanel'
 import CalendarsPanel from './CalendarsPanel'
 import Plugins from './Plugins'
-import { AlertsContext } from '../components/AlertsContext'
-import { EventActionContext } from '../calendar/EventActionContext'
+import { AlertsContext } from '@/contexts/AlertsContext'
+import { EventActionContext } from '@/calendar/EventActionContext'
 
-import Header from '../calendar/Header'
+import Header from '@/calendar/Header'
 
 interface Props {
   title: string
