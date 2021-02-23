@@ -88,13 +88,22 @@ function HabitGraph(props: IProps) {
           }
 
           return (
-            <div
+            <Flex
               key={idx}
               className="habit-chart-day"
-              style={{ height: '5em', backgroundColor: color }}
+              backgroundColor={color}
+              height="20"
+              alignItems="flex-start"
+              justifyContent="center"
+              border="1px solid rgba(230, 230, 230)"
+              borderRadius="md"
             >
-              <div className={clsx('habit-chart-day-label')}>{label}</div>
-            </div>
+              <Box borderRadius="sm" w="5" mt="2">
+                <Text fontSize="xs" fontWeight="medium" pointerEvents="none" color={'gray.600'}>
+                  {label}
+                </Text>
+              </Box>
+            </Flex>
           )
         })}
       </Flex>

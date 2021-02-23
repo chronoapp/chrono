@@ -28,7 +28,7 @@ export function formatDuration(duration: number) {
  */
 function TimeSelect(props: IProps) {
   const dayStart: Date = dates.startOf(props.start, 'day')
-  const dayEnd: Date = dates.endOf(props.start, 'day')
+  const dayEnd: Date = dates.endOf(props.end, 'day')
 
   const startIdx = Math.round(dates.diff(dayStart, props.start, 'minutes') / INTERVAL)
   const startTimeOptions: { value: number; label: string }[] = []
@@ -60,7 +60,7 @@ function TimeSelect(props: IProps) {
         size="sm"
         maxHeight="12em"
         icon={<FiChevronDown />}
-        value={startTimeOptions[startIdx].value}
+        value={startIdx}
         onChange={(e) => {
           const idx = parseInt(e.target.value)
           const date = dates.add(dayStart, idx * INTERVAL, 'minutes')
@@ -78,7 +78,7 @@ function TimeSelect(props: IProps) {
         ml="1"
         size="sm"
         icon={<FiChevronDown />}
-        value={endTimeOptions[endIdx].value}
+        value={endIdx}
         onChange={(e) => {
           const idx = parseInt(e.target.value)
           const date = dates.add(props.start, (idx + 1) * INTERVAL, 'minutes')
