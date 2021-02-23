@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect, useRef } from 'react'
-import { Button, Menu, MenuButton, MenuList, MenuItem, Portal } from '@chakra-ui/react'
+import { Flex, Button, Menu, MenuButton, MenuList, MenuItem, Portal } from '@chakra-ui/react'
 
 import Tree from 'rc-tree'
 import { EventDataNode, DataNode } from 'rc-tree/lib/interface'
@@ -163,8 +163,8 @@ function LabelTree(props: IProps) {
     return () => {
       if (allowEdit) {
         return (
-          <Menu isLazy placement="bottom">
-            {({ onClose }) => (
+          <Menu isLazy={true} placement="bottom">
+            {({ onClose, isOpen }) => (
               <>
                 <MenuButton>
                   <div
@@ -172,15 +172,17 @@ function LabelTree(props: IProps) {
                     className={clsx('event-label', allowEdit && 'event-label--hoverable')}
                   ></div>
                 </MenuButton>
-                <MenuList>
-                  <ColorPicker
-                    onSelectLabelColor={(color) => {
-                      const updatedLabel = { ...label, color_hex: color }
-                      updateLabel(updatedLabel)
-                      onClose()
-                    }}
-                  />
-                </MenuList>
+                {isOpen && (
+                  <MenuList>
+                    <ColorPicker
+                      onSelectLabelColor={(color) => {
+                        const updatedLabel = { ...label, color_hex: color }
+                        updateLabel(updatedLabel)
+                        onClose()
+                      }}
+                    />
+                  </MenuList>
+                )}
               </>
             )}
           </Menu>
@@ -235,10 +237,10 @@ function LabelTree(props: IProps) {
           return (
             <Hoverable>
               {(isMouseInside, onMouseEnter, onMouseLeave) => (
-                <div
+                <Flex
                   onMouseEnter={onMouseEnter}
                   onMouseLeave={onMouseLeave}
-                  style={{ display: 'flex', justifyContent: 'space-between' }}
+                  justifyContent="space-between"
                 >
                   <span>{item.title}</span>
                   {(isMouseInside || curMenuExpanded) && (
@@ -279,7 +281,7 @@ function LabelTree(props: IProps) {
                       </Portal>
                     </Menu>
                   )}
-                </div>
+                </Flex>
               )}
             </Hoverable>
           )
