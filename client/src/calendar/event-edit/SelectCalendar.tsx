@@ -27,7 +27,13 @@ export default function SelectCalendar(props: IProps) {
 
   return (
     <Menu>
-      <MenuButton size="sm" as={Button} variant="ghost" rightIcon={<FiChevronDown />}>
+      <MenuButton
+        size="sm"
+        borderRadius="sm"
+        as={Button}
+        variant="ghost"
+        rightIcon={<FiChevronDown />}
+      >
         {renderCalendarItem(selectedCal)}
       </MenuButton>
       <MenuList mt="-1" p="0" zIndex="10">

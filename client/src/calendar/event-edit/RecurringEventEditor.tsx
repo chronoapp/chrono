@@ -7,6 +7,11 @@ import {
   ModalFooter,
   ModalBody,
   ModalCloseButton,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuDivider,
 } from '@chakra-ui/react'
 
 import clsx from 'clsx'
@@ -385,89 +390,81 @@ function RecurringEventEditor(props: IProps) {
       : null
 
     return (
-      <div className={clsx('dropdown', repeatingDropdownActive && 'is-active')}>
-        <div className="dropdown-trigger">
-          <button
-            className="button is-small is-light ml-2"
-            onClick={() => setRepeatingDropdownActive(!repeatingDropdownActive)}
-          >
-            {selectedRule ? `Repeats ${selectedRule.toText()}` : 'Does not repeat'}{' '}
-            <FiChevronDown className="ml-1" />
-          </button>
-        </div>
-
-        <div
-          className="dropdown-menu"
-          role="menu"
-          style={{
-            marginTop: '-0.25em',
-          }}
+      <Menu>
+        <MenuButton
+          borderRadius="sm"
+          size="sm"
+          as={Button}
+          rightIcon={<FiChevronDown />}
+          fontWeight="normal"
         >
-          <div className="dropdown-content">
-            <a
-              className="dropdown-item is-flex is-align-items-center"
-              onClick={() => {
-                setIsRecurring(false)
-                setRepeatingDropdownActive(false)
-              }}
-            >
-              Never
-            </a>
-            <a
-              className="dropdown-item is-flex is-align-items-center"
-              onClick={() => {
-                setIsRecurring(true)
-                setRecurringOptions({
-                  freq: RRuleFreq.DAILY,
-                  interval: 1,
-                })
-                setRepeatingDropdownActive(false)
-              }}
-            >
-              Daily
-            </a>
-            <hr className="dropdown-divider" style={{ margin: 0 }} />
-            <a
-              className="dropdown-item is-flex is-align-items-center"
-              onClick={() => {
-                setIsRecurring(true)
-                setRecurringOptions({
-                  freq: RRuleFreq.WEEKLY,
-                  interval: 1,
-                })
-                setRepeatingDropdownActive(false)
-              }}
-            >
-              Weekly
-            </a>
-            <hr className="dropdown-divider" style={{ margin: 0 }} />
-            <a
-              className="dropdown-item is-flex is-align-items-center"
-              onClick={() => {
-                setIsRecurring(true)
-                setRecurringOptions({
-                  freq: RRuleFreq.MONTHLY,
-                  interval: 1,
-                })
-                setRepeatingDropdownActive(false)
-              }}
-            >
-              Monthly
-            </a>
-            <hr className="dropdown-divider" style={{ margin: 0 }} />
-            <a
-              className="dropdown-item is-flex is-align-items-center"
-              onClick={() => {
-                setIsRecurring(true)
-                setRepeatingDropdownActive(false)
-                setModalEnabled(true)
-              }}
-            >
-              Custom
-            </a>
-          </div>
-        </div>
-      </div>
+          {selectedRule ? `Repeats ${selectedRule.toText()}` : 'Does not repeat'}{' '}
+        </MenuButton>
+
+        <MenuList mt="-1">
+          <MenuItem
+            fontSize="sm"
+            onClick={() => {
+              setIsRecurring(false)
+              setRepeatingDropdownActive(false)
+            }}
+          >
+            Never
+          </MenuItem>
+          <MenuItem
+            fontSize="sm"
+            onClick={() => {
+              setIsRecurring(true)
+              setRecurringOptions({
+                freq: RRuleFreq.DAILY,
+                interval: 1,
+              })
+              setRepeatingDropdownActive(false)
+            }}
+          >
+            Daily
+          </MenuItem>
+          <MenuDivider m="0" />
+          <MenuItem
+            fontSize="sm"
+            onClick={() => {
+              setIsRecurring(true)
+              setRecurringOptions({
+                freq: RRuleFreq.WEEKLY,
+                interval: 1,
+              })
+              setRepeatingDropdownActive(false)
+            }}
+          >
+            Weekly
+          </MenuItem>
+          <MenuDivider m="0" />
+          <MenuItem
+            fontSize="sm"
+            onClick={() => {
+              setIsRecurring(true)
+              setRecurringOptions({
+                freq: RRuleFreq.MONTHLY,
+                interval: 1,
+              })
+              setRepeatingDropdownActive(false)
+            }}
+          >
+            Monthly
+          </MenuItem>
+          <MenuDivider m="0" />
+          <MenuItem
+            fontSize="sm"
+            onClick={() => {
+              setIsRecurring(true)
+              setRepeatingDropdownActive(false)
+              setModalEnabled(true)
+            }}
+          >
+            Custom
+          </MenuItem>
+        </MenuList>
+      </Menu>
     )
   }
 

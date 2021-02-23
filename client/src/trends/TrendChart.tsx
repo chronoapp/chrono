@@ -172,13 +172,11 @@ function TrendChart(props: IProps) {
         <Flex justifyContent="space-between">
           <Flex ml="2" alignItems="center" justifyContent="flex-start">
             <Text>Time spent on</Text>
-            {
-              <TagDropdown
-                labelsById={labelState.labelsById}
-                selectedLabel={props.selectedLabel}
-                onSelectLabel={(label) => props.setSelectedLabel(label)}
-              />
-            }
+            <TagDropdown
+              labelsById={labelState.labelsById}
+              selectedLabel={props.selectedLabel}
+              onSelectLabel={(label) => props.setSelectedLabel(label)}
+            />
             <Text>per</Text>
             {renderTimePeriodSelections()}
           </Flex>

@@ -20,6 +20,9 @@ import {
   Tag,
   TagLabel,
   TagCloseButton,
+  Menu,
+  MenuButton,
+  MenuList,
 } from '@chakra-ui/react'
 import { FiSearch } from 'react-icons/fi'
 import tinycolor from 'tinycolor2'
@@ -34,12 +37,12 @@ import {
   putLabelRule,
   auth,
 } from '../util/Api'
-import Event, { UNSAVED_EVENT_ID } from '../models/Event'
+import Event from '../models/Event'
 import { Label } from '../models/Label'
 import { LabelRule } from '../models/LabelRule'
 import Layout from '../components/Layout'
 import LabelTree from '../components/LabelTree'
-
+import { LabelContext } from '@/components/LabelsContext'
 interface Props {
   authToken: string
 }
@@ -57,7 +60,6 @@ interface LabelRuleState {
 }
 
 interface State {
-  dropdownEventId: string
   searchValue: string
   events: Event[]
   labels: Label[]
@@ -88,10 +90,12 @@ function LabelTagSolid(props: {
 }
 
 class EventList extends React.Component<Props, State> {
+  static contextType = LabelContext
+  context!: React.ContextType<typeof LabelContext>
+
   constructor(props: Props) {
     super(props)
     this.state = {
-      dropdownEventId: UNSAVED_EVENT_ID,
       searchValue: '',
       events: [],
       labels: [],
@@ -100,7 +104,6 @@ class EventList extends React.Component<Props, State> {
       isRefreshing: false,
     }
 
-    this.toggleAddLabelDropdown = this.toggleAddLabelDropdown.bind(this)
     this.onSearchChange = this.onSearchChange.bind(this)
     this.refreshEvents = this.refreshEvents.bind(this)
     this.applyLabelToEvent = this.applyLabelToEvent.bind(this)
@@ -116,6 +119,7 @@ class EventList extends React.Component<Props, State> {
     const authToken = this.props.authToken
     const events = await getEvents(authToken)
     const labels = await getLabels(authToken)
+    this.context.dispatch({ type: 'INIT', payload: labels })
 
     this.setState({
       events,
@@ -123,19 +127,10 @@ class EventList extends React.Component<Props, State> {
     })
   }
 
-  toggleAddLabelDropdown(eventId: string) {
-    if (this.state.dropdownEventId == eventId) {
-      this.setState({ dropdownEventId: UNSAVED_EVENT_ID })
-    } else {
-      this.setState({ dropdownEventId: eventId })
-    }
-  }
-
   async addLabel(eventId: string, labelId: number) {
     const event = this.state.events.find((e) => e.id == eventId)
     if (!event) return
     if (event.labels.find((l) => l.id === labelId)) {
-      this.toggleAddLabelDropdown(eventId)
       return
     }
 
@@ -165,8 +160,6 @@ class EventList extends React.Component<Props, State> {
       this.setState({ labelRuleState })
       this.applyLabelToEvent()
     }
-
-    this.toggleAddLabelDropdown(eventId)
   }
 
   async applyLabelToEvent() {
@@ -213,28 +206,6 @@ class EventList extends React.Component<Props, State> {
         this.setState({ events })
       })
     }
-  }
-
-  renderDropdown(eventId: string) {
-    return (
-      <div className={`dropdown ${eventId == this.state.dropdownEventId ? 'is-active' : ''}`}>
-        <div onClick={(_evt) => this.toggleAddLabelDropdown(eventId)} className="dropdown-trigger">
-          <a className="button is-text is-small">add tag</a>
-        </div>
-        {eventId === this.state.dropdownEventId ? (
-          <div className="dropdown-menu" id="dropdown-menu" role="menu">
-            <div className="dropdown-content">
-              <LabelTree
-                allowEdit={false}
-                onSelect={(label) => {
-                  this.addLabel(eventId, label.id)
-                }}
-              />
-            </div>
-          </div>
-        ) : null}
-      </div>
-    )
   }
 
   renderAddLabelRuleModal() {
@@ -341,7 +312,35 @@ class EventList extends React.Component<Props, State> {
                           onRemoveLabel={this.removeLabel}
                         />
                       ))}
-                      {this.renderDropdown(event.id)}
+
+                      <Menu isLazy>
+                        {({ onClose }) => (
+                          <>
+                            <MenuButton
+                              ml="2"
+                              mr="2"
+                              borderRadius="xs"
+                              size="sm"
+                              fontWeight="normal"
+                              fontSize="sm"
+                              as={Button}
+                              variant="link"
+                            >
+                              Add tag
+                            </MenuButton>
+
+                            <MenuList pl="1">
+                              <LabelTree
+                                allowEdit={false}
+                                onSelect={(label) => {
+                                  this.addLabel(event.id, label.id)
+                                  onClose()
+                                }}
+                              />
+                            </MenuList>
+                          </>
+                        )}
+                      </Menu>
                     </Box>
                   </Td>
                 </Tr>
