@@ -16,14 +16,16 @@ from app.db.models import User
 
 
 def test_getEventsBasic(userSession: Tuple[User, Session], test_client):
-    user, _ = userSession
+    user, session = userSession
     calendar = user.getPrimaryCalendar()
 
     start = datetime.fromisoformat('2020-01-02T12:00:00-05:00')
     event1 = createEvent(calendar, start, start + timedelta(hours=1))
+    session.add(event1)
 
     start2 = start + timedelta(days=1)
     event2 = createEvent(calendar, start2, start2 + timedelta(minutes=30))
+    session.add(event2)
 
     token = getAuthToken(user)
     startFilter = (start - timedelta(days=1)).isoformat()
@@ -199,13 +201,14 @@ def test_updateEvent_recurring(userSession: Tuple[User, Session], test_client):
     assert len(events) == 5
 
 
-def test_deleteEvent(userSession: Tuple[User, Session], test_client):
+def test_deleteEvent_single(userSession: Tuple[User, Session], test_client):
     user, session = userSession
     calendar = user.getPrimaryCalendar()
 
     start = datetime.now()
     end = start + timedelta(hours=1)
     event = createEvent(calendar, start, end)
+    session.add(event)
     session.commit()
 
     assert user.getSingleEvents().count() == 1
@@ -213,6 +216,7 @@ def test_deleteEvent(userSession: Tuple[User, Session], test_client):
     resp = test_client.delete(
         f'/api/v1/events/{event.id}', headers={'Authorization': getAuthToken(user)}
     )
+
     assert resp.ok
     assert user.getSingleEvents().count() == 0
 

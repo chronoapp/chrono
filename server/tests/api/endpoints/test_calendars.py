@@ -33,6 +33,7 @@ def test_postCalendar(userSession: Tuple[User, Session], test_client):
         headers={'Authorization': getAuthToken(user)},
         data=json.dumps(calendarData),
     )
+
     calendar = resp.json()
     assert calendar['id'] != None
     assert calendar['summary'] == calendarData['summary']

@@ -6,7 +6,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app.core import config
 from app.api.router import api_router
-from app.db.session import Session
+from app.db.session import session_maker
 
 app = FastAPI(title=config.PROJECT_ID, openapi_url="/api/v1/openapi.json")
 app.include_router(api_router, prefix=config.API_V1_STR)
@@ -25,7 +25,7 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1' if config.DEBUG else '0'
 
 @app.middleware("http")
 async def db_session_middleware(request: Request, call_next):
-    request.state.db = Session()
+    request.state.db = session_maker()
     response = await call_next(request)
     request.state.db.close()
     return response

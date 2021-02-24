@@ -2,7 +2,7 @@ import pytest
 
 from fastapi.testclient import TestClient
 
-from tests.test_session import scoped_session, engine, TestingSessionLocal
+from tests.test_session import test_session_maker, engine
 from app.db.base_class import Base
 from app.db.models import User, Calendar
 from app.main import app
@@ -12,11 +12,8 @@ from app.api.utils.db import get_db
 
 
 def override_get_db():
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
+    with test_session_maker.begin() as session:
+        yield session
 
 
 @pytest.fixture(autouse=True)
@@ -37,7 +34,7 @@ def userSession():
     """Initializes the test user with one primary calendar.
     Returns fixture with tuple of (user, session)
     """
-    with scoped_session() as session:
+    with test_session_maker() as session:
         user = User('test@example.com', 'Test User', None)
         calendar = Calendar(
             'default',

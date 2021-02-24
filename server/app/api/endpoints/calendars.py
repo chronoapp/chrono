@@ -56,11 +56,9 @@ async def postCalendar(
 ):
     isPrimary = calendar.primary or False
     if isPrimary:
-        user.calendars.update(
-            {
-                Calendar.primary: False,
-            }
-        )
+        # TODO: Bulk update.
+        for cal in user.calendars:
+            cal.primary = False
 
     calendarDb = Calendar(
         shortuuid.uuid(),

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from datetime import datetime, timedelta
 
 from app.api.utils.security import get_current_user
-from app.db.session import scoped_session
+from app.db.session import session_maker
 from app.db.models import User, Label
 from app.core.logger import logger
 
@@ -85,7 +85,7 @@ def getTrendsDataResult(
     labelIds = getSubtreeLabelIds(user, labelId)
     labelIdsFilter = ' OR '.join([f'label.id = {labelId}' for labelId in labelIds])
 
-    with scoped_session() as session:
+    with session_maker() as session:
         query = f"""
             with filtered_events as (
                     SELECT

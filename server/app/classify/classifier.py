@@ -12,14 +12,13 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import MultiLabelBinarizer
 
 from app.db.models import Event, User, Label
-from app.db.session import scoped_session
+from app.db.session import Session
 from app.core.logger import logger
 
 
 def updateClassifier(userId: int):
-    """Updates the stored classifier.
-    """
-    with scoped_session() as session:
+    """Updates the stored classifier."""
+    with Session.begin() as session:
         user = session.query(User).filter(User.id == userId).first()
         labelledEvents = user.events.filter(Event.labels.any()).all()
 
@@ -30,9 +29,13 @@ def updateClassifier(userId: int):
         eventLabelsBin = mlb.fit_transform(eventLabels)
 
         # Classify with Linear SVC
-        classifier = Pipeline([('vectorizer', CountVectorizer(ngram_range=(1, 3))),
-                               ('tfidf', TfidfTransformer()),
-                               ('clf', OneVsRestClassifier(LinearSVC(multi_class="ovr")))])
+        classifier = Pipeline(
+            [
+                ('vectorizer', CountVectorizer(ngram_range=(1, 3))),
+                ('tfidf', TfidfTransformer()),
+                ('clf', OneVsRestClassifier(LinearSVC(multi_class="ovr"))),
+            ]
+        )
 
         classifier.fit(eventTitles, eventLabelsBin)
 
@@ -44,7 +47,7 @@ def updateClassifier(userId: int):
 
 
 def classifyEvents(userId: int, startDaysAgo=365):
-    with scoped_session() as session:
+    with Session.begin() as session:
         user = session.query(User).filter(User.id == userId).first()
 
         with open(user.getClassifierPath(), 'rb') as f:
@@ -53,8 +56,12 @@ def classifyEvents(userId: int, startDaysAgo=365):
             mlb = data['binarizer']
 
         unlabelledEvents = user.events.filter(
-            and_(~Event.labels.any(), Event.title != None,
-                 Event.start > datetime.utcnow() - timedelta(days=startDaysAgo)))
+            and_(
+                ~Event.labels.any(),
+                Event.title != None,
+                Event.start > datetime.utcnow() - timedelta(days=startDaysAgo),
+            )
+        )
         eventTitles = [e.title for e in unlabelledEvents]
         predicted = mlb.inverse_transform(classifier.predict(eventTitles))
 

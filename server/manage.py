@@ -1,7 +1,7 @@
 import click
 import logging
 
-from app.db.session import scoped_session
+from app.db.session import session_maker
 from app.db.models import User, Label
 
 
@@ -26,7 +26,7 @@ DEFAULT_CATEGORIES = [
 @main.command()
 @click.argument('userid')
 def add_labels(userid):
-    with scoped_session() as session:
+    with session_maker.begin() as session:
         user = session.query(User).filter(User.id == userid).first()
         for l in user.labels:
             session.delete(l)

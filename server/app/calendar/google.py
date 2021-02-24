@@ -1,7 +1,8 @@
 from uuid import uuid4
 from typing import Optional, Dict, Tuple, List, Any
+
+from sqlalchemy import select
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
 
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -10,7 +11,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-from app.db.session import scoped_session
+from app.db.session import session_maker
 from app.db.models import User, Event, LabelRule, Calendar, Webhook
 from app.core.logger import logger
 from app.core import config
@@ -151,12 +152,14 @@ def syncGoogleCalendars(user: User):
 
 def syncAllEvents(userId: int, fullSync: bool = False):
     """Syncs events from google calendar."""
-    with scoped_session() as session:
-        user = session.query(User).filter(User.id == userId).first()
+    with session_maker() as session:
+        user = session.execute(select(User).filter(User.id == userId)).scalars().first()
         syncGoogleCalendars(user)
 
         for calendar in user.calendars.filter(Calendar.google_id != None):
             syncCalendar(calendar, session, fullSync=fullSync)
+
+        session.commit()
 
 
 def syncCalendar(calendar: Calendar, session: Session, fullSync: bool = False) -> None:
