@@ -73,10 +73,10 @@
 
 .button-invert-active {
   &.is-active {
-    background-color: $white-ter;
     border: none;
-    box-shadow: inset 0px 1px 5px rgba(0, 0, 0, 0.2);
-    color: $black-ter;
+    background-color: $white-ter !important;
+    box-shadow: inset 0px 1px 5px rgba(0, 0, 0, 0.2) !important;
+    color: $black-ter !important;
   }
 }
 

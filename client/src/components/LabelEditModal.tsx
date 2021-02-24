@@ -109,7 +109,7 @@ function EditLabelModal() {
             <FormLabel>Tag Color</FormLabel>
 
             <Menu>
-              <MenuButton as={Button} size="sm" rightIcon={<FiChevronDown />}>
+              <MenuButton as={Button} size="sm" rightIcon={<FiChevronDown />} variant="ghost">
                 {ColorLabel(selectedColor)}
               </MenuButton>
               <MenuList style={{ maxHeight: '14em' }} overflowY="scroll">
