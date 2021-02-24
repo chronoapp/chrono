@@ -1,8 +1,18 @@
 import React, { useContext, useState, useEffect, createRef } from 'react'
-import { Box, Flex, Button, Input, Checkbox, Menu, MenuButton, MenuList } from '@chakra-ui/react'
+import {
+  Box,
+  Flex,
+  Button,
+  Input,
+  Checkbox,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuDivider,
+} from '@chakra-ui/react'
 import { FiCalendar, FiClock, FiAlignLeft, FiTrash, FiChevronDown, FiPlus } from 'react-icons/fi'
 
-import clsx from 'clsx'
 import produce from 'immer'
 import moment from 'moment'
 import linkifyHtml from 'linkifyjs/html'
@@ -12,7 +22,6 @@ import { MdClose } from 'react-icons/md'
 
 import { format, fullDayFormat } from '@/util/localizer'
 import { addNewLabels } from '../utils/LabelUtils'
-import Popover from '@/lib/popover/Popover'
 
 import Event, { UNSAVED_EVENT_ID } from '@/models/Event'
 import Calendar from '@/models/Calendar'
@@ -70,10 +79,7 @@ function EventPopover(props: IProps) {
 
   const isExistingEvent = props.event.id !== UNSAVED_EVENT_ID
   const contentEditableRef = createRef<HTMLInputElement>()
-  const [addTagDropdownActive, setAddTagDropdownActive] = useState(false)
-
   const [confirmDeleteActive, setConfirmDeleteActive] = useState<boolean>(false)
-  const deleteEventDropdownRef = React.useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     document.addEventListener('keydown', keyboardEvents)
@@ -134,27 +140,7 @@ function EventPopover(props: IProps) {
 
   function renderDeleteEventButton() {
     if (props.event.recurring_event_id) {
-      return (
-        <Popover
-          content={renderConfirmDeleteDropdown}
-          isOpen={confirmDeleteActive}
-          containerClassName={'z-index-50'}
-          position={['bottom', 'top', 'right']}
-          align={'start'}
-        >
-          <Button
-            ml="2"
-            borderRadius="sm"
-            size="sm"
-            fontWeight="normal"
-            leftIcon={<FiTrash />}
-            rightIcon={<FiChevronDown />}
-            onClick={onClickDeleteEvent}
-          >
-            Delete
-          </Button>
-        </Popover>
-      )
+      return renderConfirmDeleteDropdown()
     } else {
       return (
         <Button
@@ -206,7 +192,6 @@ function EventPopover(props: IProps) {
               <LabelTree
                 allowEdit={false}
                 onSelect={(label) => {
-                  setAddTagDropdownActive(false)
                   // const updatedLabels = [...eventFields.labels, label]
                   const updatedLabels = produce(eventFields.labels, (draft) => {
                     if (!draft.find((l) => l.id == label.id)) {
@@ -520,46 +505,45 @@ function EventPopover(props: IProps) {
 
   function renderConfirmDeleteDropdown() {
     return (
-      <div
-        className="dropdown-menu"
-        role="menu"
-        ref={deleteEventDropdownRef}
-        style={{
-          display: 'block',
-          position: 'unset',
-          zIndex: 50,
-          marginTop: '-0.5em',
-          paddingBottom: 0,
-        }}
-      >
-        <div className="dropdown-content">
-          <a
-            className="dropdown-item is-flex is-align-items-center"
-            onClick={() => deleteEvent(props.event.id)}
-          >
+      <Menu>
+        <MenuButton
+          ml="2"
+          borderRadius="sm"
+          size="sm"
+          fontWeight="normal"
+          as={Button}
+          leftIcon={<FiTrash />}
+          rightIcon={<FiChevronDown />}
+          onClick={onClickDeleteEvent}
+        >
+          Delete
+        </MenuButton>
+
+        <MenuList mt="-2">
+          <MenuItem fontSize="sm" onClick={() => deleteEvent(props.event.id)}>
             This event
-          </a>
-          <hr className="dropdown-divider" style={{ margin: 0 }} />
-          <a
-            className="dropdown-item is-flex is-align-items-center"
+          </MenuItem>
+          <MenuDivider m="0" />
+          <MenuItem
+            fontSize="sm"
             onClick={() => {
               // Modify first recurring event w/ end date
               // Delete all overrides?
             }}
           >
             This and following events
-          </a>
-          <hr className="dropdown-divider" style={{ margin: 0 }} />
-          <a
-            className="dropdown-item is-flex is-align-items-center"
+          </MenuItem>
+          <MenuDivider m="0" />
+          <MenuItem
+            fontSize="sm"
             onClick={() => {
               props.event.recurring_event_id && deleteEvent(props.event.recurring_event_id, 'ALL')
             }}
           >
             All events
-          </a>
-        </div>
-      </div>
+          </MenuItem>
+        </MenuList>
+      </Menu>
     )
   }
 }

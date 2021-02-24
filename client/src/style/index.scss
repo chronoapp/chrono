@@ -2,13 +2,8 @@
 
 @import 'variables.scss';
 @import '../../node_modules/bulma/sass/utilities/_all.sass';
-@import '../../node_modules/bulma/sass/base/_all.sass';
 @import '../../node_modules/bulma/sass/helpers/_all.sass';
-@import '../../node_modules/bulma/sass/layout/_all.sass';
 @import '../../node_modules/bulma/sass/form/_all.sass';
-
-// TODO: Replace this and react-select with downshift
-@import '../../node_modules/bulma/sass/components/dropdown.sass';
 
 @import 'app.scss';
 @import 'elements.scss';
