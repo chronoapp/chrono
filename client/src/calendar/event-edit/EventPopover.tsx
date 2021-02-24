@@ -469,8 +469,8 @@ function EventPopover(props: IProps) {
             />
           </div>
 
-          <div className="mt-4 is-flex is-justify-content-space-between">
-            <div className="is-flex">
+          <Flex mt="4" justifyContent="space-between" alignItems="center">
+            <Flex>
               <Button
                 size="sm"
                 borderRadius="sm"
@@ -494,10 +494,14 @@ function EventPopover(props: IProps) {
                   Discard
                 </Button>
               )}
-            </div>
+            </Flex>
 
-            <button
-              className="button is-small is-text ml-2"
+            <Button
+              mt="2"
+              mb="1"
+              size="sm"
+              fontWeight="normal"
+              variant="ghost"
               onClick={() => {
                 eventActions.eventDispatch({
                   type: 'UPDATE_EDIT_EVENT',
@@ -507,8 +511,8 @@ function EventPopover(props: IProps) {
               }}
             >
               More Options
-            </button>
-          </div>
+            </Button>
+          </Flex>
         </div>
       </>
     )
