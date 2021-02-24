@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from 'react'
-import { Button } from '@chakra-ui/react'
+import { Button, Text } from '@chakra-ui/react'
 import { FiPlus } from 'react-icons/fi'
 
 import { getAuthToken, getLabels } from '@/util/Api'
@@ -43,7 +43,10 @@ function LabelPanel() {
   return (
     <>
       {labelState.editingLabel.active && <LabelEditModal />}
-      <span className="has-text-left has-text-weight-medium mt-3">Tags</span>
+      <Text align="left" mt="3" fontWeight="medium" mb="1">
+        Tags
+      </Text>
+
       <LabelTree allowEdit={true} />
 
       <Button

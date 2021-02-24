@@ -1,5 +1,5 @@
 import React from 'react'
-import { Button } from '@chakra-ui/react'
+import { Button, Text } from '@chakra-ui/react'
 import { FiPlus } from 'react-icons/fi'
 
 import { CalendarsContext, CalendarsContextType } from '../contexts/CalendarsContext'
@@ -90,7 +90,10 @@ export default function CalendarsPanel() {
         }}
       />
 
-      <span className="has-text-left has-text-weight-medium mt-3">Calendars</span>
+      <Text align="left" mt="3" fontWeight="medium" mb="1">
+        Calendars
+      </Text>
+
       {calendars.length > 0 &&
         calendars.map((calendar, idx) => {
           const selected = calendar.selected || false

@@ -38,6 +38,7 @@ import SelectCalendar from './SelectCalendar'
 import ContentEditable from '@/lib/ContentEditable'
 import TaggableInput from './TaggableInput'
 import useEventService from './useEventService'
+
 interface IProps {
   event: Event
 }

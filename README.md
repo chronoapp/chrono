@@ -1,6 +1,6 @@
 ## Timecouncil
 
-Personal time tracker for google calendar.
+Timecouncil is an extensible calendar with analytics.
 
 ### Develop
 
@@ -9,6 +9,9 @@ Personal time tracker for google calendar.
 ```
 docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
 ```
+
+Setup Poetry
+`poetry config virtualenvs.in-project true`
 
 Build Containers: `docker-compose build`
 Run Containers: `docker-compose up -d`
