@@ -1,6 +1,6 @@
 import React from 'react'
 import clsx from 'clsx'
-import { Center, Flex, Box, Text } from '@chakra-ui/react'
+import { Button, Center, Flex, Box, Text } from '@chakra-ui/react'
 import { Bar } from 'react-chartjs-2'
 
 import * as dates from '@/util/dates'
@@ -63,41 +63,47 @@ function TrendChart(props: IProps) {
   function renderTimePeriodSelections() {
     return (
       <div className="ml-2 field has-addons">
-        <button
+        <Button
+          p="1"
+          size="sm"
+          variant="ghost"
+          borderRadius="none"
+          fontWeight="normal"
+          _hover={{ background: 'none' }}
+          _active={{ background: 'none' }}
           onClick={() => setSelectedTimePeriod('DAY')}
-          className={clsx(
-            'button',
-            'button-underline',
-            'is-small',
-            selectedTimePeriod === 'DAY' && 'is-active'
-          )}
+          className={clsx('button-underline', selectedTimePeriod === 'DAY' && 'is-active')}
         >
           Day
-        </button>
-        <button
+        </Button>
+        <Button
+          ml="2"
+          p="1"
+          size="sm"
+          variant="ghost"
+          borderRadius="none"
+          fontWeight="normal"
+          _hover={{ background: 'none' }}
+          _active={{ background: 'none' }}
           onClick={() => setSelectedTimePeriod('WEEK')}
-          className={clsx(
-            'button',
-            'button-underline',
-            'ml-1',
-            'is-small',
-            selectedTimePeriod === 'WEEK' && 'is-active'
-          )}
+          className={clsx('button-underline', selectedTimePeriod === 'WEEK' && 'is-active')}
         >
           Week
-        </button>
-        <button
+        </Button>
+        <Button
+          ml="2"
+          p="1"
+          size="sm"
+          variant="ghost"
+          borderRadius="none"
+          fontWeight="normal"
+          _hover={{ background: 'none' }}
+          _active={{ background: 'none' }}
           onClick={() => setSelectedTimePeriod('MONTH')}
-          className={clsx(
-            'button',
-            'button-underline',
-            'ml-1',
-            'is-small',
-            selectedTimePeriod === 'MONTH' && 'is-active'
-          )}
+          className={clsx('button-underline', selectedTimePeriod === 'MONTH' && 'is-active')}
         >
           Month
-        </button>
+        </Button>
       </div>
     )
   }

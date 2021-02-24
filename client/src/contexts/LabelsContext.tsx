@@ -13,7 +13,6 @@ export interface LabelState {
 
 export interface LabelModalState {
   active: boolean
-  colorPickerActive: boolean
   labelTitle: string
   labelColor?: LabelColor
   labelId?: number
@@ -87,7 +86,7 @@ export function LabelsContextProvider(props: any) {
   const [labelState, dispatch] = useReducer(labelReducer, {
     loading: false,
     labelsById: {},
-    editingLabel: { active: false, colorPickerActive: false, labelTitle: '' },
+    editingLabel: { active: false, labelTitle: '' },
   })
 
   return (

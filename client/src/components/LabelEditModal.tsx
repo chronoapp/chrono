@@ -13,7 +13,12 @@ import {
   ModalFooter,
   ModalBody,
   ModalCloseButton,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
 } from '@chakra-ui/react'
+import { FiChevronDown } from 'react-icons/fi'
 
 import { getAuthToken, putLabel, createLabel } from '@/util/Api'
 import { getSortedLabelColors, LabelColor } from '@/models/LabelColors'
@@ -103,61 +108,33 @@ function EditLabelModal() {
           <FormControl id="tag-color" mt="2">
             <FormLabel>Tag Color</FormLabel>
 
-            <div className="control has-text-left">
-              <div className="select">
-                <div className={clsx('dropdown', newLabelModal.colorPickerActive && 'is-active')}>
-                  <div className="dropdown-trigger">
-                    <button
-                      className="button"
-                      aria-haspopup="true"
-                      aria-controls="dropdown-menu"
+            <Menu>
+              <MenuButton as={Button} size="sm" rightIcon={<FiChevronDown />}>
+                {ColorLabel(selectedColor)}
+              </MenuButton>
+              <MenuList style={{ maxHeight: '14em' }} overflowY="scroll">
+                {getSortedLabelColors().map((color) => {
+                  return (
+                    <MenuItem
+                      key={color.hex}
+                      fontSize={'sm'}
+                      fontWeight="normal"
                       onClick={() => {
                         dispatch({
                           type: 'UPDATE_EDIT_LABEL',
                           payload: {
                             ...newLabelModal,
-                            colorPickerActive: !newLabelModal.colorPickerActive,
+                            labelColor: color,
                           },
                         })
                       }}
                     >
-                      <span>{ColorLabel(selectedColor)}</span>
-                      <span className="icon is-small">
-                        <i className="fas fa-angle-down" aria-hidden="true"></i>
-                      </span>
-                    </button>
-                  </div>
-
-                  <div className="dropdown-menu" role="menu" style={{ maxHeight: '16em' }}>
-                    <div
-                      className="dropdown-content"
-                      style={{ overflowY: 'scroll', maxHeight: 'inherit' }}
-                    >
-                      {getSortedLabelColors().map((color) => {
-                        return (
-                          <a
-                            key={color.hex}
-                            className="dropdown-item"
-                            onClick={() => {
-                              dispatch({
-                                type: 'UPDATE_EDIT_LABEL',
-                                payload: {
-                                  ...newLabelModal,
-                                  colorPickerActive: false,
-                                  labelColor: color,
-                                },
-                              })
-                            }}
-                          >
-                            {ColorLabel(color)}
-                          </a>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+                      {ColorLabel(color)}
+                    </MenuItem>
+                  )
+                })}
+              </MenuList>
+            </Menu>
           </FormControl>
         </ModalBody>
 

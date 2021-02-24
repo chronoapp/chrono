@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect, createRef } from 'react'
-import { Box, Flex, Button, Input, Checkbox } from '@chakra-ui/react'
+import { Box, Flex, Button, Input, Checkbox, Menu, MenuButton, MenuList } from '@chakra-ui/react'
+import { FiCalendar, FiClock, FiAlignLeft, FiTrash, FiChevronDown, FiPlus } from 'react-icons/fi'
 
 import clsx from 'clsx'
 import produce from 'immer'
@@ -8,7 +9,6 @@ import linkifyHtml from 'linkifyjs/html'
 
 import * as dates from '@/util/dates'
 import { MdClose } from 'react-icons/md'
-import { FiCalendar, FiClock, FiAlignLeft, FiTrash, FiChevronDown } from 'react-icons/fi'
 
 import { format, fullDayFormat } from '@/util/localizer'
 import { addNewLabels } from '../utils/LabelUtils'
@@ -182,28 +182,46 @@ function EventPopover(props: IProps) {
 
   function renderAddTagDropdown() {
     return (
-      <div className={clsx('dropdown', addTagDropdownActive && 'is-active')}>
-        <div
-          onClick={() => setAddTagDropdownActive(!addTagDropdownActive)}
-          className="dropdown-trigger"
-        >
-          <a className="button is-text is-small">add tag</a>
-        </div>
-        {addTagDropdownActive ? (
-          <div className="dropdown-menu" id="dropdown-menu" role="menu">
-            <div className="dropdown-content">
+      <Menu isLazy>
+        {({ onClose }) => (
+          <>
+            <MenuButton
+              mb="2"
+              mt="1"
+              borderRadius="xs"
+              size="sm"
+              fontWeight="normal"
+              fontSize="sm"
+              as={Button}
+              variant="link"
+              justifyContent="center"
+              alignItems="center"
+            >
+              <Flex align="center">
+                <FiPlus /> add tag
+              </Flex>
+            </MenuButton>
+
+            <MenuList pl="1">
               <LabelTree
                 allowEdit={false}
                 onSelect={(label) => {
                   setAddTagDropdownActive(false)
-                  const updatedLabels = [...eventFields.labels, label]
+                  // const updatedLabels = [...eventFields.labels, label]
+                  const updatedLabels = produce(eventFields.labels, (draft) => {
+                    if (!draft.find((l) => l.id == label.id)) {
+                      draft.push(label)
+                    }
+                  })
+
                   setEventFields({ ...eventFields, labels: updatedLabels })
+                  onClose()
                 }}
               />
-            </div>
-          </div>
-        ) : null}
-      </div>
+            </MenuList>
+          </>
+        )}
+      </Menu>
     )
   }
 
@@ -315,23 +333,24 @@ function EventPopover(props: IProps) {
             }}
           />
 
-          <div className="mt-2" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+          <Flex mt="2" alignItems="center" flexWrap="wrap" justifyContent="left">
             {eventFields.labels.map((label) => (
-              <LabelTag
-                key={label.id}
-                label={label}
-                allowEdit={true}
-                onClickDelete={(e) => {
-                  const rmIdx = eventFields.labels.indexOf(label)
-                  const updatedLabels = produce(eventFields.labels, (labels) => {
-                    labels.splice(rmIdx, 1)
-                  })
-                  setEventFields({ ...eventFields, labels: updatedLabels })
-                }}
-              />
+              <Box mb="1" key={label.id}>
+                <LabelTag
+                  label={label}
+                  allowEdit={true}
+                  onClickDelete={(e) => {
+                    const rmIdx = eventFields.labels.indexOf(label)
+                    const updatedLabels = produce(eventFields.labels, (labels) => {
+                      labels.splice(rmIdx, 1)
+                    })
+                    setEventFields({ ...eventFields, labels: updatedLabels })
+                  }}
+                />
+              </Box>
             ))}
             {renderAddTagDropdown()}
-          </div>
+          </Flex>
 
           <Flex mt="2" alignItems="center">
             <FiClock className="mr-2" size={'1.2em'} />

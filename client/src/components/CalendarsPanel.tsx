@@ -1,4 +1,5 @@
 import React from 'react'
+import { Button } from '@chakra-ui/react'
 import { FiPlus } from 'react-icons/fi'
 
 import { CalendarsContext, CalendarsContextType } from '../contexts/CalendarsContext'
@@ -125,13 +126,16 @@ export default function CalendarsPanel() {
           )
         })}
 
-      <button
-        className="button is-text"
+      <Button
+        color="gray.600"
+        fontWeight="normal"
+        variant="link"
         onClick={() => setModalActive(true)}
-        style={{ justifyContent: 'left' }}
+        justifyContent="left"
+        m="2"
       >
         <FiPlus /> add calendar
-      </button>
+      </Button>
     </>
   )
 }

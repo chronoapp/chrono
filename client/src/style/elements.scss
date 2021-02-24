@@ -96,6 +96,7 @@
 
   &.is-active {
     font-weight: bold;
+    border-color: $black-ter;
   }
 
   &:focus:not(:active) {

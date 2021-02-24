@@ -97,6 +97,8 @@ function HabitGraph(props: IProps) {
               justifyContent="center"
               border="1px solid rgba(230, 230, 230)"
               borderRadius="md"
+              flex={1}
+              m="1"
             >
               <Box borderRadius="sm" w="5" mt="2">
                 <Text fontSize="xs" fontWeight="medium" pointerEvents="none" color={'gray.600'}>

@@ -134,7 +134,7 @@ export default function EventEditFull(props: { event: Event }) {
           <div className="mt-2 is-flex is-align-items-center">
             <FiClock className="mr-2" size={'1.2em'} />
             <input
-              className="button-underline input is-small"
+              className="input is-small"
               type="date"
               value={format(event.start, 'YYYY-MM-DD')}
               onChange={(e) => console.log(e.target.value)}

@@ -1,4 +1,5 @@
 import React, { useContext, useEffect } from 'react'
+import { Button } from '@chakra-ui/react'
 import { FiPlus } from 'react-icons/fi'
 
 import { getAuthToken, getLabels } from '@/util/Api'
@@ -45,13 +46,16 @@ function LabelPanel() {
       <span className="has-text-left has-text-weight-medium mt-3">Tags</span>
       <LabelTree allowEdit={true} />
 
-      <button
-        className="button is-text"
+      <Button
+        color="gray.600"
+        fontWeight="normal"
+        variant="link"
         onClick={onClickAddProject}
-        style={{ justifyContent: 'left' }}
+        justifyContent="left"
+        m="2"
       >
         <FiPlus /> add tag
-      </button>
+      </Button>
     </>
   )
 }
