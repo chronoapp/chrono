@@ -42,13 +42,15 @@ def add_labels(userid):
 @click.argument('userid')
 def sync_cal(userid):
     from app.calendar.google import syncAllEvents
-    syncAllEvents(userid)
+
+    syncAllEvents(userid, fullSync=False)
 
 
 @main.command()
 @click.argument('userid')
 def update_classifier(userid):
     from app.classify.classifier import updateClassifier
+
     updateClassifier(userid)
 
 
@@ -56,7 +58,14 @@ def update_classifier(userid):
 @click.argument('userid')
 def auto_label(userid):
     from app.classify.classifier import classifyEvents
+
     classifyEvents(userid, startDaysAgo=30)
+
+
+@main.command()
+def script():
+    """Insert scripts here"""
+    pass
 
 
 if __name__ == "__main__":

@@ -110,16 +110,18 @@ def googleAuthCallback(authData: AuthData, session: Session = Depends(get_db)):
         session.commit()
 
         authToken = getAuthToken(user)
-        return {'token': str(authToken)}
+        return {'token': authToken}
 
     except Exception as e:
         logging.error(e)
 
 
 def getAuthToken(user: User) -> str:
-    return jwt.encode(
-        {'user_id': user.id, 'iat': datetime.utcnow()}, config.TOKEN_SECRET, algorithm='HS256'
-    ).decode('utf-8')
+    return str(
+        jwt.encode(
+            {'user_id': user.id, 'iat': datetime.utcnow()}, config.TOKEN_SECRET, algorithm='HS256'
+        )
+    )
 
 
 # ================================== Microsoft Graph OAuth2 ==================================
@@ -185,9 +187,11 @@ def msftCallback(request: Request, session: Session = Depends(get_db)):
     user.credentials = UserCredential(tokenResult, ProviderType.Microsoft)
     session.commit()
 
-    authToken = jwt.encode(
-        {'user_id': user.id, 'iat': datetime.utcnow()}, config.TOKEN_SECRET, algorithm='HS256'
-    ).decode('utf-8')
+    authToken = str(
+        jwt.encode(
+            {'user_id': user.id, 'iat': datetime.utcnow()}, config.TOKEN_SECRET, algorithm='HS256'
+        )
+    )
 
     response = RedirectResponse(config.APP_URL)
     response.set_cookie(key='auth_token', value=authToken)

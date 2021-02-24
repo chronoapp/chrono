@@ -4,18 +4,21 @@ Timecouncil is an extensible calendar with analytics.
 
 ### Develop
 
-**Setup Log Aggregation**
+We use [Poetry](https://python-poetry.org/) for package management.
+
+Run `poetry config virtualenvs.in-project true` to enable virtualenvs to be created in the project directory.
+
+In the server/ directory, install packages with `poetry install`. In your editor settings, the python path will be at `${workspaceFolder}/server/.venv`.
+
+Build Containers `docker-compose -f docker-compose.dev.yml build`\
+Run Containers `docker-compose -f docker-compose.dev.yml up -d`\
+SSH into Container `docker-compose run -f docker-compose.dev.yml --rm web bash`
+
+**Setup Log Aggregation Plugins**
 
 ```
 docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
 ```
-
-Setup Poetry
-`poetry config virtualenvs.in-project true`
-
-Build Containers: `docker-compose build`
-Run Containers: `docker-compose up -d`
-Ssh into api: `docker-compose run --rm web bash`
 
 ### Database Migrations
 

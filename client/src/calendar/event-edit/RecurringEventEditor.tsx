@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import {
+  Box,
   Button,
   Modal,
   ModalOverlay,
@@ -263,7 +264,7 @@ function RecurringEventEditor(props: IProps) {
       }
 
       return (
-        <div className="mt-3 has-text-grey-lighter recurring-days">
+        <Box mt="3" className="recurring-days">
           {weekRange.map((day, idx) => {
             const dayNumber = (parseInt(format(day, 'd')) + 6) % 7
             const isSelected = weekdays.includes(dayNumber)
@@ -298,7 +299,7 @@ function RecurringEventEditor(props: IProps) {
               </span>
             )
           })}
-        </div>
+        </Box>
       )
     }
   }

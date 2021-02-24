@@ -1,10 +1,17 @@
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.8
+FROM python:3.9-slim
 
 RUN apt-get update -y &&\
     apt-get install -y emacs supervisor
 
-ADD ./requirements.txt /app/requirements.txt
-RUN pip install -r requirements.txt
+RUN python -m pip install poetry
+
+WORKDIR /app
+
+# Cache dependencies
+COPY pyproject.toml poetry.lock /app/
+RUN poetry config virtualenvs.create false
+RUN poetry config virtualenvs.in-project false
+RUN poetry install
 
 ADD hier /
 COPY . /app

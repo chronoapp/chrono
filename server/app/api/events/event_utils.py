@@ -8,7 +8,7 @@ from typing import List, Dict, Optional, Literal, Tuple, Generator, Any
 
 from dateutil.rrule import rrule, rruleset, rrulestr
 from datetime import timedelta
-from backports.zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, validator
 from app.api.endpoints.labels import LabelInDbVM

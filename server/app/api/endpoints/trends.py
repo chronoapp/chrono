@@ -29,10 +29,9 @@ def getUserTrends(
     userId = user.id
     logger.info(f'{userId} {time_period}')
 
-    startTime = datetime.fromisoformat(start)
-    endTime = datetime.fromisoformat(end)
-
     try:
+        startTime = datetime.fromisoformat(start)
+        endTime = datetime.fromisoformat(end)
         labels, durations = getTrendsDataResult(user, labelId, startTime, endTime, time_period)
     except ValueError as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))

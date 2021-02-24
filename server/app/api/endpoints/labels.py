@@ -20,7 +20,7 @@ class LabelVM(BaseModel):
 
     @validator('title')
     def titleIsNonEmpty(cls, title: str):
-        if title is '':
+        if not title:
             raise ValueError('Title not specified.')
 
         return title

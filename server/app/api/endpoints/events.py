@@ -136,6 +136,8 @@ async def updateEvent(
 ) -> Event:
     """Update an existing event. For recurring events, create the "override" event
     in the DB with the composite id of {baseId}_{date}.
+
+    TODO: Handle move between different calendars
     """
     curEvent: Optional[Event] = user.events.filter_by(id=event_id).one_or_none()
 

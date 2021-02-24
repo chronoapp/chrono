@@ -19,7 +19,7 @@ def get_current_user(session=Depends(get_db), authorization: str = Header(None))
 
     if authorization:
         try:
-            tokenData = jwt.decode(authorization, config.TOKEN_SECRET, algorithm='HS256')
+            tokenData = jwt.decode(authorization, config.TOKEN_SECRET, algorithms=['HS256'])
         except PyJWTError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials"

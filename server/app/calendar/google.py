@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
 from datetime import datetime, timedelta
-from backports.zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo
 from dateutil.rrule import rrulestr
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build

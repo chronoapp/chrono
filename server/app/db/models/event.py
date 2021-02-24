@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, List, Literal, TYPE_CHECKING
 import shortuuid
-from backports.zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import (
     Column,

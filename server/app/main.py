@@ -1,4 +1,5 @@
 import os
+import uvicorn
 from fastapi import FastAPI
 from starlette.requests import Request
 from starlette.middleware.cors import CORSMiddleware
@@ -28,3 +29,8 @@ async def db_session_middleware(request: Request, call_next):
     response = await call_next(request)
     request.state.db.close()
     return response
+
+
+def start():
+    """launch with poetry run start"""
+    uvicorn.run('app.main:app', host='0.0.0.0', port=80, reload=True, workers=2)
