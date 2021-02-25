@@ -144,8 +144,7 @@ function TimeGridEvent(props: IProps) {
       className={clsx(
         'cal-event',
         isInteracting && 'cal-dnd-interacting',
-        (isEditing || props.isPreview) && 'cal-has-shadow',
-        props.isPreview && 'is-dragging'
+        (isEditing || props.isPreview) && 'cal-has-shadow'
       )}
       style={{
         backgroundColor: Event.getBackgroundColor(event, calendarColor, props.now),
@@ -156,6 +155,7 @@ function TimeGridEvent(props: IProps) {
         border: props.style.border,
         color: Event.getForegroundColor(event, props.now),
         zIndex: isEditing ? 5 : 0,
+        cursor: props.isPreview ? 'move' : 'pointer',
       }}
       onMouseDown={handleStartDragging}
       onTouchStart={handleStartDragging}

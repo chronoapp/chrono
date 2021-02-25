@@ -187,7 +187,7 @@ async def updateEvent(
         logger.info(f'Updated Event: {eventDb}')
 
     eventDb.labels.clear()
-    eventDb.labels = getCombinedLabels(user, event.labels)
+    eventDb.labels = getCombinedLabels(user, event.labels, session)
 
     if eventDb.calendar.google_id:
         if prevCalendarId and prevCalendarId != eventDb.calendar_id:
