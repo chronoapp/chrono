@@ -35,10 +35,13 @@ class LabelInDbVM(LabelVM):
     id: int
 
 
-def createOrUpdateLabel(user: User, labelId: Optional[int], label: LabelVM) -> Label:
+def createOrUpdateLabel(
+    user: User, labelId: Optional[int], label: LabelVM, session: Session
+) -> Label:
     labelDb = None
     if labelId:
-        labelDb = user.labels.filter_by(id=labelId).one_or_none()
+        stmt = select(Label).where(and_(User.id == user.id, Label.id == labelId))
+        labelDb = session.execute(stmt).scalar()
 
     if not labelDb:
         labelDb = Label(label.title, label.color_hex)
@@ -92,7 +95,7 @@ async def putLabels(
     labels: List[LabelInDbVM], user=Depends(get_current_user), session=Depends(get_db)
 ):
     """TODO: Bulk update with one query."""
-    updatedLabels = [createOrUpdateLabel(user, label.id, label) for label in labels]
+    updatedLabels = [createOrUpdateLabel(user, label.id, label, session) for label in labels]
     session.commit()
 
     return updatedLabels
@@ -105,7 +108,7 @@ async def putLabel(
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> Label:
-    labelDb = createOrUpdateLabel(user, labelId, label)
+    labelDb = createOrUpdateLabel(user, labelId, label, session)
     session.commit()
     session.refresh(labelDb)
 

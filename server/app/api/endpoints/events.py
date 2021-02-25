@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from sqlalchemy import desc, and_
+from sqlalchemy import desc, and_, select
 from sqlalchemy.orm import Session
 from typing import List, Optional, Union
 from googleapiclient.errors import HttpError
@@ -98,7 +98,7 @@ async def createEvent(
             )
 
         eventDb = createOrUpdateEvent(None, event)
-        eventDb.labels = getCombinedLabels(user, event.labels)
+        eventDb.labels = getCombinedLabels(user, event.labels, session)
         eventDb.calendar = calendarDb
         user.events.append(eventDb)
 
@@ -247,11 +247,13 @@ async def deleteEvent(
     return {}
 
 
-def getCombinedLabels(user: User, labelVMs: List[LabelInDbVM]) -> List[Label]:
+def getCombinedLabels(user: User, labelVMs: List[LabelInDbVM], session: Session) -> List[Label]:
     """"List of labels, with parents removed if the list includes the child"""
     labels: List[Label] = []
     for labelVM in labelVMs:
-        label = user.labels.filter_by(id=labelVM.id).one_or_none()
+        stmt = select(Label).where(and_(User.id == user.id, Label.id == labelVM.id))
+        label = session.execute(stmt).scalar()
+
         if label:
             labels.append(label)
 

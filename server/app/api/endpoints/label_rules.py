@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from sqlalchemy import and_
+from sqlalchemy import and_, select
 
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
@@ -39,8 +39,9 @@ async def getLabelRules(
 
 @router.put('/label_rules/', response_model=LabelRuleInDBVM)
 async def putLabel(labelRule: LabelRuleVM, user=Depends(get_current_user), session=Depends(get_db)):
+    stmt = select(Label).where(and_(User.id == user.id, Label.id == labelRule.label_id))
+    labelDb = session.execute(stmt).scalar()
 
-    labelDb = user.labels.filter_by(id=labelRule.label_id).first()
     labelRuleDb = user.label_rules.filter_by(
         label_id=labelRule.label_id, text=labelRule.text
     ).first()
