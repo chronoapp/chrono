@@ -15,7 +15,7 @@ def get_current_user(session=Depends(get_db), authorization: str = Header(None))
         if (user := session.execute(select(User).where(User.email == email)).scalar()) :
             return user
 
-    elif authorization:
+    if authorization:
         try:
             tokenData = jwt.decode(authorization, config.TOKEN_SECRET, algorithms=['HS256'])
         except jwt.PyJWTError:
