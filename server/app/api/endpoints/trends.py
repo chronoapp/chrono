@@ -43,7 +43,7 @@ def getSubtreeLabelIds(user: User, labelId: int) -> List[int]:
     """Gets all Label IDs in the subtree. Could also do this in SQL,
     but this should be fast when we have O(100) labels.
     """
-    labels: List[Label] = user.labels.all()
+    labels: List[Label] = user.labels
     labelMap = {l.id: l for l in labels}
     if labelId not in labelMap:
         raise ValueError(f'Invalid Label {labelId}')

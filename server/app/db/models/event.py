@@ -88,12 +88,11 @@ class Event(Base):
 
     @classmethod
     def search(cls, session: Session, userId: int, searchQuery: str, limit: int = 250):
-        rows = engine.execute(
-            text(EVENT_SEARCH_QUERY), query=searchQuery, userId=userId, limit=limit
+        rows = session.execute(
+            text(EVENT_SEARCH_QUERY), {'query': searchQuery, 'userId': userId, 'limit': limit}
         )
 
         rowIds = [r[0] for r in rows]
-
         return session.query(Event).filter(Event.id.in_(rowIds)).order_by(desc(Event.end))
 
     @property

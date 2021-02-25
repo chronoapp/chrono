@@ -2,7 +2,9 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, validator
 
+from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
+
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
 from app.db.models import Label, User
@@ -16,7 +18,7 @@ class LabelVM(BaseModel):
     color_hex: str
     key: Optional[str]
     parent_id: Optional[int]
-    position: int
+    position: Optional[int]
 
     @validator('title')
     def titleIsNonEmpty(cls, title: str):
@@ -69,7 +71,7 @@ def combineLabels(labels: List[Label]) -> List[Label]:
 
 @router.get('/labels/', response_model=List[LabelInDbVM])
 async def getLabels(user=Depends(get_current_user), session=Depends(get_db)):
-    return user.labels.order_by(Label.title).all()
+    return user.labels
 
 
 @router.post('/labels/', response_model=LabelInDbVM)
@@ -78,6 +80,8 @@ async def createLabel(
 ) -> Label:
     labelDb = Label(label.title, label.color_hex)
     user.labels.append(labelDb)
+    user.labels.reorder()
+
     session.commit()
 
     return labelDb
@@ -112,10 +116,14 @@ async def putLabel(
 async def deleteLabel(
     labelId: int, user: User = Depends(get_current_user), session: Session = Depends(get_db)
 ) -> Label:
-    label = session.query(Label).filter_by(id=labelId).one_or_none()
+    stmt = select(Label).where(and_(User.id == user.id, Label.id == labelId))
+    label = session.execute(stmt).scalar()
+
     if not label:
         raise HTTPException(status_code=404, detail="Label not found.")
     else:
         session.delete(label)
         session.commit()
+        user.labels.reorder()
+
         return label

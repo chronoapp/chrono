@@ -153,7 +153,7 @@ def syncGoogleCalendars(user: User):
 def syncAllEvents(userId: int, fullSync: bool = False):
     """Syncs events from google calendar."""
     with session_maker() as session:
-        user = session.execute(select(User).filter(User.id == userId)).scalars().first()
+        user = session.execute(select(User).filter(User.id == userId)).scalar()
         syncGoogleCalendars(user)
 
         for calendar in user.calendars.filter(Calendar.google_id != None):
