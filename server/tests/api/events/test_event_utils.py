@@ -2,14 +2,16 @@ import pytest
 from uuid import uuid4
 
 from typing import Tuple
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
+from sqlalchemy import select
 from datetime import datetime, timedelta
 from dateutil.rrule import DAILY, WEEKLY
 
-from app.db.models import User
+from app.db.models import User, Calendar, Event
 from app.api.events.event_utils import (
     EventBaseVM,
     getAllExpandedRecurringEvents,
+    getAllExpandedRecurringEventsList,
     createOrUpdateEvent,
     verifyRecurringEvent,
     InputError,
@@ -18,9 +20,9 @@ from app.api.events.event_utils import (
 from tests.utils import createEvent
 
 
-def test_getAllExpandedRecurringEvents_override(userSession: Tuple[User, Session]):
-    user, session = userSession
-    calendar = user.getPrimaryCalendar()
+@pytest.mark.asyncio
+async def test_getAllExpandedRecurringEvents_override(user, session):
+    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     # Create a new recurring event.
     start = datetime.fromisoformat('2020-01-02T12:00:00')
@@ -30,10 +32,14 @@ def test_getAllExpandedRecurringEvents_override(userSession: Tuple[User, Session
     user.events.append(recurringEvent)
 
     # Expanded recurring events between 2 dates.
-    events = list(getAllExpandedRecurringEvents(user, start, start + timedelta(days=1), session))
+    events = await getAllExpandedRecurringEventsList(
+        user, start, start + timedelta(days=1), session
+    )
     assert len(events) == 2
 
-    events = list(getAllExpandedRecurringEvents(user, start, start + timedelta(days=10), session))
+    events = await getAllExpandedRecurringEventsList(
+        user, start, start + timedelta(days=10), session
+    )
     assert len(events) == 6
 
     delta = events[1].start - events[0].start
@@ -44,15 +50,26 @@ def test_getAllExpandedRecurringEvents_override(userSession: Tuple[User, Session
     event.title = 'Override'
     event.id = events[1].id
     user.events.append(event)
-    session.commit()
+    await session.commit()
 
-    events = list(getAllExpandedRecurringEvents(user, start, start + timedelta(days=1), session))
+    events = await getAllExpandedRecurringEventsList(
+        user, start, start + timedelta(days=1), session
+    )
     assert events[1].title == 'Override'
 
 
-def test_getAllExpandedRecurringEvents_fullDay(userSession: Tuple[User, Session]):
-    user, session = userSession
-    calendar = user.getPrimaryCalendar()
+@pytest.mark.asyncio
+async def test_getAllExpandedRecurringEvents_withTimezone(user, session):
+    # TODO: Test expansions with timezone info in EXDate
+    recurrences = [
+        'EXDATE;TZID=America/Toronto:20201019T213000',
+        'RRULE:FREQ=WEEKLY;BYDAY=MO',
+    ]
+
+
+@pytest.mark.asyncio
+async def test_getAllExpandedRecurringEvents_fullDay(user, session):
+    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     startDay = '2020-12-25'
     endDay = '2020-12-26'
@@ -72,9 +89,9 @@ def test_getAllExpandedRecurringEvents_fullDay(userSession: Tuple[User, Session]
     start = datetime.strptime(startDay, "%Y-%m-%d")
     event = createOrUpdateEvent(None, eventVM)
     user.events.append(event)
-    session.commit()
+    await session.commit()
 
-    recurringEvents = getAllExpandedRecurringEvents(
+    recurringEvents = await getAllExpandedRecurringEventsList(
         user, start, start + timedelta(days=100), session
     )
 
@@ -86,9 +103,9 @@ def test_getAllExpandedRecurringEvents_fullDay(userSession: Tuple[User, Session]
         assert e.end_day == expectedEnd.strftime('%Y-%m-%d')
 
 
-def test_verifyRecurringEvent(userSession: Tuple[User, Session]):
-    user, session = userSession
-    calendar = user.getPrimaryCalendar()
+@pytest.mark.asyncio
+async def test_verifyRecurringEvent(user, session):
+    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     # Create a new recurring event.
     start = datetime.fromisoformat('2020-12-01T12:00:00')
@@ -96,12 +113,17 @@ def test_verifyRecurringEvent(userSession: Tuple[User, Session]):
 
     recurringEvent.recurrences = ['RRULE:FREQ=DAILY;COUNT=5']
     user.events.append(recurringEvent)
-    session.commit()
+    await session.commit()
 
     # Assert that verifyRecurringEvent raises exceptions if the ID is invalid.
     validEventId = f'{recurringEvent.id}_20201202T120000Z'
     invalidEventId1 = f'{recurringEvent.id}_1212'
     invalidEventId2 = f'{recurringEvent.id}_20211202T120000Z'
+
+    # Re-query to merge with labels joined.
+    recurringEvent = (
+        await session.execute(select(Event).where(Event.id == recurringEvent.id))
+    ).scalar()
 
     verifyRecurringEvent(user, validEventId, recurringEvent)
 

@@ -2,7 +2,7 @@ from uuid import uuid4
 from typing import Optional, Dict, Tuple, List, Any
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -11,7 +11,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-from app.db.session import session_maker
+from app.db.session import async_session_maker
 from app.db.models import User, Event, LabelRule, Calendar, Webhook
 from app.core.logger import logger
 from app.core import config
@@ -150,19 +150,21 @@ def syncGoogleCalendars(user: User):
             user.calendars.append(userCalendar)
 
 
-def syncAllEvents(userId: int, fullSync: bool = False):
+async def syncAllEvents(userId: int, fullSync: bool = False):
     """Syncs events from google calendar."""
-    with session_maker() as session:
-        user = session.execute(select(User).filter(User.id == userId)).scalar()
+    async with async_session_maker() as session:
+        stmt = select(User).filter(User.id == userId).options(selectinload(User.calendars))
+        user = (await session.execute(stmt)).scalar()
         syncGoogleCalendars(user)
 
-        for calendar in user.calendars.filter(Calendar.google_id != None):
-            syncCalendar(calendar, session, fullSync=fullSync)
+        for calendar in user.calendars:
+            if calendar.google_id != None:
+                await syncCalendar(calendar, session, fullSync=fullSync)
 
         session.commit()
 
 
-def syncCalendar(calendar: Calendar, session: Session, fullSync: bool = False) -> None:
+async def syncCalendar(calendar: Calendar, session: Session, fullSync: bool = False) -> None:
     service = getService(calendar.user)
     createWebhook(calendar)
 
@@ -208,29 +210,33 @@ def syncCalendar(calendar: Calendar, session: Session, fullSync: bool = False) -
         nextPageToken = eventsResult.get('nextPageToken')
         nextSyncToken = eventsResult.get('nextSyncToken')
 
-        syncEventsToDb(calendar, events, session)
+        await syncEventsToDb(calendar, events, session)
 
         if not nextPageToken:
             break
 
     calendar.sync_token = nextSyncToken
-    session.commit()
+    await session.commit()
 
 
-def getEventWithCache(
-    user: User, addedEventsCache: Dict[str, Event], googleEventId: str
+async def getEventWithCache(
+    user: User, addedEventsCache: Dict[str, Event], googleEventId: str, session
 ) -> Optional[Event]:
     """Since we aren't committing on every event insert, store
     added / updated events in memory.
     """
-
     if googleEventId in addedEventsCache:
         return addedEventsCache[googleEventId]
     else:
-        return user.events.filter(Event.g_id == googleEventId).one_or_none()
+        stmt = select(Event).where(Event.g_id == googleEventId, Event.user_id == user.id)
+        result = await session.execute(stmt)
+        return result.scalar()
+        # return user.events.filter(Event.g_id == googleEventId).one_or_none()
 
 
-def syncEventsToDb(calendar: Calendar, eventItems: List[Dict[str, Any]], session: Session) -> None:
+async def syncEventsToDb(
+    calendar: Calendar, eventItems: List[Dict[str, Any]], session: Session
+) -> None:
     """Sync items from google to the calendar.
 
     Events could have been moved from one calendar to another.
@@ -248,27 +254,35 @@ def syncEventsToDb(calendar: Calendar, eventItems: List[Dict[str, Any]], session
     for eventItem in eventItems:
         user = calendar.user
         googleEventId = eventItem['id']
-        existingEvent = getEventWithCache(user, addedEventsCache, googleEventId)
+        existingEvent = await getEventWithCache(user, addedEventsCache, googleEventId, session)
+
         if eventItem['status'] == 'cancelled':
-            syncDeletedEvent(calendar, existingEvent, eventItem, addedEventsCache, session)
+            await syncDeletedEvent(calendar, existingEvent, eventItem, addedEventsCache, session)
         else:
-            event = syncCreatedOrUpdatedGoogleEvent(
+            event = await syncCreatedOrUpdatedGoogleEvent(
                 calendar, existingEvent, eventItem, addedEventsCache, session
             )
 
             # Auto Labelling
             if event.title:
-                labelRules = user.label_rules.filter(LabelRule.text.ilike(event.title))
+                stmt = (
+                    select(LabelRule)
+                    .where(LabelRule.user_id == user.id)
+                    .filter(LabelRule.text.ilike(event.title))
+                )
+                result = await session.execute(stmt)
+                labelRules = result.scalars().all()
+
                 for rule in labelRules:
                     if rule.label not in event.labels:
                         event.labels.append(rule.label)
 
             addedEventsCache[event.g_id] = event
 
-    session.commit()
+    await session.commit()
 
 
-def syncDeletedEvent(
+async def syncDeletedEvent(
     calendar: Calendar,
     existingEvent: Optional[Event],
     eventItem: Dict[str, Any],
@@ -286,7 +300,7 @@ def syncDeletedEvent(
 
     googleRecurringEventId = eventItem.get('recurringEventId')
     if not existingEvent and googleRecurringEventId:
-        baseRecurringEvent = getOrCreateBaseRecurringEvent(
+        baseRecurringEvent = await getOrCreateBaseRecurringEvent(
             calendar, addedEventsCache, googleRecurringEventId, session
         )
 
@@ -325,7 +339,7 @@ def syncDeletedEvent(
         addedEventsCache[event.g_id] = event
 
 
-def getOrCreateBaseRecurringEvent(
+async def getOrCreateBaseRecurringEvent(
     calendar: Calendar,
     addedEventsCache: Dict[str, Event],
     googleRecurringEventId: str,
@@ -336,7 +350,9 @@ def getOrCreateBaseRecurringEvent(
     since the rest of the info will be populated then the parent is synced.
     """
     user = calendar.user
-    baseRecurringEvent = getEventWithCache(user, addedEventsCache, googleRecurringEventId)
+    baseRecurringEvent = await getEventWithCache(
+        user, addedEventsCache, googleRecurringEventId, session
+    )
 
     if not baseRecurringEvent:
         baseRecurringEvent = Event(
@@ -360,12 +376,12 @@ def getOrCreateBaseRecurringEvent(
 
     if not baseRecurringEvent.id:
         print(f'Add ID for Base: {baseRecurringEvent}')
-        session.commit()
+        await session.commit()
 
     return baseRecurringEvent
 
 
-def syncCreatedOrUpdatedGoogleEvent(
+async def syncCreatedOrUpdatedGoogleEvent(
     calendar: Calendar,
     existingEvent: Optional[Event],
     eventItem: Dict[str, Any],
@@ -379,7 +395,7 @@ def syncCreatedOrUpdatedGoogleEvent(
 
     baseRecurringEvent = None
     if eventVM.recurring_event_g_id:
-        baseRecurringEvent = getOrCreateBaseRecurringEvent(
+        baseRecurringEvent = await getOrCreateBaseRecurringEvent(
             calendar, addedEventsCache, eventVM.recurring_event_g_id, session
         )
         eventVM.recurring_event_id = baseRecurringEvent.id
@@ -471,6 +487,7 @@ def googleEventToEventVM(calendarId: str, eventItem: Dict[str, Any]) -> GoogleEv
 """
 
 
+
 def insertGoogleEvent(user: User, event: Event):
     timeZone = event.calendar.timezone
     eventBody = getEventBody(event, timeZone)
@@ -499,9 +516,12 @@ def updateGoogleEvent(user: User, event: Event):
     )
 
 
-def deleteGoogleEvent(user: User, event: Event):
+async def deleteGoogleEvent(user: User, event: Event):
     return (
-        getService(user).events().delete(calendarId=event.calendar_id, eventId=event.g_id).execute()
+        await getService(user)
+        .events()
+        .delete(calendarId=event.calendar_id, eventId=event.g_id)
+        .execute()
     )
 
 

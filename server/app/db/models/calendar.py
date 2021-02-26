@@ -13,7 +13,7 @@ AccessRole = Literal['freeBusyReader', 'reader', 'writer', 'owner']
 class Calendar(Base):
     __tablename__ = 'calendar'
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    user = relationship('User', backref=backref('calendars', lazy='dynamic', cascade='all,delete'))
+    user = relationship('User', backref=backref('calendars', lazy='joined', cascade='all,delete'))
 
     id = Column(String(255), unique=True, primary_key=True, default=shortuuid.uuid)
 
@@ -61,16 +61,6 @@ class Calendar(Base):
         self.access_role = access_role
         self.primary = primary
         self.deleted = deleted
-
-    def getTimezone(self) -> str:
-        return self.timezone if self.timezone else self.user.timezone
-
-    def getEvents(self, expandSingleEvents: bool = True):
-        if expandSingleEvents:
-            return self.events.filter_by(recurrences=None)
-        else:
-            # TODO: modified recurring events
-            return self.events.filter(Event.recurring_event_id == None)
 
     @property
     def isGoogleCalendar(self) -> bool:

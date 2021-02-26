@@ -1,6 +1,9 @@
-from sqlalchemy.orm import Session
+import pytest
 from typing import Tuple
 from datetime import datetime
+
+from sqlalchemy.orm import Session, selectinload
+from sqlalchemy import select, func
 
 from app.db.models import User, Event
 from app.calendar.google import syncEventsToDb, syncCreatedOrUpdatedGoogleEvent, syncDeletedEvent
@@ -23,33 +26,44 @@ EVENT_ITEM_RECURRING = {
 }
 
 
-def test_syncCreatedOrUpdatedGoogleEvent_single(userSession: Tuple[User, Session]):
-    user, session = userSession
-    calendar = user.getPrimaryCalendar()
+@pytest.mark.asyncio
+async def test_syncCreatedOrUpdatedGoogleEvent_single(user, session):
+    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     eventItem = EVENT_ITEM_RECURRING.copy()
     del eventItem['recurrence']
 
-    event = syncCreatedOrUpdatedGoogleEvent(calendar, None, eventItem, {}, session)
+    event = await syncCreatedOrUpdatedGoogleEvent(calendar, None, eventItem, {}, session)
+    await session.commit()
 
     assert event.title == eventItem.get('summary')
     assert event.g_id == eventItem.get('id')
-    assert calendar.getEvents().count() == 1
+
+    stmt = select(func.count()).where(Event.calendar_id == calendar.id)
+    count = (await session.execute(stmt)).scalar()
+    assert count == 1
 
 
-def test_syncCreatedOrUpdatedGoogleEvent_recurring(userSession: Tuple[User, Session]):
-    user, session = userSession
-    calendar = user.getPrimaryCalendar()
+@pytest.mark.asyncio
+async def test_syncCreatedOrUpdatedGoogleEvent_recurring(user, session):
+    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
-    event = syncCreatedOrUpdatedGoogleEvent(calendar, None, EVENT_ITEM_RECURRING, {}, session)
+    event = await syncCreatedOrUpdatedGoogleEvent(calendar, None, EVENT_ITEM_RECURRING, {}, session)
+    await session.commit()
 
     assert event.g_id == EVENT_ITEM_RECURRING.get('id')
-    assert calendar.getEvents().count() == 0
+
+    stmt = select(func.count()).where(Event.calendar_id == calendar.id)
+    count = (await session.execute(stmt)).scalar()
+    assert count == 1
+
+    stmt = select(func.count()).where(Event.recurrences == None)
+    nonRecurringCount = (await session.execute(stmt)).scalar()
+    assert nonRecurringCount == 0
 
 
-def test_syncCreatedOrUpdatedGoogleEvent_allDay(userSession: Tuple[User, Session]):
-    user, session = userSession
-
+@pytest.mark.asyncio
+async def test_syncCreatedOrUpdatedGoogleEvent_allDay(user, session):
     eventItem = {
         'id': '20201225_60o30chp64o30c1g60o30dr56g',
         'status': 'confirmed',
@@ -62,8 +76,9 @@ def test_syncCreatedOrUpdatedGoogleEvent_allDay(userSession: Tuple[User, Session
         'visibility': 'public',
     }
 
-    calendar = user.getPrimaryCalendar()
-    event = syncCreatedOrUpdatedGoogleEvent(calendar, None, eventItem, {}, session)
+    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+    event = await syncCreatedOrUpdatedGoogleEvent(calendar, None, eventItem, {}, session)
+
     assert event.all_day
     assert event.start_day == '2020-12-25'
     assert event.end_day == '2020-12-26'
@@ -71,33 +86,44 @@ def test_syncCreatedOrUpdatedGoogleEvent_allDay(userSession: Tuple[User, Session
     assert event.end == datetime.fromisoformat('2020-12-26T00:00:00')
 
 
-def test_syncEventsToDb_deleted(userSession: Tuple[User, Session]):
+@pytest.mark.asyncio
+async def test_syncEventsToDb_deleted(user, session):
     """TODO: Ensures that all child events are deleted when the parent
     recurring event is deleted.
     """
-    user, session = userSession
-    calendar = user.getPrimaryCalendar()
+    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
-    syncEventsToDb(calendar, [EVENT_ITEM_RECURRING], session)
-    assert user.events.count() == 1
-    assert user.events.first().status == 'active'
+    await syncEventsToDb(calendar, [EVENT_ITEM_RECURRING], session)
+    await session.commit()
 
+    stmt = select(Event).where(Event.calendar_id == calendar.id).options(selectinload(Event.labels))
+    events = (await session.execute(stmt)).scalars().all()
+
+    assert len(events) == 1
+    assert events[0].status == 'active'
+
+    # Remove the event.
     eventItem = EVENT_ITEM_RECURRING.copy()
     eventItem['status'] = 'cancelled'
 
-    syncEventsToDb(calendar, [eventItem], session)
-    assert user.events.count() == 1
-    assert user.events.first().status == 'deleted'
+    await syncEventsToDb(calendar, [eventItem], session)
+    await session.commit()
+
+    stmt = select(Event).where(Event.calendar_id == calendar.id).options(selectinload(Event.labels))
+    events = (await session.execute(stmt)).scalars().all()
+
+    assert len(events) == 1
+    assert events[0].status == 'deleted'
 
 
-def test_syncEventsToDb_recurring(userSession: Tuple[User, Session]):
+@pytest.mark.asyncio
+async def test_syncEventsToDb_recurring(user, session):
     """Event from 11:00-11:30pm: at 01-09, (EXCLUDE 01-10), 01-11, 01-12
     - UPDATE event's time at 01-10 -> 10-11
     - DELETE event at 01-12
     Result: [Event: 01-09, Event: 01-11 (updated)]
     """
-    user, session = userSession
-    calendar = user.getPrimaryCalendar()
+    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     eventItems = [
         {
@@ -128,10 +154,14 @@ def test_syncEventsToDb_recurring(userSession: Tuple[User, Session]):
         },
     ]
 
-    syncEventsToDb(calendar, eventItems, session)
+    await syncEventsToDb(calendar, eventItems, session)
+    await session.commit()
 
-    parent = user.events.filter_by(g_id='7bpp8ujgsitkcuk6h1er0nadfn').first()
-    events = user.getSingleEvents(showDeleted=True).all()
+    parent = (
+        await session.execute(select(Event).where(Event.g_id == '7bpp8ujgsitkcuk6h1er0nadfn'))
+    ).scalar()
+
+    events = (await session.execute(user.getSingleEventsStmt(showDeleted=True))).scalars().all()
     assert len(events) == 2
 
     for e in events:

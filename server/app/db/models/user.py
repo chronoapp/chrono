@@ -1,7 +1,7 @@
 from typing import Optional
 
-from sqlalchemy import Column, Integer, String, and_
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, and_, select
+from sqlalchemy.orm import relationship, selectinload
 
 from app.db.base_class import Base
 from app.db.models.user_credentials import ProviderType
@@ -44,20 +44,30 @@ class User(Base):
             and self.credentials.token_data
         )
 
-    def getPrimaryCalendar(self) -> Calendar:
-        return self.calendars.filter_by(primary=True).one()
+    def getPrimaryCalendarStmt(self) -> Calendar:
+        return select(Calendar).where(Calendar.user_id == self.id, Calendar.primary == True)
 
-    def getRecurringEvents(self):
-        return self.events.filter(and_(Event.recurrences != None, Event.status != 'deleted'))
+    def getRecurringEventsStmt(self):
+        return (
+            select(Event)
+            .filter(
+                and_(Event.user_id == self.id, Event.recurrences != None, Event.status != 'deleted')
+            )
+            .options(selectinload(Event.labels))
+        )
 
-    def getSingleEvents(self, showDeleted=False, showRecurring=True):
+    def getSingleEventsStmt(self, showDeleted=False, showRecurring=True):
         """Events query without the base recurring events."""
-        eventsResult = self.events.filter_by(recurrences=None)
+        stmt = (
+            select(Event)
+            .where(and_(Event.user_id == self.id, Event.recurrences == None))
+            .options(selectinload(Event.labels))
+        )
 
         if not showRecurring:
-            eventsResult = eventsResult.filter_by(recurring_event_id=None)
+            stmt = stmt.filter_by(recurring_event_id=None)
 
         if showDeleted:
-            return eventsResult
+            return stmt
         else:
-            return eventsResult.filter(Event.status != 'deleted')
+            return stmt.filter(Event.status != 'deleted')

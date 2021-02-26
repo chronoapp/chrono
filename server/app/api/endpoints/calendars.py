@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from starlette.status import HTTP_404_NOT_FOUND
 from pydantic import BaseModel, Field, validator
-from sqlalchemy.orm import Session
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from typing import List, Optional
 import shortuuid
 
@@ -9,7 +11,6 @@ from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
 from app.db.models import User, Calendar
 from app.db.models.event import isValidTimezone
-from app.core.logger import logger
 
 from app.calendar.google import updateCalendar, createCalendar
 
@@ -45,20 +46,26 @@ class CalendarVM(CalendarBaseVM):
 
 
 @router.get('/calendars/', response_model=List[CalendarVM])
-async def getCalendars(user: User = Depends(get_current_user), session: Session = Depends(get_db)):
-    return user.calendars.all()
+async def getCalendars(
+    user: User = Depends(get_current_user), session: AsyncSession = Depends(get_db)
+):
+    result = await session.execute(select(Calendar).where(Calendar.user_id == user.id))
+    calendars = result.scalars().all()
+
+    return calendars
 
 
 @router.post('/calendars/', response_model=CalendarVM)
 async def postCalendar(
     calendar: CalendarBaseVM,
     user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
 ):
     isPrimary = calendar.primary or False
+
     if isPrimary:
-        # TODO: Bulk update.
-        for cal in user.calendars:
-            cal.primary = False
+        stmt = update(Calendar).where(Calendar.user_id == user.id).values(primary=False)
+        await session.execute(stmt)
 
     calendarDb = Calendar(
         shortuuid.uuid(),
@@ -78,6 +85,8 @@ async def postCalendar(
         resp = createCalendar(user, calendarDb)
         calendarDb.google_id = resp['id']
 
+    await session.commit()
+
     return calendarDb
 
 
@@ -86,9 +95,11 @@ async def putCalendar(
     calendarId: str,
     calendar: CalendarVM,
     user: User = Depends(get_current_user),
-    session: Session = Depends(get_db),
+    session: AsyncSession = Depends(get_db),
 ):
-    calendarDb = user.calendars.filter_by(id=calendar.id).one_or_none()
+    stmt = select(Calendar).where(Calendar.user_id == user.id, Calendar.id == calendarId)
+    calendarDb = (await session.execute(stmt)).scalar()
+
     if calendarDb:
         calendarDb.selected = calendar.selected
         calendarDb.summary = calendar.summary
@@ -98,7 +109,7 @@ async def putCalendar(
         if calendarDb.isGoogleCalendar:
             updateCalendar(user, calendarDb)
 
-        session.commit()
+        await session.commit()
     else:
         raise HTTPException(HTTP_404_NOT_FOUND)
 

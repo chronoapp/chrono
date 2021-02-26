@@ -12,7 +12,7 @@ class Label(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True, nullable=False)
 
     parent = relationship('Label', remote_side=[id])
-    parent_id = Column(BigInteger, ForeignKey('label.id'), nullable=True)
+    parent_id = Column(BigInteger, ForeignKey('label.id', ondelete='SET NULL'), nullable=True)
 
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     user = relationship(
@@ -38,4 +38,4 @@ class Label(Base):
         self.position = 0
 
     def __repr__(self):
-        return f'<Label {self.id}-{self.parent_id} {self.title} {self.position}/>'
+        return f'<Label {self.id}-{self.parent_id} {self.title} {self.position=}/>'

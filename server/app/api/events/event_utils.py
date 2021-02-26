@@ -2,9 +2,10 @@ from datetime import datetime
 from itertools import islice
 import logging
 
-from sqlalchemy import and_, or_
-from sqlalchemy.orm import Session, aliased
-from typing import List, Dict, Optional, Literal, Tuple, Generator, Any
+from sqlalchemy import and_, or_, select
+from sqlalchemy.orm import aliased, selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List, Dict, Optional, Literal, Tuple, Generator, Any, AsyncGenerator
 
 from dateutil.rrule import rrule, rruleset, rrulestr
 from datetime import timedelta
@@ -12,7 +13,7 @@ from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, validator
 from app.api.endpoints.labels import LabelInDbVM
-from app.db.models import Event, User
+from app.db.models import Event, User, Calendar
 from app.db.models.event import EventStatus
 
 """Event models and helpers to manage Recurring Events.
@@ -189,16 +190,24 @@ def getRecurringEventId(baseEventId: str, startDate: datetime, isAllDay: bool) -
     return f'{baseEventId}_{dtStr}'
 
 
-def getAllExpandedRecurringEvents(
+async def getAllExpandedRecurringEventsList(
     user: User, startDate: datetime, endDate: datetime, session
-) -> Generator[EventInDBVM, None, None]:
+) -> List[EventInDBVM]:
+    return [i async for i in getAllExpandedRecurringEvents(user, startDate, endDate, session)]
+
+
+async def getAllExpandedRecurringEvents(
+    user: User, startDate: datetime, endDate: datetime, session
+) -> AsyncGenerator[EventInDBVM, None]:
     """Expands the rule in the event to get all events between the start and end.
-    TODO: Don't need to expand ALL baseRecurringEvents, just ones in between the range.
-    TODO: add start & end dates properties to recurring events.
+    TODO: This expansion is a huge perf bottleneck..
+    - date expansions are CPU bound so we could rewrite the date rrules expansion in rust
+    - Don't need to expand ALL baseRecurringEvents, just ones in between the range.
+    - => could add start & end dates properties to recurring events on insert.
     """
     E1 = aliased(Event)
-    eventOverrides = (
-        user.getSingleEvents(showDeleted=True)
+    eventOverridesStmt = (
+        user.getSingleEventsStmt(showDeleted=True)
         .filter(
             or_(
                 Event.original_start == None,
@@ -210,9 +219,15 @@ def getAllExpandedRecurringEvents(
         )
         .join(Event.recurring_event.of_type(E1))
     )
+    result = await session.execute(eventOverridesStmt)
 
-    eventOverridesMap: Dict[str, Event] = {e.id: e for e in eventOverrides}
-    baseRecurringEvents = user.getRecurringEvents()
+    eventOverridesMap: Dict[str, Event] = {e.id: e for e in result.scalars()}
+    result = await session.execute(
+        user.getRecurringEventsStmt()
+        .options(selectinload(Event.labels))
+        .options(selectinload(Event.calendar))
+    )
+    baseRecurringEvents = result.scalars().all()
 
     for baseRecurringEvent in baseRecurringEvents:
         for e in getExpandedRecurringEvents(
@@ -228,10 +243,12 @@ def getExpandedRecurringEvents(
     startDate: datetime,
     endDate: datetime,
 ) -> Generator[EventInDBVM, None, None]:
+    """Precondition: Make sure calendar is joined with the baseRecurringEvent"""
     duration = baseRecurringEvent.end - baseRecurringEvent.start
-    timezone = baseRecurringEvent.getTimezone(user.timezone)
     isAllDay = baseRecurringEvent.all_day
     baseEventVM = EventInDBVM.from_orm(baseRecurringEvent)
+    calendar = baseRecurringEvent.calendar
+    timezone = baseRecurringEvent.time_zone or calendar.timezone or user.timezone
 
     if not baseEventVM.recurrences:
         logging.error(f'Empty Recurrence: {baseEventVM.id}')
@@ -248,7 +265,7 @@ def getExpandedRecurringEvents(
             startDate = startDate.replace(tzinfo=None)
             endDate = endDate.replace(tzinfo=None)
         else:
-            zone = baseRecurringEvent.getTimezone(user.timezone)
+            zone = baseRecurringEvent.time_zone or calendar.timezone or user.timezone
             startDate = startDate.astimezone(ZoneInfo(zone))
             endDate = endDate.astimezone(ZoneInfo(zone))
 
@@ -280,8 +297,8 @@ def getExpandedRecurringEvents(
                 )
 
 
-def verifyAndGetRecurringEventParent(
-    user: User, eventId: str, session: Session
+async def verifyAndGetRecurringEventParent(
+    user: User, eventId: str, session: AsyncSession
 ) -> Tuple[Event, datetime]:
     """Returns the parent from the virtual eventId.
     Returns tuple of (parent event, datetime)
@@ -291,7 +308,9 @@ def verifyAndGetRecurringEventParent(
         raise InputError(f'Invalid Event ID: {eventId}')
 
     parentId = ''.join(parts[:-1])
-    parentEvent = session.query(Event).filter(Event.id == parentId).one_or_none()
+
+    stmt = select(Event).where(and_(User.id == user.id, Event.id == parentId))
+    parentEvent = (await session.execute(stmt)).scalar()
 
     if not parentEvent:
         raise InputError(f'Invalid Event ID: {eventId}')
@@ -317,6 +336,7 @@ def verifyRecurringEvent(user: User, eventId: str, parentEvent: Event) -> Tuple[
     datePart = parts[-1]
     try:
         dt = datetime.strptime(datePart, "%Y%m%dT%H%M%SZ")
+
         for e in getExpandedRecurringEvents(user, parentEvent, {}, dt, dt):
             if e.id == eventId:
                 return ''.join(parts[:-1]), dt

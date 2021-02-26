@@ -1,7 +1,9 @@
 import click
 import logging
+import asyncio
 
-from app.db.session import session_maker
+from sqlalchemy import select
+from app.db.session import async_session_maker
 from app.db.models import User, Label
 
 
@@ -26,16 +28,22 @@ DEFAULT_CATEGORIES = [
 @main.command()
 @click.argument('userid')
 def add_labels(userid):
-    with session_maker.begin() as session:
-        user = session.query(User).filter(User.id == userid).first()
-        for l in user.labels:
-            session.delete(l)
+    async def run():
+        async with async_session_maker.begin() as session:
+            stmt = select(User).where(User.id == int(userid))
+            result = await session.execute(stmt)
+            user = result.scalar()
 
-        for category in DEFAULT_CATEGORIES:
-            label = Label(category, category.lower())
-            user.labels.append(label)
+            for l in user.labels:
+                session.delete(l)
 
-        session.add(user)
+            for category in DEFAULT_CATEGORIES:
+                label = Label(category, category.lower())
+                user.labels.append(label)
+
+            session.add(user)
+
+    asyncio.run(run())
 
 
 @main.command()

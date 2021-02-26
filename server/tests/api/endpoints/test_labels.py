@@ -1,6 +1,8 @@
 import json
-from sqlalchemy.orm import Session
-from typing import Tuple
+import pytest
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.api.endpoints.labels import combineLabels
 from app.api.endpoints.authentication import getAuthToken
@@ -23,30 +25,27 @@ def test_combineLabels():
     assert combined[0].id == 2
 
 
-def test_getLabels(userSession: Tuple[User, Session], test_client):
-    user, session = userSession
-
+@pytest.mark.asyncio
+async def test_getLabels(user, session, async_client):
     l1 = Label("label-1", "#fff")
     l2 = Label("label-2", "#fff")
     user.labels.append(l1)
     user.labels.append(l2)
-    user.labels.reorder()
-    session.commit()
+    await session.commit()
 
     token = getAuthToken(user)
-    resp = test_client.get(f'/api/v1/labels/', headers={'Authorization': token})
+    resp = await async_client.get('/api/v1/labels/', headers={'Authorization': token})
 
     labels = resp.json()
     assert labels[0].get('title') == 'label-1'
     assert labels[1].get('title') == 'label-2'
 
 
-def test_createLabel(userSession: Tuple[User, Session], test_client):
-    user, _ = userSession
-
+@pytest.mark.asyncio
+async def test_createLabel(user, async_client):
     labelData = {'title': 'label-1', 'color_hex': '#cccccc'}
     token = getAuthToken(user)
-    resp = test_client.post(
+    resp = await async_client.post(
         f'/api/v1/labels/', headers={'Authorization': token}, data=json.dumps(labelData)
     )
 
@@ -57,7 +56,7 @@ def test_createLabel(userSession: Tuple[User, Session], test_client):
     # Label 2
     labelData = {'title': 'label-2', 'color_hex': '#ffffff'}
     token = getAuthToken(user)
-    resp = test_client.post(
+    resp = await async_client.post(
         f'/api/v1/labels/', headers={'Authorization': token}, data=json.dumps(labelData)
     )
 
@@ -65,23 +64,29 @@ def test_createLabel(userSession: Tuple[User, Session], test_client):
     assert label.get('position') == 1
 
 
-def test_deleteLabel(userSession: Tuple[User, Session], test_client):
-    user, session = userSession
-
+@pytest.mark.asyncio
+async def test_deleteLabel(user, session, async_client):
     l1 = Label("label-1", "#ffffff")
     l2 = Label("label-2", "#ffffff")
     l3 = Label("label-3", "#ffffff")
     user.labels.append(l1)
     user.labels.append(l2)
     user.labels.append(l3)
+
     user.labels.reorder()
-    session.commit()
+    await session.commit()
 
     token = getAuthToken(user)
-    resp = test_client.delete(f'/api/v1/labels/{l2.id}', headers={'Authorization': token})
+    resp = await async_client.delete(f'/api/v1/labels/{l2.id}', headers={'Authorization': token})
 
-    assert resp.ok
-    assert len(user.labels) == 2
+    assert resp.status_code == 200
 
-    assert user.labels[0].position == 0
-    assert user.labels[1].position == 1
+    result = await session.execute(select(Label).where(User.id == user.id))
+    labels = result.scalars().all()
+
+    assert len(labels) == 2
+
+    labelIds = [l.id for l in labels]
+    assert l1.id in labelIds
+    assert l2.id not in labelIds
+    assert l3.id in labelIds

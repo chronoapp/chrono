@@ -14,12 +14,12 @@ from sqlalchemy import (
     text,
     desc,
     ARRAY,
+    select,
 )
-from sqlalchemy.orm import relationship, backref, Session
+from sqlalchemy.orm import relationship, backref, Session, selectinload
 
 from app.db.sql.event_search import EVENT_SEARCH_QUERY
 from app.db.base_class import Base
-from app.db.session import engine
 
 event_label_association_table = Table(
     'event_label',
@@ -87,17 +87,21 @@ class Event(Base):
     original_timezone = Column(String(255))
 
     @classmethod
-    def search(cls, session: Session, userId: int, searchQuery: str, limit: int = 250):
-        rows = session.execute(
-            text(EVENT_SEARCH_QUERY), {'query': searchQuery, 'userId': userId, 'limit': limit}
+    async def search(cls, session: Session, userId: int, searchQuery: str, limit: int = 250):
+        rows = await session.execute(
+            text(EVENT_SEARCH_QUERY), {'userId': userId, 'query': searchQuery, 'limit': limit}
+        )
+        rowIds = [r[0] for r in rows]
+
+        stmt = (
+            select(Event)
+            .filter(Event.id.in_(rowIds))
+            .order_by(desc(Event.end))
+            .options(selectinload(Event.labels))
         )
 
-        rowIds = [r[0] for r in rows]
-        return session.query(Event).filter(Event.id.in_(rowIds)).order_by(desc(Event.end))
-
-    @property
-    def background_color(self):
-        return self.calendar.background_color
+        result = await session.execute(stmt)
+        return result.scalars().all()
 
     @property
     def all_day(self):
@@ -114,12 +118,6 @@ class Event(Base):
             return ''.join(parts[:-1]) if len(parts) >= 2 else self.g_id
         else:
             return self.g_id
-
-    def getTimezone(self, userDefault: str) -> str:
-        if self.time_zone:
-            return self.time_zone
-        else:
-            return self.calendar.timezone or userDefault
 
     def __init__(
         self,

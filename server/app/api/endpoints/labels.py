@@ -2,7 +2,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, validator
 
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, delete
 from sqlalchemy.orm import Session
 
 from app.api.utils.db import get_db
@@ -35,13 +35,13 @@ class LabelInDbVM(LabelVM):
     id: int
 
 
-def createOrUpdateLabel(
+async def createOrUpdateLabel(
     user: User, labelId: Optional[int], label: LabelVM, session: Session
 ) -> Label:
     labelDb = None
     if labelId:
         stmt = select(Label).where(and_(User.id == user.id, Label.id == labelId))
-        labelDb = session.execute(stmt).scalar()
+        labelDb = (await session.execute(stmt)).scalar()
 
     if not labelDb:
         labelDb = Label(label.title, label.color_hex)
@@ -74,7 +74,9 @@ def combineLabels(labels: List[Label]) -> List[Label]:
 
 @router.get('/labels/', response_model=List[LabelInDbVM])
 async def getLabels(user=Depends(get_current_user), session=Depends(get_db)):
-    return user.labels
+    result = await session.execute(select(Label).where(Label.user_id == user.id))
+
+    return result.scalars().all()
 
 
 @router.post('/labels/', response_model=LabelInDbVM)
@@ -85,7 +87,7 @@ async def createLabel(
     user.labels.append(labelDb)
     user.labels.reorder()
 
-    session.commit()
+    await session.commit()
 
     return labelDb
 
@@ -95,7 +97,7 @@ async def putLabels(
     labels: List[LabelInDbVM], user=Depends(get_current_user), session=Depends(get_db)
 ):
     """TODO: Bulk update with one query."""
-    updatedLabels = [createOrUpdateLabel(user, label.id, label, session) for label in labels]
+    updatedLabels = [await createOrUpdateLabel(user, label.id, label, session) for label in labels]
     session.commit()
 
     return updatedLabels
@@ -108,9 +110,9 @@ async def putLabel(
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> Label:
-    labelDb = createOrUpdateLabel(user, labelId, label, session)
-    session.commit()
-    session.refresh(labelDb)
+    labelDb = await createOrUpdateLabel(user, labelId, label, session)
+    await session.commit()
+    await session.refresh(labelDb)
 
     return labelDb
 
@@ -119,14 +121,18 @@ async def putLabel(
 async def deleteLabel(
     labelId: int, user: User = Depends(get_current_user), session: Session = Depends(get_db)
 ) -> Label:
-    stmt = select(Label).where(and_(User.id == user.id, Label.id == labelId))
-    label = session.execute(stmt).scalar()
+    """
+    TODO: Handle delete subtree.
+    TODO: Fix positions, since Sqlalchemy ORM doesn't support deletes yet.
+    """
+    result = await session.execute(select(Label).where(User.id == user.id, Label.id == labelId))
+    label = result.scalar()
 
     if not label:
         raise HTTPException(status_code=404, detail="Label not found.")
     else:
-        session.delete(label)
-        session.commit()
-        user.labels.reorder()
+        stmt = delete(Label).where(Label.id == label.id)
+        await session.execute(stmt)
+        await session.commit()
 
         return label

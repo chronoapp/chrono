@@ -1,11 +1,13 @@
 from typing import Literal, List, Dict
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from datetime import datetime, timedelta
 
 from app.api.utils.security import get_current_user
-from app.db.session import session_maker
+from app.api.utils.db import get_db
+
 from app.db.models import User, Label
 from app.core.logger import logger
 
@@ -18,12 +20,13 @@ TimePeriod = Literal['DAY', 'WEEK', 'MONTH']
 
 
 @router.get('/trends/{labelId}')
-def getUserTrends(
+async def getUserTrends(
     labelId: int,
     start: str,
     end: str,
     time_period: TimePeriod = "WEEK",
     user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
 ):
     """TODO: start time, end time as"""
     userId = user.id
@@ -32,7 +35,9 @@ def getUserTrends(
     try:
         startTime = datetime.fromisoformat(start)
         endTime = datetime.fromisoformat(end)
-        labels, durations = getTrendsDataResult(user, labelId, startTime, endTime, time_period)
+        labels, durations = await getTrendsDataResult(
+            user, labelId, startTime, endTime, time_period, session
+        )
     except ValueError as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
 
@@ -70,8 +75,24 @@ def getSubtreeLabelIds(user: User, labelId: int) -> List[int]:
     return labelIds
 
 
-def getTrendsDataResult(
-    user: User, labelId: int, startTime: datetime, endTime: datetime, timePeriod: TimePeriod
+def getInterval(period: TimePeriod) -> timedelta:
+    if period == 'DAY':
+        return timedelta(days=1)
+    if period == 'WEEK':
+        return timedelta(weeks=1)
+    if period == 'MONTH':
+        return timedelta(days=30)
+    else:
+        raise ValueError('Period not found.')
+
+
+async def getTrendsDataResult(
+    user: User,
+    labelId: int,
+    startTime: datetime,
+    endTime: datetime,
+    timePeriod: TimePeriod,
+    session: AsyncSession,
 ):
     """Executes the DB query for time spent on the activity label,
     grouped by TimePeriod.
@@ -85,50 +106,50 @@ def getTrendsDataResult(
     labelIds = getSubtreeLabelIds(user, labelId)
     labelIdsFilter = ' OR '.join([f'label.id = {labelId}' for labelId in labelIds])
 
-    with session_maker() as session:
-        query = f"""
-            with filtered_events as (
-                    SELECT
-                        event.start at time zone :timezone as start,
-                        event.end at time zone :timezone as end,
-                        label.key as label
-                    FROM event
-                    INNER JOIN event_label ON event_label.event_id = event.id
-                    INNER JOIN label ON label.id = event_label.label_id
-                    WHERE {labelIdsFilter}
-                    AND event.status != 'deleted'
-                    AND event.start >= :start_time
-                    AND event.end <= :end_time
-                    AND event.user_id = :userId
-                )
-            SELECT starting,
-                coalesce(sum(EXTRACT(EPOCH FROM (e.end - e.start))), 0),
-                count(e.start) AS event_count
-            FROM generate_series(date_trunc(:time_period, :start_time)
-                                , :end_time
-                                , interval :time_interval) g(starting)
-            LEFT JOIN filtered_events e
-                ON e.start > g.starting
-                AND e.start <  g.starting + interval :time_interval
-            GROUP BY starting
-            ORDER BY starting;
-        """
+    query = f"""
+        with filtered_events as (
+                SELECT
+                    event.start at time zone :timezone as start,
+                    event.end at time zone :timezone_end as end,
+                    label.key as label
+                FROM event
+                INNER JOIN event_label ON event_label.event_id = event.id
+                INNER JOIN label ON label.id = event_label.label_id
+                WHERE {labelIdsFilter}
+                AND event.status != 'deleted'
+                AND event.start >= :start_time
+                AND event.end <= :end_time
+                AND event.user_id = :userId
+            )
+        SELECT starting,
+            coalesce(sum(EXTRACT(EPOCH FROM (e.end - e.start))), 0),
+            count(e.start) AS event_count
+        FROM generate_series(date_trunc('DAY', CAST(:start_time as date))
+                            , :end_time
+                            , CAST(:interval as interval)) g(starting)
+        LEFT JOIN filtered_events e
+            ON e.start > g.starting
+            AND e.start <  g.starting + CAST(:interval as interval)
+        GROUP BY starting
+        ORDER BY starting;
+    """
 
-        result = session.execute(
-            text(query),
-            {
-                'userId': userId,
-                'start_time': startTime,
-                'end_time': endTime,
-                'time_period': timePeriod,
-                'time_interval': f'1 {timePeriod}',
-                'timezone': timezone,
-            },
-        )
+    result = await session.execute(
+        text(query),
+        {
+            'userId': userId,
+            'start_time': startTime,
+            'end_time': endTime,
+            'time_period': timePeriod,
+            'interval': getInterval(timePeriod),
+            'timezone': timezone,
+            'timezone_end': timezone,
+        },
+    )
 
-        for row in result:
-            date, duration, _ = row
-            labels.append(date.strftime('%Y-%m-%d'))
-            durations.append(duration / 60.0 / 60.0)
+    for row in result:
+        date, duration, _ = row
+        labels.append(date.strftime('%Y-%m-%d'))
+        durations.append(duration / 60.0 / 60.0)
 
     return labels, durations
