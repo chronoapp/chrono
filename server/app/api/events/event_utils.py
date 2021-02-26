@@ -205,27 +205,21 @@ async def getAllExpandedRecurringEvents(
     - Don't need to expand ALL baseRecurringEvents, just ones in between the range.
     - => could add start & end dates properties to recurring events on insert.
     """
-    E1 = aliased(Event)
-    eventOverridesStmt = (
-        user.getSingleEventsStmt(showDeleted=True)
-        .filter(
-            or_(
-                Event.original_start == None,
-                and_(
-                    Event.original_start >= startDate,
-                    Event.original_start <= endDate,
-                ),
-            )
-        )
-        .join(Event.recurring_event.of_type(E1))
+    eventOverridesStmt = user.getSingleEventsStmt(showDeleted=True).where(
+        Event.recurring_event_id != None,
+        or_(
+            Event.original_start == None,
+            and_(
+                Event.original_start >= startDate,
+                Event.original_start <= endDate,
+            ),
+        ),
     )
     result = await session.execute(eventOverridesStmt)
-
     eventOverridesMap: Dict[str, Event] = {e.id: e for e in result.scalars()}
+
     result = await session.execute(
-        user.getRecurringEventsStmt()
-        .options(selectinload(Event.labels))
-        .options(selectinload(Event.calendar))
+        user.getRecurringEventsStmt().options(selectinload(Event.calendar))
     )
     baseRecurringEvents = result.scalars().all()
 
@@ -269,32 +263,36 @@ def getExpandedRecurringEvents(
             startDate = startDate.astimezone(ZoneInfo(zone))
             endDate = endDate.astimezone(ZoneInfo(zone))
 
-        # Expand events, inclusive
-        for date in islice(
-            ruleSet.between(startDate - timedelta(seconds=1), endDate + timedelta(seconds=1)),
-            MAX_RECURRING_EVENT_COUNT,
-        ):
-            start = date.replace(tzinfo=ZoneInfo(timezone))
-            end = start + duration
+        untilIsBeforeStartDate = hasattr(ruleSet, '_until') and ruleSet._until and ruleSet._until < startDate  # type: ignore
 
-            eventId = getRecurringEventId(baseEventVM.id, start, isAllDay)
+        if not untilIsBeforeStartDate:
+            # Expand events, inclusive
+            dates = ruleSet.between(
+                startDate - timedelta(seconds=1), endDate + timedelta(seconds=1)
+            )
 
-            if eventId in eventOverridesMap:
-                eventOverride = eventOverridesMap[eventId]
-                if eventOverride.status != 'deleted':
-                    yield EventInDBVM.from_orm(eventOverride)
-            else:
-                yield baseEventVM.copy(
-                    update={
-                        'id': eventId,
-                        'start': start,
-                        'end': end,
-                        'start_day': start.strftime('%Y-%m-%d') if isAllDay else None,
-                        'end_day': end.strftime('%Y-%m-%d') if isAllDay else None,
-                        'recurring_event_id': baseRecurringEvent.id,
-                        'recurrences': None,
-                    }
-                )
+            for date in islice(dates, MAX_RECURRING_EVENT_COUNT):
+                start = date.replace(tzinfo=ZoneInfo(timezone))
+                end = start + duration
+
+                eventId = getRecurringEventId(baseEventVM.id, start, isAllDay)
+
+                if eventId in eventOverridesMap:
+                    eventOverride = eventOverridesMap[eventId]
+                    if eventOverride.status != 'deleted':
+                        yield EventInDBVM.from_orm(eventOverride)
+                else:
+                    yield baseEventVM.copy(
+                        update={
+                            'id': eventId,
+                            'start': start,
+                            'end': end,
+                            'start_day': start.strftime('%Y-%m-%d') if isAllDay else None,
+                            'end_day': end.strftime('%Y-%m-%d') if isAllDay else None,
+                            'recurring_event_id': baseRecurringEvent.id,
+                            'recurrences': None,
+                        }
+                    )
 
 
 async def verifyAndGetRecurringEventParent(

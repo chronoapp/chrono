@@ -78,7 +78,7 @@ class Event(Base):
 
     # Recurring Events.
     recurrences = Column(ARRAY(String), nullable=True)
-    recurring_event_id = Column(String, ForeignKey('event.id'), nullable=True)
+    recurring_event_id = Column(String, ForeignKey('event.id'), nullable=True, index=True)
     recurring_event = relationship("Event", remote_side=[id], backref='recurring_events')
 
     # Original time (For recurring events).
