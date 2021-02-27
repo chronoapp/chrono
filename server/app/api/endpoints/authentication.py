@@ -1,10 +1,11 @@
 import logging
+import oauthlib
 import jwt
 import requests
 
 from typing import Tuple
 from pydantic import BaseModel
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, status, HTTPException
 from fastapi.responses import RedirectResponse
 
 from datetime import datetime
@@ -13,7 +14,9 @@ from requests_oauthlib import OAuth2Session
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core import config
 from app.db.models.user_credentials import UserCredential, ProviderType
@@ -83,37 +86,39 @@ def googleAuth():
 
 
 @router.post('/oauth/google/token')
-def googleAuthCallback(authData: AuthData, session: Session = Depends(get_db)):
+async def googleAuthCallback(authData: AuthData, session: AsyncSession = Depends(get_db)):
     try:
         flow = getAuthFlow(None)
         flow.fetch_token(code=authData.code)
+    except oauthlib.oauth2.rfc6749.errors.InvalidGrantError:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, 'Invalid oauth grant details.')
 
-        token = flow.credentials.token
-        resp = requests.get(f'https://www.googleapis.com/oauth2/v2/userinfo?access_token={token}')
-        userInfo = resp.json()
-        email = userInfo.get('email')
-        name = userInfo.get('given_name')
-        pictureUrl = userInfo.get('picture')
-        logging.info(userInfo)
+    token = flow.credentials.token
+    resp = requests.get(f'https://www.googleapis.com/oauth2/v2/userinfo?access_token={token}')
+    userInfo = resp.json()
+    email = userInfo.get('email')
+    name = userInfo.get('given_name')
+    pictureUrl = userInfo.get('picture')
 
-        user = session.query(User).filter(User.email == email).first()
-        if not user:
-            user = User(email, name, pictureUrl)
-            session.add(user)
-        else:
-            user.email = email
-            user.name = name
-            user.picture_url = pictureUrl
+    result = await session.execute(
+        select(User).where(User.email == email).options(selectinload(User.credentials))
+    )
+    user = result.scalar()
 
-        creds = getCredentialsDict(flow.credentials)
-        user.credentials = UserCredential(creds, ProviderType.Google)
-        session.commit()
+    if not user:
+        user = User(email, name, pictureUrl)
+        session.add(user)
+    else:
+        user.email = email
+        user.name = name
+        user.picture_url = pictureUrl
 
-        authToken = getAuthToken(user)
-        return {'token': authToken}
+    creds = getCredentialsDict(flow.credentials)
+    user.credentials = UserCredential(creds, ProviderType.Google)
+    await session.commit()
 
-    except Exception as e:
-        logging.error(e)
+    authToken = getAuthToken(user)
+    return {'token': authToken}
 
 
 def getAuthToken(user: User) -> str:
@@ -154,7 +159,7 @@ def msftAuth():
 
 
 @router.get('/oauth/msft/callback')
-def msftCallback(request: Request, session: Session = Depends(get_db)):
+async def msftCallback(request: Request, session: AsyncSession = Depends(get_db)):
     expectedState = request.cookies.get('auth_state')
     settings = getMsftSettings()
     callbackUrl = f'{request.url.path}?{request.query_params}'
@@ -176,7 +181,11 @@ def msftCallback(request: Request, session: Session = Depends(get_db)):
     email = userJson.get('mail')
     name = userJson.get('displayName')
 
-    user = session.query(User).filter(User.email == email).first()
+    result = await session.execute(
+        select(User).where(User.email == email).options(selectinload(User.credentials))
+    )
+    user = result.scalar()
+
     if not user:
         user = User(email, name, None)
         session.add(user)
@@ -185,7 +194,7 @@ def msftCallback(request: Request, session: Session = Depends(get_db)):
         user.name = name
 
     user.credentials = UserCredential(tokenResult, ProviderType.Microsoft)
-    session.commit()
+    await session.commit()
 
     authToken = str(
         jwt.encode(
