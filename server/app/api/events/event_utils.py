@@ -201,9 +201,9 @@ async def getAllExpandedRecurringEvents(
 ) -> AsyncGenerator[EventInDBVM, None]:
     """Expands the rule in the event to get all events between the start and end.
     TODO: This expansion is a huge perf bottleneck..
-    - date expansions are CPU bound so we could rewrite the date rrules expansion in rust
+    - Date expansions are CPU bound so we could rewrite the date rrules expansion in a rust binding.
     - Don't need to expand ALL baseRecurringEvents, just ones in between the range.
-    - => could add start & end dates properties to recurring events on insert.
+    - => cache the end dates properties to recurring events on insert / update.
     """
     eventOverridesStmt = user.getSingleEventsStmt(showDeleted=True).where(
         Event.recurring_event_id != None,
@@ -219,7 +219,9 @@ async def getAllExpandedRecurringEvents(
     eventOverridesMap: Dict[str, Event] = {e.id: e for e in result.scalars()}
 
     result = await session.execute(
-        user.getRecurringEventsStmt().options(selectinload(Event.calendar))
+        user.getRecurringEventsStmt()
+        .where(Event.start <= endDate)
+        .options(selectinload(Event.calendar))
     )
     baseRecurringEvents = result.scalars().all()
 
@@ -237,7 +239,11 @@ def getExpandedRecurringEvents(
     startDate: datetime,
     endDate: datetime,
 ) -> Generator[EventInDBVM, None, None]:
-    """Precondition: Make sure calendar is joined with the baseRecurringEvent"""
+    """Precondition: Make sure calendar is joined with the baseRecurringEvent
+
+    For now, assumes that the ruleset composes only of one rrule, and exdates so that
+    we can do optimizations like checking for _dtstart and _until.
+    """
     duration = baseRecurringEvent.end - baseRecurringEvent.start
     isAllDay = baseRecurringEvent.all_day
     baseEventVM = EventInDBVM.from_orm(baseRecurringEvent)
