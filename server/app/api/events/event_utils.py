@@ -211,18 +211,44 @@ async def getAllExpandedRecurringEvents(
     - Date expansions are CPU bound so we could rewrite the date rrules expansion in a rust binding.
     - Don't need to expand ALL baseRecurringEvents, just ones in between the range.
     - => cache the end dates properties to recurring events on insert / update.
+
+    TODO: Update EXDATE on write so we don't have to manually override events.
     """
-    eventOverridesStmt = user.getSingleEventsStmt(showDeleted=True).where(
+    overrides = user.getSingleEventsStmt(showDeleted=True).where(
         Event.recurring_event_id != None,
+    )
+
+    # Moved from outside of this time range to within.
+    movedFromOutsideOverrides = overrides.where(
+        Event.end >= startDate,
+        Event.start <= endDate,
+        Event.status != 'deleted',
+        # Original is outside the current range.
+        or_(
+            Event.original_start == None,  # TODO: remove None
+            and_(
+                Event.original_start < startDate,
+                Event.original_start > endDate,
+            ),
+        ),
+    )
+    result = await session.execute(movedFromOutsideOverrides)
+    for eventOverride in result.scalars():
+        # print(eventOverride)
+        yield EventInDBVM.from_orm(eventOverride)
+
+    # Overrides from within this time range.
+    movedFromInsideOverrides = overrides.where(
         or_(
             Event.original_start == None,
             and_(
                 Event.original_start >= startDate,
                 Event.original_start <= endDate,
             ),
-        ),
+        )
     )
-    result = await session.execute(eventOverridesStmt)
+
+    result = await session.execute(movedFromInsideOverrides)
     eventOverridesMap: Dict[str, Event] = {e.id: e for e in result.scalars()}
 
     result = await session.execute(

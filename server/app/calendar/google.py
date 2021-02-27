@@ -115,6 +115,7 @@ def getService(user: User):
 def syncGoogleCalendars(user: User):
     service = getService(user)
     calendarList = service.calendarList().list().execute()
+    calendarsMap = {cal.id: cal for cal in user.calendars}
 
     for calendar in calendarList.get('items'):
         calId = calendar.get('id')
@@ -123,7 +124,7 @@ def syncGoogleCalendars(user: User):
         print(f'Update Calendar: {calId}: {calSummary}')
         backgroundColor = mapGoogleColor(calendar.get('backgroundColor'))
 
-        userCalendar = user.calendars.filter_by(id=calId).first()
+        userCalendar = calendarsMap.get(calId)
         if userCalendar:
             userCalendar.timezone = calendar.get('timeZone')
             userCalendar.summary = calSummary
@@ -153,7 +154,12 @@ def syncGoogleCalendars(user: User):
 async def syncAllEvents(userId: int, fullSync: bool = False):
     """Syncs events from google calendar."""
     async with async_session_maker() as session:
-        stmt = select(User).filter(User.id == userId).options(selectinload(User.calendars))
+        stmt = (
+            select(User)
+            .filter(User.id == userId)
+            .options(selectinload(User.credentials))
+            .options(selectinload(User.calendars))
+        )
         user = (await session.execute(stmt)).scalar()
         syncGoogleCalendars(user)
 
@@ -487,7 +493,6 @@ def googleEventToEventVM(calendarId: str, eventItem: Dict[str, Any]) -> GoogleEv
 """
 
 
-
 def insertGoogleEvent(user: User, event: Event):
     timeZone = event.calendar.timezone
     eventBody = getEventBody(event, timeZone)
@@ -516,12 +521,9 @@ def updateGoogleEvent(user: User, event: Event):
     )
 
 
-async def deleteGoogleEvent(user: User, event: Event):
+def deleteGoogleEvent(user: User, event: Event):
     return (
-        await getService(user)
-        .events()
-        .delete(calendarId=event.calendar_id, eventId=event.g_id)
-        .execute()
+        getService(user).events().delete(calendarId=event.calendar_id, eventId=event.g_id).execute()
     )
 
 
@@ -550,6 +552,7 @@ def createWebhook(calendar: Calendar) -> None:
         logger.debug(f'No API URL specified.')
         return
 
+    # TODO: Fix lazy select
     # Only one webhook per calendar
     if calendar.webhook:
         logger.debug(f'Webhook exists.')
