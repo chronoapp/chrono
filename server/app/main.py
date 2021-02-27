@@ -40,4 +40,4 @@ async def db_session_middleware(request: Request, call_next):
 
 def start():
     """launch with poetry run start"""
-    uvicorn.run('app.main:app', host='0.0.0.0', port=80, reload=True, workers=2)
+    uvicorn.run('app.main:app', host='0.0.0.0', port=8080, reload=True)

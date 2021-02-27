@@ -54,9 +54,6 @@ async def getEvents(
     )
     endDate = datetime.fromisoformat(end_date) if end_date else datetime.now()
 
-    logger.info(f'getEvents:{user.id}')
-    logger.info(f'query:{query}')
-
     if title:
         selectStmt = (
             user.getSingleEventsStmt(showRecurring=False)

@@ -192,7 +192,7 @@ async def test_updateEvent_recurring(user, session, async_client):
     override.title = 'Override'
     override.id = events[8].id
     user.events.append(override)
-    session.commit()
+    await session.commit()
 
     # Trim the original event's instance list.
 
