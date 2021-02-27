@@ -193,7 +193,14 @@ def getRecurringEventId(baseEventId: str, startDate: datetime, isAllDay: bool) -
 async def getAllExpandedRecurringEventsList(
     user: User, startDate: datetime, endDate: datetime, session
 ) -> List[EventInDBVM]:
-    return [i async for i in getAllExpandedRecurringEvents(user, startDate, endDate, session)]
+    expandedEvents = [
+        i async for i in getAllExpandedRecurringEvents(user, startDate, endDate, session)
+    ]
+
+    return sorted(
+        expandedEvents,
+        key=lambda event: event.start,
+    )
 
 
 async def getAllExpandedRecurringEvents(

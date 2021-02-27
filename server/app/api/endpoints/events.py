@@ -1,9 +1,10 @@
+import heapq
 from datetime import datetime, timedelta
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Iterable
 from googleapiclient.errors import HttpError
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from sqlalchemy import desc, and_, select, delete
+from sqlalchemy import asc, and_, select, delete
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,7 +17,6 @@ from app.api.events.event_utils import (
     EventBaseVM,
     EventInDBVM,
     createOrUpdateEvent,
-    getAllExpandedRecurringEvents,
     getRecurringEventId,
     verifyRecurringEvent,
     verifyAndGetRecurringEventParent,
@@ -43,7 +43,7 @@ async def getEvents(
     end_date: Optional[str] = None,
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_db),
-) -> List[Union[EventInDBVM, Event]]:
+) -> Iterable[Union[EventInDBVM, Event]]:
     """
     TODO: Validate fields: date
     TODO: Filter queries for recurring events
@@ -76,7 +76,7 @@ async def getEvents(
         selectStmt = (
             user.getSingleEventsStmt(showRecurring=False)
             .filter(and_(Event.start >= startDate, Event.start <= endDate))
-            .order_by(desc(Event.start))
+            .order_by(asc(Event.start))
             .limit(limit)
         )
         result = await session.execute(selectStmt)
@@ -85,9 +85,10 @@ async def getEvents(
             user, startDate, endDate, session
         )
 
-        allEvents = expandedRecurringEvents + singleEvents
-
-        return sorted(allEvents, key=lambda event: event.start)
+        allEvents = heapq.merge(
+            expandedRecurringEvents, singleEvents, key=lambda event: event.start
+        )
+        return allEvents
 
 
 @router.post('/events/', response_model=EventInDBVM)
