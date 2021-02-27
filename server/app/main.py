@@ -3,12 +3,17 @@ import uvicorn
 from fastapi import FastAPI
 from starlette.requests import Request
 from starlette.middleware.cors import CORSMiddleware
+from fastapi.responses import ORJSONResponse
 
 from app.core import config
 from app.api.router import api_router
 from app.db.session import async_session_maker
 
-app = FastAPI(title=config.PROJECT_ID, openapi_url="/api/v1/openapi.json")
+app = FastAPI(
+    title=config.PROJECT_ID,
+    openapi_url="/api/v1/openapi.json",
+    default_response_class=ORJSONResponse,
+)
 app.include_router(api_router, prefix=config.API_V1_STR)
 
 # TODO: Whitelist Origins.
