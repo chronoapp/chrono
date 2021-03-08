@@ -126,6 +126,7 @@ def syncGoogleCalendars(user: User):
 
         userCalendar = calendarsMap.get(calId)
         if userCalendar:
+            userCalendar.google_id = calId
             userCalendar.timezone = calendar.get('timeZone')
             userCalendar.summary = calSummary
             userCalendar.description = calendar.get('description')
@@ -148,6 +149,7 @@ def syncGoogleCalendars(user: User):
                 calendar.get('primary'),
                 calendar.get('deleted'),
             )
+            userCalendar.google_id = calId
             user.calendars.append(userCalendar)
 
 
@@ -156,18 +158,19 @@ async def syncAllEvents(userId: int, fullSync: bool = False):
     async with async_session_maker() as session:
         stmt = (
             select(User)
-            .filter(User.id == userId)
+            .where(User.id == userId)
             .options(selectinload(User.credentials))
             .options(selectinload(User.calendars))
         )
         user = (await session.execute(stmt)).scalar()
         syncGoogleCalendars(user)
+        await session.commit()
 
         for calendar in user.calendars:
             if calendar.google_id != None:
                 await syncCalendar(calendar, session, fullSync=fullSync)
 
-        session.commit()
+        await session.commit()
 
 
 async def syncCalendar(calendar: Calendar, session: Session, fullSync: bool = False) -> None:
