@@ -60,7 +60,6 @@ interface LabelRuleState {
 }
 
 interface State {
-  searchValue: string
   events: Event[]
   labels: Label[]
 
@@ -89,6 +88,37 @@ function LabelTagSolid(props: {
   )
 }
 
+function SearchBar(props: { onRefreshEvents: (s: string) => void }) {
+  const [searchValue, setSearchValue] = React.useState('')
+
+  return (
+    <Flex w="100%" mt="2">
+      <Input
+        borderRadius="0"
+        type="text"
+        value={searchValue}
+        onChange={(e) => {
+          setSearchValue(e.target.value)
+        }}
+        onKeyPress={(event) => {
+          if (event.key == 'Enter') {
+            props.onRefreshEvents(searchValue)
+          }
+        }}
+        placeholder="Find an event"
+      />
+      <Button
+        fontWeight="normal"
+        borderRadius="0"
+        onClick={() => props.onRefreshEvents(searchValue)}
+        leftIcon={<FiSearch />}
+      >
+        Search
+      </Button>
+    </Flex>
+  )
+}
+
 class EventList extends React.Component<Props, State> {
   static contextType = LabelContext
   context!: React.ContextType<typeof LabelContext>
@@ -96,7 +126,6 @@ class EventList extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
-      searchValue: '',
       events: [],
       labels: [],
       addLabelRuleModalActive: false,
@@ -104,7 +133,6 @@ class EventList extends React.Component<Props, State> {
       isRefreshing: false,
     }
 
-    this.onSearchChange = this.onSearchChange.bind(this)
     this.refreshEvents = this.refreshEvents.bind(this)
     this.applyLabelToEvent = this.applyLabelToEvent.bind(this)
     this.removeLabel = this.removeLabel.bind(this)
@@ -169,7 +197,7 @@ class EventList extends React.Component<Props, State> {
     if (labelRuleState.applyAll) {
       const labelRule = new LabelRule(labelRuleState.event.title, labelRuleState.label.id)
       putLabelRule(labelRule, this.props.authToken).then((_labelRule) => {
-        this.refreshEvents()
+        // this.refreshEvents()
       })
     } else {
       labelRuleState.event.labels.push(labelRuleState.label)
@@ -189,12 +217,7 @@ class EventList extends React.Component<Props, State> {
     }
   }
 
-  onSearchChange(event) {
-    this.setState({ searchValue: event.target.value })
-  }
-
-  async refreshEvents() {
-    const { searchValue } = this.state
+  async refreshEvents(searchValue?: string) {
     const authToken = this.props.authToken
 
     if (searchValue) {
@@ -352,41 +375,12 @@ class EventList extends React.Component<Props, State> {
     )
   }
 
-  renderSearchBar() {
-    return (
-      this.state.events.length > 0 && (
-        <Flex w="100%" mt="2">
-          <Input
-            borderRadius="0"
-            type="text"
-            value={this.state.searchValue}
-            onChange={this.onSearchChange}
-            onKeyPress={(event) => {
-              if (event.key == 'Enter') {
-                this.refreshEvents()
-              }
-            }}
-            placeholder="Find an event"
-          />
-          <Button
-            fontWeight="normal"
-            borderRadius="0"
-            onClick={this.refreshEvents}
-            leftIcon={<FiSearch />}
-          >
-            Search
-          </Button>
-        </Flex>
-      )
-    )
-  }
-
   render() {
     return (
       <Layout>
         <Box w="100%" overflowY="scroll">
           <Container maxW="5xl" centerContent>
-            {this.renderSearchBar()}
+            <SearchBar onRefreshEvents={(search) => this.refreshEvents(search)} />
             {this.renderAddLabelRuleModal()}
             {this.renderTable()}
           </Container>

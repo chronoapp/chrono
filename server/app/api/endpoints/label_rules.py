@@ -18,7 +18,7 @@ router = APIRouter()
 
 class LabelRuleVM(BaseModel):
     text: str
-    label_id: str
+    label_id: int
 
     class Config:
         orm_mode = True
