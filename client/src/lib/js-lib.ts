@@ -1,6 +1,13 @@
-export function groupByKey(array, key) {
-  return array.reduce((hash, obj) => {
-    if (obj[key] === undefined) return hash
-    return Object.assign(hash, { [obj[key]]: (hash[obj[key]] || []).concat(obj) })
-  }, {})
+export function groupBy<T, K>(list: T[], getKey: (item: T) => K) {
+  const map = new Map<K, T[]>()
+  list.forEach((item) => {
+    const key = getKey(item)
+    const collection = map.get(key)
+    if (!collection) {
+      map.set(key, [item])
+    } else {
+      collection.push(item)
+    }
+  })
+  return Array.from(map.values())
 }

@@ -11,7 +11,7 @@ export interface CalendarsContextType {
   getPrimaryCalendar: () => Calendar
   getDefaultCalendar: (calendarId: string) => Calendar
   getCalendarColor: (calendarId: string) => string
-  addCalendar: (calendar: Calendar) => void
+  setCalendar: (calendar: Calendar) => void
   deleteCalendar: (calendarId: string) => void
 }
 
@@ -54,7 +54,7 @@ export function CalendarsContextProvider(props: any) {
 
       return color
     },
-    addCalendar: (calendar: Calendar) => {
+    setCalendar: (calendar: Calendar) => {
       setCalendarsById(
         produce(calendarsById, (draft) => {
           draft[calendar.id] = calendar

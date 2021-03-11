@@ -12,18 +12,14 @@ import {
   ModalBody,
   ModalCloseButton,
 } from '@chakra-ui/react'
-import { CalendarSource } from '@/models/Calendar'
+import Calendar, { CalendarEditable, CalendarSource } from '@/models/Calendar'
 
 interface IProps {
   isActive: boolean
+  editingCalendar?: Calendar
+
   onCancel: () => void
-  onSave: (
-    name: string,
-    description: string,
-    timezone: string,
-    backgroundColor: string,
-    source: CalendarSource
-  ) => void
+  onSave: (fields: CalendarEditable) => void
 }
 
 const DEFAULT_CALENDAR_BG_COLOR = '#2196f3'
@@ -32,27 +28,38 @@ const DEFAULT_CALENDAR_BG_COLOR = '#2196f3'
  * Modal to add / edit a calendar.
  */
 export default function CalendarEditModal(props: IProps) {
-  const [calendarName, setCalendarName] = React.useState<string>('')
-  const [description, setDescription] = React.useState<string>('')
-  const [timezone, setTimezone] = React.useState<string>(null!)
-  const [source, setSource] = React.useState<CalendarSource>('timecouncil')
-  const [backgroundColor, setBackgroundColor] = React.useState<string>(DEFAULT_CALENDAR_BG_COLOR)
+  const [editableFields, setEditableFields] = React.useState<CalendarEditable>(
+    getDefaultEditableFields()
+  )
+
+  function getDefaultEditableFields(): CalendarEditable {
+    return {
+      summary: props.editingCalendar?.summary || '',
+      description: props.editingCalendar?.description || '',
+      source: 'timecouncil',
+      backgroundColor: DEFAULT_CALENDAR_BG_COLOR,
+      timezone: undefined,
+    }
+  }
+
+  React.useEffect(() => {
+    setEditableFields(getDefaultEditableFields())
+  }, [props.editingCalendar])
 
   return (
     <Modal isOpen={props.isActive} onClose={props.onCancel}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>New Calendar</ModalHeader>
+        <ModalHeader>{props.editingCalendar ? 'Edit Calendar' : 'New Calendar'}</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           <FormControl id="calendar-title" isRequired>
             <FormLabel>Title</FormLabel>
             <Input
               type="text"
-              placeholder=""
-              value={calendarName}
+              value={editableFields.summary}
               onChange={(e) => {
-                setCalendarName(e.target.value)
+                setEditableFields({ ...editableFields, summary: e.target.value })
               }}
             />
           </FormControl>
@@ -63,9 +70,9 @@ export default function CalendarEditModal(props: IProps) {
               className="input"
               type="text"
               placeholder=""
-              value={description}
+              value={editableFields.description}
               onChange={(e) => {
-                setDescription(e.target.value)
+                setEditableFields({ ...editableFields, description: e.target.value })
               }}
             />
           </FormControl>
@@ -75,12 +82,7 @@ export default function CalendarEditModal(props: IProps) {
           <Button variant={'ghost'} mr={3} onClick={props.onCancel}>
             Cancel
           </Button>
-          <Button
-            colorScheme="primary"
-            onClick={() =>
-              props.onSave(calendarName, description, timezone, backgroundColor, source)
-            }
-          >
+          <Button colorScheme="primary" onClick={() => props.onSave(editableFields)}>
             Save
           </Button>
         </ModalFooter>

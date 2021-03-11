@@ -3,7 +3,15 @@ import { immerable } from 'immer'
 export type AccessRole = 'reader' | 'writer' | 'owner' | 'freeBusyReader'
 export type CalendarSource = 'google' | 'timecouncil'
 
-export default class Calendar {
+export interface CalendarEditable {
+  summary: string
+  description: string
+  source: CalendarSource
+  backgroundColor: string
+  timezone: string | undefined
+}
+
+export default class Calendar implements CalendarEditable {
   [immerable] = true
 
   static fromJson(json): Calendar {
@@ -16,7 +24,8 @@ export default class Calendar {
       json.selected,
       json.primary,
       json.accessRole,
-      json.source
+      json.source,
+      json.timezone
     )
   }
 
@@ -29,7 +38,8 @@ export default class Calendar {
     readonly selected: boolean,
     readonly primary: boolean,
     readonly accessRole: AccessRole,
-    readonly source: CalendarSource
+    readonly source: CalendarSource,
+    readonly timezone: string
   ) {}
 
   public isWritable(): boolean {

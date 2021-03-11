@@ -18,7 +18,7 @@ import {
   AlertDialogOverlay,
 } from '@chakra-ui/react'
 import Hoverable from '@/lib/Hoverable'
-import { groupByKey } from '@/lib/js-lib'
+import { groupBy } from '@/lib/js-lib'
 
 import { CalendarsContext, CalendarsContextType } from '@/contexts/CalendarsContext'
 import * as API from '@/util/Api'
@@ -79,15 +79,17 @@ export default function CalendarsPanel() {
     calendarsById,
     loadCalendars,
     updateCalendarSelect,
-    addCalendar,
+    setCalendar,
     deleteCalendar,
   } = React.useContext<CalendarsContextType>(CalendarsContext)
 
-  const [editModalActive, setEditModalActive] = React.useState(false)
   const confirmDeleteCancelRef = React.useRef<HTMLButtonElement>(null)
   const [confirmDeleteCalendarId, setConfirmDeleteCalendarId] = React.useState<undefined | string>(
     undefined
   )
+
+  const [editModalActive, setEditModalActive] = React.useState(false)
+  const [editingCalendarId, setEditingCalendarId] = React.useState<undefined | string>(undefined)
 
   React.useEffect(() => {
     async function init() {
@@ -130,7 +132,7 @@ export default function CalendarsPanel() {
     }
   }
 
-  const groupedCalendars = groupByKey(Object.values(calendarsById), 'source')
+  const groupedCalendars = groupBy(Object.values(calendarsById), (cal) => cal.source)
 
   function renderCalendarList(calendars: Calendar[]) {
     const sortedCalendars = calendars.sort((a, b) => {
@@ -189,6 +191,8 @@ export default function CalendarsPanel() {
                         <MenuList>
                           <MenuItem
                             onClick={() => {
+                              setEditModalActive(true)
+                              setEditingCalendarId(calendar.id)
                               onMouseLeave()
                             }}
                             icon={<FiEdit />}
@@ -230,20 +234,27 @@ export default function CalendarsPanel() {
 
       <CalendarEditModal
         isActive={editModalActive}
+        editingCalendar={
+          editingCalendarId !== undefined ? calendarsById[editingCalendarId] : undefined
+        }
         onCancel={() => setEditModalActive(false)}
-        onSave={async (summary, description, timezone, backgroundColor, source) => {
-          try {
+        onSave={async (fields) => {
+          // TODO: Handle errors, add alerts
+
+          if (editingCalendarId) {
+            const updatedCalendar = { ...calendarsById[editingCalendarId], ...fields }
+            const calendar = await API.putCalendar(updatedCalendar, API.getAuthToken())
+            setCalendar(calendar)
+          } else {
             const calendar = await API.createCalendar(
               API.getAuthToken(),
-              summary,
-              backgroundColor,
-              source,
-              description,
-              timezone
+              fields.summary,
+              fields.backgroundColor,
+              fields.source,
+              fields.description,
+              fields.timezone
             )
-            addCalendar(calendar)
-          } catch (err) {
-            // TODO: Display errors
+            setCalendar(calendar)
           }
 
           setEditModalActive(false)
