@@ -9,5 +9,6 @@ export function groupBy<T, K>(list: T[], getKey: (item: T) => K) {
       collection.push(item)
     }
   })
-  return Array.from(map.values())
+
+  return map
 }

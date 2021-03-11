@@ -132,8 +132,6 @@ export default function CalendarsPanel() {
     }
   }
 
-  const groupedCalendars = groupBy(Object.values(calendarsById), (cal) => cal.source)
-
   function renderCalendarList(calendars: Calendar[]) {
     const sortedCalendars = calendars.sort((a, b) => {
       if (a.primary && !b.primary) {
@@ -172,7 +170,9 @@ export default function CalendarsPanel() {
                 ></span>
 
                 <Flex align="center" justifyContent="space-between" w="100%">
-                  <Text pl="2">{calendar.summary}</Text>
+                  <Text fontSize="sm" pl="2">
+                    {calendar.summary}
+                  </Text>
 
                   {isMouseInside && (
                     <Menu isLazy>
@@ -223,6 +223,8 @@ export default function CalendarsPanel() {
     )
   }
 
+  const groupedCalendars = groupBy(Object.values(calendarsById), (cal) => cal.source)
+
   return (
     <>
       <ConfirmDeleteCalendarAlert
@@ -265,15 +267,21 @@ export default function CalendarsPanel() {
         Calendars
       </Text>
 
-      {Object.entries(groupedCalendars).map((entry) => {
-        const [calendarSource, calendars] = entry
+      {Array.from(groupedCalendars.keys()).map((calendarSource) => {
+        const calendars = groupedCalendars.get(calendarSource)
+        if (!calendars) {
+          return
+        }
+
         return (
           <Box key={calendarSource}>
             <Flex align="left" mt="1" mb="1">
-              {renderImageForSource(calendarSource as CalendarSource)}
-              <Text pl="1">winxton@gmail.com</Text>
+              {renderImageForSource(calendarSource)}
+              <Text fontSize="sm" pl="1">
+                test@example.com
+              </Text>
             </Flex>
-            {renderCalendarList(calendars as Calendar[])}
+            {renderCalendarList(calendars)}
           </Box>
         )
       })}

@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect, useRef } from 'react'
-import { Flex, Button, Menu, MenuButton, MenuList, MenuItem, Portal } from '@chakra-ui/react'
+import { Text, Flex, Button, Menu, MenuButton, MenuList, MenuItem, Portal } from '@chakra-ui/react'
 
 import Tree from 'rc-tree'
 import { EventDataNode, DataNode } from 'rc-tree/lib/interface'
@@ -242,7 +242,7 @@ function LabelTree(props: IProps) {
                   onMouseLeave={onMouseLeave}
                   justifyContent="space-between"
                 >
-                  <span>{item.title}</span>
+                  <Text fontSize="sm">{item.title}</Text>
                   {(isMouseInside || curMenuExpanded) && (
                     <Menu isLazy>
                       <MenuButton
