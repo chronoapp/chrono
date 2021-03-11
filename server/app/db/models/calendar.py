@@ -8,6 +8,7 @@ from app.db.base_class import Base
 from app.db.models.event import Event
 
 AccessRole = Literal['freeBusyReader', 'reader', 'writer', 'owner']
+CalendarSource = Literal['google', 'timecouncil']
 
 
 class Calendar(Base):
@@ -61,6 +62,13 @@ class Calendar(Base):
         self.access_role = access_role
         self.primary = primary
         self.deleted = deleted
+
+    @property
+    def source(self) -> CalendarSource:
+        if self.google_id:
+            return 'google'
+        else:
+            return 'timecouncil'
 
     @property
     def isGoogleCalendar(self) -> bool:

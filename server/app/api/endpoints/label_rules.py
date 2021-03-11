@@ -79,9 +79,10 @@ async def putLabel(
 
     # applies the rule to all previous events
     result = await session.execute(
-        select(Event).where(
-            Event.user_id == user.id,
-            Event.title.ilike(labelRule.text).options(selectinload(Event.labels)),
+        select(Event)
+        .where(Event.user_id == user.id, Event.title.ilike(labelRule.text))
+        .options(
+            selectinload(Event.labels),
         )
     )
     events = result.scalars()

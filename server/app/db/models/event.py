@@ -24,8 +24,8 @@ from app.db.base_class import Base
 event_label_association_table = Table(
     'event_label',
     Base.metadata,
-    Column('event_id', String, ForeignKey('event.id')),
-    Column('label_id', Integer, ForeignKey('label.id')),
+    Column('event_id', String, ForeignKey('event.id', ondelete='CASCADE')),
+    Column('label_id', Integer, ForeignKey('label.id', ondelete='CASCADE')),
 )
 
 EventStatus = Literal['deleted', 'tentative', 'active']
@@ -54,7 +54,7 @@ class Event(Base):
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     user = relationship('User', backref=backref('events', lazy='dynamic', cascade='all,delete'))
 
-    calendar_id = Column(String(255), ForeignKey('calendar.id'), nullable=False)
+    calendar_id = Column(String(255), ForeignKey('calendar.id', ondelete='CASCADE'), nullable=False)
     calendar: 'Calendar' = relationship(
         'Calendar',
         backref=backref(
@@ -74,7 +74,12 @@ class Event(Base):
     end_day = Column(String(10), nullable=True)  # YYYY-MM-DD date if full day
     time_zone = Column(String(255))
 
-    labels = relationship('Label', lazy='joined', secondary=event_label_association_table)
+    labels = relationship(
+        'Label',
+        lazy='joined',
+        secondary=event_label_association_table,
+        cascade="all,delete",
+    )
 
     # Recurring Events.
     recurrences = Column(ARRAY(String), nullable=True)
