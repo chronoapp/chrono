@@ -103,9 +103,8 @@ export default function EventEditFull(props: { event: Event }) {
           <div className="is-flex is-align-items-center is-flex-wrap-wrap">
             <span className="mr-2" style={{ width: '1.25em' }} />
             {event.labels.map((label) => (
-              <div className="mt-2">
+              <div key={label.id} className="mt-2">
                 <LabelTag
-                  key={label.id}
                   label={label}
                   allowEdit={true}
                   onClickDelete={(e) => {

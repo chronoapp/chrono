@@ -43,7 +43,8 @@ function LabelPanel() {
   return (
     <>
       {labelState.editingLabel.active && <LabelEditModal />}
-      <Text align="left" mt="3" fontWeight="medium" mb="1">
+
+      <Text align="left" fontWeight="medium" mt="3" mb="2">
         Tags
       </Text>
 

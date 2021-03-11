@@ -69,7 +69,3 @@ class Calendar(Base):
             return 'google'
         else:
             return 'timecouncil'
-
-    @property
-    def isGoogleCalendar(self) -> bool:
-        return self.sync_token is not None

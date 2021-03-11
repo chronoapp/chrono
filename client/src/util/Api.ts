@@ -3,7 +3,7 @@ import Cookies from 'universal-cookie'
 import Event from '../models/Event'
 import { Label, TimePeriod } from '../models/Label'
 import { LabelRule } from '../models/LabelRule'
-import Calendar from '../models/Calendar'
+import Calendar, { CalendarSource } from '../models/Calendar'
 import { formatDateTime } from '../util/localizer'
 
 const API_URL = '/api/v1'
@@ -93,7 +93,7 @@ export async function createCalendar(
   authToken: string,
   summary: string,
   backgroundColor: string,
-  isGoogleCalendar: boolean,
+  source: CalendarSource,
   description: string,
   timezone?: string,
   foregroundColor: string = '#ffffff'
@@ -105,7 +105,7 @@ export async function createCalendar(
       description,
       timezone,
       backgroundColor,
-      isGoogleCalendar,
+      source,
       foregroundColor,
     }),
     headers: { Authorization: authToken },
@@ -136,6 +136,13 @@ export async function putCalendar(calendar: Calendar, authToken: string): Promis
     .then((resp) => {
       return Calendar.fromJson(resp)
     })
+}
+
+export async function deleteCalendar(calendarId: string, authToken: string) {
+  return fetch(`${API_URL}/calendars/${calendarId}`, {
+    method: 'DELETE',
+    headers: { Authorization: authToken },
+  }).then(handleErrors)
 }
 
 export async function getEvents(

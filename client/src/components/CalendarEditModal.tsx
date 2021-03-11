@@ -12,6 +12,7 @@ import {
   ModalBody,
   ModalCloseButton,
 } from '@chakra-ui/react'
+import { CalendarSource } from '@/models/Calendar'
 
 interface IProps {
   isActive: boolean
@@ -21,7 +22,7 @@ interface IProps {
     description: string,
     timezone: string,
     backgroundColor: string,
-    isGoogleCalendar: boolean
+    source: CalendarSource
   ) => void
 }
 
@@ -34,7 +35,7 @@ export default function CalendarEditModal(props: IProps) {
   const [calendarName, setCalendarName] = React.useState<string>('')
   const [description, setDescription] = React.useState<string>('')
   const [timezone, setTimezone] = React.useState<string>(null!)
-  const [isGoogleCalendar, setIsGoogleCalendar] = React.useState<boolean>(false)
+  const [source, setSource] = React.useState<CalendarSource>('timecouncil')
   const [backgroundColor, setBackgroundColor] = React.useState<string>(DEFAULT_CALENDAR_BG_COLOR)
 
   return (
@@ -77,7 +78,7 @@ export default function CalendarEditModal(props: IProps) {
           <Button
             colorScheme="primary"
             onClick={() =>
-              props.onSave(calendarName, description, timezone, backgroundColor, isGoogleCalendar)
+              props.onSave(calendarName, description, timezone, backgroundColor, source)
             }
           >
             Save

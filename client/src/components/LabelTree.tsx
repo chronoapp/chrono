@@ -244,7 +244,7 @@ function LabelTree(props: IProps) {
                 >
                   <span>{item.title}</span>
                   {(isMouseInside || curMenuExpanded) && (
-                    <Menu isLazy placement="bottom-end">
+                    <Menu isLazy>
                       <MenuButton
                         variant="unstyled"
                         color="gray.600"
