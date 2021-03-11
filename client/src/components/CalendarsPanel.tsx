@@ -9,13 +9,17 @@ import {
   MenuList,
   MenuItem,
   Portal,
-  Box,
   AlertDialog,
   AlertDialogBody,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogContent,
   AlertDialogOverlay,
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon,
 } from '@chakra-ui/react'
 import Hoverable from '@/lib/Hoverable'
 import { groupBy } from '@/lib/js-lib'
@@ -29,9 +33,9 @@ import produce from 'immer'
 
 function renderImageForSource(source: CalendarSource) {
   if (source === 'google') {
-    return <img src={'./google.svg'} width={18} />
+    return <img src={'./google.svg'} width={22} />
   } else {
-    return <img src={'./timecouncil-symbol.png'} width={24} height="100%" />
+    return <img src={'./timecouncil-symbol.png'} width={22} height="100%" />
   }
 }
 
@@ -148,26 +152,21 @@ export default function CalendarsPanel() {
         return (
           <Hoverable key={idx}>
             {(isMouseInside, onMouseEnter, onMouseLeave) => (
-              <Flex
-                onMouseEnter={onMouseEnter}
-                onMouseLeave={onMouseLeave}
-                pl="2"
-                pt="1"
-                pb="1"
-                className="cal-checkbox-container tag-block"
-              >
-                <input
-                  type="checkbox"
-                  checked={selected}
-                  className="cal-checkbox"
-                  onChange={(v) => {
-                    onSelectCalendar(calendar, v.target.checked)
-                  }}
-                />
-                <span
-                  className="cal-checkmark"
-                  style={{ backgroundColor: selected ? calendar.backgroundColor : '#eee' }}
-                ></span>
+              <Flex onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} pl="2" pt="1" pb="1">
+                <label className="cal-checkbox-container tag-block">
+                  <input
+                    type="checkbox"
+                    checked={selected}
+                    className="cal-checkbox"
+                    onChange={(v) => {
+                      onSelectCalendar(calendar, v.target.checked)
+                    }}
+                  />
+                  <span
+                    className="cal-checkmark"
+                    style={{ backgroundColor: selected ? calendar.backgroundColor : '#eee' }}
+                  ></span>
+                </label>
 
                 <Flex align="center" justifyContent="space-between" w="100%">
                   <Text fontSize="sm" pl="2">
@@ -224,6 +223,7 @@ export default function CalendarsPanel() {
   }
 
   const groupedCalendars = groupBy(Object.values(calendarsById), (cal) => cal.source)
+  const keyArr = Array.from(groupedCalendars.keys())
 
   return (
     <>
@@ -267,24 +267,46 @@ export default function CalendarsPanel() {
         Calendars
       </Text>
 
-      {Array.from(groupedCalendars.keys()).map((calendarSource) => {
-        const calendars = groupedCalendars.get(calendarSource)
-        if (!calendars) {
-          return
-        }
+      {keyArr.length > 0 && (
+        <Accordion
+          defaultIndex={keyArr.map((c, idx) => idx)}
+          allowMultiple={true}
+          allowToggle={true}
+        >
+          {keyArr.map((calendarSource) => {
+            const calendars = groupedCalendars.get(calendarSource)
+            if (!calendars) {
+              return
+            }
 
-        return (
-          <Box key={calendarSource}>
-            <Flex align="left" mt="1" mb="1">
-              {renderImageForSource(calendarSource)}
-              <Text fontSize="sm" pl="1">
-                test@example.com
-              </Text>
-            </Flex>
-            {renderCalendarList(calendars)}
-          </Box>
-        )
-      })}
+            return (
+              <AccordionItem key={calendarSource} border="0" mt="1">
+                <AccordionButton
+                  size="sm"
+                  height="8"
+                  pt="2"
+                  pb="2"
+                  pl="1"
+                  display="flex"
+                  justifyContent="space-between"
+                >
+                  <Flex alignItems="center">
+                    {renderImageForSource(calendarSource)}
+                    <Text fontSize="sm" pl="1">
+                      test@example.com
+                    </Text>
+                  </Flex>
+                  <AccordionIcon />
+                </AccordionButton>
+
+                <AccordionPanel pt="0" pb="0">
+                  {renderCalendarList(calendars)}
+                </AccordionPanel>
+              </AccordionItem>
+            )
+          })}
+        </Accordion>
+      )}
 
       <Button
         color="gray.600"
