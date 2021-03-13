@@ -153,7 +153,7 @@ function Layout(props: Props) {
   }
 
   return (
-    <div className="App">
+    <Box className="App">
       <Head>
         <title>{props.title}</title>
         <meta charSet="utf-8" />
@@ -164,23 +164,23 @@ function Layout(props: Props) {
 
       {renderNavItems()}
 
-      <div className="app-content">
+      <Flex height="calc(100vh - 3.25rem)" width="100%">
         {props.includeLeftPanel && (
-          <div className="left-section">
+          <Box className="left-section">
             {props.canCreateEvent && <NewEventButton />}
-            <div className="left-section-scrollable" style={{ overflowY: 'scroll' }}>
+            <Flex overflowY="scroll" pr="1" height="100%" flexDirection="column" pb="2">
               <MiniCalendar />
               <LabelPanel />
               <CalendarsPanel />
-            </div>
-          </div>
+            </Flex>
+          </Box>
         )}
         {props.children}
         <Plugins />
-      </div>
+      </Flex>
 
       <footer></footer>
-    </div>
+    </Box>
   )
 }
 

@@ -1,8 +1,9 @@
 import React, { useContext } from 'react'
-import clsx from 'clsx'
 import {
   Button,
   Text,
+  Box,
+  Flex,
   FormControl,
   FormLabel,
   Input,
@@ -35,13 +36,14 @@ function EditLabelModal() {
 
   function ColorLabel(color: LabelColor) {
     return (
-      <span style={{ display: 'flex' }}>
-        <span
-          className="event-label event-label--hoverable mr-2"
+      <Flex>
+        <Box
+          mr="1"
+          className="event-label event-label--hoverable"
           style={{ backgroundColor: color.hex }}
-        ></span>
-        <p>{color.title}</p>
-      </span>
+        ></Box>
+        <Text>{color.title}</Text>
+      </Flex>
     )
   }
 
@@ -75,7 +77,6 @@ function EditLabelModal() {
       payload: {
         ...newLabelModal,
         active: false,
-        colorPickerActive: false,
         labelTitle: '',
         labelId: undefined,
         labelColor: undefined,

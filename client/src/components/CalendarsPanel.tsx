@@ -279,6 +279,8 @@ export default function CalendarsPanel() {
               return
             }
 
+            const groupName = calendarSource == 'google' ? 'Google' : 'Timecouncil'
+
             return (
               <AccordionItem key={calendarSource} border="0" mt="1">
                 <AccordionButton
@@ -293,13 +295,13 @@ export default function CalendarsPanel() {
                   <Flex alignItems="center">
                     {renderImageForSource(calendarSource)}
                     <Text fontSize="sm" pl="1">
-                      test@example.com
+                      {groupName}
                     </Text>
                   </Flex>
                   <AccordionIcon />
                 </AccordionButton>
 
-                <AccordionPanel pt="0" pb="0">
+                <AccordionPanel pt="0" pb="0" pr="0">
                   {renderCalendarList(calendars)}
                 </AccordionPanel>
               </AccordionItem>
