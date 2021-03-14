@@ -83,7 +83,6 @@ function eventReducer(state: EventState, action: ActionType) {
     case 'INIT_EDIT_NEW_EVENT':
       return {
         ...state,
-        eventsById: { ...eventsById, [action.payload.id]: action.payload },
         editingEvent: {
           id: action.payload.id,
           editMode: 'EDIT' as EditMode,
@@ -98,9 +97,6 @@ function eventReducer(state: EventState, action: ActionType) {
       const { selectTailSegment } = action.payload
       return {
         ...state,
-        eventsById: {
-          ...update(eventsById, { $unset: [UNSAVED_EVENT_ID] }),
-        },
         editingEvent: {
           id: action.payload.event.id,
           editMode: 'READ' as EditMode,
@@ -118,7 +114,6 @@ function eventReducer(state: EventState, action: ActionType) {
 
       return {
         ...state,
-        eventsById: { ...eventsById, [event.id]: event },
         editingEvent: {
           id: event.id,
           editMode: 'EDIT' as EditMode,

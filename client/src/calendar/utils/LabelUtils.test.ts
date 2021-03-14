@@ -1,6 +1,6 @@
-import { getParentIds, addNewLabels } from '../../../src/calendar/utils/LabelUtils'
-import { normalizeArr } from '../../../src/lib/normalizer'
-import { Label } from '../../../src/models/Label'
+import { getParentIds, addNewLabels } from './LabelUtils'
+import { normalizeArr } from '../../lib/normalizer'
+import { Label } from '../../models/Label'
 
 // l1 is parent of both l2 and l3
 const l1 = new Label(1, 'Label 1', 'label-1', '#fff', 1, undefined)
