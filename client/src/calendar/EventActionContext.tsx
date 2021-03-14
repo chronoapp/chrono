@@ -1,5 +1,4 @@
 import { createContext, useReducer, useState } from 'react'
-import update from 'immutability-helper'
 import { produce } from 'immer'
 
 import { normalizeArr } from '../lib/normalizer'
@@ -127,22 +126,15 @@ function eventReducer(state: EventState, action: ActionType) {
      * then override it when the server returns a successful response.
      */
     case 'UPDATE_EVENT':
-      return {
-        ...state,
-        eventsById: update(update(eventsById, { $unset: [action.payload.replaceEventId] }), {
-          [action.payload.event.id]: { $set: action.payload.event },
-        }),
-      }
-
-    case 'CREATE_EVENT':
-      const eventsWithNew = update(eventsById, {
-        [action.payload.id]: { $set: { ...action.payload } },
+      return produce(state, (stateDraft) => {
+        delete stateDraft.eventsById[action.payload.replaceEventId]
+        stateDraft.eventsById[action.payload.event.id] = action.payload.event
       })
 
-      return {
-        ...state,
-        eventsById: eventsWithNew,
-      }
+    case 'CREATE_EVENT':
+      return produce(state, (stateDraft) => {
+        stateDraft.eventsById[action.payload.id] = action.payload
+      })
 
     case 'DELETE_EVENT':
       const delEventId = action.payload.eventId
@@ -163,16 +155,18 @@ function eventReducer(state: EventState, action: ActionType) {
       } else {
         return {
           ...state,
-          eventsById: update(eventsById, { $unset: [delEventId] }),
+          eventsById: produce(eventsById, (eventsByIdDraft) => {
+            delete eventsByIdDraft[delEventId]
+          }),
         }
       }
 
     case 'CANCEL_SELECT':
-      let eventsUnselected = update(eventsById, { $unset: [UNSAVED_EVENT_ID] })
-
       return {
         ...state,
-        eventsById: eventsUnselected,
+        eventsById: produce(eventsById, (draftEventsById) => {
+          delete draftEventsById[UNSAVED_EVENT_ID]
+        }),
         editingEvent: null,
       }
 

@@ -1,6 +1,6 @@
 import React, { createContext, useReducer } from 'react'
 
-import update from 'immutability-helper'
+import produce from 'immer'
 import { Label } from '@/models/Label'
 import { normalizeArr } from '@/lib/normalizer'
 import { LabelColor } from '@/models/LabelColors'
@@ -51,27 +51,25 @@ function labelReducer(labelState: LabelState, action: ActionType) {
       }
     case 'UPDATE':
       const label = action.payload
-      return {
-        ...labelState,
-        labelsById: update(labelState.labelsById, { [label.id]: { $set: label } }),
-      }
+
+      return produce(labelState, (draft) => {
+        draft.labelsById[label.id] = label
+      })
+
     case 'UPDATE_MULTI':
       const labelMap = action.payload
+      return produce(labelState, (draft) => {
+        for (let labelId in labelMap) {
+          draft.labelsById[labelId] = labelMap[labelId]
+        }
+      })
 
-      const updates = {}
-      for (let labelId in labelMap) {
-        updates[labelId] = { $set: labelMap[labelId] }
-      }
-      return {
-        ...labelState,
-        labelsById: update(labelState.labelsById, updates),
-      }
     case 'DELETE':
       const labelId = action.payload
-      return {
-        ...labelState,
-        labelsById: update(labelState.labelsById, { $unset: [labelId] }),
-      }
+      return produce(labelState, (draft) => {
+        delete draft.labelsById[labelId]
+      })
+
     case 'UPDATE_EDIT_LABEL':
       return {
         ...labelState,
