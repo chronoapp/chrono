@@ -47,6 +47,7 @@ function NewEventButton() {
       maxHeight="2.2em"
       maxWidth="8em"
       mt="2"
+      mb="2"
       size="sm"
       onClick={() => {
         eventsContext.eventDispatch({
@@ -164,7 +165,7 @@ function Layout(props: Props) {
 
       {renderNavItems()}
 
-      <Flex height="calc(100vh - 3.25rem)" width="100%">
+      <Flex height="calc(100vh - 3.25rem)" width="100%" overflowY="auto">
         {props.includeLeftPanel && (
           <Box className="left-section">
             {props.canCreateEvent && <NewEventButton />}

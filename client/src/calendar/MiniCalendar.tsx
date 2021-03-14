@@ -68,7 +68,7 @@ export default function MiniCalendar() {
   }
 
   return (
-    <Box mt="3" pr="1">
+    <Box mt="1" pr="1">
       <Flex pl="1" justifyContent="space-between">
         <Text>{format(viewDate, 'MMMM YYYY')}</Text>
         <Flex>

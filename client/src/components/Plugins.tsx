@@ -10,7 +10,15 @@ export default function Plugins() {
   const isTrendsActive = router.pathname == '/trends'
 
   return (
-    <Flex className="cal-plugins" justifyContent="center" pt="2">
+    <Flex
+      width="14"
+      justifyContent="center"
+      p="1"
+      pt="2"
+      flexShrink={0}
+      borderLeftWidth="1px"
+      borderColor="gray.200"
+    >
       <Link href="/trends">
         <Box
           p="1"
