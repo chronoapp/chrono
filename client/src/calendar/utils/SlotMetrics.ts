@@ -2,9 +2,10 @@ import * as dates from '../../util/dates'
 
 import { Rect } from '../../util/Selection'
 
-const getDstOffset = (start, end) => start.getTimezoneOffset() - end.getTimezoneOffset()
+export const getDstOffset = (start: Date, end: Date): number =>
+  start.getTimezoneOffset() - end.getTimezoneOffset()
 
-const getKey = (min, max, step, slots) =>
+const getKey = (min: Date, max: Date, step: number, slots: number) =>
   `${+dates.startOf(min, 'minutes')}${+dates.startOf(max, 'minutes')}${step}-${slots}`
 
 /**
