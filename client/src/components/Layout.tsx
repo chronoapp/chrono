@@ -9,6 +9,7 @@ import {
   MenuList,
   MenuItem,
   MenuDivider,
+  useToast,
 } from '@chakra-ui/react'
 import { FiSettings, FiLogOut } from 'react-icons/fi'
 
@@ -24,7 +25,7 @@ import MiniCalendar from '@/calendar/MiniCalendar'
 import LabelPanel from './LabelPanel'
 import CalendarsPanel from './CalendarsPanel'
 import Plugins from './Plugins'
-import { AlertsContext } from '@/contexts/AlertsContext'
+import Toast from '@/components/Toast'
 import { EventActionContext } from '@/calendar/EventActionContext'
 
 import Header from '@/calendar/Header'
@@ -66,13 +67,21 @@ function NewEventButton() {
  */
 // export default class Layout extends React.Component<Props, {}> {
 function Layout(props: Props) {
-  const alertsContext = React.useContext(AlertsContext)
+  const toast = useToast({ duration: 2000, position: 'bottom' })
 
   async function refreshCalendar() {
-    alertsContext.addMessage('Updating calendar..')
+    const toastId = toast({
+      render: (props) => <Toast title={'Updating calendar..'} showSpinner={false} {...props} />,
+    })
+
     await syncCalendar(getAuthToken())
-    alertsContext.addMessage('Calendar updated.')
+
     document.dispatchEvent(new Event(GlobalEvent.refreshCalendar))
+
+    toastId && toast.close(toastId)
+    toast({
+      render: (props) => <Toast title={'Calendar updated.'} showSpinner={false} {...props} />,
+    })
   }
 
   function Settings() {

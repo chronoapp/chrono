@@ -1,5 +1,15 @@
 import React, { useContext, useState, useEffect, useRef } from 'react'
-import { Text, Flex, Button, Menu, MenuButton, MenuList, MenuItem, Portal } from '@chakra-ui/react'
+import {
+  Text,
+  Flex,
+  Button,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  Portal,
+  useToast,
+} from '@chakra-ui/react'
 
 import Tree from 'rc-tree'
 import { EventDataNode, DataNode } from 'rc-tree/lib/interface'
@@ -9,7 +19,7 @@ import clsx from 'clsx'
 import Hoverable from '@/lib/Hoverable'
 
 import { LABEL_COLORS } from '@/models/LabelColors'
-import { AlertsContext } from '@/contexts/AlertsContext'
+import Toast from '@/components/Toast'
 import { LabelContext, LabelContextType } from '@/contexts/LabelsContext'
 import { Label } from '@/models/Label'
 import ColorPicker from './ColorPicker'
@@ -41,7 +51,7 @@ function usePrevious(value) {
 }
 
 function LabelTree(props: IProps) {
-  const alertsContext = useContext(AlertsContext)
+  const toast = useToast({ duration: 2000, position: 'bottom' })
   const { labelState, dispatch } = useContext<LabelContextType>(LabelContext)
   const [expandedKeys, setExpandedKeys] = useState([])
   const [autoExpandParent, setAutoExpandParent] = useState(false)
@@ -202,7 +212,11 @@ function LabelTree(props: IProps) {
   function onDeleteLabel(item: TreeItem) {
     dispatch({ type: 'DELETE', payload: item.key })
     deleteLabel(item.key, getAuthToken()).then((r) => {
-      alertsContext.addMessage(`Tag ${item.title} deleted.`)
+      toast({
+        render: (props) => (
+          <Toast title={`Tag ${item.title} deleted.`} showSpinner={false} {...props} />
+        ),
+      })
     })
   }
 

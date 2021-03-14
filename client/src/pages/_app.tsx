@@ -7,9 +7,7 @@ import { ChakraProvider, extendTheme } from '@chakra-ui/react'
 
 import { LabelsContextProvider } from '@/contexts/LabelsContext'
 import { CalendarsContextProvider } from '@/contexts/CalendarsContext'
-import { AlertsContextProvider } from '@/contexts/AlertsContext'
 import { EventActionProvider } from '@/calendar/EventActionContext'
-import { Alerts } from '@/components/Alerts'
 
 Router.events.on('routeChangeStart', () => NProgress.start())
 Router.events.on('routeChangeComplete', () => NProgress.done())
@@ -50,17 +48,13 @@ class MyApp extends App {
 
     return (
       <ChakraProvider theme={theme}>
-        <AlertsContextProvider>
-          <Alerts />
-
-          <EventActionProvider>
-            <LabelsContextProvider>
-              <CalendarsContextProvider>
-                <Component {...pageProps} />
-              </CalendarsContextProvider>
-            </LabelsContextProvider>
-          </EventActionProvider>
-        </AlertsContextProvider>
+        <EventActionProvider>
+          <LabelsContextProvider>
+            <CalendarsContextProvider>
+              <Component {...pageProps} />
+            </CalendarsContextProvider>
+          </LabelsContextProvider>
+        </EventActionProvider>
       </ChakraProvider>
     )
   }

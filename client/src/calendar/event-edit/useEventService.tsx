@@ -1,5 +1,6 @@
 import React from 'react'
 import { FiCheck, FiTrash } from 'react-icons/fi'
+import { useToast } from '@chakra-ui/react'
 
 import { GlobalEvent } from '../../util/global'
 import {
@@ -9,18 +10,17 @@ import {
   deleteEvent as deleteEventReq,
 } from '../../util/Api'
 import Event, { UNSAVED_EVENT_ID } from '../../models/Event'
-import Alert from '../../models/Alert'
+import Toast from '@/components/Toast'
 
 import { EventActionContext, DeleteMethod } from '../EventActionContext'
-import { AlertsContext } from '@/contexts/AlertsContext'
 
 /**
  * Hook to provides CRUD Action that deal with the event server API.
  * and creates UI Alerts on updates.
  */
 export default function useEventService() {
-  const alertsContext = React.useContext(AlertsContext)
   const eventActions = React.useContext(EventActionContext)
+  const toast = useToast({ duration: 2000, position: 'bottom' })
 
   function deleteEvent(eventId: string, deleteMethod: DeleteMethod = 'SINGLE') {
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
@@ -30,18 +30,17 @@ export default function useEventService() {
     })
     const token = getAuthToken()
 
-    const savingAlert = new Alert({ title: 'Deleting Event..', isLoading: true })
-    alertsContext.addAlert(savingAlert)
+    const toastId = toast({
+      render: (props) => <Toast title={'Deleting Event..'} showSpinner={true} {...props} />,
+    })
 
     deleteEventReq(token, eventId).then(() => {
-      alertsContext.addAlert(
-        new Alert({
-          title: 'Event Deleted',
-          icon: FiTrash,
-          autoDismiss: true,
-          removeAlertId: savingAlert.id,
-        })
-      )
+      toastId && toast.close(toastId)
+      toast({
+        render: (props) => (
+          <Toast title={'Event Deleted.'} showSpinner={false} {...props} Icon={FiTrash} />
+        ),
+      })
     })
   }
 
@@ -55,20 +54,19 @@ export default function useEventService() {
     }
 
     if (event.id !== UNSAVED_EVENT_ID) {
-      const alert = new Alert({ title: 'Saving Event..', isLoading: true })
-      alertsContext.addAlert(alert)
+      const toastId = toast({
+        render: (props) => <Toast title={'Saving Event..'} showSpinner={true} {...props} />,
+      })
 
       // TODO: Queue overrides from server to prevent race condition.
       updateEventReq(getAuthToken(), event)
         .then(() => {
-          alertsContext.addAlert(
-            new Alert({
-              title: 'Event Updated.',
-              icon: FiCheck,
-              removeAlertId: alert.id,
-              autoDismiss: true,
-            })
-          )
+          toastId && toast.close(toastId)
+          toast({
+            render: (props) => (
+              <Toast title={'Event Updated.'} showSpinner={false} {...props} Icon={FiCheck} />
+            ),
+          })
         })
         .catch((err) => {
           // TODO: Revert to Original
@@ -80,8 +78,9 @@ export default function useEventService() {
     const token = getAuthToken()
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
 
-    const savingAlert = new Alert({ title: 'Saving Event..', isLoading: true })
-    alertsContext.addAlert(savingAlert)
+    const toastId = toast({
+      render: (props) => <Toast title={'Saving Event..'} showSpinner={true} {...props} />,
+    })
 
     const isExistingEvent = event.id !== UNSAVED_EVENT_ID
     if (isExistingEvent) {
@@ -105,14 +104,12 @@ export default function useEventService() {
             document.dispatchEvent(new CustomEvent(GlobalEvent.refreshCalendar))
           }
 
-          alertsContext.addAlert(
-            new Alert({
-              title: 'Event Updated.',
-              icon: FiCheck,
-              autoDismiss: true,
-              removeAlertId: savingAlert.id,
-            })
-          )
+          toastId && toast.close(toastId)
+          toast({
+            render: (props) => (
+              <Toast title={'Event Updated.'} showSpinner={false} {...props} Icon={FiCheck} />
+            ),
+          })
         })
     } else {
       eventActions.eventDispatch({ type: 'CREATE_EVENT', payload: event })
@@ -128,14 +125,12 @@ export default function useEventService() {
           })
         }
 
-        alertsContext.addAlert(
-          new Alert({
-            title: 'Event Created.',
-            icon: FiCheck,
-            autoDismiss: true,
-            removeAlertId: savingAlert.id,
-          })
-        )
+        toastId && toast.close(toastId)
+        toast({
+          render: (props) => (
+            <Toast title={'Event Created.'} showSpinner={false} {...props} Icon={FiCheck} />
+          ),
+        })
       })
     }
   }

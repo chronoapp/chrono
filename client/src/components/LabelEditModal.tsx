@@ -18,16 +18,16 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
+  useToast,
 } from '@chakra-ui/react'
 import { FiChevronDown } from 'react-icons/fi'
-
+import Toast from '@/components/Toast'
 import { getAuthToken, putLabel, createLabel } from '@/util/Api'
 import { getSortedLabelColors, LabelColor } from '@/models/LabelColors'
-import { AlertsContext } from '@/contexts/AlertsContext'
 import { LabelContext, LabelContextType, LabelModalState } from '@/contexts/LabelsContext'
 
 function EditLabelModal() {
-  const alertsContext = useContext(AlertsContext)
+  const toast = useToast({ duration: 2000, position: 'bottom' })
   const { labelState, dispatch } = useContext<LabelContextType>(LabelContext)
 
   const allColors = getSortedLabelColors()
@@ -54,7 +54,12 @@ function EditLabelModal() {
         payload: { ...newLabelModal, active: false, labelTitle: '' },
       })
       dispatch({ type: 'UPDATE', payload: label })
-      alertsContext.addMessage(`Saved tag ${label.title}.`)
+
+      toast({
+        render: (props) => (
+          <Toast title={`Saved tag ${label.title}.`} showSpinner={false} {...props} />
+        ),
+      })
     }
 
     if (newLabelModal.labelId) {
