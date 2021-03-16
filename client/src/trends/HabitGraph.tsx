@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react'
-import chunk from 'lodash/chunk'
-import clsx from 'clsx'
+import chunk from '@/lib/js-lib/chunk'
 import { Flex, Box, Text, IconButton } from '@chakra-ui/react'
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 

@@ -1,4 +1,3 @@
-import findIndex from 'lodash/findIndex'
 import Event from '../../models/Event'
 import * as dates from '../../util/dates'
 
@@ -25,7 +24,7 @@ export function eventSegments(event: Event, range: Date[]): EventSegment {
   let start = dates.max(dates.startOf(event.start, 'day'), first)
   let end = dates.min(dates.ceil(event.end, 'day'), last)
 
-  let padding = findIndex(range, (x) => dates.eq(x, start, 'day'))
+  let padding = range.findIndex((x) => dates.eq(x, start, 'day'))
   let span = dates.diff(start, end, 'day')
 
   span = Math.min(span, slots)

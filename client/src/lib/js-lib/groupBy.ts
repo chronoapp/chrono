@@ -1,4 +1,4 @@
-export function groupBy<T, K>(list: T[], getKey: (item: T) => K) {
+export default function groupBy<T, K>(list: T[], getKey: (item: T) => K) {
   const map = new Map<K, T[]>()
   list.forEach((item) => {
     const key = getKey(item)

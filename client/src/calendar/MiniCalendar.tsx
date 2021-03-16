@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect } from 'react'
 import { Box, Flex, Text } from '@chakra-ui/react'
 
 import clsx from 'clsx'
-import chunk from 'lodash/chunk'
+import chunk from '@/lib/js-lib/chunk'
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi'
 
 import * as dates from '../util/dates'

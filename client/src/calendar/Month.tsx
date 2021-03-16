@@ -1,5 +1,5 @@
 import React from 'react'
-import chunk from 'lodash/chunk'
+import chunk from '@/lib/js-lib/chunk'
 
 import Event from '../models/Event'
 import * as dates from '../util/dates'

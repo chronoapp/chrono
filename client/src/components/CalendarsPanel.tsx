@@ -22,7 +22,7 @@ import {
   AccordionIcon,
 } from '@chakra-ui/react'
 import Hoverable from '@/lib/Hoverable'
-import { groupBy } from '@/lib/js-lib'
+import groupBy from '@/lib/js-lib/groupBy'
 
 import { CalendarsContext, CalendarsContextType } from '@/contexts/CalendarsContext'
 import * as API from '@/util/Api'
