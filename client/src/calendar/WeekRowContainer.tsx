@@ -216,12 +216,16 @@ class WeekRowContainer extends React.Component<IProps, IState> {
       })
 
       selection.on('click', (clickEvent: EventData) => {
-        if (this.context.eventState.editingEvent) {
-          this.context?.eventDispatch({ type: 'CANCEL_SELECT' })
-          return
+        const bounds = getBoundsForNode(rowContainer)
+
+        // Unselect popover on click.
+        if (pointInBox(bounds, clickEvent.x, clickEvent.y)) {
+          if (this.context.eventState.editingEvent) {
+            this.context?.eventDispatch({ type: 'CANCEL_SELECT' })
+            return
+          }
         }
 
-        const bounds = getBoundsForNode(rowContainer)
         this.handleCreateNewEvent(clickEvent.x, clickEvent.y, bounds)
       })
     }
