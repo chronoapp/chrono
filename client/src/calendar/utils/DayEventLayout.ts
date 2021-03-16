@@ -1,5 +1,3 @@
-import sortBy from 'lodash/sortBy'
-
 /**
  * TODO: Type this.
  */
@@ -111,11 +109,17 @@ function onSameRow(a, b, minimumStartDifference) {
 }
 
 function sortByRender(events: Event[]) {
-  const sortedByTime = sortBy(events, ['startMs', (e) => -e.endMs])
+  const sortedByTime = events.concat().sort((a, b) => {
+    return a.startMs - b.startMs || b.endMs - a.endMs
+  })
 
   const sorted: Event[] = []
   while (sortedByTime.length > 0) {
     const event = sortedByTime.shift()
+    if (!event) {
+      throw new Error('Undefined event at sortByRender')
+    }
+
     sorted.push(event)
 
     for (let i = 0; i < sortedByTime.length; i++) {

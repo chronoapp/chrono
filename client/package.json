@@ -19,7 +19,6 @@
     "framer-motion": "^3.6.2",
     "immer": "^8.0.1",
     "linkifyjs": "^2.1.9",
-    "lodash": "^4.17.15",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.33",
     "next": "^10.0.8",
