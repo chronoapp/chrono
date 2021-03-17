@@ -130,7 +130,8 @@ function Layout(props: Props) {
                   padding="2"
                   pl="0"
                   height="100%"
-                  fontWeight={router.pathname === '/' ? 'medium' : 'normal'}
+                  color={router.pathname === '/' ? 'primary.800' : 'gray.500'}
+                  fontWeight={'medium'}
                 >
                   Calendar
                 </Button>
@@ -142,7 +143,8 @@ function Layout(props: Props) {
                   ml="2"
                   padding="2"
                   height="100%"
-                  fontWeight={router.pathname === '/events' ? 'medium' : 'normal'}
+                  color={router.pathname === '/events' ? 'primary.800' : 'gray.500'}
+                  fontWeight={'medium'}
                 >
                   Events
                 </Button>

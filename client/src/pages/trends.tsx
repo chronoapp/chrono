@@ -59,7 +59,7 @@ class TrendsPage extends React.Component<{ authToken: string }, {}> {
     return (
       <Layout>
         <Container minW="3xl" maxW="5xl" mt="2">
-          <Heading m="3" fontSize="2xl" align="left">
+          <Heading m="3" fontSize="2xl" align="left" color="gray.700">
             Trends
           </Heading>
 

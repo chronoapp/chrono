@@ -22,7 +22,6 @@ function TimeSelectFullDay(props: IProps) {
     <Menu>
       <MenuButton
         size="sm"
-        borderRadius="sm"
         as={Button}
         fontWeight="normal"
         variant="ghost"
