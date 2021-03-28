@@ -27,6 +27,7 @@ async def test_postCalendar(user, session, async_client):
         'foregroundColor': '#ffffff',
         'description': 'this is an amazing calendar.',
         'selected': True,
+        'source': 'timecouncil',
         'primary': True,
     }
 
@@ -37,6 +38,7 @@ async def test_postCalendar(user, session, async_client):
     )
 
     calendar = resp.json()
+
     assert calendar['id'] != None
     assert calendar['summary'] == calendarData['summary']
 
