@@ -164,7 +164,7 @@ export default class SlotMetrics {
     const rangeStartMin = this.positionFromDate(rangeStart)
     const rangeEndMin = this.positionFromDate(rangeEnd)
     const top =
-      rangeEndMin > this.step * (this.numSlots - 1) && !dates.eq(this.end, rangeEnd)
+      rangeEndMin > this.step * this.numSlots && !dates.eq(this.end, rangeEnd)
         ? ((rangeStartMin - this.step) / (this.step * this.numSlots)) * 100 // closest step
         : (rangeStartMin / (this.step * this.numSlots)) * 100
 
