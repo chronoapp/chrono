@@ -218,11 +218,25 @@ async def updateEvent(
 
         logger.info(f'Created Override: {eventDb}')
 
+    # We are overriding a parent recurring event.
+    elif curEvent and curEvent.is_parent_recurring_event:
+        prevCalendarId = curEvent.calendar_id
+
+        # Since we're modifying the recurrence, we need to remove all previous overrides.
+        if curEvent.recurrences != event.recurrences:
+            stmt = delete(Event).where(
+                and_(Event.user_id == user.id, Event.recurring_event_id == curEvent.id)
+            )
+            await session.execute(stmt)
+
+        eventDb = createOrUpdateEvent(curEvent, event)
+
     # Update normal event.
     else:
         prevCalendarId = curEvent.calendar_id if curEvent else None
         eventDb = createOrUpdateEvent(curEvent, event)
-        logger.info(f'Updated Event: {eventDb}')
+
+    logger.info(f'Updated Event: {eventDb}')
 
     eventDb.labels.clear()
     eventDb.labels = await getCombinedLabels(user, event.labels, session)
@@ -282,15 +296,6 @@ async def deleteEvent(
     )
     event = (await session.execute(stmt)).scalar()
 
-    if not event:
-        try:
-            event = await createOverrideDeletedEvent(user, eventId, session)
-            user.events.append(event)
-            await session.commit()
-
-        except InputError as e:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
-
     if event:
         event.status = 'deleted'
 
@@ -309,6 +314,16 @@ async def deleteEvent(
                 logger.error(e)
 
         await session.commit()
+
+    else:
+        # Virtual recurring event instance.
+        try:
+            event = await createOverrideDeletedEvent(user, eventId, session)
+            user.events.append(event)
+            await session.commit()
+
+        except InputError as e:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
 
     return {}
 

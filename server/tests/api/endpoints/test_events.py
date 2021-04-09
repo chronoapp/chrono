@@ -175,7 +175,7 @@ async def test_updateEvent_recurring(user, session, async_client):
     """
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
-    # Create a new recurring event.
+    # Create a new recurring event 2020-01-01 to 2020-01-10 => 10 events.
     start = datetime.fromisoformat('2020-01-01T12:00:00')
     recurringEvent = createEvent(calendar, start, start + timedelta(hours=1))
     recurringEvent.recurrences = ['RRULE:FREQ=DAILY;UNTIL=20200110T120000Z']
@@ -194,7 +194,8 @@ async def test_updateEvent_recurring(user, session, async_client):
     user.events.append(override)
     await session.commit()
 
-    # Trim the original event's instance list.
+    # Trim the original event's instance list
+    # Now, it starts from 2020-01-05.
 
     eventData = {
         "title": recurringEvent.title,
@@ -213,6 +214,8 @@ async def test_updateEvent_recurring(user, session, async_client):
     events = await getAllExpandedRecurringEventsList(
         user, start, start + timedelta(days=20), session
     )
+
+    # The overriden event should be removed.
     assert len(events) == 5
 
 
