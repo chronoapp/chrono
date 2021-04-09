@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import {
   Box,
+  Flex,
   Button,
+  Text,
+  NumberInput,
+  NumberInputField,
+  NumberInputStepper,
+  NumberIncrementStepper,
+  NumberDecrementStepper,
+  Select,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -19,7 +27,6 @@ import clsx from 'clsx'
 import produce from 'immer'
 import { BsArrowRepeat } from 'react-icons/bs'
 import { FiChevronDown } from 'react-icons/fi'
-import useClickOutside from '../../lib/hooks/useClickOutside'
 
 import * as dates from '../../util/dates'
 import { format, getWeekRange, localFullDate } from '../../util/localizer'
@@ -86,8 +93,9 @@ function getRRule(
     )
   }
 }
+
 /**
- * UI to create a RRULE.
+ * UI that encapsulates the creation of an RRULE.
  *
  * The input recurrences string (e.g. RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=TH,TU)
  * is decontructed to the recurringOptions dict.
@@ -110,13 +118,6 @@ function RecurringEventEditor(props: IProps) {
 
   const weekRange = getWeekRange(new Date())
   const rule: RRule | undefined = getRRule(recurringOptions, endCondition)
-  const eventEditModalRef = React.useRef<HTMLDivElement>(null)
-
-  useClickOutside(eventEditModalRef, () => {
-    if (modalEnabled) {
-      setModalEnabled(false)
-    }
-  })
 
   /**
    * Updates the end conditions when the recurrence frequency changes.
@@ -185,7 +186,7 @@ function RecurringEventEditor(props: IProps) {
    */
   function renderEndSelection() {
     return (
-      <div className="mt-3">
+      <Box mt="3" mb="2">
         Ends on
         <div className="control mt-2 is-flex is-flex-direction-column">
           <label className="radio is-flex is-align-items-center">
@@ -232,27 +233,33 @@ function RecurringEventEditor(props: IProps) {
             />
             <div className="ml-1">After</div>
 
-            <div className="is-flex is-align-items-center">
-              <input
-                className="input is-small ml-1"
-                type="number"
-                min="1"
-                max="99"
+            <Flex alignItems="center">
+              <NumberInput
+                size="sm"
+                ml="1"
+                min={1}
+                max={99}
                 value={recurringOptions?.count || ''}
                 disabled={endCondition != EndCondition.ByCount}
-                style={{ maxWidth: 45 }}
-                onChange={(e) => {
+                w="20"
+                onChange={(val) => {
                   setRecurringOptions({
                     ...recurringOptions,
-                    count: parseInt(e.target.value),
+                    count: parseInt(val),
                   })
                 }}
-              ></input>
+              >
+                <NumberInputField />
+                <NumberInputStepper>
+                  <NumberIncrementStepper />
+                  <NumberDecrementStepper />
+                </NumberInputStepper>
+              </NumberInput>
               <span className="ml-1">Occurrences</span>
-            </div>
+            </Flex>
           </label>
         </div>
-      </div>
+      </Box>
     )
   }
 
@@ -340,48 +347,56 @@ function RecurringEventEditor(props: IProps) {
 
   function renderEditor() {
     return (
-      <div>
-        <div className="control is-flex is-align-items-center">
-          <label className="mr-1">Repeat every</label>
-          <input
-            className="input is-small mr-1"
-            type="number"
-            min="1"
-            max="99"
-            value={recurringOptions?.interval}
-            style={{ maxWidth: 50 }}
-            onChange={(e) => {
-              setRecurringOptions({ ...recurringOptions, interval: parseInt(e.target.value) })
-            }}
-          ></input>
+      <Box>
+        <Flex alignItems="center" className="control">
+          <Text mr="1">Repeat every</Text>
 
-          <span className="select is-small">
-            <select
-              defaultValue={recurringOptions?.freq?.toString()}
-              onChange={(e) => {
-                setRecurringOptions({
-                  ...recurringOptions,
-                  freq: parseInt(e.target.value) as RRuleFreq,
-                })
-              }}
-            >
-              {[RRuleFreq.DAILY, RRuleFreq.WEEKLY, RRuleFreq.MONTHLY, RRuleFreq.YEARLY].map(
-                (val, idx) => {
-                  return (
-                    <option key={idx} value={val}>
-                      {frequencyName(val)}
-                    </option>
-                  )
-                }
-              )}
-            </select>
-          </span>
-        </div>
+          <NumberInput
+            size="sm"
+            min={1}
+            max={99}
+            value={recurringOptions?.interval}
+            w="20"
+            onChange={(val) => {
+              setRecurringOptions({ ...recurringOptions, interval: parseInt(val) })
+            }}
+          >
+            <NumberInputField />
+            <NumberInputStepper>
+              <NumberIncrementStepper />
+              <NumberDecrementStepper />
+            </NumberInputStepper>
+          </NumberInput>
+
+          <Select
+            size="sm"
+            w="30"
+            ml="1"
+            defaultValue={recurringOptions?.freq?.toString()}
+            onChange={(e) => {
+              setRecurringOptions({
+                ...recurringOptions,
+                freq: parseInt(e.target.value) as RRuleFreq,
+              })
+            }}
+          >
+            {[RRuleFreq.DAILY, RRuleFreq.WEEKLY, RRuleFreq.MONTHLY, RRuleFreq.YEARLY].map(
+              (val, idx) => {
+                return (
+                  <option key={idx} value={val}>
+                    {frequencyName(val)}
+                  </option>
+                )
+              }
+            )}
+          </Select>
+        </Flex>
         {renderRangeSelection()}
         {renderEndSelection()}
+
         <hr />
-        <div className="mt-3">{rule ? `Repeats ${rule.toText()}` : 'Does not repeat'}</div>
-      </div>
+        <Box mt="3">{rule ? `Repeats ${rule.toText()}` : 'Does not repeat'}</Box>
+      </Box>
     )
   }
 
