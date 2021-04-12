@@ -51,7 +51,12 @@ class User(Base):
         return (
             select(Event)
             .filter(
-                and_(Event.user_id == self.id, Event.recurrences != None, Event.status != 'deleted')
+                and_(
+                    Event.user_id == self.id,
+                    Event.recurrences != None,
+                    Event.recurring_event_id == None,
+                    Event.status != 'deleted',
+                )
             )
             .options(selectinload(Event.labels))
         )
@@ -60,7 +65,12 @@ class User(Base):
         """Events query without the base recurring events."""
         stmt = (
             select(Event)
-            .where(and_(Event.user_id == self.id, Event.recurrences == None))
+            .where(
+                and_(
+                    Event.user_id == self.id,
+                    Event.recurrences == None,
+                )
+            )
             .options(selectinload(Event.labels))
         )
 

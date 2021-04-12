@@ -66,6 +66,7 @@ async def getEvents(
         return result.scalars().all()
 
     elif query:
+        # TODO: Search in recurring events.
         tsQuery = ' & '.join(query.split())
         return await Event.search(session, user.id, tsQuery, limit=limit)
 
@@ -110,6 +111,12 @@ async def createEvent(
                 status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail='Can not modify recurring event from this endpoint.',
             )
+
+        # Write original starts if this is a recurring event.
+        if event.recurrences:
+            event.original_start = event.start
+            event.original_start_day = event.start_day
+            event.original_timezone = event.timezone
 
         eventDb = createOrUpdateEvent(None, event)
         eventDb.labels = await getCombinedLabels(user, event.labels, session)
@@ -177,7 +184,7 @@ async def updateEvent(
     elif not curEvent and not event.recurring_event_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail='Event not found.')
 
-    # New recurring event with override.
+    # Replace recurring event instance with override.
     elif not curEvent and event.recurring_event_id:
         parentEvent: Optional[Event] = (
             await session.execute(
@@ -223,6 +230,7 @@ async def updateEvent(
         prevCalendarId = curEvent.calendar_id
 
         # Since we're modifying the recurrence, we need to remove all previous overrides.
+        # TODO: Only delete the overrides that no longer exist.
         if curEvent.recurrences != event.recurrences:
             stmt = delete(Event).where(
                 and_(Event.user_id == user.id, Event.recurring_event_id == curEvent.id)

@@ -41,6 +41,7 @@ class EventBaseVM(BaseModel):
     recurrences: Optional[List[str]]
     recurring_event_id: Optional[str]
 
+    # Read only fields.
     original_start: Optional[datetime]
     original_start_day: Optional[str]
     original_timezone: Optional[str]
@@ -143,6 +144,8 @@ def createOrUpdateEvent(
     overrideId: Optional[str] = None,
     googleId: Optional[str] = None,
 ) -> Event:
+    recurrences = None if eventVM.recurring_event_id else eventVM.recurrences
+
     if not eventDb:
         return Event(
             googleId,
@@ -154,7 +157,7 @@ def createOrUpdateEvent(
             eventVM.end_day,
             eventVM.calendar_id,
             eventVM.timezone,
-            eventVM.recurrences,
+            recurrences,
             eventVM.original_start,
             eventVM.original_start_day,
             eventVM.original_timezone,
@@ -172,7 +175,7 @@ def createOrUpdateEvent(
             eventDb.end_day = eventVM.end_day
             eventDb.calendar_id = eventVM.calendar_id
             eventDb.recurring_event_id = eventVM.recurring_event_id
-            eventDb.recurrences = eventVM.recurrences
+            eventDb.recurrences = recurrences
             eventDb.original_start = eventVM.original_start
             eventDb.original_start_day = eventVM.original_start_day
             eventDb.original_timezone = eventVM.original_timezone
@@ -329,7 +332,7 @@ def getExpandedRecurringEvents(
                             'start_day': start.strftime('%Y-%m-%d') if isAllDay else None,
                             'end_day': end.strftime('%Y-%m-%d') if isAllDay else None,
                             'recurring_event_id': baseRecurringEvent.id,
-                            'recurrences': None,
+                            'recurrences': baseRecurringEvent.recurrences,
                         }
                     )
 
@@ -339,6 +342,8 @@ async def verifyAndGetRecurringEventParent(
 ) -> Tuple[Event, datetime]:
     """Returns the parent from the virtual eventId.
     Returns tuple of (parent event, datetime)
+
+    Throws InputError if it's not a valid event ID.
     """
     parts = eventId.split('_')
     if not len(parts) >= 2:
