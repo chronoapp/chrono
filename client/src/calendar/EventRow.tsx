@@ -1,11 +1,12 @@
 import React, { useContext } from 'react'
 import clsx from 'clsx'
+import { Portal, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from '@chakra-ui/react'
+
 import * as dates from '../util/dates'
 
 import { EventSegment } from './utils/eventLevels'
 import DateSlotMetrics from './utils/DateSlotMetrics'
 import { timeFormatShort } from '../util/localizer'
-import Popover from '../lib/popover/Popover'
 import EventPopover from './event-edit/EventPopover'
 
 import Event from '../models/Event'
@@ -72,14 +73,14 @@ function EventItem(props: { event: Event; isPreview: boolean; now: Date }) {
 
   if (isEditing && !isDragging) {
     return (
-      <Popover
-        containerClassName={'cal-event-modal-container'}
-        content={(args) => <EventPopover event={event} />}
-        isOpen={true}
-        position={['right', 'left', 'bottom', 'top']}
-        padding={5}
-      >
-        {eventDisplay}
+      <Popover isOpen={true} isLazy={true}>
+        <PopoverTrigger>{eventDisplay}</PopoverTrigger>
+        <Portal>
+          <PopoverContent w="md">
+            <PopoverArrow />
+            <EventPopover event={event} />
+          </PopoverContent>
+        </Portal>
       </Popover>
     )
   }

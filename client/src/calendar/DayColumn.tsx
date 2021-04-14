@@ -1,18 +1,17 @@
 import React from 'react'
 import clsx from 'clsx'
+import { Portal, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from '@chakra-ui/react'
 
-import Popover from '../lib/popover/Popover'
+import { timeRangeFormat, timeFormatShort } from '@/util/localizer'
+import * as dates from '@/util/dates'
+import { Selection, SelectRect, EventData, getBoundsForNode, isEvent } from '@/util/Selection'
+import Event, { EMPTY_TITLE } from '@/models/Event'
 
 import SlotMetrics from './utils/SlotMetrics'
 import getStyledEvents from './utils/DayEventLayout'
-import { timeRangeFormat, timeFormatShort } from '../util/localizer'
-import * as dates from '../util/dates'
-import { Selection, SelectRect, EventData, getBoundsForNode, isEvent } from '../util/Selection'
-
 import TimeSlotGroup from './TimeSlotGroup'
 import TimeGridEvent from './TimeGridEvent'
 import EventPopover from './event-edit/EventPopover'
-import Event, { EMPTY_TITLE } from '../models/Event'
 
 import DragDropEventContainer from './DragDropEventContainer'
 import { EventActionContext } from './EventActionContext'
@@ -161,24 +160,26 @@ class DayColumn extends React.Component<IProps, IState> {
         editingEvent?.id === event.id && editingEvent?.editMode !== 'FULL_EDIT' && isSegmentSelected
 
       if (isEditing && !isInteracting) {
+        // TODO: Update the placement depending on the event's location.
         return (
-          <Popover
-            key={`evt_${idx}`}
-            containerClassName={'cal-event-modal-container'}
-            content={(args) => <EventPopover event={editingEvent!.event} />}
-            isOpen={true}
-            position={['right', 'left', 'bottom', 'top']}
-            padding={5}
-          >
-            <TimeGridEvent
-              now={now}
-              event={event}
-              label={label}
-              style={style}
-              isPreview={false}
-              isTailSegment={isTailSegment}
-              getContainerRef={this.getContainerRef}
-            />
+          <Popover key={`evt_${idx}`} isOpen={true} isLazy={true}>
+            <PopoverTrigger>
+              <TimeGridEvent
+                now={now}
+                event={event}
+                label={label}
+                style={style}
+                isPreview={false}
+                isTailSegment={isTailSegment}
+                getContainerRef={this.getContainerRef}
+              />
+            </PopoverTrigger>
+            <Portal>
+              <PopoverContent w="md">
+                <PopoverArrow />
+                <EventPopover event={editingEvent!.event} />
+              </PopoverContent>
+            </Portal>
           </Popover>
         )
       } else {
