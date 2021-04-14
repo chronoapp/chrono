@@ -194,7 +194,7 @@ export default function EventEditFull(props: { event: Event }) {
           </div>
 
           <RecurringEventEditor
-            initialDate={event.start}
+            initialDate={event.original_start || event.start}
             initialRulestr={recurrences}
             onChange={(rules) => {
               console.log(`Rule Updated: ${rules}`)

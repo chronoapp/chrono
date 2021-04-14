@@ -53,6 +53,17 @@ export default function useEventService() {
       })
     }
 
+    // For recurring events, delete all and refresh.
+    // TODO: Add a filter for updates and deletes to the client store
+    // so we don't need a full refresh and prevent flickering.
+    if (Event.isParentRecurringEvent(event)) {
+      eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
+      eventActions.eventDispatch({
+        type: 'DELETE_EVENT',
+        payload: { eventId: event.id, deleteMethod: 'ALL' },
+      })
+    }
+
     if (event.id !== UNSAVED_EVENT_ID) {
       const toastId = toast({
         render: (props) => <Toast title={'Saving Event..'} showSpinner={true} {...props} />,
@@ -60,7 +71,11 @@ export default function useEventService() {
 
       // TODO: Queue overrides from server to prevent race condition.
       updateEventReq(getAuthToken(), event)
-        .then(() => {
+        .then((event) => {
+          if (Event.isParentRecurringEvent(event)) {
+            document.dispatchEvent(new CustomEvent(GlobalEvent.refreshCalendar))
+          }
+
           toastId && toast.close(toastId)
           toast({
             render: (props) => (

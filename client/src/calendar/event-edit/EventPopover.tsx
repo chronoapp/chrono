@@ -12,6 +12,7 @@ import {
   MenuDivider,
 } from '@chakra-ui/react'
 import { FiCalendar, FiClock, FiAlignLeft, FiTrash, FiChevronDown, FiPlus } from 'react-icons/fi'
+import { RRule } from 'rrule'
 
 import produce from 'immer'
 import moment from 'moment'
@@ -38,6 +39,7 @@ import SelectCalendar from './SelectCalendar'
 import ContentEditable from '@/lib/ContentEditable'
 import TaggableInput from './TaggableInput'
 import useEventService from './useEventService'
+import { getRecurrenceRules } from './RecurringEventEditor'
 
 interface IProps {
   event: Event
@@ -63,7 +65,7 @@ function EventPopover(props: IProps) {
   const eventActions = useContext(EventActionContext)
   const calendarContext = useContext(CalendarsContext)
   const { labelState } = useContext<LabelContextType>(LabelContext)
-  const { saveEvent, deleteEvent } = useEventService()
+  const { saveEvent, updateEvent, deleteEvent } = useEventService()
 
   const [eventFields, setEventFields] = useState(
     new EventFields(
@@ -345,6 +347,9 @@ function EventPopover(props: IProps) {
               type="date"
               size="sm"
               maxWidth="15em"
+              border="0"
+              borderBottom="3px solid"
+              borderBottomColor="gray.200"
               value={format(eventFields.start, 'YYYY-MM-DD')}
               onChange={(e) => {
                 const m = moment(e.target.value, 'YYYY-MM-DD')
@@ -525,13 +530,7 @@ function EventPopover(props: IProps) {
             This event
           </MenuItem>
           <MenuDivider m="0" />
-          <MenuItem
-            fontSize="sm"
-            onClick={() => {
-              // Modify first recurring event w/ end date
-              // Delete all overrides?
-            }}
-          >
+          <MenuItem fontSize="sm" onClick={() => deleteThisAndFollowingEvents(props.event)}>
             This and following events
           </MenuItem>
           <MenuDivider m="0" />
@@ -546,6 +545,66 @@ function EventPopover(props: IProps) {
         </MenuList>
       </Menu>
     )
+  }
+
+  async function deleteThisAndFollowingEvents(event: Event) {
+    if (!event.recurrences || !event.recurring_event_id || !event.original_start) {
+      throw Error('Invalid Recurring Event')
+    }
+
+    const recurrenceStr = event.recurrences!.join('\n')
+    const ruleOptions = getRecurrenceRules(recurrenceStr, event.original_start)
+
+    if (ruleOptions.count) {
+      const upToThisEventRules = produce(ruleOptions, (draft) => {
+        delete draft['count']
+        draft.until = dates.subtract(event.start, 1, 'seconds')
+        draft.dtstart = event.original_start
+      })
+
+      const upToThisRRule = new RRule(upToThisEventRules)
+      const upToThisCount = upToThisRRule.all().length
+      console.log(`New Count: ${upToThisCount}`)
+
+      const upToThisRRuleNoStart = new RRule({ ...upToThisEventRules, dtstart: null })
+      const updatedParentEvent = getParentEventWithRecurrence(
+        event,
+        upToThisRRuleNoStart.toString()
+      )
+
+      updateEvent(updatedParentEvent)
+    } else if (ruleOptions.until) {
+      const upToThisEventRules = produce(ruleOptions, (draft) => {
+        delete draft['count']
+        draft.until = dates.subtract(event.start, 1, 'seconds')
+      })
+
+      const recurrence = new RRule(upToThisEventRules).toString()
+      const updatedParentEvent = getParentEventWithRecurrence(event, recurrence)
+
+      updateEvent(updatedParentEvent)
+    }
+  }
+
+  /**
+   * Creates the base recurring event with the updated recurrence.
+   */
+  function getParentEventWithRecurrence(event: Event, recurrence: string) {
+    if (!event.recurring_event_id) {
+      throw new Error('Not a recurring event.')
+    }
+
+    return produce(event, (draft) => {
+      draft.recurrences = [recurrence]
+      draft.id = event.recurring_event_id!
+      draft.recurring_event_id = null
+      draft.start = event.original_start!
+      draft.end = dates.add(
+        event.original_start!,
+        dates.diff(event.end, event.start, 'minutes'),
+        'minutes'
+      )
+    })
   }
 }
 

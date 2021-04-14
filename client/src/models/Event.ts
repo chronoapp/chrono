@@ -1,3 +1,4 @@
+import { immerable } from 'immer'
 import { Label } from './Label'
 import { hexToHSL } from '../calendar/utils/Colors'
 import { localFullDate, fullDayFormat } from '../util/localizer'
@@ -6,9 +7,11 @@ export const UNSAVED_EVENT_ID = 'unsaved-event'
 export const EMPTY_TITLE = '(No title)'
 
 /**
- * Contains fields only because it is copied for drag & drop.
+ * Derived preperties are static because we could use the spread operator {..event, ..}
+ * to copy the event for drag & drop.
  */
 export default class Event {
+  [immerable] = true
   public labels: Label[]
 
   constructor(
@@ -26,7 +29,10 @@ export default class Event {
     readonly all_day: boolean,
     readonly backgroundColor: string,
     readonly foregroundColor: string,
-    readonly recurrences: string[] | null
+    readonly recurrences: string[] | null,
+    readonly original_start: Date | null,
+    readonly original_start_day: string | null,
+    readonly original_timezone: string | null
   ) {
     this.labels = labels
   }
@@ -47,7 +53,13 @@ export default class Event {
       eventJson.all_day,
       eventJson.background_color,
       eventJson.foreground_color,
-      eventJson.recurrences
+      eventJson.recurrences,
+      eventJson.original_start &&
+        (eventJson.all_day
+          ? localFullDate(eventJson.original_start_day)
+          : new Date(eventJson.original_start)),
+      eventJson.original_start_day,
+      eventJson.original_timezone
     )
   }
 
@@ -85,11 +97,18 @@ export default class Event {
       allDay,
       '',
       '#fff',
+      null,
+      null,
+      null,
       null
     )
   }
 
   static getDefaultTitle(event: Event) {
     return event.title ? event.title : EMPTY_TITLE
+  }
+
+  static isParentRecurringEvent(event: Event): boolean {
+    return !!event.recurrences && !event.recurring_event_id
   }
 }
