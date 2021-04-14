@@ -322,6 +322,10 @@ def getExpandedRecurringEvents(
                 if eventId in eventOverridesMap:
                     eventOverride = eventOverridesMap[eventId]
                     if eventOverride.status != 'deleted':
+                        eventOverride.recurrences = baseRecurringEvent.recurrences
+                        eventOverride.original_start = baseRecurringEvent.original_start
+                        eventOverride.original_start_day = baseRecurringEvent.original_start_day
+                        eventOverride.original_timezone = baseRecurringEvent.original_timezone
                         yield EventInDBVM.from_orm(eventOverride)
                 else:
                     yield baseEventVM.copy(

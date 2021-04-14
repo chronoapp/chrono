@@ -86,7 +86,7 @@ class Event(Base):
     recurring_event_id = Column(String, ForeignKey('event.id'), nullable=True, index=True)
     recurring_event = relationship("Event", remote_side=[id], backref='recurring_events')
 
-    # Original time (For recurring events).
+    # Original time (For recurring events). Child event use the parent's value.
     original_start = Column(DateTime(timezone=True))
     original_start_day = Column(String(10))
     original_timezone = Column(String(255))

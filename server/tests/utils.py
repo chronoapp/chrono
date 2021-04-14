@@ -1,5 +1,5 @@
 from uuid import uuid4
-from typing import Optional
+from typing import Optional, List
 
 from datetime import datetime
 
@@ -13,7 +13,12 @@ def createEvent(
     end: datetime,
     googleId: Optional[str] = None,
     timezone: Optional[str] = None,
+    recurrences: Optional[List[str]] = None,
 ):
+    originalStart = None
+    if recurrences:
+        originalStart = start
+
     event = Event(
         googleId,
         f'Event',
@@ -24,8 +29,8 @@ def createEvent(
         None,
         calendar.id,
         timezone,
-        None,
-        None,
+        recurrences,
+        originalStart,
         None,
         None,
     )

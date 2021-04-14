@@ -212,11 +212,6 @@ async def updateEvent(
 
         prevCalendarId = None
 
-        # Store original starts
-        event.original_start = dt
-        event.original_start_day = dt.strftime('%Y-%m-%d') if event.isAllDay() else None
-        event.original_timezone = event.timezone
-
         eventDb = createOrUpdateEvent(None, event, overrideId=event_id, googleId=googleId)
 
         user.events.append(eventDb)

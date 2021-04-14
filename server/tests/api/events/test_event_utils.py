@@ -26,9 +26,12 @@ async def test_getAllExpandedRecurringEvents_override(user, session):
 
     # Create a new recurring event.
     start = datetime.fromisoformat('2020-01-02T12:00:00')
-    recurringEvent = createEvent(calendar, start, start + timedelta(hours=1))
-
-    recurringEvent.recurrences = ['RRULE:FREQ=DAILY;UNTIL=20200107T120000Z']
+    recurringEvent = createEvent(
+        calendar,
+        start,
+        start + timedelta(hours=1),
+        recurrences=['RRULE:FREQ=DAILY;UNTIL=20200107T120000Z'],
+    )
     user.events.append(recurringEvent)
 
     # Expanded recurring events between 2 dates.
@@ -36,6 +39,7 @@ async def test_getAllExpandedRecurringEvents_override(user, session):
         user, start, start + timedelta(days=1), session
     )
     assert len(events) == 2
+    assert events[0].original_start == start
 
     events = await getAllExpandedRecurringEventsList(
         user, start, start + timedelta(days=10), session
