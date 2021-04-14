@@ -20,7 +20,7 @@ import { EventActionContext, DeleteMethod } from '../EventActionContext'
  */
 export default function useEventService() {
   const eventActions = React.useContext(EventActionContext)
-  const toast = useToast({ duration: 2000, position: 'bottom' })
+  const toast = useToast({ duration: 2000, position: 'top' })
 
   function deleteEvent(eventId: string, deleteMethod: DeleteMethod = 'SINGLE') {
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })

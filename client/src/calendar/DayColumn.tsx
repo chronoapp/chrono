@@ -175,7 +175,7 @@ class DayColumn extends React.Component<IProps, IState> {
               />
             </PopoverTrigger>
             <Portal>
-              <PopoverContent w="md">
+              <PopoverContent w="25em">
                 <PopoverArrow />
                 <EventPopover event={editingEvent!.event} />
               </PopoverContent>

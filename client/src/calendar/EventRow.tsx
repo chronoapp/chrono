@@ -76,7 +76,7 @@ function EventItem(props: { event: Event; isPreview: boolean; now: Date }) {
       <Popover isOpen={true} isLazy={true}>
         <PopoverTrigger>{eventDisplay}</PopoverTrigger>
         <Portal>
-          <PopoverContent w="md">
+          <PopoverContent w="25em">
             <PopoverArrow />
             <EventPopover event={event} />
           </PopoverContent>
