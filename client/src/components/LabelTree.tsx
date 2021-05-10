@@ -51,7 +51,8 @@ function usePrevious(value) {
 }
 
 function LabelTree(props: IProps) {
-  const toast = useToast({ duration: 2000, position: 'bottom' })
+  const toast = useToast({ duration: 2000, position: 'top' })
+
   const { labelState, dispatch } = useContext<LabelContextType>(LabelContext)
   const [expandedKeys, setExpandedKeys] = useState([])
   const [autoExpandParent, setAutoExpandParent] = useState(false)

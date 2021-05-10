@@ -27,7 +27,7 @@ import { getSortedLabelColors, LabelColor } from '@/models/LabelColors'
 import { LabelContext, LabelContextType, LabelModalState } from '@/contexts/LabelsContext'
 
 function EditLabelModal() {
-  const toast = useToast({ duration: 2000, position: 'bottom' })
+  const toast = useToast({ duration: 2000, position: 'top' })
   const { labelState, dispatch } = useContext<LabelContextType>(LabelContext)
 
   const allColors = getSortedLabelColors()

@@ -39,8 +39,6 @@ interface Props {
 
 function NewEventButton() {
   const eventsContext = React.useContext(EventActionContext)
-  // TODO: Scroll to the event if it's off-screen.
-
   return (
     <Button
       borderRadius="sm"
@@ -51,6 +49,8 @@ function NewEventButton() {
       mb="2"
       size="sm"
       onClick={() => {
+        // TODO: Create the event on the current view if current day is not in view.
+        document.dispatchEvent(new Event(GlobalEvent.scrollToEvent))
         eventsContext.eventDispatch({
           type: 'INIT_NEW_EVENT_AT_DATE',
           payload: { date: roundNext15Min(new Date()), allDay: false },
@@ -67,7 +67,7 @@ function NewEventButton() {
  */
 // export default class Layout extends React.Component<Props, {}> {
 function Layout(props: Props) {
-  const toast = useToast({ duration: 2000, position: 'bottom' })
+  const toast = useToast({ duration: 2000, position: 'top' })
 
   async function refreshCalendar() {
     const toastId = toast({
