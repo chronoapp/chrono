@@ -16,6 +16,9 @@ import Event, { UNSAVED_EVENT_ID } from '../models/Event'
 import SlotMetrics from './utils/SlotMetrics'
 import { GlobalEvent } from '../util/global'
 
+const SCROLL_WRAPPER_SELECTOR = '.cal-time-content'
+const GRID_WRAPPER_SELECTOR = '.cal-time-view'
+
 interface IProps {
   slotMetrics: SlotMetrics
   children: any
@@ -111,7 +114,33 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
     this.updateEvent(event, start, range.endDate, range.top, range.height)
   }
 
-  private handleMove(point: SelectRect, bounds: Rect) {
+  /**
+   * Scrolls while moving the event up or down.
+   */
+  private scrollToEventIfNecessary(
+    eventTopPercent: number,
+    eventHeightPercent: number,
+    scrollWrapper: HTMLElement
+  ) {
+    const eventTop = (eventTopPercent / 100) * scrollWrapper.scrollHeight
+    const eventBottom = eventTop + (eventHeightPercent / 100) * scrollWrapper.scrollHeight
+
+    const viewportBottom = scrollWrapper.scrollTop + scrollWrapper.clientHeight
+    const eventOverflows = eventTop < scrollWrapper.scrollTop && eventBottom > viewportBottom
+    if (eventOverflows) {
+      return
+    }
+
+    if (eventTop < scrollWrapper.scrollTop) {
+      scrollWrapper.scrollTop = Math.max(eventTop, 0)
+    }
+
+    if (eventBottom > viewportBottom) {
+      scrollWrapper.scrollTop = eventBottom - scrollWrapper.clientHeight
+    }
+  }
+
+  private handleMove(point: SelectRect, bounds: Rect, scrollWrapper: HTMLElement) {
     const { event } = this.context.dragAndDropAction!
     const { slotMetrics } = this.props
 
@@ -129,6 +158,7 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
     const range = slotMetrics.getRange(currentSlot, end, false, true)
 
     this.updateEvent(event, currentSlot, end, range.top, range.height)
+    this.scrollToEventIfNecessary(range.top, range.height, scrollWrapper)
   }
 
   private reset() {
@@ -161,7 +191,8 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
 
     if (current) {
       const node = current
-      const selection = (this.selection = new Selection(node.closest('.cal-time-view')))
+      const selection = (this.selection = new Selection(node.closest(GRID_WRAPPER_SELECTOR)))
+      const scrollWrapper = node.closest(SCROLL_WRAPPER_SELECTOR) as HTMLElement
 
       selection.on('beforeSelect', (point: EventData) => {
         const dragAndDropAction: DragDropAction = this.context.dragAndDropAction!
@@ -197,7 +228,7 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
         if (dragAndDropAction!.action === 'RESIZE') {
           this.handleResize(point, bounds)
         } else if (dragAndDropAction!.action === 'MOVE') {
-          this.handleMove(point, bounds)
+          this.handleMove(point, bounds, scrollWrapper)
         }
       })
 
