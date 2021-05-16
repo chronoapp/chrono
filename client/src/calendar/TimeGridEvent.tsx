@@ -1,4 +1,5 @@
 import React, { useContext } from 'react'
+import * as dates from '../util/dates'
 
 import clsx from 'clsx'
 import Event from '../models/Event'
@@ -92,7 +93,10 @@ function TimeGridEvent(props: IProps) {
     )
   }
 
-  const diffMin = (event.end.getTime() - event.start.getTime()) / 60000
+  const displayStart: Date = dates.max(event.start, dates.startOf(event.end, 'day'))
+  const displayEnd: Date = dates.min(event.end, dates.endOf(event.start, 'day'))
+
+  const diffMin = (displayEnd.getTime() - displayStart.getTime()) / 60000
   const displayTitle = Event.getDefaultTitle(event)
 
   const tagColors = event.labels.map((label, idx) => (
