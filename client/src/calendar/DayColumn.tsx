@@ -162,7 +162,7 @@ class DayColumn extends React.Component<IProps, IState> {
       if (isEditing && !isInteracting) {
         // TODO: Update the placement depending on the event's location.
         return (
-          <Popover key={`evt_${idx}`} isOpen={true} isLazy={true}>
+          <Popover key={`evt_${idx}`} isOpen={true} isLazy={true} placement={'auto'}>
             <PopoverTrigger>
               <TimeGridEvent
                 now={now}
