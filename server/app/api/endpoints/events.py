@@ -58,7 +58,7 @@ async def getEvents(
         selectStmt = (
             user.getSingleEventsStmt(showRecurring=False)
             .filter(
-                and_(Event.start >= startDate, Event.start <= endDate, Event.title.ilike(title))
+                and_(Event.end >= startDate, Event.start <= endDate, Event.title.ilike(title))
             )
             .limit(limit)
         )
@@ -73,7 +73,7 @@ async def getEvents(
     else:
         selectStmt = (
             user.getSingleEventsStmt(showRecurring=False)
-            .filter(and_(Event.start >= startDate, Event.start <= endDate))
+            .filter(and_(Event.end >= startDate, Event.start <= endDate))
             .order_by(asc(Event.start))
             .limit(limit)
         )
