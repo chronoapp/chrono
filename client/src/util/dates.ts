@@ -71,7 +71,7 @@ export function visibleDays(date: Date, startOfWeek: number, fillDates: boolean 
   return days
 }
 
-export function ceil(date, unit) {
+export function ceil(date: Date, unit: string): Date {
   let floor = dates.startOf(date, unit)
 
   return dates.eq(floor, date) ? floor : dates.add(floor, 1, unit)

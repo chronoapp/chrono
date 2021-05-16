@@ -93,7 +93,6 @@ function Calendar() {
           now={eventsContext.selectedDate}
           events={events}
           range={[eventsContext.selectedDate]}
-          renderHeader={false}
         />
       )
     } else if (eventsContext.display == 'Week') {
