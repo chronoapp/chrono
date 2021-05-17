@@ -1,5 +1,6 @@
 import React from 'react'
 import clsx from 'clsx'
+import { Box } from '@chakra-ui/react'
 
 import * as dates from '../util/dates'
 import { format } from '../util/localizer'
@@ -9,6 +10,7 @@ import Event from '../models/Event'
 import EventRow from './EventRow'
 import WeekRowContainer from './WeekRowContainer'
 import useEventService from './event-edit/useEventService'
+import EventEndingRow from './EventEndingRow'
 
 interface IProps {
   key: number
@@ -20,15 +22,16 @@ interface IProps {
 }
 
 const MIN_ROWS = 1
-const MAX_ROWS = 6
+const MAX_ROWS = 5
 
 /**
  * Row used for month and full day events in the week view.
  * TODO: Handle Show More.
  */
 function WeekRow(props: IProps) {
-  const dayMetrics = new DateSlotMetrics(props.range, props.events, MAX_ROWS, MIN_ROWS)
   const { updateEvent } = useEventService()
+
+  const dayMetrics = new DateSlotMetrics(props.range, props.events, MAX_ROWS, MIN_ROWS)
 
   function renderBackgroundCells() {
     return (
@@ -69,10 +72,26 @@ function WeekRow(props: IProps) {
           wrapperClassname="cal-month-view"
           ignoreNewEventYBoundCheck={false}
         >
-          {!props.loading &&
-            dayMetrics.levels.map((segments, idx) => (
-              <EventRow key={idx} segments={segments} slotMetrics={dayMetrics} isPreview={false} />
-            ))}
+          {!props.loading && (
+            <>
+              {dayMetrics.levels.map((segments, idx) => (
+                <EventRow
+                  key={idx}
+                  segments={segments}
+                  slotMetrics={dayMetrics}
+                  isPreview={false}
+                />
+              ))}
+
+              {!!dayMetrics.extra.length && (
+                <EventEndingRow
+                  segments={dayMetrics.extra}
+                  slots={dayMetrics.slots}
+                  now={props.today}
+                />
+              )}
+            </>
+          )}
         </WeekRowContainer>
       </div>
     </div>

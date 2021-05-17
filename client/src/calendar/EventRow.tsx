@@ -1,8 +1,6 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import clsx from 'clsx'
 import { Portal, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from '@chakra-ui/react'
-
-import * as dates from '../util/dates'
 
 import { EventSegment } from './utils/eventLevels'
 import DateSlotMetrics from './utils/DateSlotMetrics'
@@ -13,9 +11,9 @@ import Event from '../models/Event'
 import { CalendarsContext } from '@/contexts/CalendarsContext'
 import { EventActionContext } from './EventActionContext'
 
-function EventItem(props: { event: Event; isPreview: boolean; now: Date }) {
-  const calendarsContext = useContext(CalendarsContext)
-  const eventActionContext = useContext(EventActionContext)
+export function EventItem(props: { event: Event; isPreview: boolean; now: Date }) {
+  const calendarsContext = React.useContext(CalendarsContext)
+  const eventActionContext = React.useContext(EventActionContext)
   const { event } = props
   const calendar = calendarsContext.getDefaultCalendar(event.calendar_id)
   const eventTitle = Event.getDefaultTitle(event)
@@ -53,7 +51,7 @@ function EventItem(props: { event: Event; isPreview: boolean; now: Date }) {
     eventDisplay = (
       <div
         className={clsx('cal-event-row', props.isPreview && 'cal-event-preview')}
-        style={{ alignItems: 'center' }}
+        style={{ alignItems: 'center', color: Event.getForegroundColor(event, props.now) }}
         onMouseDown={handleStartDragging}
         onTouchStart={handleStartDragging}
         onClick={handleClickEvent}
@@ -95,23 +93,23 @@ interface IProps {
   isPreview: boolean
 }
 
+export function renderSpan(slots: number, len: number, key: string, content?: React.ReactElement) {
+  const flexBasis = (Math.abs(len) / slots) * 100 + '%'
+  return (
+    <div
+      style={{ flexBasis: flexBasis, maxWidth: flexBasis }}
+      className="cal-row-segment"
+      key={key}
+    >
+      {content}
+    </div>
+  )
+}
+
 /**
  * An event row which can span multiple days.
  */
 export default function EventRow(props: IProps) {
-  function renderSpan(slots: number, len: number, key: string, content?: React.ReactElement) {
-    const flexBasis = (Math.abs(len) / slots) * 100 + '%'
-    return (
-      <div
-        style={{ flexBasis: flexBasis, maxWidth: flexBasis }}
-        className="cal-row-segment"
-        key={key}
-      >
-        {content}
-      </div>
-    )
-  }
-
   let lastEnd = 1
   const numSlots = props.slotMetrics.range.length
   const now = new Date()
