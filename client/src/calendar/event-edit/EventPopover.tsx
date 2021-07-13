@@ -269,7 +269,9 @@ function EventPopover(props: IProps) {
                 borderRadius="sm"
                 fontWeight="normal"
                 colorScheme="primary"
-                onClick={() => setReadOnly(false)}
+                onClick={(e) => {
+                  eventActions.eventDispatch({ type: 'UPDATE_EDIT_MODE', payload: 'FULL_EDIT' })
+                }}
               >
                 Edit
               </Button>
