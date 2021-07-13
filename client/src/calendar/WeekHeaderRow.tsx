@@ -16,8 +16,9 @@ interface IProps {
 const CELL_WRAPPER_CLS = 'cal-allday-cell'
 
 /**
- * Top of week view.
- * Merge with WeekRow?
+ * Top of week view. Similar to WeekRow except there is no limit for number of rows.
+ *
+ * TODO: Merge with WeekRow?
  */
 function WeekHeaderRow(props: IProps) {
   const dayMetrics = new DateSlotMetrics(props.range, props.events, 8, 1)

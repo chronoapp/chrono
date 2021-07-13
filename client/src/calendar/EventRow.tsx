@@ -67,14 +67,21 @@ export function EventItem(props: { event: Event; isPreview: boolean; now: Date }
 
   const dnd = eventActionContext.dragAndDropAction
   const isDragging = dnd && dnd.interacting && dnd.event.id === event.id
-  const isEditing = eventActionContext.eventState.editingEvent?.id === event.id
+  const editingEvent = eventActionContext.eventState.editingEvent
+  const isEditing = editingEvent?.id === event.id && editingEvent?.editMode !== 'FULL_EDIT'
 
   if (isEditing && !isDragging) {
     return (
-      <Popover isOpen={true} isLazy={true}>
+      <Popover isOpen={true}>
         <PopoverTrigger>{eventDisplay}</PopoverTrigger>
         <Portal>
-          <PopoverContent w="25em">
+          <PopoverContent
+            w="25em"
+            onMouseDown={(e) => {
+              // Prevents popover closing before edit event is pressed.
+              e.preventDefault()
+            }}
+          >
             <PopoverArrow />
             <EventPopover event={event} />
           </PopoverContent>
