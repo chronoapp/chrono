@@ -405,7 +405,7 @@ function EventPopover(props: IProps) {
 
             <Checkbox
               ml="1"
-              checked={eventFields.allDay}
+              defaultIsChecked={eventFields.allDay}
               colorScheme="primary"
               onChange={(e) => {
                 const isAllDay = e.target.checked

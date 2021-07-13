@@ -65,7 +65,7 @@ export default function EventEndingRow(props: IProps) {
     let count = eventsInSlot(segments, slot).length
 
     return (
-      <Popover isLazy={true}>
+      <Popover isLazy={true} closeOnBlur={false}>
         <PopoverTrigger>
           <Text
             color="gray.700"

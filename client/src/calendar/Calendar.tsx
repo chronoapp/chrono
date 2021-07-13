@@ -60,6 +60,8 @@ function Calendar() {
       const end = month[month.length - 1]
       loadEvents(start, end)
     }
+
+    // TODO: Cancel selections if the previous display is different (i.e. transition from month to week view)
   }
 
   async function loadEvents(start: Date, end: Date) {

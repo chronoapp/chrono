@@ -229,7 +229,7 @@ export default function EventEditFull(props: { event: Event }) {
 
             <ContentEditable
               className="cal-event-edit-description"
-              html={event.description}
+              html={event.description || ''}
               onChange={(e) => setEvent({ ...event, description: e.target.value })}
               style={{ minHeight: '4em' }}
             />

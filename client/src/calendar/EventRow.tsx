@@ -75,13 +75,7 @@ export function EventItem(props: { event: Event; isPreview: boolean; now: Date }
       <Popover isOpen={true}>
         <PopoverTrigger>{eventDisplay}</PopoverTrigger>
         <Portal>
-          <PopoverContent
-            w="25em"
-            onMouseDown={(e) => {
-              // Prevents popover closing before edit event is pressed.
-              e.preventDefault()
-            }}
-          >
+          <PopoverContent w="25em">
             <PopoverArrow />
             <EventPopover event={event} />
           </PopoverContent>
