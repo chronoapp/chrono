@@ -425,16 +425,40 @@ function EventPopover(props: IProps) {
               defaultIsChecked={eventFields.allDay}
               colorScheme="primary"
               onChange={(e) => {
+                let updatedFields
                 const isAllDay = e.target.checked
+
                 if (isAllDay) {
                   const start = dates.startOf(eventFields.start, 'day')
                   const end = dates.endOf(eventFields.start, 'day')
-                  setEventFields({ ...eventFields, allDay: isAllDay, start, end, fullDays: 1 })
+
+                  updatedFields = {
+                    ...eventFields,
+                    allDay: isAllDay,
+                    start,
+                    end,
+                    startDay: fullDayFormat(start),
+                    endDay: fullDayFormat(end),
+                  }
                 } else {
                   const start = dates.startOf(eventFields.start, 'day')
                   const end = dates.add(start, 1, 'hours')
-                  setEventFields({ ...eventFields, allDay: isAllDay, start, end })
+
+                  updatedFields = {
+                    ...eventFields,
+                    allDay: isAllDay,
+                    start,
+                    end,
+                    startDay: null,
+                    endDay: null,
+                  }
                 }
+
+                setEventFields(updatedFields)
+                eventActions.eventDispatch({
+                  type: 'UPDATE_EDIT_EVENT',
+                  payload: getUpdatedEvent(props.event, updatedFields),
+                })
               }}
             >
               All Day

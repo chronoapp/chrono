@@ -206,31 +206,38 @@ export default function EventEditFull(props: { event: Event }) {
               onChange={(e) => {
                 const isAllDay = e.target.checked
 
+                let updatedEvent
                 if (isAllDay) {
                   const start = dates.startOf(event.start, 'day')
                   const end = dates.endOf(event.start, 'day')
 
-                  setEvent({
+                  updatedEvent = {
                     ...event,
                     all_day: isAllDay,
                     start,
                     end,
                     start_day: fullDayFormat(start),
                     end_day: fullDayFormat(end),
-                  })
+                  }
                 } else {
                   const start = dates.startOf(event.start, 'day')
                   const end = dates.add(start, 1, 'hours')
 
-                  setEvent({
+                  updatedEvent = {
                     ...event,
                     all_day: isAllDay,
                     start,
                     end,
                     start_day: null,
                     end_day: null,
-                  })
+                  }
                 }
+
+                setEvent(updatedEvent)
+                eventActions.eventDispatch({
+                  type: 'UPDATE_EDIT_EVENT',
+                  payload: updatedEvent,
+                })
               }}
             >
               All day
