@@ -14,6 +14,7 @@ import {
 
 import produce from 'immer'
 import * as dates from '@/util/dates'
+import moment from 'moment'
 
 import { MdClose } from 'react-icons/md'
 import { FiMail } from 'react-icons/fi'
@@ -24,8 +25,7 @@ import { EventActionContext } from '@/calendar/EventActionContext'
 import { CalendarsContext } from '@/contexts/CalendarsContext'
 import Event from '@/models/Event'
 import { Label } from '@/models/Label'
-
-import { format } from '@/util/localizer'
+import { format, fullDayFormat } from '@/util/localizer'
 import ContentEditable from '@/lib/ContentEditable'
 import { LabelTag } from '@/components/LabelTag'
 import { LabelContext, LabelContextType } from '@/contexts/LabelsContext'
@@ -50,8 +50,8 @@ export default function EventEditFull(props: { event: Event }) {
 
   // Event data and overrides
   const [event, setEvent] = useState(props.event)
-  const [tmpFullDays, setFullDays] = useState(1)
-  // const [rrules, setRrules] = useState<RRule | undefined>()
+
+  const defaultDays = event.all_day ? Math.max(dates.diff(event.end, event.start, 'day'), 1) : 1
   const [recurrences, setRecurrences] = useState<string | null>(
     event.recurrences ? event.recurrences.join('\n') : null
   )
@@ -136,15 +136,43 @@ export default function EventEditFull(props: { event: Event }) {
               className="input is-small"
               type="date"
               value={format(event.start, 'YYYY-MM-DD')}
-              onChange={(e) => console.log(e.target.value)}
+              onChange={(e) => {
+                const m = moment(e.target.value, 'YYYY-MM-DD')
+                const duration = dates.diff(event.end, event.start, 'minutes')
+                const start = dates.merge(m.toDate(), event.start)
+                const end = dates.add(start, duration, 'minutes')
+
+                const updatedEvent = event.all_day
+                  ? {
+                      ...event,
+                      start,
+                      end,
+                      start_day: fullDayFormat(start),
+                      end_day: fullDayFormat(end),
+                    }
+                  : { ...event, start, end }
+
+                setEvent(updatedEvent)
+                eventActions.setSelectedDate(start)
+                eventActions.eventDispatch({
+                  type: 'UPDATE_EDIT_EVENT',
+                  payload: updatedEvent,
+                })
+              }}
               style={{ flex: 1 }}
             />
             {event.all_day && (
               <TimeSelectFullDay
-                days={tmpFullDays}
+                days={defaultDays}
                 startDate={event.start}
                 onSelectNumDays={(days) => {
-                  setFullDays(days)
+                  const endDate = dates.add(event.start, days, 'day')
+                  const updatedEvent = {
+                    ...event,
+                    end: endDate,
+                    end_day: fullDayFormat(endDate),
+                  }
+                  setEvent(updatedEvent)
                 }}
               />
             )}
@@ -174,18 +202,34 @@ export default function EventEditFull(props: { event: Event }) {
 
             <Checkbox
               ml="1"
-              checked={event.all_day}
+              defaultChecked={event.all_day}
               onChange={(e) => {
                 const isAllDay = e.target.checked
+
                 if (isAllDay) {
                   const start = dates.startOf(event.start, 'day')
                   const end = dates.endOf(event.start, 'day')
-                  setEvent({ ...event, all_day: isAllDay, start, end })
-                  setFullDays(1)
+
+                  setEvent({
+                    ...event,
+                    all_day: isAllDay,
+                    start,
+                    end,
+                    start_day: fullDayFormat(start),
+                    end_day: fullDayFormat(end),
+                  })
                 } else {
                   const start = dates.startOf(event.start, 'day')
                   const end = dates.add(start, 1, 'hours')
-                  setEvent({ ...event, all_day: isAllDay, start, end })
+
+                  setEvent({
+                    ...event,
+                    all_day: isAllDay,
+                    start,
+                    end,
+                    start_day: null,
+                    end_day: null,
+                  })
                 }
               }}
             >

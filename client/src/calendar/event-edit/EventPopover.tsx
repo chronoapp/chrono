@@ -57,6 +57,8 @@ export class EventFields {
     readonly labels: Label[],
     readonly calendarId: string,
     readonly allDay: boolean,
+    readonly startDay: string | null,
+    readonly endDay: string | null,
     readonly fullDays: number
   ) {}
 }
@@ -76,9 +78,15 @@ function EventPopover(props: IProps) {
       props.event.labels,
       getSelectedCalendar(props.event.calendar_id)?.id,
       props.event.all_day,
-      props.event.all_day ? dates.diff(props.event.end, props.event.start, 'day') : 0
+      props.event.start_day,
+      props.event.end_day,
+      props.event.all_day ? dates.diff(props.event.end, props.event.start, 'day') : 1
     )
   )
+
+  const defaultDays = eventFields.allDay
+    ? Math.max(dates.diff(eventFields.end, eventFields.start, 'day'), 1)
+    : 1
 
   const isExistingEvent = props.event.id !== UNSAVED_EVENT_ID
   const contentEditableRef = createRef<HTMLInputElement>()
@@ -107,27 +115,17 @@ function EventPopover(props: IProps) {
   }
 
   function getUpdatedEvent(e: Event, fields: EventFields) {
-    const fullDayEventDetails = fields.allDay
-      ? {
-          all_day: true,
-          start_day: fullDayFormat(fields.start),
-          end_day: fullDayFormat(dates.add(fields.start, fields.fullDays, 'day')),
-        }
-      : {
-          all_day: false,
-          start: fields.start,
-          end: fields.end,
-          start_day: null,
-          end_day: null,
-        }
-
     const event = {
       ...e,
       title: fields.title,
       description: fields.description,
       calendar_id: fields.calendarId,
       labels: fields.labels,
-      ...fullDayEventDetails,
+      all_day: fields.allDay,
+      start: fields.start,
+      end: fields.end,
+      start_day: fields.startDay,
+      end_day: fields.endDay,
     }
 
     return event
@@ -356,12 +354,20 @@ function EventPopover(props: IProps) {
               onChange={(e) => {
                 const m = moment(e.target.value, 'YYYY-MM-DD')
                 const duration = dates.diff(eventFields.end, eventFields.start, 'minutes')
-
                 const start = dates.merge(m.toDate(), eventFields.start)
                 const end = dates.add(start, duration, 'minutes')
-                const updatedFields = { ...eventFields, start, end }
-                setEventFields(updatedFields)
 
+                const updatedFields = eventFields.allDay
+                  ? {
+                      ...eventFields,
+                      start,
+                      end,
+                      startDay: fullDayFormat(start),
+                      endDay: fullDayFormat(end),
+                    }
+                  : { ...eventFields, start, end }
+
+                setEventFields(updatedFields)
                 eventActions.setSelectedDate(start)
                 eventActions.eventDispatch({
                   type: 'UPDATE_EDIT_EVENT',
@@ -375,10 +381,21 @@ function EventPopover(props: IProps) {
             <Box w="1.7em" />
             {eventFields.allDay && (
               <TimeSelectFullDay
-                days={eventFields.fullDays}
+                days={defaultDays}
                 startDate={eventFields.start}
                 onSelectNumDays={(days) => {
-                  setEventFields({ ...eventFields, fullDays: days })
+                  const endDate = dates.add(eventFields.start, days, 'day')
+                  const updatedEventFields = {
+                    ...eventFields,
+                    end: endDate,
+                    endDay: fullDayFormat(endDate),
+                  }
+                  setEventFields(updatedEventFields)
+
+                  eventActions.eventDispatch({
+                    type: 'UPDATE_EDIT_EVENT',
+                    payload: getUpdatedEvent(props.event, updatedEventFields),
+                  })
                 }}
               />
             )}
