@@ -58,8 +58,7 @@ export class EventFields {
     readonly calendarId: string,
     readonly allDay: boolean,
     readonly startDay: string | null,
-    readonly endDay: string | null,
-    readonly fullDays: number
+    readonly endDay: string | null
   ) {}
 }
 
@@ -79,8 +78,7 @@ function EventPopover(props: IProps) {
       getSelectedCalendar(props.event.calendar_id)?.id,
       props.event.all_day,
       props.event.start_day,
-      props.event.end_day,
-      props.event.all_day ? dates.diff(props.event.end, props.event.start, 'day') : 1
+      props.event.end_day
     )
   )
 
