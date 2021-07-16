@@ -2,7 +2,8 @@ from uuid import uuid4
 from typing import Optional, Dict, Tuple, List, Any
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -156,14 +157,10 @@ def syncGoogleCalendars(user: User):
 async def syncAllEvents(userId: int, fullSync: bool = False):
     """Syncs events from google calendar."""
     async with async_session_maker() as session:
-        stmt = (
-            select(User)
-            .where(User.id == userId)
-            .options(selectinload(User.credentials))
-            .options(selectinload(User.calendars))
-        )
+        stmt = select(User).where(User.id == userId).options(selectinload(User.credentials))
         user = (await session.execute(stmt)).scalar()
         syncGoogleCalendars(user)
+
         await session.commit()
 
         for calendar in user.calendars:
@@ -173,9 +170,9 @@ async def syncAllEvents(userId: int, fullSync: bool = False):
         await session.commit()
 
 
-async def syncCalendar(calendar: Calendar, session: Session, fullSync: bool = False) -> None:
+async def syncCalendar(calendar: Calendar, session: AsyncSession, fullSync: bool = False) -> None:
     service = getService(calendar.user)
-    createWebhook(calendar)
+    await createWebhook(calendar, session)
 
     end = (datetime.utcnow() + timedelta(days=30)).isoformat() + 'Z'
     nextPageToken = None
@@ -237,14 +234,17 @@ async def getEventWithCache(
     if googleEventId in addedEventsCache:
         return addedEventsCache[googleEventId]
     else:
-        stmt = select(Event).where(Event.g_id == googleEventId, Event.user_id == user.id)
+        stmt = (
+            select(Event)
+            .where(Event.g_id == googleEventId, Event.user_id == user.id)
+        )
         result = await session.execute(stmt)
+
         return result.scalar()
-        # return user.events.filter(Event.g_id == googleEventId).one_or_none()
 
 
 async def syncEventsToDb(
-    calendar: Calendar, eventItems: List[Dict[str, Any]], session: Session
+    calendar: Calendar, eventItems: List[Dict[str, Any]], session: AsyncSession
 ) -> None:
     """Sync items from google to the calendar.
 
@@ -272,23 +272,34 @@ async def syncEventsToDb(
                 calendar, existingEvent, eventItem, addedEventsCache, session
             )
 
-            # Auto Labelling
-            if event.title:
-                stmt = (
-                    select(LabelRule)
-                    .where(LabelRule.user_id == user.id)
-                    .filter(LabelRule.text.ilike(event.title))
-                )
-                result = await session.execute(stmt)
-                labelRules = result.scalars().all()
-
-                for rule in labelRules:
-                    if rule.label not in event.labels:
-                        event.labels.append(rule.label)
+            await autoLabelEvents(event, user, session)
 
             addedEventsCache[event.g_id] = event
 
     await session.commit()
+
+
+async def autoLabelEvents(event: Event, user: User, session: AsyncSession):
+    """Auto adds labels based on the LabelRule."""
+
+    if event.title:
+        stmt = (
+            select(LabelRule)
+            .where(LabelRule.user_id == user.id)
+            .filter(LabelRule.text.ilike(event.title))
+            .options(selectinload(LabelRule.label))
+        )
+        result = await session.execute(stmt)
+        labelRules = result.scalars().all()
+
+        if len(labelRules) > 0:
+            # Makes sure labels are refreshed.
+            await session.refresh(event)
+
+            for rule in labelRules:
+                print(rule.label)
+                if rule.label not in event.labels:
+                    event.labels.append(rule.label)
 
 
 async def syncDeletedEvent(
@@ -296,7 +307,7 @@ async def syncDeletedEvent(
     existingEvent: Optional[Event],
     eventItem: Dict[str, Any],
     addedEventsCache: Dict[str, Event],
-    session: Session,
+    session: AsyncSession,
 ):
     """Sync deleted events to the DB.
     If the base event has not been created at this point, add a temporary event to the DB
@@ -352,7 +363,7 @@ async def getOrCreateBaseRecurringEvent(
     calendar: Calendar,
     addedEventsCache: Dict[str, Event],
     googleRecurringEventId: str,
-    session: Session,
+    session: AsyncSession,
 ) -> Event:
     """Retrieves the existing base recurring event, or make a stub event in case
     the parent has not been created yet. For the stub parent event, we only need a primary ID,
@@ -395,7 +406,7 @@ async def syncCreatedOrUpdatedGoogleEvent(
     existingEvent: Optional[Event],
     eventItem: Dict[str, Any],
     addedEventsCache: Dict[str, Event],
-    session: Session,
+    session: AsyncSession,
 ) -> Event:
     """Syncs new event, or update existing from Google.
     For recurring events, translate the google reference to the internal event reference.
@@ -549,7 +560,7 @@ def updateCalendar(user: User, calendar: Calendar):
     return getService(user).calendarList().patch(calendarId=calendar.id, body=body).execute()
 
 
-def createWebhook(calendar: Calendar) -> None:
+async def createWebhook(calendar: Calendar, session) -> None:
     """Create a webhook for the calendar to watche for event updates."""
     if not config.API_URL:
         logger.debug(f'No API URL specified.')
@@ -557,7 +568,11 @@ def createWebhook(calendar: Calendar) -> None:
 
     # TODO: Fix lazy select
     # Only one webhook per calendar
-    if calendar.webhook:
+
+    stmt = select(Webhook).where(Webhook.calendar_id == calendar.id)
+    webhook = (await session.execute(stmt)).scalar()
+
+    if webhook:
         logger.debug(f'Webhook exists.')
         return
 
@@ -574,7 +589,7 @@ def createWebhook(calendar: Calendar) -> None:
     webhook.calendar = calendar
 
 
-def cancelWebhook(user: User, webhook: Webhook, session: Session):
+def cancelWebhook(user: User, webhook: Webhook, session: AsyncSession):
     body = {'resourceId': webhook.resource_id, 'id': webhook.id}
 
     try:
