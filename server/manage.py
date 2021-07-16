@@ -1,6 +1,8 @@
 import click
 import logging
 import asyncio
+from functools import wraps
+
 
 from sqlalchemy import select
 from app.db.session import async_session_maker
@@ -25,6 +27,14 @@ DEFAULT_CATEGORIES = [
 ]
 
 
+def click_coroutine(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(f(*args, **kwargs))
+
+    return wrapper
+
+
 @main.command()
 @click.argument('userid')
 def add_labels(userid):
@@ -47,11 +57,12 @@ def add_labels(userid):
 
 
 @main.command()
-@click.argument('userid')
-def sync_cal(userid):
+@click.argument('userid', type=click.INT)
+@click_coroutine
+async def sync_cal(userid: int):
     from app.calendar.google import syncAllEvents
 
-    syncAllEvents(userid, fullSync=False)
+    await syncAllEvents(userid, fullSync=False)
 
 
 @main.command()
