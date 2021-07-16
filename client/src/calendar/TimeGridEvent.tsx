@@ -93,10 +93,21 @@ function TimeGridEvent(props: IProps) {
     )
   }
 
-  const displayStart: Date = dates.max(event.start, dates.startOf(event.end, 'day'))
-  const displayEnd: Date = dates.min(event.end, dates.endOf(event.start, 'day'))
+  /**
+   * Gets the duration of the event in minutes, accounting for the cut-off at
+   * the end of the day.
+   */
+  function getEventDurationMinutes(): number {
+    if (props.isTailSegment || props.style.top == 0) {
+      const startOfDay: Date = dates.startOf(event.end, 'day')
+      return (event.end.getTime() - startOfDay.getTime()) / 60000
+    } else {
+      const displayEnd: Date = dates.min(event.end, dates.endOf(event.start, 'day'))
+      return (displayEnd.getTime() - event.start.getTime()) / 60000
+    }
+  }
 
-  const diffMin = (displayEnd.getTime() - displayStart.getTime()) / 60000
+  const diffMin = getEventDurationMinutes()
   const displayTitle = Event.getDefaultTitle(event)
 
   const tagColors = event.labels.map((label, idx) => (
