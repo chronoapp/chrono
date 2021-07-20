@@ -29,6 +29,9 @@ class User(Base):
 
     timezone = Column(String(255), nullable=False, server_default='UTC')
 
+    def __repr__(self):
+        return f'<User {self.id=} {self.email=}/>'
+
     def __init__(self, email: str, name: str, pictureUrl: Optional[str]):
         self.email = email
         self.name = name
