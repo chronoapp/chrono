@@ -34,6 +34,8 @@ services:
   # PostgreSQL database (Testing)
   postgres_test:
     image: postgres:latest
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
 
 volumes:
   postgres_db_data: # PostgreSQL data volume
