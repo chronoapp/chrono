@@ -5,7 +5,7 @@ from functools import wraps
 
 
 from sqlalchemy import select
-from app.db.session import async_session_maker
+from app.db.session import AsyncSession
 from app.db.models import User, Label
 
 
@@ -39,7 +39,7 @@ def click_coroutine(f):
 @click.argument('userid')
 def add_labels(userid):
     async def run():
-        async with async_session_maker.begin() as session:
+        async with AsyncSession() as session:
             stmt = select(User).where(User.id == int(userid))
             result = await session.execute(stmt)
             user = result.scalar()

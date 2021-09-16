@@ -12,7 +12,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-from app.db.session import async_session_maker
+from app.db.session import AsyncSession
 from app.db.models import User, Event, LabelRule, Calendar, Webhook
 from app.core.logger import logger
 from app.core import config
@@ -156,7 +156,7 @@ def syncGoogleCalendars(user: User):
 
 async def syncAllEvents(userId: int, fullSync: bool = False):
     """Syncs events from google calendar."""
-    async with async_session_maker() as session:
+    async with AsyncSession() as session:
         stmt = select(User).where(User.id == userId).options(selectinload(User.credentials))
         user = (await session.execute(stmt)).scalar()
         syncGoogleCalendars(user)

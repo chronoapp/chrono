@@ -118,6 +118,7 @@ async def googleAuthCallback(authData: AuthData, session: AsyncSession = Depends
     await session.commit()
 
     authToken = getAuthToken(user)
+
     return {'token': authToken}
 
 
