@@ -90,9 +90,7 @@ class InputError(Error):
     pass
 
 
-def recurrenceToRuleSet(
-    recurrence: str, timezone: str, start: datetime, startDay: Optional[str]
-) -> rruleset:
+def recurrenceToRuleSet(recurrence: str, timezone: str, start: datetime, startDay: Optional[str]) -> rruleset:
     """Gets the rrule objects from recurrence string array
     Converts to the local datetime in the timezone.
     """
@@ -124,11 +122,7 @@ def getRRule(
 
     count = None
     if not until:
-        count = (
-            min(MAX_RECURRING_EVENT_COUNT, occurrences)
-            if occurrences
-            else MAX_RECURRING_EVENT_COUNT
-        )
+        count = min(MAX_RECURRING_EVENT_COUNT, occurrences) if occurrences else MAX_RECURRING_EVENT_COUNT
 
     if count:
         rule = rrule(dtstart=startDate, freq=freq, interval=interval, count=count)
@@ -187,18 +181,14 @@ def getRecurringEventId(baseEventId: str, startDate: datetime, isAllDay: bool) -
     """Returns a composite ID for the recurring event, based on the original
     event ID and the start date.
     """
-    dtStr = startDate.astimezone(ZoneInfo('UTC')).strftime(
-        "%Y%m%d" if isAllDay else "%Y%m%dT%H%M%SZ"
-    )
+    dtStr = startDate.astimezone(ZoneInfo('UTC')).strftime("%Y%m%d" if isAllDay else "%Y%m%dT%H%M%SZ")
     return f'{baseEventId}_{dtStr}'
 
 
 async def getAllExpandedRecurringEventsList(
     user: User, startDate: datetime, endDate: datetime, session
 ) -> List[EventInDBVM]:
-    expandedEvents = [
-        i async for i in getAllExpandedRecurringEvents(user, startDate, endDate, session)
-    ]
+    expandedEvents = [i async for i in getAllExpandedRecurringEvents(user, startDate, endDate, session)]
 
     return sorted(
         expandedEvents,
@@ -255,16 +245,12 @@ async def getAllExpandedRecurringEvents(
     eventOverridesMap: Dict[str, Event] = {e.id: e for e in result.scalars()}
 
     result = await session.execute(
-        user.getRecurringEventsStmt()
-        .where(Event.start <= endDate)
-        .options(selectinload(Event.calendar))
+        user.getRecurringEventsStmt().where(Event.start <= endDate).options(selectinload(Event.calendar))
     )
     baseRecurringEvents = result.scalars().all()
 
     for baseRecurringEvent in baseRecurringEvents:
-        for e in getExpandedRecurringEvents(
-            user, baseRecurringEvent, eventOverridesMap, startDate, endDate
-        ):
+        for e in getExpandedRecurringEvents(user, baseRecurringEvent, eventOverridesMap, startDate, endDate):
             yield e
 
 
@@ -309,9 +295,7 @@ def getExpandedRecurringEvents(
 
         if not untilIsBeforeStartDate:
             # Expand events, inclusive
-            dates = ruleSet.between(
-                startDate - timedelta(seconds=1), endDate + timedelta(seconds=1)
-            )
+            dates = ruleSet.between(startDate - timedelta(seconds=1), endDate + timedelta(seconds=1))
 
             for date in islice(dates, MAX_RECURRING_EVENT_COUNT):
                 start = date.replace(tzinfo=ZoneInfo(timezone))
