@@ -62,6 +62,13 @@ export function getAuthToken(req?: any) {
   return cookies.get('auth_token') || ''
 }
 
+export function getHeaders(authToken: string) {
+  return {
+    'Content-Type': 'application/json',
+    Authorization: authToken,
+  }
+}
+
 export function getGoogleOauthUrl(): string {
   return `${API_URL}/oauth/google/auth`
 }
@@ -82,6 +89,9 @@ export function signOut() {
 export async function authenticate(code: string, state: string) {
   return fetch(`${API_URL}/oauth/google/token`, {
     method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
     body: JSON.stringify({
       code,
       state,
@@ -98,6 +108,7 @@ export async function createCalendar(
   timezone?: string,
   foregroundColor: string = '#ffffff'
 ): Promise<Calendar> {
+
   return fetch(`${API_URL}/calendars/`, {
     method: 'POST',
     body: JSON.stringify({
@@ -108,7 +119,7 @@ export async function createCalendar(
       source,
       foregroundColor,
     }),
-    headers: { Authorization: authToken },
+    headers: getHeaders(authToken),
   })
     .then(handleErrors)
     .then((resp) => {
@@ -118,7 +129,7 @@ export async function createCalendar(
 
 export async function getCalendars(authToken: string): Promise<Calendar[]> {
   return fetch(`${API_URL}/calendars/`, {
-    headers: { Authorization: authToken },
+    headers: getHeaders(authToken),
   })
     .then(handleErrors)
     .then((resp) => {
@@ -130,7 +141,7 @@ export async function putCalendar(calendar: Calendar, authToken: string): Promis
   return fetch(`${API_URL}/calendars/${calendar.id}`, {
     method: 'PUT',
     body: JSON.stringify(calendar),
-    headers: { Authorization: authToken },
+    headers: getHeaders(authToken),
   })
     .then(handleErrors)
     .then((resp) => {
@@ -141,7 +152,7 @@ export async function putCalendar(calendar: Calendar, authToken: string): Promis
 export async function deleteCalendar(calendarId: string, authToken: string) {
   return fetch(`${API_URL}/calendars/${calendarId}`, {
     method: 'DELETE',
-    headers: { Authorization: authToken },
+    headers: getHeaders(authToken),
   }).then(handleErrors)
 }
 
@@ -164,7 +175,7 @@ export async function getEvents(
     .join('&')
 
   return fetch(`${API_URL}/events/?${queryString}`, {
-    headers: { Authorization: authToken },
+    headers: getHeaders(authToken),
   })
     .then(handleErrors)
     .then((resp) => {
@@ -175,7 +186,7 @@ export async function getEvents(
 export async function createEvent(authToken: string, event: Event): Promise<Event> {
   return fetch(`${API_URL}/events/`, {
     method: 'POST',
-    headers: { Authorization: authToken },
+    headers: { Authorization: authToken, 'Content-Type': 'application/json' },
     body: JSON.stringify(event),
   })
     .then(handleErrors)
@@ -185,7 +196,7 @@ export async function createEvent(authToken: string, event: Event): Promise<Even
 export async function updateEvent(authToken: string, event: Event): Promise<Event> {
   return fetch(`${API_URL}/events/${event.id}`, {
     method: 'PUT',
-    headers: { Authorization: authToken },
+    headers: getHeaders(authToken),
     body: JSON.stringify(event),
   })
     .then(handleErrors)
@@ -195,14 +206,14 @@ export async function updateEvent(authToken: string, event: Event): Promise<Even
 export async function deleteEvent(authToken: string, eventId: string): Promise<{}> {
   return fetch(`${API_URL}/events/${eventId}`, {
     method: 'DELETE',
-    headers: { Authorization: authToken },
+    headers: getHeaders(authToken),
     body: JSON.stringify(event),
   }).then(handleErrors)
 }
 
 export async function searchEvents(authToken: string, query: string): Promise<Event[]> {
   return fetch(`${API_URL}/events/?query=${query}`, {
-    headers: { Authorization: authToken },
+    headers: getHeaders(authToken),
   })
     .then(handleErrors)
     .then((resp) => {
@@ -224,7 +235,7 @@ export async function getTrends(
       start
     )}&end=${formatDateTime(end)}`,
     {
-      headers: { Authorization: authToken },
+      headers: getHeaders(authToken),
     }
   ).then(handleErrors)
 }
@@ -233,7 +244,7 @@ export async function getTrends(
 
 export async function getLabels(authToken: string, title: string = ''): Promise<Label[]> {
   return fetch(`${API_URL}/labels/?title=${title}`, {
-    headers: { Authorization: authToken },
+    headers: getHeaders(authToken),
   })
     .then(handleErrors)
     .then((resp) => resp.map((label: any) => Label.fromJson(label)))
@@ -253,7 +264,7 @@ export async function createLabel(
   return fetch(`${API_URL}/labels/`, {
     method: 'POST',
     body: JSON.stringify(label),
-    headers: { Authorization: authToken },
+    headers: getHeaders(authToken),
   })
     .then(handleErrors)
     .then(Label.fromJson)
@@ -263,7 +274,7 @@ export async function putLabel(label: Label, authToken: string): Promise<Label> 
   return fetch(`${API_URL}/labels/${label.id}`, {
     method: 'PUT',
     body: JSON.stringify(label),
-    headers: { Authorization: authToken },
+    headers: getHeaders(authToken),
   })
     .then(handleErrors)
     .then(Label.fromJson)
@@ -272,7 +283,7 @@ export async function putLabel(label: Label, authToken: string): Promise<Label> 
 export async function deleteLabel(labelId: number, authToken: string): Promise<Label> {
   return fetch(`${API_URL}/labels/${labelId}`, {
     method: 'DELETE',
-    headers: { Authorization: authToken },
+    headers: getHeaders(authToken),
   })
     .then(handleErrors)
     .then(Label.fromJson)
@@ -282,7 +293,7 @@ export async function putLabels(labels: Label[], authToken: string): Promise<Lab
   return fetch(`${API_URL}/labels/`, {
     method: 'PUT',
     body: JSON.stringify(labels),
-    headers: { Authorization: authToken },
+    headers: getHeaders(authToken),
   })
     .then(handleErrors)
     .then((labels) => labels.map((label) => Label.fromJson(label)))
@@ -296,7 +307,7 @@ export async function getLabelRules(
   authToken: string
 ): Promise<LabelRule[]> {
   return fetch(`${API_URL}/label_rules/?text=${labelText}&label_id=${labelId}`, {
-    headers: { Authorization: authToken },
+    headers: getHeaders(authToken),
   })
     .then(handleErrors)
     .then((resp) => resp.map((rule: any) => LabelRule.fromJson(rule)))
@@ -306,7 +317,7 @@ export async function putLabelRule(labelRule: LabelRule, authToken: string): Pro
   return fetch(`${API_URL}/label_rules/`, {
     method: 'PUT',
     body: JSON.stringify(labelRule),
-    headers: { Authorization: authToken },
+    headers: getHeaders(authToken),
   })
     .then(handleErrors)
     .then(LabelRule.fromJson)
@@ -315,6 +326,6 @@ export async function putLabelRule(labelRule: LabelRule, authToken: string): Pro
 export async function syncCalendar(authToken: string) {
   return fetch(`${API_URL}/sync/`, {
     method: 'POST',
-    headers: { Authorization: authToken },
+    headers: getHeaders(authToken),
   }).then(handleErrors)
 }
