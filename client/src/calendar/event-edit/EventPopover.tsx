@@ -614,7 +614,8 @@ function EventPopover(props: IProps) {
       )
 
       updateEvent(updatedParentEvent)
-    } else if (ruleOptions.until) {
+    } else {
+      // Set an until date for the recurrence
       const upToThisEventRules = produce(ruleOptions, (draft) => {
         delete draft['count']
         draft.until = dates.subtract(event.start, 1, 'seconds')
