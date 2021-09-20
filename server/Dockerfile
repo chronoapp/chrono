@@ -1,9 +1,10 @@
-FROM python:3.9-slim
+FROM python:3.9.7-slim
 
-RUN apt-get update -y &&\
-    apt-get install -y emacs supervisor&&\
-    apt-get install -y gcc
-
+RUN apt-get update -y && apt-get install -y\
+    emacs\
+    supervisor\
+    gcc
+    
 RUN python -m pip install poetry
 
 WORKDIR /app
