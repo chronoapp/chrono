@@ -22,7 +22,7 @@ export function eventSegments(event: Event, range: Date[]): EventSegment {
   const slots = dates.diff(first, last, 'day')
 
   let start = dates.max(dates.startOf(event.start, 'day'), first)
-  let end = dates.min(dates.ceil(event.end, 'day'), last)
+  let end = dates.min(dates.endOf(event.end, 'day'), last)
 
   let padding = range.findIndex((x) => dates.eq(x, start, 'day'))
   let span = dates.diff(start, end, 'day')
@@ -85,13 +85,14 @@ export function segsOverlap(seg, otherSegs) {
 export function sortEvents(evtA: Event, evtB: Event) {
   let startSort = +dates.startOf(evtA.start, 'day') - +dates.startOf(evtB.start, 'day')
 
-  let durA = dates.diff(evtA.start, dates.ceil(evtA.end, 'day'), 'day')
-  let durB = dates.diff(evtB.start, dates.ceil(evtB.end, 'day'), 'day')
+  let durA = dates.diff(evtA.start, dates.endOf(evtA.end, 'day'), 'day')
+  let durB = dates.diff(evtB.start, dates.endOf(evtB.end, 'day'), 'day')
 
   return (
     startSort || // sort by start Day first
     Math.max(durB, 1) - Math.max(durA, 1) || // events spanning multiple days go first
     +evtB.all_day - +evtA.all_day || // then allDay single day events
-    +evtA.start - +evtB.start
-  ) // then sort by start time
+    +evtA.start - +evtB.start || // then sort by start time
+    +evtA.end - +evtB.end // then sort by end time
+  )
 }
