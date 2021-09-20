@@ -68,6 +68,9 @@ export function getRecurrenceRules(rulestr: string, initialDate: Date): Partial<
   return firstRule
 }
 
+/**
+ * Cleans up options (cannot set both until and count) and returns a valid RRule.
+ */
 function getRRule(
   recurringOptions: Partial<Options>,
   endCondition: EndCondition
@@ -94,8 +97,19 @@ function getRRule(
   }
 }
 
+function getInitialEndCondition(recurrence: Partial<Options>): EndCondition {
+  if (recurrence.count) {
+    return EndCondition.ByCount
+  } else if (recurrence.until) {
+    return EndCondition.ByEndDate
+  } else {
+    return EndCondition.Never
+  }
+}
+
 /**
- * UI that encapsulates the creation of an RRULE.
+ * UI that encapsulates the creation of an RRULE. Tightly coupled with the rrule
+ * library since it uses its internals.
  *
  * The input recurrences string (e.g. RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=TH,TU)
  * is decontructed to the recurringOptions dict.
@@ -112,8 +126,9 @@ function RecurringEventEditor(props: IProps) {
       : getDefaultOptions(props.initialDate)
   )
 
-  // TODO: set initial
-  const [endCondition, setEndCondition] = useState<EndCondition>(EndCondition.Never)
+  const [endCondition, setEndCondition] = useState<EndCondition>(
+    getInitialEndCondition(recurringOptions)
+  )
   const [isRecurring, setIsRecurring] = useState<boolean>(props.initialRulestr !== null)
 
   const weekRange = getWeekRange(new Date())
