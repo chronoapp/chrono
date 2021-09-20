@@ -1,7 +1,9 @@
-import { immerable } from 'immer'
+import { immerable, produce } from 'immer'
 import { Label } from './Label'
 import { hexToHSL } from '../calendar/utils/Colors'
 import { localFullDate, fullDayFormat } from '../util/localizer'
+
+import * as dates from '@/util/dates'
 
 export const UNSAVED_EVENT_ID = 'unsaved-event'
 export const EMPTY_TITLE = '(No title)'
@@ -110,5 +112,27 @@ export default class Event {
 
   static isParentRecurringEvent(event: Event): boolean {
     return !!event.recurrences && !event.recurring_event_id
+  }
+
+  /**
+   * Creates the base recurring event with the updated recurrence.
+   * Used to update the parent reccurence since we can't do it from the event instances.
+   */
+  static getParentEventWithRecurrence(event: Event, recurrence: string) {
+    if (!event.recurring_event_id) {
+      throw new Error('Not a recurring event.')
+    }
+
+    return produce(event, (draft) => {
+      draft.recurrences = [recurrence]
+      draft.id = event.recurring_event_id!
+      draft.recurring_event_id = null
+      draft.start = event.original_start!
+      draft.end = dates.add(
+        event.original_start!,
+        dates.diff(event.end, event.start, 'minutes'),
+        'minutes'
+      )
+    })
   }
 }

@@ -605,10 +605,14 @@ function EventPopover(props: IProps) {
 
       const upToThisRRule = new RRule(upToThisEventRules)
       const upToThisCount = upToThisRRule.all().length
-      console.log(`New Count: ${upToThisCount}`)
 
-      const upToThisRRuleNoStart = new RRule({ ...upToThisEventRules, dtstart: null })
-      const updatedParentEvent = getParentEventWithRecurrence(
+      const upToThisRRuleNoStart = new RRule({
+        ...upToThisEventRules,
+        dtstart: null,
+        until: null,
+        count: upToThisCount,
+      })
+      const updatedParentEvent = Event.getParentEventWithRecurrence(
         event,
         upToThisRRuleNoStart.toString()
       )
@@ -622,31 +626,10 @@ function EventPopover(props: IProps) {
       })
 
       const recurrence = new RRule(upToThisEventRules).toString()
-      const updatedParentEvent = getParentEventWithRecurrence(event, recurrence)
+      const updatedParentEvent = Event.getParentEventWithRecurrence(event, recurrence)
 
       updateEvent(updatedParentEvent)
     }
-  }
-
-  /**
-   * Creates the base recurring event with the updated recurrence.
-   */
-  function getParentEventWithRecurrence(event: Event, recurrence: string) {
-    if (!event.recurring_event_id) {
-      throw new Error('Not a recurring event.')
-    }
-
-    return produce(event, (draft) => {
-      draft.recurrences = [recurrence]
-      draft.id = event.recurring_event_id!
-      draft.recurring_event_id = null
-      draft.start = event.original_start!
-      draft.end = dates.add(
-        event.original_start!,
-        dates.diff(event.end, event.start, 'minutes'),
-        'minutes'
-      )
-    })
   }
 }
 

@@ -23,7 +23,7 @@ import { FiCalendar, FiAlignLeft, FiClock } from 'react-icons/fi'
 
 import { EventActionContext } from '@/calendar/EventActionContext'
 import { CalendarsContext } from '@/contexts/CalendarsContext'
-import Event from '@/models/Event'
+import Event, { UNSAVED_EVENT_ID } from '@/models/Event'
 import { Label } from '@/models/Label'
 import { format, fullDayFormat } from '@/util/localizer'
 import ContentEditable from '@/lib/ContentEditable'
@@ -46,7 +46,7 @@ export default function EventEditFull(props: { event: Event }) {
   const eventActions = useContext(EventActionContext)
   const calendarContext = useContext(CalendarsContext)
   const { labelState } = useContext<LabelContextType>(LabelContext)
-  const { saveEvent } = useEventService()
+  const { saveEvent, updateEvent } = useEventService()
 
   // Event data and overrides
   const [event, setEvent] = useState(props.event)
@@ -56,7 +56,7 @@ export default function EventEditFull(props: { event: Event }) {
     event.recurrences ? event.recurrences.join('\n') : null
   )
 
-  function getEventData() {
+  function getEventData(): Event {
     if (recurrences) {
       return { ...event, recurrences: [recurrences] }
     } else {
@@ -64,11 +64,25 @@ export default function EventEditFull(props: { event: Event }) {
     }
   }
 
+  async function onSaveEvent() {
+    const eventData = getEventData()
+
+    if (eventData.id !== UNSAVED_EVENT_ID && recurrences) {
+      // Existing event with recurrence => Update the parent event
+      // TODO: UI for edit this ALL Events or This & following events.
+      const parentEventUpdate = Event.getParentEventWithRecurrence(event, recurrences)
+      await updateEvent(parentEventUpdate)
+    } else {
+      // Update the individual event
+      await saveEvent(eventData)
+    }
+  }
+
   const labels: Label[] = Object.values(labelState.labelsById)
 
   return (
     <Modal
-      size="2xl"
+      size="3xl"
       isOpen={true}
       onClose={() => {
         eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
@@ -296,7 +310,7 @@ export default function EventEditFull(props: { event: Event }) {
             Cancel
           </Button>
 
-          <Button colorScheme="primary" onClick={() => saveEvent(getEventData())}>
+          <Button colorScheme="primary" onClick={onSaveEvent}>
             Save changes
           </Button>
         </ModalFooter>
