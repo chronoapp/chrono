@@ -1,6 +1,5 @@
 import React from 'react'
 import clsx from 'clsx'
-import { Box } from '@chakra-ui/react'
 
 import * as dates from '../util/dates'
 import { format } from '../util/localizer'
@@ -19,6 +18,7 @@ interface IProps {
   range: Date[]
   events: Event[]
   loading: boolean
+  showDatesOfWeek: boolean
 }
 
 const MIN_ROWS = 1
@@ -53,6 +53,7 @@ function WeekRow(props: IProps) {
 
     return (
       <div key={`header_${index}`} className={clsx('cal-date-cell', isOffRange && 'cal-off-range')}>
+        {props.showDatesOfWeek && <div>{format(date, 'ddd')}</div>}
         <div className={clsx(isCurrent && 'cal-today-bg-month')}>{label}</div>
       </div>
     )

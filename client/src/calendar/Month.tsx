@@ -30,16 +30,12 @@ function Month(props: IProps) {
         date={props.date}
         key={weekIdx}
         events={eventsForWeek}
+        showDatesOfWeek={weekIdx == 0}
       />
     )
   }
 
-  return (
-    <div className="cal-month-view">
-      <div className="cal-month-header"></div>
-      {weeks.map(renderWeek)}
-    </div>
-  )
+  return <div className="cal-month-view">{weeks.map(renderWeek)}</div>
 }
 
 Month.getTitle = monthTitleFormat
