@@ -66,7 +66,7 @@ type ActionType =
   | { type: 'DELETE_EVENT'; payload: { eventId: string; deleteMethod?: EditRecurringAction } }
   | { type: 'CANCEL_SELECT' }
   | { type: 'UPDATE_EVENT'; payload: { event: Event; replaceEventId: string } }
-  | { type: 'UPDATE_EDIT_EVENT'; payload: Event }
+  | { type: 'UPDATE_EDIT_EVENT'; payload: Partial<Event> }
   | {
       type: 'UPDATE_EDIT_MODE'
       payload: { editMode: EditMode; editRecurringAction: EditRecurringAction }
@@ -182,7 +182,13 @@ function eventReducer(state: EventState, action: ActionType) {
       if (!state.editingEvent) {
         return state
       } else {
-        return { ...state, editingEvent: { ...state.editingEvent, event: action.payload } }
+        return {
+          ...state,
+          editingEvent: {
+            ...state.editingEvent,
+            event: { ...state.editingEvent.event, ...action.payload },
+          },
+        }
       }
 
     case 'UPDATE_EDIT_MODE':
