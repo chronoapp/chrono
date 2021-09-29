@@ -79,13 +79,8 @@ function ConfirmDeleteCalendarAlert(props: {
  * TODO: Update selected calendars to server.
  */
 export default function CalendarsPanel() {
-  const {
-    calendarsById,
-    loadCalendars,
-    updateCalendarSelect,
-    setCalendar,
-    deleteCalendar,
-  } = React.useContext<CalendarsContextType>(CalendarsContext)
+  const { calendarsById, loadCalendars, updateCalendarSelect, setCalendar, deleteCalendar } =
+    React.useContext<CalendarsContextType>(CalendarsContext)
 
   const confirmDeleteCancelRef = React.useRef<HTMLButtonElement>(null)
   const [confirmDeleteCalendarId, setConfirmDeleteCalendarId] = React.useState<undefined | string>(

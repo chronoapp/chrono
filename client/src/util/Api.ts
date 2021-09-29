@@ -192,7 +192,7 @@ export async function createEvent(authToken: string, event: Event): Promise<Even
     .then((resp) => Event.fromJson(resp))
 }
 
-export async function updateEvent(authToken: string, event: Event): Promise<Event> {
+export async function updateEvent(authToken: string, event: Partial<Event>): Promise<Event> {
   return fetch(`${API_URL}/events/${event.id}`, {
     method: 'PUT',
     headers: getHeaders(authToken),

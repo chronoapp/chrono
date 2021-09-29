@@ -22,7 +22,8 @@ import * as dates from '@/util/dates'
 import { MdClose } from 'react-icons/md'
 
 import { format, fullDayFormat } from '@/util/localizer'
-import { addNewLabels } from '../utils/LabelUtils'
+import { addNewLabels } from '@/calendar/utils/LabelUtils'
+import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 
 import Event, { UNSAVED_EVENT_ID } from '@/models/Event'
 import Calendar from '@/models/Calendar'
@@ -657,43 +658,10 @@ function EventPopover(props: IProps) {
       throw Error('Invalid Recurring Event')
     }
 
-    const recurrenceStr = event.recurrences!.join('\n')
-    const ruleOptions = getRecurrenceRules(recurrenceStr, event.original_start)
+    const rules = getSplitRRules(event.recurrences!.join('\n'), event.original_start, event.start)
+    const updatedParentEvent = Event.getParentEventWithRecurrence(event, rules.start.toString())
 
-    if (ruleOptions.count) {
-      const upToThisEventRules = produce(ruleOptions, (draft) => {
-        delete draft['count']
-        draft.until = dates.subtract(event.start, 1, 'seconds')
-        draft.dtstart = event.original_start
-      })
-
-      const upToThisRRule = new RRule(upToThisEventRules)
-      const upToThisCount = upToThisRRule.all().length
-
-      const upToThisRRuleNoStart = new RRule({
-        ...upToThisEventRules,
-        dtstart: null,
-        until: null,
-        count: upToThisCount,
-      })
-      const updatedParentEvent = Event.getParentEventWithRecurrence(
-        event,
-        upToThisRRuleNoStart.toString()
-      )
-
-      updateEvent(updatedParentEvent)
-    } else {
-      // Set an until date for the recurrence
-      const upToThisEventRules = produce(ruleOptions, (draft) => {
-        delete draft['count']
-        draft.until = dates.subtract(event.start, 1, 'seconds')
-      })
-
-      const recurrence = new RRule(upToThisEventRules)
-      const updatedParentEvent = Event.getParentEventWithRecurrence(event, recurrence.toString())
-
-      updateEvent(updatedParentEvent)
-    }
+    return updateEvent(updatedParentEvent)
   }
 }
 

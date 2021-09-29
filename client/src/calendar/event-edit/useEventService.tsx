@@ -44,7 +44,14 @@ export default function useEventService() {
     })
   }
 
-  function updateEvent(event: Event) {
+  /**
+   * Update an existing event and handles updating the recurrence for a parent event.
+   */
+  function updateEvent(event: Partial<Event>, showToast: boolean = true) {
+    if (!event.id) {
+      throw new Error('updateEvent: event does not have id')
+    }
+
     // Update the the editing event copy.
     if (event.id === eventActions.eventState.editingEvent?.id) {
       eventActions.eventDispatch({
@@ -65,23 +72,26 @@ export default function useEventService() {
     }
 
     if (event.id !== UNSAVED_EVENT_ID) {
-      const toastId = toast({
-        render: (props) => <Toast title={'Saving Event..'} showSpinner={true} {...props} />,
-      })
+      const toastId =
+        showToast &&
+        toast({
+          render: (props) => <Toast title={'Saving Event..'} showSpinner={true} {...props} />,
+        })
 
       // TODO: Queue overrides from server to prevent race condition.
-      updateEventReq(getAuthToken(), event)
+      return updateEventReq(getAuthToken(), event)
         .then((event) => {
           if (Event.isParentRecurringEvent(event)) {
             document.dispatchEvent(new CustomEvent(GlobalEvent.refreshCalendar))
           }
 
           toastId && toast.close(toastId)
-          toast({
-            render: (props) => (
-              <Toast title={'Event Updated.'} showSpinner={false} {...props} Icon={FiCheck} />
-            ),
-          })
+          showToast &&
+            toast({
+              render: (props) => (
+                <Toast title={'Event Updated.'} showSpinner={false} {...props} Icon={FiCheck} />
+              ),
+            })
         })
         .catch((err) => {
           // TODO: Revert to Original
@@ -89,13 +99,21 @@ export default function useEventService() {
     }
   }
 
-  function saveEvent(event: Event) {
+  /**
+   * Saves a new event to the server.
+   *
+   * @param event Event to Create / Update
+   * @returns a promise of the updated event.
+   */
+  function saveEvent(event: Event, showToast: boolean = true) {
     const token = getAuthToken()
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
 
-    const toastId = toast({
-      render: (props) => <Toast title={'Saving Event..'} showSpinner={true} {...props} />,
-    })
+    const toastId =
+      showToast &&
+      toast({
+        render: (props) => <Toast title={'Saving Event..'} showSpinner={true} {...props} />,
+      })
 
     const isExistingEvent = event.id !== UNSAVED_EVENT_ID
     if (isExistingEvent) {
@@ -120,11 +138,12 @@ export default function useEventService() {
           }
 
           toastId && toast.close(toastId)
-          toast({
-            render: (props) => (
-              <Toast title={'Event Updated.'} showSpinner={false} {...props} Icon={FiCheck} />
-            ),
-          })
+          showToast &&
+            toast({
+              render: (props) => (
+                <Toast title={'Event Updated.'} showSpinner={false} {...props} Icon={FiCheck} />
+              ),
+            })
         })
     } else {
       eventActions.eventDispatch({ type: 'CREATE_EVENT', payload: event })
@@ -141,11 +160,12 @@ export default function useEventService() {
         }
 
         toastId && toast.close(toastId)
-        toast({
-          render: (props) => (
-            <Toast title={'Event Created.'} showSpinner={false} {...props} Icon={FiCheck} />
-          ),
-        })
+        showToast &&
+          toast({
+            render: (props) => (
+              <Toast title={'Event Created.'} showSpinner={false} {...props} Icon={FiCheck} />
+            ),
+          })
       })
     }
   }

@@ -10,18 +10,21 @@ import {
   ModalBody,
   ModalCloseButton,
   Checkbox,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  MenuDivider,
 } from '@chakra-ui/react'
 
 import produce from 'immer'
 import * as dates from '@/util/dates'
 import moment from 'moment'
 
-import { MdClose } from 'react-icons/md'
 import { FiMail } from 'react-icons/fi'
-import { BsArrowRepeat } from 'react-icons/bs'
-import { FiCalendar, FiAlignLeft, FiClock } from 'react-icons/fi'
+import { FiCalendar, FiAlignLeft, FiClock, FiChevronDown } from 'react-icons/fi'
 
-import { EventActionContext } from '@/calendar/EventActionContext'
+import { EventActionContext, EditRecurringAction } from '@/calendar/EventActionContext'
 import { CalendarsContext } from '@/contexts/CalendarsContext'
 import Event, { UNSAVED_EVENT_ID } from '@/models/Event'
 import { Label } from '@/models/Label'
@@ -30,13 +33,13 @@ import ContentEditable from '@/lib/ContentEditable'
 import { LabelTag } from '@/components/LabelTag'
 import { LabelContext, LabelContextType } from '@/contexts/LabelsContext'
 
-import { addNewLabels } from '../utils/LabelUtils'
+import { addNewLabels } from '@/calendar/utils/LabelUtils'
+import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 import SelectCalendar from './SelectCalendar'
 import RecurringEventEditor from './RecurringEventEditor'
 import TaggableInput from './TaggableInput'
 import TimeSelect from './TimeSelect'
 import TimeSelectFullDay from './TimeSelectFullDay'
-
 import useEventService from './useEventService'
 
 /**
@@ -56,6 +59,10 @@ export default function EventEditFull(props: { event: Event }) {
     event.recurrences ? event.recurrences.join('\n') : null
   )
 
+  const recurringAction = eventActions.eventState.editingEvent?.editRecurringAction
+  const isUnsavedEvent = event.id === UNSAVED_EVENT_ID
+  const isExistingRecurringEvent = !isUnsavedEvent && recurrences
+
   function getEventData(): Event {
     if (recurrences) {
       return { ...event, recurrences: [recurrences] }
@@ -67,18 +74,139 @@ export default function EventEditFull(props: { event: Event }) {
   async function onSaveEvent() {
     const eventData = getEventData()
 
-    if (eventData.id !== UNSAVED_EVENT_ID && recurrences) {
-      // Existing event with recurrence => Update the parent event
-      // TODO: UI for edit this ALL Events or This & following events.
-      const parentEventUpdate = Event.getParentEventWithRecurrence(event, recurrences)
-      await updateEvent(parentEventUpdate)
-    } else {
+    if (!isExistingRecurringEvent) {
       // Update the individual event
-      await saveEvent(eventData)
+      return await saveEvent(eventData)
+    } else {
+      switch (recurringAction) {
+        case 'ALL':
+          const parentEventUpdate = Event.getParentEventWithRecurrence(event, recurrences)
+          return await updateEvent(parentEventUpdate)
+
+        case 'SINGLE':
+          return await saveEvent(eventData)
+
+        case 'THIS_AND_FOLLOWING':
+          /**
+           * To update this event and all following events, we need to split the recurrence into:
+           * 1) The recurrence up to this event. We then use the recurrence to update the parent event.
+           * 2) The recurrence from this event onwards, to create a new series of events.
+           */
+
+          // 1) Update the base event's recurrence only
+          if (!event.original_start) {
+            throw Error('No original start time for event')
+          }
+
+          const rules = getSplitRRules(
+            event.recurrences!.join('\n'),
+            event.original_start,
+            event.start
+          )
+
+          const updatedParentEvent = Event.getRequiredParentEventFields(
+            event,
+            rules.start.toString()
+          )
+          const req1 = updateEvent(updatedParentEvent)
+
+          // 2) Create a new recurring event for the the rest of the events
+          const thisAndFollowingEvent = {
+            ...eventData,
+            recurrences: [rules.end.toString()],
+            id: UNSAVED_EVENT_ID,
+            recurring_event_id: null,
+          }
+
+          const req2 = saveEvent(thisAndFollowingEvent, false)
+
+          return Promise.all([req1, req2])
+      }
     }
   }
 
   const labels: Label[] = Object.values(labelState.labelsById)
+
+  function recurringEventActionDescription(action: EditRecurringAction) {
+    if (action === 'ALL') {
+      return 'Editing all events in series'
+    } else if (action === 'THIS_AND_FOLLOWING') {
+      return 'Editing this and following events in series'
+    } else if (action === 'SINGLE') {
+      return 'Editing this event in series'
+    }
+  }
+
+  function renderRecurringEventSelectionMenu() {
+    if (!isExistingRecurringEvent || !recurringAction) {
+      return
+    }
+
+    const currentSelection = recurringEventActionDescription(recurringAction)
+
+    return (
+      <Menu>
+        <MenuButton
+          ml="2"
+          borderRadius="sm"
+          size="sm"
+          fontWeight="normal"
+          variant="outline"
+          as={Button}
+          rightIcon={<FiChevronDown />}
+        >
+          {currentSelection}
+        </MenuButton>
+
+        <MenuList mt="-2">
+          <MenuItem
+            fontSize="sm"
+            onClick={() =>
+              eventActions.eventDispatch({
+                type: 'UPDATE_EDIT_MODE',
+                payload: {
+                  editMode: 'FULL_EDIT',
+                  editRecurringAction: 'SINGLE' as EditRecurringAction,
+                },
+              })
+            }
+          >
+            This event
+          </MenuItem>
+          <MenuDivider m="0" />
+          <MenuItem
+            fontSize="sm"
+            onClick={() =>
+              eventActions.eventDispatch({
+                type: 'UPDATE_EDIT_MODE',
+                payload: {
+                  editMode: 'FULL_EDIT',
+                  editRecurringAction: 'THIS_AND_FOLLOWING' as EditRecurringAction,
+                },
+              })
+            }
+          >
+            This and following events
+          </MenuItem>
+          <MenuDivider m="0" />
+          <MenuItem
+            fontSize="sm"
+            onClick={() => {
+              eventActions.eventDispatch({
+                type: 'UPDATE_EDIT_MODE',
+                payload: {
+                  editMode: 'FULL_EDIT',
+                  editRecurringAction: 'ALL' as EditRecurringAction,
+                },
+              })
+            }}
+          >
+            All events
+          </MenuItem>
+        </MenuList>
+      </Menu>
+    )
+  }
 
   return (
     <Modal
@@ -90,7 +218,7 @@ export default function EventEditFull(props: { event: Event }) {
     >
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Edit Event</ModalHeader>
+        <ModalHeader>Edit Event {renderRecurringEventSelectionMenu()}</ModalHeader>
         <ModalCloseButton />
 
         <ModalBody>
@@ -258,18 +386,20 @@ export default function EventEditFull(props: { event: Event }) {
             </Checkbox>
           </div>
 
-          <RecurringEventEditor
-            initialDate={event.original_start || event.start}
-            initialRulestr={recurrences}
-            onChange={(rules) => {
-              console.log(`Rule Updated: ${rules}`)
-              if (rules) {
-                setRecurrences(rules.toString())
-              } else {
-                setRecurrences(null)
-              }
-            }}
-          />
+          {(recurringAction !== 'SINGLE' || isUnsavedEvent) && (
+            <RecurringEventEditor
+              initialDate={event.original_start || event.start}
+              initialRulestr={recurrences}
+              onChange={(rules) => {
+                console.log(`Rule Updated: ${rules}`)
+                if (rules) {
+                  setRecurrences(rules.toString())
+                } else {
+                  setRecurrences(null)
+                }
+              }}
+            />
+          )}
 
           <div className="mt-2 is-flex is-align-items-center">
             <Box mr="2">

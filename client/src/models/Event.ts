@@ -110,7 +110,7 @@ export default class Event {
     return event.title ? event.title : EMPTY_TITLE
   }
 
-  static isParentRecurringEvent(event: Event): boolean {
+  static isParentRecurringEvent(event: Partial<Event>): boolean {
     return !!event.recurrences && !event.recurring_event_id
   }
 
@@ -123,16 +123,21 @@ export default class Event {
       throw new Error('Not a recurring event.')
     }
 
-    return produce(event, (draft) => {
-      draft.recurrences = [recurrence]
-      draft.id = event.recurring_event_id!
-      draft.recurring_event_id = null
-      draft.start = event.original_start!
-      draft.end = dates.add(
+    return { ...event, ...Event.getRequiredParentEventFields(event, recurrence) }
+  }
+
+  static getRequiredParentEventFields(event: Event, recurrence: string) {
+    return {
+      id: event.recurring_event_id!,
+      calendar_id: event.calendar_id,
+      recurrences: [recurrence],
+      recurring_event_id: null,
+      start: event.original_start!,
+      end: dates.add(
         event.original_start!,
         dates.diff(event.end, event.start, 'minutes'),
         'minutes'
-      )
-    })
+      ),
+    }
   }
 }
