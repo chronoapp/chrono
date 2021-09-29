@@ -27,7 +27,7 @@ import { addNewLabels } from '../utils/LabelUtils'
 import Event, { UNSAVED_EVENT_ID } from '@/models/Event'
 import Calendar from '@/models/Calendar'
 import { Label } from '@/models/Label'
-import { EventActionContext } from '../EventActionContext'
+import { EditRecurringAction, EventActionContext } from '../EventActionContext'
 import { CalendarsContext } from '@/contexts/CalendarsContext'
 import { LabelContext, LabelContextType } from '@/contexts/LabelsContext'
 import { LabelTag } from '@/components/LabelTag'
@@ -88,7 +88,6 @@ function EventPopover(props: IProps) {
 
   const isExistingEvent = props.event.id !== UNSAVED_EVENT_ID
   const contentEditableRef = createRef<HTMLInputElement>()
-  const [confirmDeleteActive, setConfirmDeleteActive] = useState<boolean>(false)
 
   useEffect(() => {
     document.addEventListener('keydown', keyboardEvents)
@@ -99,10 +98,6 @@ function EventPopover(props: IProps) {
 
   const isReadOnly = eventActions.eventState.editingEvent?.editMode == 'READ'
   return <Box boxShadow="2xl">{isReadOnly ? renderReadOnlyView() : renderEditView()}</Box>
-
-  function setReadOnly(readOnly: boolean) {
-    eventActions.eventDispatch({ type: 'UPDATE_EDIT_MODE', payload: readOnly ? 'READ' : 'EDIT' })
-  }
 
   function keyboardEvents(e: KeyboardEvent) {
     if (e.key === 'Enter') {
@@ -129,17 +124,129 @@ function EventPopover(props: IProps) {
     return event
   }
 
-  function onClickDeleteEvent() {
+  function renderEditEventButton() {
     if (props.event.recurring_event_id) {
-      setConfirmDeleteActive(!confirmDeleteActive)
+      return (
+        <Menu>
+          <MenuButton
+            ml="2"
+            borderRadius="sm"
+            size="sm"
+            fontWeight="normal"
+            colorScheme="primary"
+            as={Button}
+            rightIcon={<FiChevronDown />}
+          >
+            Edit
+          </MenuButton>
+
+          <MenuList mt="-2">
+            <MenuItem
+              fontSize="sm"
+              onClick={() =>
+                eventActions.eventDispatch({
+                  type: 'UPDATE_EDIT_MODE',
+                  payload: {
+                    editMode: 'FULL_EDIT',
+                    editRecurringAction: 'SINGLE' as EditRecurringAction,
+                  },
+                })
+              }
+            >
+              This event
+            </MenuItem>
+            <MenuDivider m="0" />
+            <MenuItem
+              fontSize="sm"
+              onClick={() =>
+                eventActions.eventDispatch({
+                  type: 'UPDATE_EDIT_MODE',
+                  payload: {
+                    editMode: 'FULL_EDIT',
+                    editRecurringAction: 'THIS_AND_FOLLOWING' as EditRecurringAction,
+                  },
+                })
+              }
+            >
+              This and following events
+            </MenuItem>
+            <MenuDivider m="0" />
+            <MenuItem
+              fontSize="sm"
+              onClick={() => {
+                eventActions.eventDispatch({
+                  type: 'UPDATE_EDIT_MODE',
+                  payload: {
+                    editMode: 'FULL_EDIT',
+                    editRecurringAction: 'ALL' as EditRecurringAction,
+                  },
+                })
+              }}
+            >
+              All events
+            </MenuItem>
+          </MenuList>
+        </Menu>
+      )
     } else {
-      deleteEvent(props.event.id)
+      return (
+        <Button
+          size="sm"
+          borderRadius="sm"
+          fontWeight="normal"
+          colorScheme="primary"
+          onClick={() => {
+            eventActions.eventDispatch({
+              type: 'UPDATE_EDIT_MODE',
+              payload: {
+                editMode: 'FULL_EDIT',
+                editRecurringAction: 'SINGLE' as EditRecurringAction,
+              },
+            })
+          }}
+        >
+          Edit
+        </Button>
+      )
     }
   }
 
   function renderDeleteEventButton() {
     if (props.event.recurring_event_id) {
-      return renderConfirmDeleteDropdown()
+      return (
+        <Menu>
+          <MenuButton
+            ml="2"
+            borderRadius="sm"
+            size="sm"
+            fontWeight="normal"
+            as={Button}
+            leftIcon={<FiTrash />}
+            rightIcon={<FiChevronDown />}
+          >
+            Delete
+          </MenuButton>
+
+          <MenuList mt="-2">
+            <MenuItem fontSize="sm" onClick={() => deleteEvent(props.event.id)}>
+              This event
+            </MenuItem>
+            <MenuDivider m="0" />
+            <MenuItem fontSize="sm" onClick={() => deleteThisAndFollowingEvents(props.event)}>
+              This and following events
+            </MenuItem>
+            <MenuDivider m="0" />
+            <MenuItem
+              fontSize="sm"
+              onClick={() => {
+                props.event.recurring_event_id && deleteEvent(props.event.recurring_event_id, 'ALL')
+              }}
+            >
+              All events
+            </MenuItem>
+          </MenuList>
+        </Menu>
+      )
     } else {
       return (
         <Button
@@ -148,7 +255,7 @@ function EventPopover(props: IProps) {
           size="sm"
           fontWeight="normal"
           leftIcon={<FiTrash />}
-          onClick={onClickDeleteEvent}
+          onClick={() => deleteEvent(props.event.id)}
         >
           Delete
         </Button>
@@ -260,18 +367,7 @@ function EventPopover(props: IProps) {
 
           {calendar.isWritable() && (
             <div className="mt-4 is-flex">
-              <Button
-                size="sm"
-                borderRadius="sm"
-                fontWeight="normal"
-                colorScheme="primary"
-                onClick={(e) => {
-                  eventActions.eventDispatch({ type: 'UPDATE_EDIT_MODE', payload: 'FULL_EDIT' })
-                }}
-              >
-                Edit
-              </Button>
-
+              {renderEditEventButton()}
               {renderDeleteEventButton()}
             </div>
           )}
@@ -539,7 +635,13 @@ function EventPopover(props: IProps) {
                   type: 'UPDATE_EDIT_EVENT',
                   payload: getUpdatedEvent(props.event, eventFields),
                 })
-                eventActions.eventDispatch({ type: 'UPDATE_EDIT_MODE', payload: 'FULL_EDIT' })
+                eventActions.eventDispatch({
+                  type: 'UPDATE_EDIT_MODE',
+                  payload: {
+                    editMode: 'FULL_EDIT',
+                    editRecurringAction: 'SINGLE' as EditRecurringAction,
+                  },
+                })
               }}
             >
               More Options
@@ -547,44 +649,6 @@ function EventPopover(props: IProps) {
           </Flex>
         </div>
       </>
-    )
-  }
-
-  function renderConfirmDeleteDropdown() {
-    return (
-      <Menu>
-        <MenuButton
-          ml="2"
-          borderRadius="sm"
-          size="sm"
-          fontWeight="normal"
-          as={Button}
-          leftIcon={<FiTrash />}
-          rightIcon={<FiChevronDown />}
-          onClick={onClickDeleteEvent}
-        >
-          Delete
-        </MenuButton>
-
-        <MenuList mt="-2">
-          <MenuItem fontSize="sm" onClick={() => deleteEvent(props.event.id)}>
-            This event
-          </MenuItem>
-          <MenuDivider m="0" />
-          <MenuItem fontSize="sm" onClick={() => deleteThisAndFollowingEvents(props.event)}>
-            This and following events
-          </MenuItem>
-          <MenuDivider m="0" />
-          <MenuItem
-            fontSize="sm"
-            onClick={() => {
-              props.event.recurring_event_id && deleteEvent(props.event.recurring_event_id, 'ALL')
-            }}
-          >
-            All events
-          </MenuItem>
-        </MenuList>
-      </Menu>
     )
   }
 
@@ -625,8 +689,8 @@ function EventPopover(props: IProps) {
         draft.until = dates.subtract(event.start, 1, 'seconds')
       })
 
-      const recurrence = new RRule(upToThisEventRules).toString()
-      const updatedParentEvent = Event.getParentEventWithRecurrence(event, recurrence)
+      const recurrence = new RRule(upToThisEventRules)
+      const updatedParentEvent = Event.getParentEventWithRecurrence(event, recurrence.toString())
 
       updateEvent(updatedParentEvent)
     }

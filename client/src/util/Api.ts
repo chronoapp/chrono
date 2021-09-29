@@ -90,7 +90,7 @@ export async function authenticate(code: string, state: string) {
   return fetch(`${API_URL}/oauth/google/token`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       code,
@@ -108,7 +108,6 @@ export async function createCalendar(
   timezone?: string,
   foregroundColor: string = '#ffffff'
 ): Promise<Calendar> {
-
   return fetch(`${API_URL}/calendars/`, {
     method: 'POST',
     body: JSON.stringify({

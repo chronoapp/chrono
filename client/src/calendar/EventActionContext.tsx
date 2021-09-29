@@ -10,7 +10,8 @@ export type Action = 'MOVE' | 'RESIZE'
 export type Direction = 'UP' | 'DOWN'
 
 export type Display = 'Day' | 'Week' | 'WorkWeek' | 'Month'
-export type DeleteMethod = 'SINGLE' | 'ALL'
+
+export type EditRecurringAction = 'SINGLE' | 'THIS_AND_FOLLOWING' | 'ALL'
 type EditMode = 'READ' | 'EDIT' | 'FULL_EDIT'
 
 export interface DragDropAction {
@@ -52,6 +53,7 @@ export interface EventState {
     editMode: EditMode
     selectTailSegment: boolean
     event: Event
+    editRecurringAction: EditRecurringAction
   } | null
 }
 
@@ -61,11 +63,14 @@ type ActionType =
   | { type: 'INIT_EDIT_EVENT'; payload: { event: Event; selectTailSegment?: boolean } }
   | { type: 'INIT_NEW_EVENT_AT_DATE'; payload: { date: Date; allDay: boolean } }
   | { type: 'CREATE_EVENT'; payload: Event }
-  | { type: 'DELETE_EVENT'; payload: { eventId: string; deleteMethod?: DeleteMethod } }
+  | { type: 'DELETE_EVENT'; payload: { eventId: string; deleteMethod?: EditRecurringAction } }
   | { type: 'CANCEL_SELECT' }
   | { type: 'UPDATE_EVENT'; payload: { event: Event; replaceEventId: string } }
   | { type: 'UPDATE_EDIT_EVENT'; payload: Event }
-  | { type: 'UPDATE_EDIT_MODE'; payload: EditMode }
+  | {
+      type: 'UPDATE_EDIT_MODE'
+      payload: { editMode: EditMode; editRecurringAction: EditRecurringAction }
+    }
 
 function eventReducer(state: EventState, action: ActionType) {
   const { eventsById } = state
@@ -87,6 +92,7 @@ function eventReducer(state: EventState, action: ActionType) {
           editMode: 'EDIT' as EditMode,
           event: action.payload,
           selectTailSegment: false,
+          editRecurringAction: 'SINGLE' as EditRecurringAction,
         },
       }
 
@@ -101,6 +107,7 @@ function eventReducer(state: EventState, action: ActionType) {
           editMode: 'READ' as EditMode,
           event: action.payload.event,
           selectTailSegment: !!selectTailSegment,
+          editRecurringAction: 'SINGLE' as EditRecurringAction,
         },
       }
 
@@ -118,6 +125,7 @@ function eventReducer(state: EventState, action: ActionType) {
           editMode: 'EDIT' as EditMode,
           event,
           selectTailSegment: false,
+          editRecurringAction: 'SINGLE' as EditRecurringAction,
         },
       }
 
@@ -181,7 +189,14 @@ function eventReducer(state: EventState, action: ActionType) {
       if (!state.editingEvent) {
         return state
       } else {
-        return { ...state, editingEvent: { ...state.editingEvent, editMode: action.payload } }
+        return {
+          ...state,
+          editingEvent: {
+            ...state.editingEvent,
+            editMode: action.payload.editMode,
+            editRecurringAction: action.payload.editRecurringAction,
+          },
+        }
       }
 
     default:

@@ -12,7 +12,7 @@ import {
 import Event, { UNSAVED_EVENT_ID } from '../../models/Event'
 import Toast from '@/components/Toast'
 
-import { EventActionContext, DeleteMethod } from '../EventActionContext'
+import { EventActionContext, EditRecurringAction } from '../EventActionContext'
 
 /**
  * Hook to provides CRUD Action that deal with the event server API.
@@ -22,7 +22,7 @@ export default function useEventService() {
   const eventActions = React.useContext(EventActionContext)
   const toast = useToast({ duration: 2000, position: 'top' })
 
-  function deleteEvent(eventId: string, deleteMethod: DeleteMethod = 'SINGLE') {
+  function deleteEvent(eventId: string, deleteMethod: EditRecurringAction = 'SINGLE') {
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
     eventActions.eventDispatch({
       type: 'DELETE_EVENT',
@@ -104,7 +104,7 @@ export default function useEventService() {
         payload: { event: event, replaceEventId: event.id },
       })
 
-      updateEventReq(token, event)
+      return updateEventReq(token, event)
         .then((event) => {
           eventActions.eventDispatch({
             type: 'UPDATE_EVENT',
@@ -128,7 +128,7 @@ export default function useEventService() {
         })
     } else {
       eventActions.eventDispatch({ type: 'CREATE_EVENT', payload: event })
-      createEvent(token, event).then((event) => {
+      return createEvent(token, event).then((event) => {
         console.log(`Created event in db: ${event.id}`)
 
         if (event.recurrences) {
