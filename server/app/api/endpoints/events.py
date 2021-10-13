@@ -49,17 +49,22 @@ async def getEvents(
     TODO: Filter queries for recurring events
     TODO: Figure out how to gather async queries
     """
-    startDate = (
-        datetime.fromisoformat(start_date) if start_date else datetime.now() - timedelta(days=30)
-    )
-    endDate = datetime.fromisoformat(end_date) if end_date else datetime.now()
+    try:
+        startDate = (
+            datetime.fromisoformat(start_date)
+            if start_date
+            else datetime.now() - timedelta(days=30)
+        )
+        endDate = datetime.fromisoformat(end_date) if end_date else datetime.now()
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=f'Invalid date format: {e}'
+        )
 
     if title:
         selectStmt = (
             user.getSingleEventsStmt(showRecurring=False)
-            .filter(
-                and_(Event.end >= startDate, Event.start <= endDate, Event.title.ilike(title))
-            )
+            .filter(and_(Event.end >= startDate, Event.start <= endDate, Event.title.ilike(title)))
             .limit(limit)
         )
         result = await session.execute(selectStmt)
