@@ -175,9 +175,6 @@ def createOrUpdateEvent(
         eventDb.calendar_id = eventVM.calendar_id or eventDb.calendar_id
         eventDb.recurring_event_id = eventVM.recurring_event_id or eventDb.recurring_event_id
         eventDb.recurrences = recurrences or eventDb.recurrences
-        eventDb.original_start = eventVM.original_start or eventDb.original_start
-        eventDb.original_start_day = eventVM.original_start_day or eventDb.original_start_day
-        eventDb.original_timezone = eventVM.original_timezone or eventDb.original_timezone
 
         return eventDb
 
@@ -228,15 +225,15 @@ async def getAllExpandedRecurringEvents(
         # Original is outside the current range.
         or_(
             Event.original_start == None,  # TODO: remove None
-            and_(
+            or_(
                 Event.original_start < startDate,
                 Event.original_start > endDate,
             ),
         ),
     )
     result = await session.execute(movedFromOutsideOverrides)
+
     for eventOverride in result.scalars():
-        # print(eventOverride)
         yield EventInDBVM.from_orm(eventOverride)
 
     # Overrides from within this time range.
@@ -322,12 +319,10 @@ def getExpandedRecurringEvents(
                     eventOverride = eventOverridesMap[eventId]
                     if eventOverride.status != 'deleted':
                         eventOverride.recurrences = baseRecurringEvent.recurrences
-                        eventOverride.original_start = baseRecurringEvent.original_start
-                        eventOverride.original_start_day = baseRecurringEvent.original_start_day
-                        eventOverride.original_timezone = baseRecurringEvent.original_timezone
+
                         yield EventInDBVM.from_orm(eventOverride)
                 else:
-                    yield baseEventVM.copy(
+                    eventVM = baseEventVM.copy(
                         update={
                             'id': eventId,
                             'start': start,
@@ -336,8 +331,11 @@ def getExpandedRecurringEvents(
                             'end_day': end.strftime('%Y-%m-%d') if isAllDay else None,
                             'recurring_event_id': baseRecurringEvent.id,
                             'recurrences': baseRecurringEvent.recurrences,
+                            'original_start': start,
+                            'original_start_day': start.strftime('%Y-%m-%d') if isAllDay else None,
                         }
                     )
+                    yield eventVM
 
 
 async def verifyAndGetRecurringEventParent(
