@@ -184,7 +184,7 @@ async def updateEvent(
     elif not curEvent and not event.recurring_event_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail='Event not found.')
 
-    # Replace recurring event instance with override.
+    # This is an instance of a recurring event. Replace the recurring event instance with and override.
     elif not curEvent and event.recurring_event_id:
         parentEvent: Optional[Event] = (
             await session.execute(
@@ -211,6 +211,11 @@ async def updateEvent(
             googleId = getRecurringEventId(parentEvent.recurring_event_gId, dt, event.isAllDay())
 
         prevCalendarId = None
+
+        # Sets the original recurring start date info.
+        event.original_start = dt
+        event.original_start_day = event.start_day
+        event.original_timezone = event.timezone
 
         eventDb = createOrUpdateEvent(None, event, overrideId=event_id, googleId=googleId)
 
