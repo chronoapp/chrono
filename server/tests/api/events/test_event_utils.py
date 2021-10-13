@@ -39,7 +39,7 @@ async def test_getAllExpandedRecurringEvents_override(user, session):
         user, start, start + timedelta(days=1), session
     )
     assert len(events) == 2
-    assert events[0].original_start == start
+    assert events[0].original_start == events[0].start
 
     events = await getAllExpandedRecurringEventsList(
         user, start, start + timedelta(days=10), session
