@@ -20,6 +20,7 @@ import {
 import produce from 'immer'
 import * as dates from '@/util/dates'
 import moment from 'moment'
+import { getAuthToken, getEvent } from '@/util/Api'
 
 import { FiMail } from 'react-icons/fi'
 import { FiCalendar, FiAlignLeft, FiClock, FiChevronDown } from 'react-icons/fi'
@@ -74,14 +75,18 @@ export default function EventEditFull(props: { event: Event }) {
   async function onSaveEvent() {
     const eventData = getEventData()
 
+    if (!event.recurring_event_id) {
+      throw Error('Could not find recurring event')
+    }
+
     if (!isExistingRecurringEvent) {
       // Update the individual event
       return await saveEvent(eventData)
     } else {
       switch (recurringAction) {
         case 'ALL':
-          const parentEventUpdate = Event.getParentEventWithRecurrence(event, recurrences)
-          return await updateEvent(parentEventUpdate)
+          const parent = await getEvent(getAuthToken(), event.recurring_event_id)
+          return await updateEvent({ ...parent, recurrences: [recurrences] })
 
         case 'SINGLE':
           return await saveEvent(eventData)
@@ -94,20 +99,13 @@ export default function EventEditFull(props: { event: Event }) {
            */
 
           // 1) Update the base event's recurrence only
-          if (!event.original_start) {
-            throw Error('No original start time for event')
-          }
-
+          const parentEvent = await getEvent(getAuthToken(), event.recurring_event_id)
           const rules = getSplitRRules(
             event.recurrences!.join('\n'),
-            event.original_start,
+            parentEvent.start,
             event.start
           )
-
-          const updatedParentEvent = Event.getRequiredParentEventFields(
-            event,
-            rules.start.toString()
-          )
+          const updatedParentEvent = { ...parentEvent, recurrences: [rules.start.toString()] }
           const req1 = updateEvent(updatedParentEvent)
 
           // 2) Create a new recurring event for the the rest of the events

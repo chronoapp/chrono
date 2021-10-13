@@ -2,14 +2,14 @@ import React from 'react'
 import { FiCheck, FiTrash } from 'react-icons/fi'
 import { useToast } from '@chakra-ui/react'
 
-import { GlobalEvent } from '../../util/global'
+import { GlobalEvent } from '@/util/global'
 import {
   getAuthToken,
   createEvent,
   updateEvent as updateEventReq,
   deleteEvent as deleteEventReq,
-} from '../../util/Api'
-import Event, { UNSAVED_EVENT_ID } from '../../models/Event'
+} from '@/util/Api'
+import Event, { UNSAVED_EVENT_ID } from '@/models/Event'
 import Toast from '@/components/Toast'
 
 import { EventActionContext, EditRecurringAction } from '../EventActionContext'

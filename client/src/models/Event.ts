@@ -113,31 +113,4 @@ export default class Event {
   static isParentRecurringEvent(event: Partial<Event>): boolean {
     return !!event.recurrences && !event.recurring_event_id
   }
-
-  /**
-   * Creates the base recurring event with the updated recurrence.
-   * Used to update the parent reccurence since we can't do it from the event instances.
-   */
-  static getParentEventWithRecurrence(event: Event, recurrence: string) {
-    if (!event.recurring_event_id) {
-      throw new Error('Not a recurring event.')
-    }
-
-    return { ...event, ...Event.getRequiredParentEventFields(event, recurrence) }
-  }
-
-  static getRequiredParentEventFields(event: Event, recurrence: string) {
-    return {
-      id: event.recurring_event_id!,
-      calendar_id: event.calendar_id,
-      recurrences: [recurrence],
-      recurring_event_id: null,
-      start: event.original_start!,
-      end: dates.add(
-        event.original_start!,
-        dates.diff(event.end, event.start, 'minutes'),
-        'minutes'
-      ),
-    }
-  }
 }

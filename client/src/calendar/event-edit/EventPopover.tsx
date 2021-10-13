@@ -40,7 +40,7 @@ import SelectCalendar from './SelectCalendar'
 import ContentEditable from '@/lib/ContentEditable'
 import TaggableInput from './TaggableInput'
 import useEventService from './useEventService'
-import { getRecurrenceRules } from './RecurringEventEditor'
+import { getEvent, getAuthToken } from '@/util/Api'
 
 interface IProps {
   event: Event
@@ -654,12 +654,14 @@ function EventPopover(props: IProps) {
   }
 
   async function deleteThisAndFollowingEvents(event: Event) {
-    if (!event.recurrences || !event.recurring_event_id || !event.original_start) {
+    if (!event.recurrences || !event.recurring_event_id) {
       throw Error('Invalid Recurring Event')
     }
 
-    const rules = getSplitRRules(event.recurrences!.join('\n'), event.original_start, event.start)
-    const updatedParentEvent = Event.getParentEventWithRecurrence(event, rules.start.toString())
+    const parentEvent = await getEvent(getAuthToken(), event.recurring_event_id)
+
+    const rules = getSplitRRules(event.recurrences!.join('\n'), parentEvent.start, event.start)
+    const updatedParentEvent = { ...parentEvent, recurrences: [rules.start.toString()] }
 
     return updateEvent(updatedParentEvent)
   }

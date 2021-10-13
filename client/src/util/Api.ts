@@ -182,10 +182,20 @@ export async function getEvents(
     })
 }
 
+export async function getEvent(authToken: string, eventId: string): Promise<Event> {
+  return fetch(`${API_URL}/events/${eventId}`, {
+    headers: getHeaders(authToken),
+  })
+    .then(handleErrors)
+    .then((resp) => {
+      return Event.fromJson(resp)
+    })
+}
+
 export async function createEvent(authToken: string, event: Event): Promise<Event> {
   return fetch(`${API_URL}/events/`, {
     method: 'POST',
-    headers: { Authorization: authToken, 'Content-Type': 'application/json' },
+    headers: getHeaders(authToken),
     body: JSON.stringify(event),
   })
     .then(handleErrors)
