@@ -11,6 +11,10 @@ import { RRule } from 'rrule'
  * use the property in the event.
  */
 export function getSplitRRules(recurrenceStr: string, originalStartDt: Date, splitDt: Date) {
+  if (!dates.lte(originalStartDt, splitDt)) {
+    throw new Error('splitDt must be after originalStartDt')
+  }
+
   const ruleOptions = getRecurrenceRules(recurrenceStr, originalStartDt)
 
   if (ruleOptions.count) {

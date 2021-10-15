@@ -81,6 +81,20 @@ export default function EventEditFull(props: { event: Event }) {
     return { ...props.event, ...EventFields.getMutableEventFields(eventFields) }
   }
 
+  /**
+   * Overrides the existing parent recurring event.
+   * TODO: Update event start / end based on the offsets.
+   */
+  async function updateRecurringEvent(parent: Event) {
+    const updatedParent = produce(parent, (event) => {
+      event.title = eventFields.title
+      event.description = eventFields.description
+      event.labels = eventFields.labels
+    })
+
+    return await updateEvent(updatedParent)
+  }
+
   async function onSaveEvent() {
     const eventData = getEventData()
 
@@ -98,17 +112,8 @@ export default function EventEditFull(props: { event: Event }) {
           return await saveEvent(eventData)
 
         case 'ALL':
-          /**
-           * TODO: Update event start / end based on the offsets.
-           */
           const parent = await getEvent(getAuthToken(), props.event.recurring_event_id)
-          const updatedParent = produce(parent, (event) => {
-            event.title = eventFields.title
-            event.description = eventFields.description
-            event.labels = eventFields.labels
-          })
-
-          return await updateEvent(updatedParent)
+          return await updateRecurringEvent(parent)
 
         case 'THIS_AND_FOLLOWING':
           /**
@@ -116,30 +121,33 @@ export default function EventEditFull(props: { event: Event }) {
            * 1) The recurrence up to this event. We then use the recurrence to update the parent event.
            * 2) The recurrence from this event onwards, to create a new series of events.
            */
-
-          // 1) Update the base event's recurrence only
           const parentEvent = await getEvent(getAuthToken(), props.event.recurring_event_id)
-          const rules = getSplitRRules(
-            props.event.recurrences!.join('\n'),
-            parentEvent.start,
-            props.event.original_start
-          )
 
-          const updatedParentEvent = { ...parentEvent, recurrences: [rules.start.toString()] }
-          const req1 = updateEvent(updatedParentEvent)
+          if (dates.eq(parentEvent.start, props.event.original_start)) {
+            console.log('updateRecurringEvent')
+            return updateRecurringEvent(parentEvent)
+          } else {
+            // 1) Update the base event's recurrence, cut off at the current event's original start date.
+            const rules = getSplitRRules(
+              props.event.recurrences!.join('\n'),
+              parentEvent.start,
+              props.event.original_start
+            )
+            const updatedParentEvent = { ...parentEvent, recurrences: [rules.start.toString()] }
+            const req1 = updateEvent(updatedParentEvent)
 
-          // 2) Create a new recurring event for the the rest of the events
-          // TODO: Use the new recurrence this & following starting at this date.
-          const thisAndFollowingEvent = {
-            ...eventData,
-            recurrences: [rules.end.toString()],
-            id: UNSAVED_EVENT_ID,
-            recurring_event_id: null,
+            // 2) Create a new recurring event for the the rest of the events
+            // TODO: Use the new recurrence this & following starting at this date.
+            const thisAndFollowingEvent = {
+              ...eventData,
+              recurrences: [rules.end.toString()],
+              id: UNSAVED_EVENT_ID,
+              recurring_event_id: null,
+            }
+            const req2 = saveEvent(thisAndFollowingEvent, false)
+
+            return Promise.all([req1, req2])
           }
-
-          const req2 = saveEvent(thisAndFollowingEvent, false)
-
-          return Promise.all([req1, req2])
       }
     }
   }
