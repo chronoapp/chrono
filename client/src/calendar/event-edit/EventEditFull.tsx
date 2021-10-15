@@ -75,14 +75,14 @@ export default function EventEditFull(props: { event: Event }) {
   async function onSaveEvent() {
     const eventData = getEventData()
 
-    if (!event.recurring_event_id) {
-      throw Error('Could not find recurring event')
-    }
-
     if (!isExistingRecurringEvent) {
       // Update the individual event
       return await saveEvent(eventData)
     } else {
+      if (!event.recurring_event_id) {
+        throw Error('Could not find recurring event')
+      }
+
       switch (recurringAction) {
         case 'ALL':
           const parent = await getEvent(getAuthToken(), event.recurring_event_id)
