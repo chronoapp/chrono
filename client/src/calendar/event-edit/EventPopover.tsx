@@ -41,26 +41,9 @@ import ContentEditable from '@/lib/ContentEditable'
 import TaggableInput from './TaggableInput'
 import useEventService from './useEventService'
 import { getEvent, getAuthToken } from '@/util/Api'
-
+import EventFields from './EventFields'
 interface IProps {
   event: Event
-}
-
-/**
- * Editable fields in event.
- */
-export class EventFields {
-  public constructor(
-    readonly title: string,
-    readonly description: string,
-    readonly start: Date,
-    readonly end: Date,
-    readonly labels: Label[],
-    readonly calendarId: string,
-    readonly allDay: boolean,
-    readonly startDay: string | null,
-    readonly endDay: string | null
-  ) {}
 }
 
 function EventPopover(props: IProps) {
@@ -79,7 +62,8 @@ function EventPopover(props: IProps) {
       getSelectedCalendar(props.event.calendar_id)?.id,
       props.event.all_day,
       props.event.start_day,
-      props.event.end_day
+      props.event.end_day,
+      props.event.recurrences ? props.event.recurrences.join('\n') : null
     )
   )
 
