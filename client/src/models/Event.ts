@@ -106,8 +106,8 @@ export default class Event {
     )
   }
 
-  static getDefaultTitle(event: Event) {
-    return event.title ? event.title : EMPTY_TITLE
+  static getDefaultTitle(title?: string) {
+    return title ? title : EMPTY_TITLE
   }
 
   static isParentRecurringEvent(event: Partial<Event>): boolean {

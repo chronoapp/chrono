@@ -42,6 +42,7 @@ import TaggableInput from './TaggableInput'
 import TimeSelect from './TimeSelect'
 import TimeSelectFullDay from './TimeSelectFullDay'
 import useEventService from './useEventService'
+import EventFields from './EventFields'
 
 /**
  * Full view for event editing.
@@ -53,23 +54,31 @@ export default function EventEditFull(props: { event: Event }) {
   const { saveEvent, updateEvent } = useEventService()
 
   // Event data and overrides
-  const [event, setEvent] = useState(props.event)
-
-  const defaultDays = event.all_day ? Math.max(dates.diff(event.end, event.start, 'day'), 1) : 1
-  const [recurrences, setRecurrences] = useState<string | null>(
-    event.recurrences ? event.recurrences.join('\n') : null
+  const [eventFields, setEventFields] = useState(
+    new EventFields(
+      props.event.title,
+      props.event.description || '',
+      props.event.start,
+      props.event.end,
+      props.event.labels,
+      props.event.calendar_id,
+      props.event.all_day,
+      props.event.start_day,
+      props.event.end_day,
+      props.event.recurrences ? props.event.recurrences.join('\n') : null
+    )
   )
+  const defaultDays = eventFields.allDay
+    ? Math.max(dates.diff(eventFields.start, eventFields.end, 'day'), 1)
+    : 1
 
+  // Derived Properties
   const recurringAction = eventActions.eventState.editingEvent?.editRecurringAction
-  const isUnsavedEvent = event.id === UNSAVED_EVENT_ID
-  const isExistingRecurringEvent = !isUnsavedEvent && recurrences
+  const isUnsavedEvent = props.event.id === UNSAVED_EVENT_ID
+  const isExistingRecurringEvent = !isUnsavedEvent && props.event.recurrences != null
 
   function getEventData(): Event {
-    if (recurrences) {
-      return { ...event, recurrences: [recurrences] }
-    } else {
-      return event
-    }
+    return { ...props.event, ...EventFields.getMutableEventFields(eventFields) }
   }
 
   async function onSaveEvent() {
@@ -79,17 +88,27 @@ export default function EventEditFull(props: { event: Event }) {
       // Update the individual event
       return await saveEvent(eventData)
     } else {
-      if (!event.recurring_event_id) {
+      // Update a recurring event.
+      if (!props.event.recurring_event_id || !props.event.original_start) {
         throw Error('Could not find recurring event')
       }
 
       switch (recurringAction) {
-        case 'ALL':
-          const parent = await getEvent(getAuthToken(), event.recurring_event_id)
-          return await updateEvent({ ...parent, recurrences: [recurrences] })
-
         case 'SINGLE':
           return await saveEvent(eventData)
+
+        case 'ALL':
+          /**
+           * TODO: Update event start / end based on the offsets.
+           */
+          const parent = await getEvent(getAuthToken(), props.event.recurring_event_id)
+          const updatedParent = produce(parent, (event) => {
+            event.title = eventFields.title
+            event.description = eventFields.description
+            event.labels = eventFields.labels
+          })
+
+          return await updateEvent(updatedParent)
 
         case 'THIS_AND_FOLLOWING':
           /**
@@ -99,16 +118,18 @@ export default function EventEditFull(props: { event: Event }) {
            */
 
           // 1) Update the base event's recurrence only
-          const parentEvent = await getEvent(getAuthToken(), event.recurring_event_id)
+          const parentEvent = await getEvent(getAuthToken(), props.event.recurring_event_id)
           const rules = getSplitRRules(
-            event.recurrences!.join('\n'),
+            props.event.recurrences!.join('\n'),
             parentEvent.start,
-            event.start
+            props.event.original_start
           )
+
           const updatedParentEvent = { ...parentEvent, recurrences: [rules.start.toString()] }
           const req1 = updateEvent(updatedParentEvent)
 
           // 2) Create a new recurring event for the the rest of the events
+          // TODO: Use the new recurrence this & following starting at this date.
           const thisAndFollowingEvent = {
             ...eventData,
             recurrences: [rules.end.toString()],
@@ -224,35 +245,39 @@ export default function EventEditFull(props: { event: Event }) {
             <span className="mr-2" style={{ width: '1.25em' }} />
             <TaggableInput
               labels={labels}
-              title={event.title}
+              title={eventFields.title}
               wrapperCls={'has-width-100'}
               portalCls={'.cal-event-modal-container'}
               isHeading={false}
-              placeholder={!event.title ? Event.getDefaultTitle(event) : ''}
+              placeholder={Event.getDefaultTitle(eventFields.title)}
               handleChange={(title, labelIds: number[]) => {
-                const updatedLabels = addNewLabels(labelState.labelsById, event.labels, labelIds)
-                const updatedEvent = { ...event, title: title, labels: updatedLabels }
-                setEvent(updatedEvent)
+                const updatedLabels = addNewLabels(
+                  labelState.labelsById,
+                  eventFields.labels,
+                  labelIds
+                )
+
+                setEventFields({ ...eventFields, title, labels: updatedLabels })
               }}
               onBlur={() => {
-                eventActions.eventDispatch({ type: 'UPDATE_EDIT_EVENT', payload: event })
+                eventActions.eventDispatch({ type: 'UPDATE_EDIT_EVENT', payload: getEventData() })
               }}
             />
           </div>
 
           <div className="is-flex is-align-items-center is-flex-wrap-wrap">
             <span className="mr-2" style={{ width: '1.25em' }} />
-            {event.labels.map((label) => (
+            {eventFields.labels.map((label) => (
               <div key={label.id} className="mt-2">
                 <LabelTag
                   label={label}
                   allowEdit={true}
                   onClickDelete={(e) => {
-                    const rmIdx = event.labels.indexOf(label)
-                    const updatedLabels = produce(event.labels, (labels) => {
+                    const rmIdx = eventFields.labels.indexOf(label)
+                    const updatedLabels = produce(eventFields.labels, (labels) => {
                       labels.splice(rmIdx, 1)
                     })
-                    setEvent({ ...event, labels: updatedLabels })
+                    setEventFields({ ...eventFields, labels: updatedLabels })
                   }}
                 />
               </div>
@@ -275,24 +300,29 @@ export default function EventEditFull(props: { event: Event }) {
             <input
               className="input is-small"
               type="date"
-              value={format(event.start, 'YYYY-MM-DD')}
+              value={format(eventFields.start, 'YYYY-MM-DD')}
               onChange={(e) => {
                 const m = moment(e.target.value, 'YYYY-MM-DD')
-                const duration = dates.diff(event.end, event.start, 'minutes')
-                const start = dates.merge(m.toDate(), event.start)
+                const duration = dates.diff(eventFields.end, eventFields.start, 'minutes')
+                const start = dates.merge(m.toDate(), eventFields.start)
                 const end = dates.add(start, duration, 'minutes')
 
-                const updatedEvent = event.all_day
+                const updatedFields = eventFields.allDay
                   ? {
-                      ...event,
+                      ...eventFields,
                       start,
                       end,
-                      start_day: fullDayFormat(start),
-                      end_day: fullDayFormat(end),
+                      startDay: fullDayFormat(start),
+                      endDay: fullDayFormat(end),
                     }
-                  : { ...event, start, end }
+                  : { ...eventFields, start, end }
 
-                setEvent(updatedEvent)
+                setEventFields(updatedFields)
+                const updatedEvent = {
+                  ...props.event,
+                  ...EventFields.getMutableEventFields(updatedFields),
+                }
+
                 eventActions.setSelectedDate(start)
                 eventActions.eventDispatch({
                   type: 'UPDATE_EDIT_EVENT',
@@ -301,40 +331,45 @@ export default function EventEditFull(props: { event: Event }) {
               }}
               style={{ flex: 1 }}
             />
-            {event.all_day && (
+            {eventFields.allDay && (
               <TimeSelectFullDay
                 days={defaultDays}
-                startDate={event.start}
+                startDate={eventFields.start}
                 onSelectNumDays={(days) => {
-                  const endDate = dates.add(event.start, days, 'day')
-                  const updatedEvent = {
-                    ...event,
-                    end: endDate,
-                    end_day: fullDayFormat(endDate),
-                  }
-                  setEvent(updatedEvent)
+                  const endDate = dates.add(eventFields.start, days, 'day')
+                  setEventFields({ ...eventFields, end: endDate, endDay: fullDayFormat(endDate) })
                 }}
               />
             )}
 
-            {!event.all_day && (
+            {!eventFields.allDay && (
               <TimeSelect
-                start={event.start}
-                end={event.end}
+                start={eventFields.start}
+                end={eventFields.end}
                 onSelectStartDate={(date) => {
-                  const event = { ...props.event, start: date }
-                  setEvent({ ...event, start: date })
+                  const updatedFields = { ...eventFields, start: date }
+                  setEventFields(updatedFields)
+
+                  const updatedEvent = {
+                    ...props.event,
+                    ...EventFields.getMutableEventFields(updatedFields),
+                  }
                   eventActions.eventDispatch({
                     type: 'UPDATE_EDIT_EVENT',
-                    payload: event,
+                    payload: updatedEvent,
                   })
                 }}
                 onSelectEndDate={(date) => {
-                  const event = { ...props.event, end: date }
-                  setEvent({ ...event, end: date })
+                  const updatedFields = { ...eventFields, end: date }
+                  setEventFields(updatedFields)
+
+                  const updatedEvent = {
+                    ...props.event,
+                    ...EventFields.getMutableEventFields(updatedFields),
+                  }
                   eventActions.eventDispatch({
                     type: 'UPDATE_EDIT_EVENT',
-                    payload: event,
+                    payload: updatedEvent,
                   })
                 }}
               />
@@ -342,38 +377,42 @@ export default function EventEditFull(props: { event: Event }) {
 
             <Checkbox
               ml="1"
-              defaultChecked={event.all_day}
+              defaultChecked={eventFields.allDay}
               onChange={(e) => {
                 const isAllDay = e.target.checked
 
-                let updatedEvent
+                let eventFields
                 if (isAllDay) {
-                  const start = dates.startOf(event.start, 'day')
-                  const end = dates.endOf(event.start, 'day')
+                  const start = dates.startOf(eventFields.start, 'day')
+                  const end = dates.endOf(eventFields.start, 'day')
 
-                  updatedEvent = {
-                    ...event,
-                    all_day: isAllDay,
+                  eventFields = {
+                    ...eventFields,
+                    allDay: isAllDay,
                     start,
                     end,
-                    start_day: fullDayFormat(start),
-                    end_day: fullDayFormat(end),
+                    startDay: fullDayFormat(start),
+                    endDay: fullDayFormat(end),
                   }
                 } else {
-                  const start = dates.startOf(event.start, 'day')
+                  const start = dates.startOf(eventFields.start, 'day')
                   const end = dates.add(start, 1, 'hours')
 
-                  updatedEvent = {
-                    ...event,
-                    all_day: isAllDay,
+                  eventFields = {
+                    ...eventFields,
+                    allDay: isAllDay,
                     start,
                     end,
-                    start_day: null,
-                    end_day: null,
+                    startDay: null,
+                    endDay: null,
                   }
                 }
+                setEventFields(eventFields)
 
-                setEvent(updatedEvent)
+                const updatedEvent = {
+                  ...props.event,
+                  ...EventFields.getMutableEventFields(eventFields),
+                }
                 eventActions.eventDispatch({
                   type: 'UPDATE_EDIT_EVENT',
                   payload: updatedEvent,
@@ -386,14 +425,15 @@ export default function EventEditFull(props: { event: Event }) {
 
           {(recurringAction !== 'SINGLE' || isUnsavedEvent) && (
             <RecurringEventEditor
-              initialDate={event.original_start || event.start}
-              initialRulestr={recurrences}
+              initialDate={props.event.original_start || eventFields.start}
+              initialRulestr={eventFields.recurrences}
               onChange={(rules) => {
                 console.log(`Rule Updated: ${rules}`)
+
                 if (rules) {
-                  setRecurrences(rules.toString())
+                  setEventFields({ ...eventFields, recurrences: rules.toString() })
                 } else {
-                  setRecurrences(null)
+                  setEventFields({ ...eventFields, recurrences: null })
                 }
               }}
             />
@@ -404,11 +444,16 @@ export default function EventEditFull(props: { event: Event }) {
               <FiCalendar size={'1.25em'} />
             </Box>
             <SelectCalendar
-              defaultCalendarId={event.calendar_id}
+              defaultCalendarId={eventFields.calendarId}
               calendarsById={calendarContext.calendarsById}
               onChange={(value) => {
-                const updatedEvent = { ...event, calendar_id: value }
-                setEvent(updatedEvent)
+                const updatedFields = { ...eventFields, calendarId: value }
+                setEventFields(updatedFields)
+
+                const updatedEvent = {
+                  ...props.event,
+                  ...EventFields.getMutableEventFields(updatedFields),
+                }
                 eventActions.eventDispatch({
                   type: 'UPDATE_EDIT_EVENT',
                   payload: updatedEvent,
@@ -422,8 +467,8 @@ export default function EventEditFull(props: { event: Event }) {
 
             <ContentEditable
               className="cal-event-edit-description"
-              html={event.description || ''}
-              onChange={(e) => setEvent({ ...event, description: e.target.value })}
+              html={eventFields.description || ''}
+              onChange={(e) => setEventFields({ ...eventFields, description: e.target.value })}
               style={{ minHeight: '4em' }}
             />
           </div>

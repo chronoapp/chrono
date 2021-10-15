@@ -638,13 +638,17 @@ function EventPopover(props: IProps) {
   }
 
   async function deleteThisAndFollowingEvents(event: Event) {
-    if (!event.recurrences || !event.recurring_event_id) {
+    if (!event.recurrences || !event.recurring_event_id || !event.original_start) {
       throw Error('Invalid Recurring Event')
     }
 
     const parentEvent = await getEvent(getAuthToken(), event.recurring_event_id)
 
-    const rules = getSplitRRules(event.recurrences!.join('\n'), parentEvent.start, event.start)
+    const rules = getSplitRRules(
+      event.recurrences!.join('\n'),
+      parentEvent.start,
+      event.original_start
+    )
     const updatedParentEvent = { ...parentEvent, recurrences: [rules.start.toString()] }
 
     return updateEvent(updatedParentEvent)

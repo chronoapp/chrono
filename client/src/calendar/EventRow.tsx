@@ -16,7 +16,7 @@ export function EventItem(props: { event: Event; isPreview: boolean; now: Date }
   const eventActionContext = React.useContext(EventActionContext)
   const { event } = props
   const calendar = calendarsContext.getDefaultCalendar(event.calendar_id)
-  const eventTitle = Event.getDefaultTitle(event)
+  const eventTitle = Event.getDefaultTitle(event.title)
 
   function handleStartDragging(e) {
     if (e.button === 0 && calendar.isWritable()) {

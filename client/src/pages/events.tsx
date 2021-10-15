@@ -324,7 +324,7 @@ class EventList extends React.Component<Props, State> {
                 <Tr key={`event-${event.id}`}>
                   <Td>{format(event.start, 'MMM DD')}</Td>
                   <Td>{getDurationDisplay(event.start, event.end)}</Td>
-                  <Td>{Event.getDefaultTitle(event)}</Td>
+                  <Td>{Event.getDefaultTitle(event.title)}</Td>
                   <Td>
                     <Box display="flex" alignItems="center">
                       {event.labels.map((label) => (
