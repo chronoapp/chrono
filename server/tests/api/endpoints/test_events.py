@@ -181,9 +181,7 @@ async def test_updateEvent_recurring(user, session, async_client):
     recurringEvent.recurrences = ['RRULE:FREQ=DAILY;UNTIL=20200110T120000Z']
     user.events.append(recurringEvent)
 
-    events = await getAllExpandedRecurringEventsList(
-        user, start, start + timedelta(days=20), session
-    )
+    events = await getAllExpandedRecurringEventsList(user, start, start + timedelta(days=20), session)
     assert len(events) == 10
 
     # With Override
@@ -211,9 +209,7 @@ async def test_updateEvent_recurring(user, session, async_client):
     )
     assert resp.status_code == 200
 
-    events = await getAllExpandedRecurringEventsList(
-        user, start, start + timedelta(days=20), session
-    )
+    events = await getAllExpandedRecurringEventsList(user, start, start + timedelta(days=20), session)
 
     # The overriden event should be removed.
     assert len(events) == 5
@@ -254,9 +250,7 @@ async def test_deleteEvent_overrides(user, session, async_client):
     user.events.append(recurringEvent)
     recurringEvent.user_id = user.id
 
-    events = await getAllExpandedRecurringEventsList(
-        user, start, start + timedelta(days=5), session
-    )
+    events = await getAllExpandedRecurringEventsList(user, start, start + timedelta(days=5), session)
     override = createOrUpdateEvent(None, events[2])
     override.title = 'Override'
     override.id = events[2].id

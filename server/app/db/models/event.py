@@ -11,14 +11,10 @@ from sqlalchemy import (
     Table,
     Text,
     DateTime,
-    text,
-    desc,
     ARRAY,
-    select,
 )
-from sqlalchemy.orm import relationship, backref, Session, selectinload
+from sqlalchemy.orm import relationship, backref
 
-from app.db.sql.event_search import EVENT_SEARCH_QUERY
 from app.db.base_class import Base
 
 event_label_association_table = Table(
@@ -57,9 +53,7 @@ class Event(Base):
     calendar_id = Column(String(255), ForeignKey('calendar.id', ondelete='CASCADE'), nullable=False)
     calendar: 'Calendar' = relationship(
         'Calendar',
-        backref=backref(
-            'events', lazy='dynamic', cascade='all,delete', order_by='Event.start.asc()'
-        ),
+        backref=backref('events', lazy='dynamic', cascade='all,delete', order_by='Event.start.asc()'),
     )
 
     title = Column(String(255), index=True)
@@ -90,23 +84,6 @@ class Event(Base):
     original_start = Column(DateTime(timezone=True))
     original_start_day = Column(String(10))
     original_timezone = Column(String(255))
-
-    @classmethod
-    async def search(cls, session: Session, userId: int, searchQuery: str, limit: int = 250):
-        rows = await session.execute(
-            text(EVENT_SEARCH_QUERY), {'userId': userId, 'query': searchQuery, 'limit': limit}
-        )
-        rowIds = [r[0] for r in rows]
-
-        stmt = (
-            select(Event)
-            .filter(Event.id.in_(rowIds))
-            .order_by(desc(Event.end))
-            .options(selectinload(Event.labels))
-        )
-
-        result = await session.execute(stmt)
-        return result.scalars().all()
 
     @property
     def all_day(self):
