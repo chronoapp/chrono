@@ -1,5 +1,5 @@
 import heapq
-from typing import List, Optional, Iterable
+from typing import List, Optional, Iterable, Tuple
 from datetime import datetime
 from googleapiclient.errors import HttpError
 
@@ -12,18 +12,14 @@ from app.core.logger import logger
 from app.db.sql.event_search import EVENT_SEARCH_QUERY
 from app.db.models import Event, User, Calendar
 from app.api.repos.event_utils import (
-    InputError,
     EventBaseVM,
     EventInDBVM,
     createOrUpdateEvent,
     getRecurringEventId,
-    verifyAndGetRecurringEventParent,
     getAllExpandedRecurringEventsList,
+    getExpandedRecurringEvents,
 )
-from app.calendar.google import (
-    insertGoogleEvent,
-    deleteGoogleEvent,
-)
+from app.calendar.google import insertGoogleEvent, deleteGoogleEvent, moveGoogleEvent, updateGoogleEvent
 from app.api.endpoints.labels import LabelInDbVM, Label, combineLabels
 
 """
@@ -32,11 +28,23 @@ Provides an abstraction over SQLAlchemy.
 """
 
 
-class EventNotFound(Exception):
+class Error(Exception):
+    """Base class for exceptions in this module."""
+
     pass
 
 
-class CalendarNotFound(Exception):
+class InputError(Error):
+    """Exception raised for errors in the input."""
+
+    pass
+
+
+class EventNotFound(Error):
+    pass
+
+
+class CalendarNotFound(Error):
     pass
 
 
@@ -133,6 +141,98 @@ class EventRepository:
             except InputError as e:
                 raise EventNotFound('Event not found.')
 
+    async def updateEvent(self, user: User, eventId: str, event: EventBaseVM) -> Event:
+        curEvent = await self.getEvent(user, eventId)
+
+        if curEvent and not curEvent.isWritable():
+            raise InputError("Can not update immutable event.")
+
+        # Not found in DB.
+        elif not curEvent and not event.recurring_event_id:
+            raise EventNotFound(f'Event not found.')
+
+        # This is an instance of a recurring event. Replace the recurring event instance with and override.
+        elif not curEvent and event.recurring_event_id:
+            parentEvent = await self.getEvent(user, event.recurring_event_id)
+
+            if not parentEvent:
+                raise EventNotFound(f'Invalid parent event {event.recurring_event_id}.')
+
+            try:
+                _, dt = verifyRecurringEvent(user, eventId, parentEvent)
+            except InputError as err:
+                raise EventNotFound(str(err))
+
+            googleId = None
+            if parentEvent.recurring_event_gId:
+                googleId = getRecurringEventId(parentEvent.recurring_event_gId, dt, event.isAllDay())
+
+            prevCalendarId = None
+
+            # Sets the original recurring start date info.
+            event.original_start = dt
+            event.original_start_day = event.start_day
+            event.original_timezone = event.timezone
+
+            eventDb = createOrUpdateEvent(None, event, overrideId=event.id, googleId=googleId)
+
+            user.events.append(eventDb)
+            await self.session.commit()
+            await self.session.refresh(eventDb)
+
+            logger.info(f'Created Override: {eventDb}')
+
+        # We are overriding a parent recurring event.
+        elif curEvent and curEvent.is_parent_recurring_event:
+            prevCalendarId = curEvent.calendar_id
+
+            # Since we're modifying the recurrence, we need to remove all previous overrides.
+            # TODO: Only delete the overrides that no longer exist.
+            if curEvent.recurrences != event.recurrences:
+                stmt = delete(Event).where(
+                    and_(Event.user_id == user.id, Event.recurring_event_id == curEvent.id)
+                )
+                await self.session.execute(stmt)
+
+            eventDb = createOrUpdateEvent(curEvent, event)
+
+        # Update normal event.
+        else:
+            prevCalendarId = curEvent.calendar_id if curEvent else None
+            eventDb = createOrUpdateEvent(curEvent, event)
+
+        logger.info(f'Updated Event: {eventDb}')
+
+        eventDb.labels.clear()
+        eventDb.labels = await getCombinedLabels(user, event.labels, self.session)
+
+        if eventDb.calendar.google_id:
+            if prevCalendarId and prevCalendarId != eventDb.calendar_id:
+                # Base recurring Event.
+                recurringEvent: Optional[Event] = self.getEvent(user, event.recurring_event_id)
+                if recurringEvent:
+                    # If we move one event's calendar, we need to update all child events.
+                    recurringEvent.calendar_id = eventDb.calendar_id
+
+                    childEvents: List[Event] = (
+                        await self.session.execute(
+                            select(Event).where(
+                                and_(User.id == user.id, Event.recurring_event_id == recurringEvent.id)
+                            )
+                        )
+                    ).scalars()
+
+                    for e in childEvents:
+                        e.calendar_id = eventDb.calendar_id
+
+                    moveGoogleEvent(user, recurringEvent, prevCalendarId)
+                else:
+                    moveGoogleEvent(user, eventDb, prevCalendarId)
+
+            _ = updateGoogleEvent(user, eventDb)
+
+        return eventDb
+
     async def search(self, userId: int, searchQuery: str, limit: int = 250) -> List[Event]:
         rows = await self.session.execute(
             text(EVENT_SEARCH_QUERY), {'userId': userId, 'query': searchQuery, 'limit': limit}
@@ -204,3 +304,55 @@ async def createOverrideDeletedEvent(user: User, eventId: str, session: AsyncSes
     )
 
     return event
+
+
+async def verifyAndGetRecurringEventParent(
+    user: User, eventId: str, session: AsyncSession
+) -> Tuple[Event, datetime]:
+    """Returns the parent from the virtual eventId.
+    Returns tuple of (parent event, datetime)
+
+    Throws InputError if it's not a valid event ID.
+    """
+    parts = eventId.split('_')
+    if not len(parts) >= 2:
+        raise InputError(f'Invalid Event ID: {eventId}')
+
+    parentId = ''.join(parts[:-1])
+
+    stmt = select(Event).where(and_(User.id == user.id, Event.id == parentId))
+    parentEvent = (await session.execute(stmt)).scalar()
+
+    if not parentEvent:
+        raise InputError(f'Invalid Event ID: {eventId}')
+
+    _, date = verifyRecurringEvent(user, eventId, parentEvent)
+
+    return parentEvent, date
+
+
+def verifyRecurringEvent(user: User, eventId: str, parentEvent: Event) -> Tuple[str, datetime]:
+    """Makes sure the eventId is part of the parent Event ID.
+    Returns tuple of (parent event ID, datetime)
+    Raises InputError otherwise.
+    """
+    parts = eventId.split('_')
+    if not len(parts) >= 2:
+        raise InputError(f'Invalid Event ID: {eventId}')
+
+    parentEventId = ''.join(parts[:-1])
+    if not parentEventId == parentEvent.id:
+        raise InputError(f'Invalid Event ID: {eventId} parent {parentEvent.id}')
+
+    datePart = parts[-1]
+    try:
+        dt = datetime.strptime(datePart, "%Y%m%dT%H%M%SZ")
+
+        for e in getExpandedRecurringEvents(user, parentEvent, {}, dt, dt):
+            if e.id == eventId:
+                return ''.join(parts[:-1]), dt
+
+        raise InputError('Invalid Event ID.')
+
+    except ValueError:
+        raise InputError('Invalid Event ID.')

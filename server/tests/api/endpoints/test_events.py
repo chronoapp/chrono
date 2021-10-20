@@ -2,14 +2,12 @@ import pytest
 import json
 from uuid import uuid4
 from datetime import datetime, timedelta
-from typing import Tuple
 
 from sqlalchemy import select, func
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import selectinload
 from app.api.repos.event_utils import (
     getExpandedRecurringEvents,
     getAllExpandedRecurringEventsList,
-    getAllExpandedRecurringEvents,
     createOrUpdateEvent,
 )
 from app.api.endpoints.authentication import getAuthToken

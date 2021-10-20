@@ -7,14 +7,11 @@ from sqlalchemy import select
 from datetime import datetime, timedelta
 from dateutil.rrule import DAILY, WEEKLY
 
-from app.db.models import User, Calendar, Event
 from app.api.repos.event_utils import (
     EventBaseVM,
     getAllExpandedRecurringEvents,
     getAllExpandedRecurringEventsList,
     createOrUpdateEvent,
-    verifyRecurringEvent,
-    InputError,
 )
 
 from tests.utils import createEvent
@@ -99,32 +96,3 @@ async def test_getAllExpandedRecurringEvents_fullDay(user, session):
         assert e.start_day == expectedStart.strftime('%Y-%m-%d')
         expectedEnd = expectedStart + timedelta(days=1)
         assert e.end_day == expectedEnd.strftime('%Y-%m-%d')
-
-
-@pytest.mark.asyncio
-async def test_verifyRecurringEvent(user, session):
-    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
-
-    # Create a new recurring event.
-    start = datetime.fromisoformat('2020-12-01T12:00:00')
-    recurringEvent = createEvent(calendar, start, start + timedelta(hours=1), timezone='UTC')
-
-    recurringEvent.recurrences = ['RRULE:FREQ=DAILY;COUNT=5']
-    user.events.append(recurringEvent)
-    await session.commit()
-
-    # Assert that verifyRecurringEvent raises exceptions if the ID is invalid.
-    validEventId = f'{recurringEvent.id}_20201202T120000Z'
-    invalidEventId1 = f'{recurringEvent.id}_1212'
-    invalidEventId2 = f'{recurringEvent.id}_20211202T120000Z'
-
-    # Re-query to merge with labels joined.
-    recurringEvent = (await session.execute(select(Event).where(Event.id == recurringEvent.id))).scalar()
-
-    verifyRecurringEvent(user, validEventId, recurringEvent)
-
-    with pytest.raises(InputError):
-        verifyRecurringEvent(user, invalidEventId1, recurringEvent)
-
-    with pytest.raises(InputError):
-        verifyRecurringEvent(user, invalidEventId2, recurringEvent)

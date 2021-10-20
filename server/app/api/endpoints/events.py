@@ -1,30 +1,17 @@
-import heapq
 from datetime import datetime, timedelta
 from typing import List, Optional, Union, Iterable
 from fastapi import APIRouter, Depends, HTTPException, status
-
-from sqlalchemy import asc, and_, select, delete
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logger import logger
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
-from app.api.repos.event_repo import EventRepository, CalendarNotFound, EventNotFound, getCombinedLabels
-
+from app.api.repos.event_repo import EventRepository, CalendarNotFound, EventNotFound, InputError
 from app.api.repos.event_utils import (
-    InputError,
     EventBaseVM,
     EventInDBVM,
-    createOrUpdateEvent,
-    getRecurringEventId,
-    verifyRecurringEvent,
 )
-from app.calendar.google import (
-    updateGoogleEvent,
-    moveGoogleEvent,
-)
-from app.db.models import Event, User, Calendar
+from app.db.models import Event, User
 
 router = APIRouter()
 
@@ -115,110 +102,20 @@ async def updateEvent(
 
     TODO: Handle move between different calendars
     """
-    eventRepo = EventRepository(session)
-    curEvent = await eventRepo.getEvent(user, event_id)
-
-    if curEvent and not curEvent.isWritable():
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail='Can not update event.')
-
-    # Not found in DB.
-    elif not curEvent and not event.recurring_event_id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail='Event not found.')
-
-    # This is an instance of a recurring event. Replace the recurring event instance with and override.
-    elif not curEvent and event.recurring_event_id:
-        parentEvent = await eventRepo.getEvent(user, event.recurring_event_id)
-
-        if not parentEvent:
-            raise HTTPException(
-                status.HTTP_404_NOT_FOUND,
-                detail=f'Invalid parent event {event.recurring_event_id}.',
-            )
-
-        try:
-            _, dt = verifyRecurringEvent(user, event_id, parentEvent)
-        except InputError as err:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(err))
-
-        googleId = None
-        if parentEvent.recurring_event_gId:
-            googleId = getRecurringEventId(parentEvent.recurring_event_gId, dt, event.isAllDay())
-
-        prevCalendarId = None
-
-        # Sets the original recurring start date info.
-        event.original_start = dt
-        event.original_start_day = event.start_day
-        event.original_timezone = event.timezone
-
-        eventDb = createOrUpdateEvent(None, event, overrideId=event_id, googleId=googleId)
-
-        user.events.append(eventDb)
+    try:
+        eventRepo = EventRepository(session)
+        eventDb = await eventRepo.updateEvent(user, event_id, event)
         await session.commit()
-        await session.refresh(eventDb)
 
-        logger.info(f'Created Override: {eventDb}')
+        return eventDb
 
-    # We are overriding a parent recurring event.
-    elif curEvent and curEvent.is_parent_recurring_event:
-        prevCalendarId = curEvent.calendar_id
-
-        # Since we're modifying the recurrence, we need to remove all previous overrides.
-        # TODO: Only delete the overrides that no longer exist.
-        if curEvent.recurrences != event.recurrences:
-            stmt = delete(Event).where(
-                and_(Event.user_id == user.id, Event.recurring_event_id == curEvent.id)
-            )
-            await session.execute(stmt)
-
-        eventDb = createOrUpdateEvent(curEvent, event)
-
-    # Update normal event.
-    else:
-        prevCalendarId = curEvent.calendar_id if curEvent else None
-        eventDb = createOrUpdateEvent(curEvent, event)
-
-    logger.info(f'Updated Event: {eventDb}')
-
-    eventDb.labels.clear()
-    eventDb.labels = await getCombinedLabels(user, event.labels, session)
-
-    if eventDb.calendar.google_id:
-        if prevCalendarId and prevCalendarId != eventDb.calendar_id:
-            # Base recurring Event.
-            recurringEvent: Optional[Event] = (
-                await session.execute(
-                    select(Event)
-                    .where(and_(User.id == user.id, Event.id == event.recurring_event_id))
-                    .options(selectinload(Event.labels))
-                    .options(selectinload(Event.calendar))
-                )
-            ).scalar()
-
-            if recurringEvent:
-                # If we move one event's calendar, we need to update all child events.
-                recurringEvent.calendar_id = eventDb.calendar_id
-
-                childEvents: List[Event] = (
-                    await session.execute(
-                        select(Event).where(
-                            and_(User.id == user.id, Event.recurring_event_id == recurringEvent.id)
-                        )
-                    )
-                ).scalars()
-
-                for e in childEvents:
-                    e.calendar_id = eventDb.calendar_id
-
-                moveGoogleEvent(user, recurringEvent, prevCalendarId)
-            else:
-                moveGoogleEvent(user, eventDb, prevCalendarId)
-
-        _ = updateGoogleEvent(user, eventDb)
-
-    await session.commit()
-
-    return eventDb
+    except EventNotFound as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+    except InputError as e:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e))
+    except Exception as e:
+        print(e)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @router.delete('/events/{eventId}')

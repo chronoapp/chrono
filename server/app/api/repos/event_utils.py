@@ -78,21 +78,7 @@ MAX_RECURRING_EVENT_COUNT = 1000
 UpdateOption = Literal['SINGLE', 'ALL', 'FOLLOWING']
 
 
-class Error(Exception):
-    """Base class for exceptions in this module."""
-
-    pass
-
-
-class InputError(Error):
-    """Exception raised for errors in the input."""
-
-    pass
-
-
-def recurrenceToRuleSet(
-    recurrence: str, timezone: str, start: datetime, startDay: Optional[str]
-) -> rruleset:
+def recurrenceToRuleSet(recurrence: str, timezone: str, start: datetime, startDay: Optional[str]) -> rruleset:
     """Gets the rrule objects from recurrence string array
     Converts to the local datetime in the timezone.
     """
@@ -118,9 +104,9 @@ def getRRule(
     until: Optional[datetime],
 ) -> rrule:
     if until and occurrences:
-        raise InputError('Until and occurrences cannot both be set.')
+        raise ValueError('Until and occurrences cannot both be set.')
     if not until and not occurrences:
-        raise InputError('Either until or occurrences must be set.')
+        raise ValueError('Either until or occurrences must be set.')
 
     count = None
     if not until:
@@ -336,55 +322,3 @@ def getExpandedRecurringEvents(
                         }
                     )
                     yield eventVM
-
-
-async def verifyAndGetRecurringEventParent(
-    user: User, eventId: str, session: AsyncSession
-) -> Tuple[Event, datetime]:
-    """Returns the parent from the virtual eventId.
-    Returns tuple of (parent event, datetime)
-
-    Throws InputError if it's not a valid event ID.
-    """
-    parts = eventId.split('_')
-    if not len(parts) >= 2:
-        raise InputError(f'Invalid Event ID: {eventId}')
-
-    parentId = ''.join(parts[:-1])
-
-    stmt = select(Event).where(and_(User.id == user.id, Event.id == parentId))
-    parentEvent = (await session.execute(stmt)).scalar()
-
-    if not parentEvent:
-        raise InputError(f'Invalid Event ID: {eventId}')
-
-    _, date = verifyRecurringEvent(user, eventId, parentEvent)
-
-    return parentEvent, date
-
-
-def verifyRecurringEvent(user: User, eventId: str, parentEvent: Event) -> Tuple[str, datetime]:
-    """Makes sure the eventId is part of the parent Event ID.
-    Returns tuple of (parent event ID, datetime)
-    Raises InputError otherwise.
-    """
-    parts = eventId.split('_')
-    if not len(parts) >= 2:
-        raise InputError(f'Invalid Event ID: {eventId}')
-
-    parentEventId = ''.join(parts[:-1])
-    if not parentEventId == parentEvent.id:
-        raise InputError(f'Invalid Event ID: {eventId} parent {parentEvent.id}')
-
-    datePart = parts[-1]
-    try:
-        dt = datetime.strptime(datePart, "%Y%m%dT%H%M%SZ")
-
-        for e in getExpandedRecurringEvents(user, parentEvent, {}, dt, dt):
-            if e.id == eventId:
-                return ''.join(parts[:-1]), dt
-
-        raise InputError('Invalid Event ID.')
-
-    except ValueError:
-        raise InputError('Invalid Event ID.')
