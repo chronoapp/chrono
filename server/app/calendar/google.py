@@ -16,7 +16,7 @@ from app.db.session import AsyncSession
 from app.db.models import User, Event, LabelRule, Calendar, Webhook
 from app.core.logger import logger
 from app.core import config
-from app.api.events.event_utils import (
+from app.api.repos.event_utils import (
     EventBaseVM,
     createOrUpdateEvent,
     getRecurringEventId,

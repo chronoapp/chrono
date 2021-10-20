@@ -11,7 +11,7 @@ from sqlalchemy import text, desc
 from app.core.logger import logger
 from app.db.sql.event_search import EVENT_SEARCH_QUERY
 from app.db.models import Event, User, Calendar
-from app.api.events.event_utils import (
+from app.api.repos.event_utils import (
     InputError,
     EventBaseVM,
     EventInDBVM,

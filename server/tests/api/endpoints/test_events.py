@@ -6,7 +6,7 @@ from typing import Tuple
 
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session, selectinload
-from app.api.events.event_utils import (
+from app.api.repos.event_utils import (
     getExpandedRecurringEvents,
     getAllExpandedRecurringEventsList,
     getAllExpandedRecurringEvents,

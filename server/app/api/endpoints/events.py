@@ -12,7 +12,7 @@ from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
 from app.api.repos.event_repo import EventRepository, CalendarNotFound, EventNotFound, getCombinedLabels
 
-from app.api.events.event_utils import (
+from app.api.repos.event_utils import (
     InputError,
     EventBaseVM,
     EventInDBVM,

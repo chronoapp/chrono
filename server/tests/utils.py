@@ -14,6 +14,7 @@ def createEvent(
     googleId: Optional[str] = None,
     timezone: Optional[str] = None,
     recurrences: Optional[List[str]] = None,
+    title: Optional[str] = 'Event',
 ):
     originalStart = None
     if recurrences:
@@ -21,7 +22,7 @@ def createEvent(
 
     event = Event(
         googleId,
-        f'Event',
+        title,
         f'Event description',
         start,
         end,

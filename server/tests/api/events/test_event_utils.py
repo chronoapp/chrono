@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from dateutil.rrule import DAILY, WEEKLY
 
 from app.db.models import User, Calendar, Event
-from app.api.events.event_utils import (
+from app.api.repos.event_utils import (
     EventBaseVM,
     getAllExpandedRecurringEvents,
     getAllExpandedRecurringEventsList,
@@ -35,15 +35,11 @@ async def test_getAllExpandedRecurringEvents_override(user, session):
     user.events.append(recurringEvent)
 
     # Expanded recurring events between 2 dates.
-    events = await getAllExpandedRecurringEventsList(
-        user, start, start + timedelta(days=1), session
-    )
+    events = await getAllExpandedRecurringEventsList(user, start, start + timedelta(days=1), session)
     assert len(events) == 2
     assert events[0].original_start == events[0].start
 
-    events = await getAllExpandedRecurringEventsList(
-        user, start, start + timedelta(days=10), session
-    )
+    events = await getAllExpandedRecurringEventsList(user, start, start + timedelta(days=10), session)
     assert len(events) == 6
 
     delta = events[1].start - events[0].start
@@ -56,9 +52,7 @@ async def test_getAllExpandedRecurringEvents_override(user, session):
     user.events.append(event)
     await session.commit()
 
-    events = await getAllExpandedRecurringEventsList(
-        user, start, start + timedelta(days=1), session
-    )
+    events = await getAllExpandedRecurringEventsList(user, start, start + timedelta(days=1), session)
     assert events[1].title == 'Override'
 
 
@@ -125,9 +119,7 @@ async def test_verifyRecurringEvent(user, session):
     invalidEventId2 = f'{recurringEvent.id}_20211202T120000Z'
 
     # Re-query to merge with labels joined.
-    recurringEvent = (
-        await session.execute(select(Event).where(Event.id == recurringEvent.id))
-    ).scalar()
+    recurringEvent = (await session.execute(select(Event).where(Event.id == recurringEvent.id))).scalar()
 
     verifyRecurringEvent(user, validEventId, recurringEvent)
 
