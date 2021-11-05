@@ -174,7 +174,7 @@ class EventRepository:
             event.original_start_day = event.start_day
             event.original_timezone = event.timezone
 
-            updatedEvent = createOrUpdateEvent(None, event, overrideId=event.id, googleId=googleId)
+            updatedEvent = createOrUpdateEvent(None, event, overrideId=eventId, googleId=googleId)
 
             user.events.append(updatedEvent)
             await self.session.commit()
