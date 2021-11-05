@@ -21,22 +21,22 @@ services:
 
   # PostgreSQL database
   postgres_db:
-    image: sameersbn/postgresql:10-1
+    image: postgres:13-alpine
     volumes:
-      - postgres_db_data:/var/lib/postgresql
+      - postgres-data:/var/lib/postgresql/data
     ports:
       - '7432:5432'
     environment:
-      DB_USER: ${DATABASE_USER}
-      DB_PASS: ${DATABASE_PASS}
-      DB_NAME: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASS}
+      POSTGRES_DB: ${DATABASE_NAME}
 
   # PostgreSQL database (Testing)
   postgres_test:
-    image: postgres:latest
+    image: postgres:13-alpine
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
 
 volumes:
-  postgres_db_data: # PostgreSQL data volume
+  postgres-data:
   model_data:
