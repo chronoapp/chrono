@@ -174,13 +174,13 @@ class EventRepository:
             event.original_start_day = event.start_day
             event.original_timezone = event.timezone
 
-            eventDb = createOrUpdateEvent(None, event, overrideId=event.id, googleId=googleId)
+            updatedEvent = createOrUpdateEvent(None, event, overrideId=event.id, googleId=googleId)
 
-            user.events.append(eventDb)
+            user.events.append(updatedEvent)
             await self.session.commit()
-            await self.session.refresh(eventDb)
+            await self.session.refresh(updatedEvent)
 
-            logger.info(f'Created Override: {eventDb}')
+            logger.info(f'Created Override: {updatedEvent}')
 
         # We are overriding a parent recurring event.
         elif curEvent and curEvent.is_parent_recurring_event:
@@ -194,25 +194,25 @@ class EventRepository:
                 )
                 await self.session.execute(stmt)
 
-            eventDb = createOrUpdateEvent(curEvent, event)
+            updatedEvent = createOrUpdateEvent(curEvent, event)
 
         # Update normal event.
         else:
             prevCalendarId = curEvent.calendar_id if curEvent else None
-            eventDb = createOrUpdateEvent(curEvent, event)
+            updatedEvent = createOrUpdateEvent(curEvent, event)
 
-        logger.info(f'Updated Event: {eventDb}')
+        logger.info(f'Updated Event: {updatedEvent}')
 
-        eventDb.labels.clear()
-        eventDb.labels = await getCombinedLabels(user, event.labels, self.session)
+        updatedEvent.labels.clear()
+        updatedEvent.labels = await getCombinedLabels(user, event.labels, self.session)
 
-        if eventDb.calendar.google_id:
-            if prevCalendarId and prevCalendarId != eventDb.calendar_id:
+        if updatedEvent.calendar.google_id:
+            if prevCalendarId and prevCalendarId != updatedEvent.calendar_id:
                 # Base recurring Event.
-                recurringEvent: Optional[Event] = self.getEvent(user, event.recurring_event_id)
+                recurringEvent: Optional[Event] = await self.getEvent(user, event.recurring_event_id)
                 if recurringEvent:
                     # If we move one event's calendar, we need to update all child events.
-                    recurringEvent.calendar_id = eventDb.calendar_id
+                    recurringEvent.calendar_id = updatedEvent.calendar_id
 
                     childEvents: List[Event] = (
                         await self.session.execute(
@@ -223,15 +223,15 @@ class EventRepository:
                     ).scalars()
 
                     for e in childEvents:
-                        e.calendar_id = eventDb.calendar_id
+                        e.calendar_id = updatedEvent.calendar_id
 
                     moveGoogleEvent(user, recurringEvent, prevCalendarId)
                 else:
-                    moveGoogleEvent(user, eventDb, prevCalendarId)
+                    moveGoogleEvent(user, updatedEvent, prevCalendarId)
 
-            _ = updateGoogleEvent(user, eventDb)
+            _ = updateGoogleEvent(user, updatedEvent)
 
-        return eventDb
+        return updatedEvent
 
     async def search(self, userId: int, searchQuery: str, limit: int = 250) -> List[Event]:
         rows = await self.session.execute(
