@@ -35,9 +35,8 @@ async def getUserTrends(
     try:
         startTime = datetime.fromisoformat(start)
         endTime = datetime.fromisoformat(end)
-        labels, durations = await getTrendsDataResult(
-            user, labelId, startTime, endTime, time_period, session
-        )
+        labels, durations = await getTrendsDataResult(user, labelId, startTime, endTime, time_period, session)
+
     except ValueError as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
 
@@ -75,13 +74,38 @@ def getSubtreeLabelIds(user: User, labelId: int) -> List[int]:
     return labelIds
 
 
-def getInterval(period: TimePeriod) -> timedelta:
+def getInterval(period: TimePeriod) -> str:
+    """Returns the postgres interval."""
     if period == 'DAY':
-        return timedelta(days=1)
-    if period == 'WEEK':
-        return timedelta(weeks=1)
-    if period == 'MONTH':
-        return timedelta(days=30)
+        return '1 day'
+    elif period == 'WEEK':
+        return '1 week'
+    elif period == 'MONTH':
+        return '1 month'
+    else:
+        raise ValueError('Period not found.')
+
+
+def getRoundedDate(dt: datetime, period: TimePeriod) -> datetime:
+    """Rounds the date to the nearest period."""
+    if period == 'DAY':
+        return dt
+    elif period == 'WEEK':
+        return dt - timedelta(days=(dt.weekday() + 1) % 7)
+    elif period == 'MONTH':
+        return dt.replace(day=1)
+    else:
+        raise ValueError('Period not found.')
+
+
+def getNextPeriodDt(dt: datetime, period: TimePeriod) -> datetime:
+    """Gets the next timeperiod for the given datetime."""
+    if period == 'DAY':
+        return dt + timedelta(days=1)
+    elif period == 'WEEK':
+        return dt + timedelta(days=7)
+    elif period == 'MONTH':
+        return dt + timedelta(days=30)
     else:
         raise ValueError('Period not found.')
 
@@ -99,12 +123,16 @@ async def getTrendsDataResult(
 
     TODO: Expand recurring events and merge.
     """
+    startTime = getRoundedDate(startTime, timePeriod)
+    endTimePlusOneInterval = getNextPeriodDt(endTime, timePeriod)
+
     userId = user.id
     timezone = user.timezone
     labels, durations = [], []
 
     labelIds = getSubtreeLabelIds(user, labelId)
     labelIdsFilter = ' OR '.join([f'label.id = {labelId}' for labelId in labelIds])
+    interval = getInterval(timePeriod)
 
     query = f"""
         with filtered_events as (
@@ -125,11 +153,11 @@ async def getTrendsDataResult(
             coalesce(sum(EXTRACT(EPOCH FROM (e.end - e.start))), 0),
             count(e.start) AS event_count
         FROM generate_series(date_trunc('DAY', CAST(:start_time as date))
-                            , :end_time
-                            , CAST(:interval as interval)) g(starting)
+                            , :interval_end_time
+                            , CAST('{interval}' as interval)) g(starting)
         LEFT JOIN filtered_events e
             ON e.start > g.starting
-            AND e.start <  g.starting + CAST(:interval as interval)
+            AND e.start <  g.starting + CAST('{interval}' as interval)
         GROUP BY starting
         ORDER BY starting;
     """
@@ -139,9 +167,9 @@ async def getTrendsDataResult(
         {
             'userId': userId,
             'start_time': startTime,
-            'end_time': endTime,
+            'end_time': endTimePlusOneInterval,
+            'interval_end_time': endTime,
             'time_period': timePeriod,
-            'interval': getInterval(timePeriod),
             'timezone': timezone,
             'timezone_end': timezone,
         },
