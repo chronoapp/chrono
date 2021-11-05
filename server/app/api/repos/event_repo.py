@@ -28,23 +28,23 @@ Provides an abstraction over SQLAlchemy.
 """
 
 
-class Error(Exception):
+class EventRepoError(Exception):
     """Base class for exceptions in this module."""
 
     pass
 
 
-class InputError(Error):
+class InputError(EventRepoError):
     """Exception raised for errors in the input."""
 
     pass
 
 
-class EventNotFound(Error):
+class EventNotFound(EventRepoError):
     pass
 
 
-class CalendarNotFound(Error):
+class CalendarNotFound(EventRepoError):
     pass
 
 
@@ -109,7 +109,7 @@ class EventRepository:
 
         return eventDb
 
-    async def delete(self, user: User, eventId: str) -> Event:
+    async def deleteEvent(self, user: User, eventId: str) -> Event:
         stmt = (
             select(Event)
             .where(and_(Event.user_id == user.id, Event.id == eventId, Event.status != 'deleted'))

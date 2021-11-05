@@ -27,7 +27,6 @@ async def getEvents(
     session: AsyncSession = Depends(get_db),
 ) -> Iterable[Union[EventInDBVM, Event]]:
     """
-    TODO: Validate fields: date
     TODO: Filter queries for recurring events
     TODO: Figure out how to gather async queries
     """
@@ -71,7 +70,7 @@ async def createEvent(
         return eventDb
 
     except CalendarNotFound:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail='Calendar not found.')
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail='Calendar not found.')
     except Exception as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST)
 
@@ -130,7 +129,7 @@ async def deleteEvent(
 
     try:
         eventRepo = EventRepository(session)
-        _ = await eventRepo.delete(user, eventId)
+        _ = await eventRepo.deleteEvent(user, eventId)
         await session.commit()
 
         return {}
