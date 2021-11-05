@@ -35,7 +35,9 @@ async def getUserTrends(
     try:
         startTime = datetime.fromisoformat(start)
         endTime = datetime.fromisoformat(end)
-        labels, durations = await getTrendsDataResult(user, labelId, startTime, endTime, time_period, session)
+        labels, durations = await getTrendsDataResult(
+            user, labelId, startTime, endTime, time_period, session
+        )
 
     except ValueError as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))

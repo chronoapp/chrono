@@ -98,7 +98,7 @@ async def putLabels(
 ):
     """TODO: Bulk update with one query."""
     updatedLabels = [await createOrUpdateLabel(user, label.id, label, session) for label in labels]
-    session.commit()
+    await session.commit()
 
     return updatedLabels
 
