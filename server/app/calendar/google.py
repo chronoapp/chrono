@@ -106,7 +106,7 @@ def mapGoogleColor(color: str) -> str:
         return color
 
 
-def getService(user: User):
+def getCalendarService(user: User):
     credentials = Credentials(**user.credentials.token_data)
     service = build('calendar', 'v3', credentials=credentials, cache_discovery=False)
 
@@ -114,7 +114,7 @@ def getService(user: User):
 
 
 def syncGoogleCalendars(user: User):
-    service = getService(user)
+    service = getCalendarService(user)
     calendarList = service.calendarList().list().execute()
     calendarsMap = {cal.id: cal for cal in user.calendars}
 
@@ -171,7 +171,7 @@ async def syncAllEvents(userId: int, fullSync: bool = False):
 
 
 async def syncCalendar(calendar: Calendar, session: AsyncSession, fullSync: bool = False) -> None:
-    service = getService(calendar.user)
+    service = getCalendarService(calendar.user)
     await createWebhook(calendar, session)
 
     end = (datetime.utcnow() + timedelta(days=30)).isoformat() + 'Z'
@@ -234,10 +234,7 @@ async def getEventWithCache(
     if googleEventId in addedEventsCache:
         return addedEventsCache[googleEventId]
     else:
-        stmt = (
-            select(Event)
-            .where(Event.g_id == googleEventId, Event.user_id == user.id)
-        )
+        stmt = select(Event).where(Event.g_id == googleEventId, Event.user_id == user.id)
         result = await session.execute(stmt)
 
         return result.scalar()
@@ -511,13 +508,18 @@ def insertGoogleEvent(user: User, event: Event):
     timeZone = event.calendar.timezone
     eventBody = getEventBody(event, timeZone)
 
-    return getService(user).events().insert(calendarId=event.calendar_id, body=eventBody).execute()
+    return (
+        getCalendarService(user)
+        .events()
+        .insert(calendarId=event.calendar_id, body=eventBody)
+        .execute()
+    )
 
 
 def moveGoogleEvent(user: User, event: Event, prevCalendarId: str):
     """Moves an event to another calendar, i.e. changes an event's organizer."""
     return (
-        getService(user)
+        getCalendarService(user)
         .events()
         .move(calendarId=prevCalendarId, eventId=event.g_id, destination=event.calendar_id)
         .execute()
@@ -528,7 +530,7 @@ def updateGoogleEvent(user: User, event: Event):
     timeZone = event.calendar.timezone
     eventBody = getEventBody(event, timeZone)
     return (
-        getService(user)
+        getCalendarService(user)
         .events()
         .patch(calendarId=event.calendar_id, eventId=event.g_id, body=eventBody)
         .execute()
@@ -537,7 +539,10 @@ def updateGoogleEvent(user: User, event: Event):
 
 def deleteGoogleEvent(user: User, event: Event):
     return (
-        getService(user).events().delete(calendarId=event.calendar_id, eventId=event.g_id).execute()
+        getCalendarService(user)
+        .events()
+        .delete(calendarId=event.calendar_id, eventId=event.g_id)
+        .execute()
     )
 
 
@@ -548,7 +553,7 @@ def createCalendar(user: User, calendar: Calendar):
         'description': calendar.description,
         'timeZone': calendar.timezone,
     }
-    return getService(user).calendars().insert(body=body).execute()
+    return getCalendarService(user).calendars().insert(body=body).execute()
 
 
 def updateCalendar(user: User, calendar: Calendar):
@@ -557,7 +562,9 @@ def updateCalendar(user: User, calendar: Calendar):
         'foregroundColor': calendar.foreground_color,
         'backgroundColor': calendar.background_color,
     }
-    return getService(user).calendarList().patch(calendarId=calendar.id, body=body).execute()
+    return (
+        getCalendarService(user).calendarList().patch(calendarId=calendar.id, body=body).execute()
+    )
 
 
 async def createWebhook(calendar: Calendar, session) -> None:
@@ -584,7 +591,12 @@ async def createWebhook(calendar: Calendar, session) -> None:
     webhookUrl = f'{baseApiUrl}/webhooks/google_events'
 
     body = {'id': uniqueId, 'address': webhookUrl, 'type': 'web_hook'}
-    resp = getService(calendar.user).events().watch(calendarId=calendar.id, body=body).execute()
+    resp = (
+        getCalendarService(calendar.user)
+        .events()
+        .watch(calendarId=calendar.id, body=body)
+        .execute()
+    )
     webhook = Webhook(resp.get('id'), resp.get('resourceId'), resp.get('resourceUri'))
     webhook.calendar = calendar
 
@@ -593,7 +605,7 @@ def cancelWebhook(user: User, webhook: Webhook, session: AsyncSession):
     body = {'resourceId': webhook.resource_id, 'id': webhook.id}
 
     try:
-        resp = getService(user).channels().stop(body=body).execute()
+        resp = getCalendarService(user).channels().stop(body=body).execute()
     except HttpError as e:
         logger.error(e)
 
