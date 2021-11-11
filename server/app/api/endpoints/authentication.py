@@ -22,7 +22,7 @@ from app.core import config
 from app.db.models.user_credentials import UserCredential, ProviderType
 from app.db.models.user import User
 from app.api.utils.db import get_db
-from app.calendar.microsoft import getMsftUser, getMsftSettings
+from app.sync.msft.calendar import getMsftUser, getMsftSettings
 
 router = APIRouter()
 
