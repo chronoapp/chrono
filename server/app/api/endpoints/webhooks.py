@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.api.utils.db import get_db
 from app.db.models import Webhook
-from app.calendar.google import syncCalendar
+from app.sync.google.calendar import syncCalendar
 
 router = APIRouter()
 

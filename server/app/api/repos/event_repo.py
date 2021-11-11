@@ -19,7 +19,12 @@ from app.api.repos.event_utils import (
     getAllExpandedRecurringEventsList,
     getExpandedRecurringEvents,
 )
-from app.calendar.google import insertGoogleEvent, deleteGoogleEvent, moveGoogleEvent, updateGoogleEvent
+from app.sync.google.calendar import (
+    insertGoogleEvent,
+    deleteGoogleEvent,
+    moveGoogleEvent,
+    updateGoogleEvent,
+)
 from app.api.endpoints.labels import LabelInDbVM, Label, combineLabels
 
 """
@@ -67,7 +72,9 @@ class EventRepository:
         expandedRecurringEvents = await getAllExpandedRecurringEventsList(
             user, startDate, endDate, self.session
         )
-        allEvents = heapq.merge(expandedRecurringEvents, singleEvents, key=lambda event: event.start)
+        allEvents = heapq.merge(
+            expandedRecurringEvents, singleEvents, key=lambda event: event.start
+        )
 
         return allEvents
 
@@ -85,7 +92,9 @@ class EventRepository:
 
     async def createEvent(self, user: User, event: EventBaseVM) -> Event:
         calendarResult = await self.session.execute(
-            select(Calendar).where(and_(Calendar.user_id == user.id, Calendar.id == event.calendar_id))
+            select(Calendar).where(
+                and_(Calendar.user_id == user.id, Calendar.id == event.calendar_id)
+            )
         )
         calendarDb: Optional[Calendar] = calendarResult.scalar()
         if not calendarDb:
@@ -122,7 +131,9 @@ class EventRepository:
 
             # If the parent is deleted, we can delete all child event.
             # TODO: Foreign keys?
-            stmt = delete(Event).where(and_(Event.user_id == user.id, Event.recurring_event_id == event.id))
+            stmt = delete(Event).where(
+                and_(Event.user_id == user.id, Event.recurring_event_id == event.id)
+            )
             await self.session.execute(stmt)
 
             # Delete from Google
@@ -165,7 +176,9 @@ class EventRepository:
 
             googleId = None
             if parentEvent.recurring_event_gId:
-                googleId = getRecurringEventId(parentEvent.recurring_event_gId, dt, event.isAllDay())
+                googleId = getRecurringEventId(
+                    parentEvent.recurring_event_gId, dt, event.isAllDay()
+                )
 
             prevCalendarId = None
 
@@ -209,7 +222,9 @@ class EventRepository:
         if updatedEvent.calendar.google_id:
             if prevCalendarId and prevCalendarId != updatedEvent.calendar_id:
                 # Base recurring Event.
-                recurringEvent: Optional[Event] = await self.getEvent(user, event.recurring_event_id)
+                recurringEvent: Optional[Event] = await self.getEvent(
+                    user, event.recurring_event_id
+                )
                 if recurringEvent:
                     # If we move one event's calendar, we need to update all child events.
                     recurringEvent.calendar_id = updatedEvent.calendar_id
@@ -217,7 +232,10 @@ class EventRepository:
                     childEvents: List[Event] = (
                         await self.session.execute(
                             select(Event).where(
-                                and_(User.id == user.id, Event.recurring_event_id == recurringEvent.id)
+                                and_(
+                                    User.id == user.id,
+                                    Event.recurring_event_id == recurringEvent.id,
+                                )
                             )
                         )
                     ).scalars()
@@ -262,7 +280,9 @@ class EventRepository:
         return result.scalars().all()
 
 
-async def getCombinedLabels(user: User, labelVMs: List[LabelInDbVM], session: AsyncSession) -> List[Label]:
+async def getCombinedLabels(
+    user: User, labelVMs: List[LabelInDbVM], session: AsyncSession
+) -> List[Label]:
     """"List of labels, with parents removed if the list includes the child"""
     labels: List[Label] = []
     for labelVM in labelVMs:

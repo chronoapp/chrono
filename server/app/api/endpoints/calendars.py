@@ -13,7 +13,7 @@ from app.db.models import User, Calendar, Event
 from app.db.models.event import isValidTimezone
 
 from app.db.models.calendar import CalendarSource
-from app.calendar import google as gcal
+from app.sync.google import calendar as gcal
 
 router = APIRouter()
 

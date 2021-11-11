@@ -6,7 +6,11 @@ from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select, func
 
 from app.db.models import User, Event
-from app.calendar.google import syncEventsToDb, syncCreatedOrUpdatedGoogleEvent, syncDeletedEvent
+from app.sync.google.calendar import (
+    syncEventsToDb,
+    syncCreatedOrUpdatedGoogleEvent,
+    syncDeletedEvent,
+)
 
 EVENT_ITEM_RECURRING = {
     'kind': 'calendar#event',

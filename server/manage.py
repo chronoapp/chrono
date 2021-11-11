@@ -60,7 +60,7 @@ def add_labels(userid):
 @click.argument('userid', type=click.INT)
 @click_coroutine
 async def sync_cal(userid: int):
-    from app.calendar.google import syncAllEvents
+    from app.sync.google.calendar import syncAllEvents
 
     await syncAllEvents(userid, fullSync=False)
 
