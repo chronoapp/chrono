@@ -73,7 +73,10 @@ def googleAuth():
     https://developers.google.com/identity/protocols/OAuth2WebServer
     """
 
-    scopes = ['https://www.googleapis.com/auth/calendar']
+    scopes = [
+        'https://www.googleapis.com/auth/calendar',
+        'https://www.googleapis.com/auth/contacts.readonly',
+    ]
     flow = getAuthFlow(scopes)
     authorization_url, state = flow.authorization_url(
         access_type='offline', prompt='consent', include_granted_scopes='true'
