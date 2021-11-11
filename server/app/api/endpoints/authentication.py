@@ -126,6 +126,10 @@ async def googleAuthCallback(authData: AuthData, session: AsyncSession = Depends
 
 
 def getAuthToken(user: User) -> str:
+    """Encodes a JWT token.
+    TODO: add expiration date to token. {"exp": expire}
+    """
+
     return str(
         jwt.encode(
             {'user_id': user.id, 'iat': datetime.utcnow()}, config.TOKEN_SECRET, algorithm='HS256'
@@ -210,3 +214,49 @@ async def msftCallback(request: Request, session: AsyncSession = Depends(get_db)
     response.set_cookie(key='auth_token', value=authToken)
 
     return response
+
+
+# ================================== Email / Password Login ==================================
+
+from passlib.context import CryptContext
+
+pwdContext = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+class LoginUser(BaseModel):
+    email: str
+    password: str
+
+
+def verifyPassword(plainPass: str, hashedPass: str) -> bool:
+    return pwdContext.verify(plainPass, hashedPass)
+
+
+def getPasswordHash(plainPass: str):
+    return pwdContext.hash(plainPass)
+
+
+async def authenticateUser(loginUser: LoginUser, session: AsyncSession) -> User:
+    result = await session.execute(
+        select(User).where(User.email == loginUser.email).options(selectinload(User.credentials))
+    )
+    user = result.scalar()
+    if not user:
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED, detail='User and password combination does not exist.'
+        )
+
+    if not verifyPassword(loginUser.password, user.hashed_password):
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED, detail='User and password combination does not exist.'
+        )
+
+    return user
+
+
+@router.post('/auth/login')
+async def login(loginUser: LoginUser, session: AsyncSession = Depends(get_db)):
+    user = await authenticateUser(loginUser, session)
+    authToken = getAuthToken(user)
+
+    return {'token': authToken}

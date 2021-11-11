@@ -77,6 +77,19 @@ export function getMsftOauthUrl(): string {
   return `${API_URL}/oauth/msft/auth`
 }
 
+export function loginWithEmail(email: string, password: string) {
+  return fetch(`${API_URL}/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email,
+      password,
+    }),
+  }).then(handleErrors)
+}
+
 export function signOut() {
   // TODO: Update state after this.
   const cookies = new Cookies()
