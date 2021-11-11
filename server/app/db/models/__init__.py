@@ -7,3 +7,4 @@ from .webhook import Webhook
 from .event import Event
 from .label import Label
 from .label_rule import LabelRule
+from .contact import Contact
