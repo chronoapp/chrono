@@ -1,10 +1,12 @@
 import Router from 'next/router'
 import Cookies from 'universal-cookie'
-import Event from '../models/Event'
-import { Label, TimePeriod } from '../models/Label'
-import { LabelRule } from '../models/LabelRule'
-import Calendar, { CalendarSource } from '../models/Calendar'
-import { formatDateTime } from '../util/localizer'
+
+import { formatDateTime } from '@/util/localizer'
+import Event from '@/models/Event'
+import { Label, TimePeriod } from '@/models/Label'
+import { LabelRule } from '@/models/LabelRule'
+import Calendar, { CalendarSource } from '@/models/Calendar'
+import Contact from '@/models/Contact'
 
 const API_URL = '/api/v1'
 
@@ -348,6 +350,15 @@ export async function putLabelRule(labelRule: LabelRule, authToken: string): Pro
 export async function syncCalendar(authToken: string) {
   return fetch(`${API_URL}/sync/`, {
     method: 'POST',
+    headers: getHeaders(authToken),
+  }).then(handleErrors)
+}
+
+// Contacts
+
+export async function getContacts(authToken: string): Promise<Contact[]> {
+  return fetch(`${API_URL}/contacts/`, {
+    method: 'GET',
     headers: getHeaders(authToken),
   }).then(handleErrors)
 }
