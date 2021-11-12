@@ -31,10 +31,16 @@ async def getEvents(
     TODO: Figure out how to gather async queries
     """
     try:
-        startDate = datetime.fromisoformat(start_date) if start_date else datetime.now() - timedelta(days=30)
+        startDate = (
+            datetime.fromisoformat(start_date)
+            if start_date
+            else datetime.now() - timedelta(days=30)
+        )
         endDate = datetime.fromisoformat(end_date) if end_date else datetime.now()
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f'Invalid date format: {e}')
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=f'Invalid date format: {e}'
+        )
 
     eventRepo = EventRepository(session)
 
@@ -82,7 +88,7 @@ async def getEvent(
     """TODO: Fetch recurring event."""
     eventRepo = EventRepository(session)
 
-    event = await eventRepo.getEvent(event_id, user)
+    event = await eventRepo.getEvent(user, event_id)
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
