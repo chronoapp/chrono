@@ -29,7 +29,7 @@
     "react-chartjs-2": "^2.11.1",
     "react-dom": "^16.14.0",
     "react-icons": "^4.2.0",
-    "react-mentions": "^4.1.1",
+    "react-mentions": "^4.3.0",
     "rrule": "^2.6.6",
     "styled-components": "^5.2.1",
     "tinycolor2": "^1.4.1",
