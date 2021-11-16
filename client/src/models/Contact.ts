@@ -4,7 +4,7 @@ export default class Contact {
   [immerable] = true
 
   static fromJson(json): Contact {
-    return new Contact(json.id, json.emailAddress, json.firstName, json.lastName)
+    return new Contact(json.id, json.emailAddress, json.firstName, json.lastName, json.photoUrl)
   }
 
   get fullName(): string {
@@ -27,6 +27,7 @@ export default class Contact {
     readonly id: string,
     readonly emailAddress: string,
     readonly firstName: string,
-    readonly lastName: string
+    readonly lastName: string,
+    readonly photoUrl: string
   ) {}
 }

@@ -25,7 +25,7 @@ async def syncContacts(user: User, session: AsyncSession, fullSync: bool = False
             .connections()
             .list(
                 resourceName='people/me',
-                personFields='names,emailAddresses',
+                personFields='names,emailAddresses,photos',
                 pageToken=nextPageToken,
             )
             .execute()
@@ -53,6 +53,9 @@ async def syncContactsToDB(user: User, contacts, session: AsyncSession):
         emails = contact.get('emailAddresses', [])
         emailAddress = emails[0].get('value') if emails else None
 
+        photos = contact.get('photos', [])
+        photoUrl = photos[0].get('url') if len(photos) > 0 else None
+
         stmt = select(Contact).where(Contact.user_id == user.id, Contact.google_id == resourceId)
         contact = (await session.execute(stmt)).scalar()
 
@@ -60,8 +63,9 @@ async def syncContactsToDB(user: User, contacts, session: AsyncSession):
             contact.email = emailAddress
             contact.first_name = givenName
             contact.last_name = familyName
+            contact.photo_url = photoUrl
         else:
-            contact = Contact(givenName, familyName, emailAddress, resourceId)
+            contact = Contact(givenName, familyName, emailAddress, photoUrl, resourceId)
             user.contacts.append(contact)
 
     await session.commit()

@@ -17,6 +17,7 @@ class ContactBaseVM(BaseModel):
     first_name: Optional[str] = Field(alias='firstName')
     last_name: Optional[str] = Field(alias='lastName')
     email_address: Optional[str] = Field(alias='emailAddress')
+    photo_url: Optional[str] = Field(alias='photoUrl')
 
     class Config:
         orm_mode = True
