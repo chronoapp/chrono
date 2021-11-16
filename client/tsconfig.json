@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "lib": ["dom", "es2017"],
+    "lib": ["dom", "es2020"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
     "allowSyntheticDefaultImports": true,
     "noImplicitAny": false,
+    "downlevelIteration": true,
 
     "noUnusedLocals": false, // TODO: enable
     "noUnusedParameters": false, // TODO: disable
