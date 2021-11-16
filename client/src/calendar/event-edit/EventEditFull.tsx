@@ -389,12 +389,12 @@ export default function EventEditFull(props: { event: Event }) {
               onChange={(e) => {
                 const isAllDay = e.target.checked
 
-                let eventFields
+                let newEventFields
                 if (isAllDay) {
                   const start = dates.startOf(eventFields.start, 'day')
                   const end = dates.endOf(eventFields.start, 'day')
 
-                  eventFields = {
+                  newEventFields = {
                     ...eventFields,
                     allDay: isAllDay,
                     start,
@@ -406,7 +406,7 @@ export default function EventEditFull(props: { event: Event }) {
                   const start = dates.startOf(eventFields.start, 'day')
                   const end = dates.add(start, 1, 'hours')
 
-                  eventFields = {
+                  newEventFields = {
                     ...eventFields,
                     allDay: isAllDay,
                     start,
@@ -415,11 +415,11 @@ export default function EventEditFull(props: { event: Event }) {
                     endDay: null,
                   }
                 }
-                setEventFields(eventFields)
+                setEventFields(newEventFields)
 
                 const updatedEvent = {
                   ...props.event,
-                  ...EventFields.getMutableEventFields(eventFields),
+                  ...EventFields.getMutableEventFields(newEventFields),
                 }
                 eventActions.eventDispatch({
                   type: 'UPDATE_EDIT_EVENT',
