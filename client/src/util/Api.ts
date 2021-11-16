@@ -356,9 +356,11 @@ export async function syncCalendar(authToken: string) {
 
 // Contacts
 
-export async function getContacts(authToken: string): Promise<Contact[]> {
-  return fetch(`${API_URL}/contacts/`, {
+export async function getContacts(authToken: string, query?: string): Promise<Contact[]> {
+  return fetch(`${API_URL}/contacts/?query=${query || ''}`, {
     method: 'GET',
     headers: getHeaders(authToken),
-  }).then(handleErrors)
+  })
+    .then(handleErrors)
+    .then((resp) => resp.map((contact) => Contact.fromJson(contact)))
 }
