@@ -19,7 +19,7 @@ class EventParticipant(Base):
     __tablename__ = 'event_participant'
 
     id = Column(String(255), primary_key=True, default=shortuuid.uuid)
-    email = Column(String(255), nullable=False, index=True)
+    email = Column(String(255), nullable=True, index=True)
 
     event_id = Column(String(255), ForeignKey('event.id'), nullable=False)
     event = relationship('Event', back_populates='participants')
