@@ -62,6 +62,7 @@ class User(Base):
                     Event.status != 'deleted',
                 )
             )
+            .options(selectinload(Event.participants))
             .options(selectinload(Event.labels))
         )
 
@@ -75,6 +76,7 @@ class User(Base):
                     Event.recurrences == None,
                 )
             )
+            .options(selectinload(Event.participants))
             .options(selectinload(Event.labels))
         )
 

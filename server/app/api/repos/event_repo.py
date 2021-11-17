@@ -10,7 +10,8 @@ from sqlalchemy import text, desc
 
 from app.core.logger import logger
 from app.db.sql.event_search import EVENT_SEARCH_QUERY
-from app.db.models import Event, User, Calendar
+from app.db.models import Event, User, Calendar, EventParticipant
+from app.api.repos.contact_repo import ContactRepository
 from app.api.repos.event_utils import (
     EventBaseVM,
     EventInDBVM,
@@ -85,18 +86,20 @@ class EventRepository:
                 .where(and_(User.id == user.id, Event.id == eventId))
                 .options(selectinload(Event.labels))
                 .options(selectinload(Event.calendar))
+                .options(selectinload(Event.participants))
             )
         ).scalar()
 
         return curEvent
 
     async def createEvent(self, user: User, event: EventBaseVM) -> Event:
-        calendarResult = await self.session.execute(
-            select(Calendar).where(
-                and_(Calendar.user_id == user.id, Calendar.id == event.calendar_id)
+        calendarDb: Optional[Calendar] = (
+            await self.session.execute(
+                select(Calendar).where(
+                    and_(Calendar.user_id == user.id, Calendar.id == event.calendar_id)
+                )
             )
-        )
-        calendarDb: Optional[Calendar] = calendarResult.scalar()
+        ).scalar()
         if not calendarDb:
             raise CalendarNotFound('Calendar not found.')
 
@@ -109,6 +112,18 @@ class EventRepository:
         eventDb = createOrUpdateEvent(None, event)
         eventDb.labels = await getCombinedLabels(user, event.labels, self.session)
         eventDb.calendar = calendarDb
+
+        # Add participants, matched with contacts.
+        contactRepo = ContactRepository(self.session)
+        eventDb.participants = []
+        for participantVM in event.participants:
+            participant = EventParticipant(participantVM.email)
+            existingContact = await contactRepo.getContactWithEmail(user, participantVM.email)
+            participant.contact = existingContact
+            eventDb.participants.append(participant)
+
+        # TODO: Send invites to participants.
+
         user.events.append(eventDb)
 
         # Sync with google calendar. TODO: Add flag for sync status
@@ -189,6 +204,8 @@ class EventRepository:
 
             updatedEvent = createOrUpdateEvent(None, event, overrideId=eventId, googleId=googleId)
 
+            # TODO: update participants.
+
             user.events.append(updatedEvent)
             await self.session.commit()
             await self.session.refresh(updatedEvent)
@@ -262,6 +279,7 @@ class EventRepository:
             .filter(Event.id.in_(rowIds))
             .order_by(desc(Event.end))
             .options(selectinload(Event.labels))
+            .options(selectinload(Event.participants))
         )
         result = await self.session.execute(stmt)
 

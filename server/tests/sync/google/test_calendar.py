@@ -100,7 +100,13 @@ async def test_syncEventsToDb_deleted(user, session):
     await syncEventsToDb(calendar, [EVENT_ITEM_RECURRING], session)
     await session.commit()
 
-    stmt = select(Event).where(Event.calendar_id == calendar.id).options(selectinload(Event.labels))
+    stmt = (
+        select(Event)
+        .where(Event.calendar_id == calendar.id)
+        .options(selectinload(Event.labels))
+        .options(selectinload(Event.participants))
+    )
+
     events = (await session.execute(stmt)).scalars().all()
 
     assert len(events) == 1
@@ -113,7 +119,12 @@ async def test_syncEventsToDb_deleted(user, session):
     await syncEventsToDb(calendar, [eventItem], session)
     await session.commit()
 
-    stmt = select(Event).where(Event.calendar_id == calendar.id).options(selectinload(Event.labels))
+    stmt = (
+        select(Event)
+        .where(Event.calendar_id == calendar.id)
+        .options(selectinload(Event.labels))
+        .options(selectinload(Event.participants))
+    )
     events = (await session.execute(stmt)).scalars().all()
 
     assert len(events) == 1

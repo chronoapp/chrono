@@ -15,9 +15,19 @@ from pydantic import BaseModel, validator
 from app.api.endpoints.labels import LabelInDbVM
 from app.db.models import Event, User, Calendar
 from app.db.models.event import EventStatus
+from app.db.models.event_participant import ParticipantStatus
 
 """Event models and helpers to manage Recurring Events.
 """
+
+
+class EventParticipantVM(BaseModel):
+    email: str
+    status: Optional[ParticipantStatus]
+    photo_url: Optional[str]
+
+    class Config:
+        orm_mode = True
 
 
 class EventBaseVM(BaseModel):
@@ -40,6 +50,8 @@ class EventBaseVM(BaseModel):
     calendar_id: str
     recurrences: Optional[List[str]]
     recurring_event_id: Optional[str]
+
+    participants: List[EventParticipantVM] = []
 
     # Read only fields.
     original_start: Optional[datetime]
@@ -78,7 +90,9 @@ MAX_RECURRING_EVENT_COUNT = 1000
 UpdateOption = Literal['SINGLE', 'ALL', 'FOLLOWING']
 
 
-def recurrenceToRuleSet(recurrence: str, timezone: str, start: datetime, startDay: Optional[str]) -> rruleset:
+def recurrenceToRuleSet(
+    recurrence: str, timezone: str, start: datetime, startDay: Optional[str]
+) -> rruleset:
     """Gets the rrule objects from recurrence string array
     Converts to the local datetime in the timezone.
     """

@@ -11,13 +11,14 @@ from app.api.repos.event_utils import (
     createOrUpdateEvent,
 )
 from app.api.endpoints.authentication import getAuthToken
+from app.db.models.event_participant import EventParticipant
 
 from tests.utils import createEvent
-from app.db.models import User, Event
+from app.db.models import User, Event, Contact
 
 
 @pytest.mark.asyncio
-async def test_getEventsBasic(user, session, async_client):
+async def test_getEventsBasic(user: User, session, async_client):
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     start = datetime.fromisoformat('2020-01-02T12:00:00-05:00')
@@ -41,7 +42,7 @@ async def test_getEventsBasic(user, session, async_client):
 
 
 @pytest.mark.asyncio
-async def test_createEvent_single(user, session, async_client):
+async def test_createEvent_single(user: User, session, async_client):
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     start = datetime.fromisoformat("2021-01-11T09:30:00+00:00")
@@ -74,7 +75,7 @@ async def test_createEvent_single(user, session, async_client):
 
 
 @pytest.mark.asyncio
-async def test_createEvent_recurring_invalid(user, session, async_client):
+async def test_createEvent_recurring_invalid(user: User, session, async_client):
     """Malformed recurrence string."""
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
     start = datetime.fromisoformat("2021-01-11T05:00:00+00:00")
@@ -104,7 +105,7 @@ async def test_createEvent_recurring_invalid(user, session, async_client):
 
 
 @pytest.mark.asyncio
-async def test_createEvent_recurring(user, session, async_client):
+async def test_createEvent_recurring(user: User, session, async_client):
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     start = datetime.fromisoformat("2021-01-11T05:00:00+00:00")
@@ -136,7 +137,7 @@ async def test_createEvent_recurring(user, session, async_client):
 
 
 @pytest.mark.asyncio
-async def test_createEvent_allDay(user, session, async_client):
+async def test_createEvent_allDay(user: User, session, async_client):
     """TODO: API Should only need one of start / end and start_day / end_day"""
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
@@ -167,7 +168,58 @@ async def test_createEvent_allDay(user, session, async_client):
 
 
 @pytest.mark.asyncio
-async def test_updateEvent_recurring(user, session, async_client):
+async def test_createEvent_withParticipants(user: User, session, async_client):
+    """Create event with participants emails.
+    If the user has the contact stored, make sure that it's linked to the participant.
+    """
+
+    # Setup Existing Contact
+    contactEmail = 'jon@example.com'
+    contact = Contact('Jon', 'Snow', contactEmail, 'test-img.png', None)
+    user.contacts.append(contact)
+    await session.commit()
+
+    # Create Event with Participants
+
+    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+    start = datetime.fromisoformat("2021-01-11T00:00:00+00:00")
+    end = start + timedelta(days=1)
+    event = {
+        "title": "meeting",
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "start_day": start.strftime('%Y-%m-%d'),
+        "end_day": end.strftime('%Y-%m-%d'),
+        "calendar_id": calendar.id,
+        "participants": [{'email': contactEmail}, {'email': 'adam@example.com'}],
+    }
+
+    resp = await async_client.post(
+        f'/api/v1/events/', headers={'Authorization': getAuthToken(user)}, data=json.dumps(event)
+    )
+
+    assert len(resp.json().get('participants')) == 2
+
+    eventId = resp.json().get('id')
+    eventDb = (await session.execute(select(Event).where(Event.id == eventId))).scalar()
+    for participant in eventDb.participants:
+        if participant.email == contactEmail:
+            assert participant.contact_id == contact.id
+
+    # Make sure the event has the added participants
+
+    res = await async_client.get(
+        f'/api/v1/events/{eventId}', headers={'Authorization': getAuthToken(user)}
+    )
+    participants = res.json()['participants']
+
+    assert len(participants) == 2
+    assert participants[0]['email'] == contactEmail
+    assert participants[0]['photo_url'] == 'test-img.png'
+
+
+@pytest.mark.asyncio
+async def test_updateEvent_recurring(user: User, session, async_client):
     """Modify for this & following events.
     TODO: Should delete outdated, overriden events.
     """
@@ -179,7 +231,9 @@ async def test_updateEvent_recurring(user, session, async_client):
     recurringEvent.recurrences = ['RRULE:FREQ=DAILY;UNTIL=20200110T120000Z']
     user.events.append(recurringEvent)
 
-    events = await getAllExpandedRecurringEventsList(user, start, start + timedelta(days=20), session)
+    events = await getAllExpandedRecurringEventsList(
+        user, start, start + timedelta(days=20), session
+    )
     assert len(events) == 10
 
     # With Override
@@ -207,7 +261,9 @@ async def test_updateEvent_recurring(user, session, async_client):
     )
     assert resp.status_code == 200
 
-    events = await getAllExpandedRecurringEventsList(user, start, start + timedelta(days=20), session)
+    events = await getAllExpandedRecurringEventsList(
+        user, start, start + timedelta(days=20), session
+    )
 
     # The overriden event should be removed.
     assert len(events) == 5
@@ -239,7 +295,7 @@ async def test_deleteEvent_single(user, session, async_client):
 
 
 @pytest.mark.asyncio
-async def test_deleteEvent_overrides(user, session, async_client):
+async def test_deleteEvent_overrides(user: User, session, async_client):
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     start = datetime.fromisoformat('2020-01-01T12:00:00')
@@ -248,7 +304,9 @@ async def test_deleteEvent_overrides(user, session, async_client):
     user.events.append(recurringEvent)
     recurringEvent.user_id = user.id
 
-    events = await getAllExpandedRecurringEventsList(user, start, start + timedelta(days=5), session)
+    events = await getAllExpandedRecurringEventsList(
+        user, start, start + timedelta(days=5), session
+    )
     override = createOrUpdateEvent(None, events[2])
     override.title = 'Override'
     override.id = events[2].id
@@ -265,7 +323,10 @@ async def test_deleteEvent_overrides(user, session, async_client):
         f'/api/v1/events/{recurringEvent.id}', headers={'Authorization': getAuthToken(user)}
     )
     result = await session.execute(
-        select(Event).where(Event.user_id == user.id).options(selectinload(Event.labels))
+        select(Event)
+        .where(Event.user_id == user.id)
+        .options(selectinload(Event.labels))
+        .options(selectinload(Event.participants))
     )
     events = result.scalars().all()
 
