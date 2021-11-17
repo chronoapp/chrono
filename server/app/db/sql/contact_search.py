@@ -3,7 +3,7 @@ CONTACT_SEARCH_QUERY = """
         SELECT contact.*,
             setweight(to_tsvector('english', coalesce(contact.first_name, '')), 'A') ||
             setweight(to_tsvector('english', coalesce(contact.last_name, '')), 'B') ||
-            setweight(to_tsvector('english', coalesce(contact.email_address, '')), 'C') as doc
+            setweight(to_tsvector('english', coalesce(contact.email, '')), 'C') as doc
         FROM contact
         WHERE contact.user_id = :userId
     ) search

@@ -18,19 +18,33 @@ class Contact(Base):
 
     first_name = Column(String(255), nullable=True)
     last_name = Column(String(255), nullable=True)
-    email_address = Column(String(255), nullable=True)
+    email = Column(String(255), nullable=True, index=True)
     photo_url = Column(String(255), nullable=True)
+
+    @property
+    def display_name(self):
+        if self.first_name and self.last_name:
+            return f'{self.first_name} {self.last_name}'
+        elif self.first_name:
+            return self.first_name
+        elif self.last_name:
+            return self.last_name
+        else:
+            return self.email
 
     def __init__(
         self,
         first_name: Optional[str],
         last_name: Optional[str],
-        email_address: Optional[str],
+        email: Optional[str],
         photo_url: Optional[str],
         google_id: Optional[str],
     ):
         self.first_name = first_name
         self.last_name = last_name
-        self.email_address = email_address
+        self.email = email
         self.photo_url = photo_url
         self.google_id = google_id
+
+    def __repr__(self):
+        return f'<Contact {self.id} {self.display_name}>'

@@ -53,7 +53,9 @@ class Event(Base):
     calendar_id = Column(String(255), ForeignKey('calendar.id', ondelete='CASCADE'), nullable=False)
     calendar: 'Calendar' = relationship(
         'Calendar',
-        backref=backref('events', lazy='dynamic', cascade='all,delete', order_by='Event.start.asc()'),
+        backref=backref(
+            'events', lazy='dynamic', cascade='all,delete', order_by='Event.start.asc()'
+        ),
     )
 
     title = Column(String(255), index=True)
@@ -72,6 +74,12 @@ class Event(Base):
         'Label',
         lazy='joined',
         secondary=event_label_association_table,
+        cascade="all,delete",
+    )
+
+    participants = relationship(
+        "EventParticipant",
+        lazy='joined',
         cascade="all,delete",
     )
 
