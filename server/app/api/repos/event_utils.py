@@ -23,7 +23,7 @@ from app.db.models.event_participant import ParticipantStatus
 
 class EventParticipantVM(BaseModel):
     email: str
-    status: Optional[ParticipantStatus]
+    response_status: Optional[ParticipantStatus]
     photo_url: Optional[str]
 
     class Config:
