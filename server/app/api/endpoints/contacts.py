@@ -1,6 +1,6 @@
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field, validator
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.utils.db import get_db
@@ -25,6 +25,21 @@ class ContactBaseVM(BaseModel):
 
 class ContactInDBVM(ContactBaseVM):
     id: str
+
+
+@router.get('/contacts/{contact_id}', response_model=ContactInDBVM)
+async def getContact(
+    contact_id: str,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+):
+    contactRepo = ContactRepository(session)
+
+    contact = await contactRepo.getContact(user, contact_id)
+    if not contact:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    return contact
 
 
 @router.get('/contacts/', response_model=List[ContactInDBVM])

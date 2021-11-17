@@ -364,3 +364,12 @@ export async function getContacts(authToken: string, query?: string): Promise<Co
     .then(handleErrors)
     .then((resp) => resp.map((contact) => Contact.fromJson(contact)))
 }
+
+export async function getContact(authToken: string, contactId: string): Promise<Contact> {
+  return fetch(`${API_URL}/contacts/${contactId}`, {
+    method: 'GET',
+    headers: getHeaders(authToken),
+  })
+    .then(handleErrors)
+    .then((resp) => Contact.fromJson(resp))
+}
