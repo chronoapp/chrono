@@ -80,7 +80,7 @@ class Event(Base):
     participants = relationship(
         "EventParticipant",
         lazy='joined',
-        cascade="all,delete",
+        cascade="all, delete-orphan",
     )
 
     # Recurring Events.
