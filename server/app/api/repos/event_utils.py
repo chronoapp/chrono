@@ -15,16 +15,28 @@ from pydantic import BaseModel, validator
 from app.api.endpoints.labels import LabelInDbVM
 from app.db.models import Event, User, Calendar
 from app.db.models.event import EventStatus
-from app.db.models.event_participant import ParticipantStatus
+from app.db.models.event_participant import ResponseStatus
 
 """Event models and helpers to manage Recurring Events.
 """
 
 
 class EventParticipantVM(BaseModel):
-    email: str
-    response_status: Optional[ParticipantStatus]
+    """Either one of email or contact ID is required."""
+
+    contact_id: Optional[str]
+    email: Optional[str]
+
+    response_status: Optional[ResponseStatus]
+    display_name: Optional[str]
     photo_url: Optional[str]
+
+    @validator("email")
+    def validateContactAndEmail(cls, email, values: Dict[str, Any]):
+        if email is None and values.get("contact_id") is None:
+            raise ValueError("Either email or contact_id is required.")
+
+        return email
 
     class Config:
         orm_mode = True

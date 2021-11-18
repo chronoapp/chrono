@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship, backref
 from app.db.base_class import Base
 
 
-ParticipantStatus = Literal['needsAction', 'accepted', 'declined', 'tentative']
+ResponseStatus = Literal['needsAction', 'accepted', 'declined', 'tentative']
 
 
 class EventParticipant(Base):
@@ -19,7 +19,7 @@ class EventParticipant(Base):
     __tablename__ = 'event_participant'
 
     id = Column(String(255), primary_key=True, default=shortuuid.uuid)
-    email = Column(String(255), nullable=True, index=True)
+    email_ = Column(String(255), nullable=True, index=True)
 
     event_id = Column(String(255), ForeignKey('event.id'), nullable=False)
     event = relationship('Event', back_populates='participants')
@@ -41,10 +41,25 @@ class EventParticipant(Base):
         if self.contact:
             return self.contact.display_name
         else:
-            return self.email
+            return self.email_
 
-    def __init__(self, email: str, responseStatus: ParticipantStatus = 'needsAction'):
-        self.email = email
+    @property
+    def email(self) -> Optional[str]:
+        if self.email_:
+            return self.email_
+        elif self.contact:
+            return self.contact.email
+        else:
+            return None
+
+    def __init__(
+        self,
+        email: Optional[str],
+        contactId: Optional[str],
+        responseStatus: ResponseStatus = 'needsAction',
+    ):
+        self.email_ = email
+        self.contact_id = contactId
         self.response_status = responseStatus
 
     def __repr__(self):

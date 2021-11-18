@@ -116,9 +116,17 @@ class EventRepository:
         # Add participants, matched with contacts.
         contactRepo = ContactRepository(self.session)
         eventDb.participants = []
+        existingContactIds = set()  # Make sure we don't add duplicate contacts
+
         for participantVM in event.participants:
-            participant = EventParticipant(participantVM.email)
-            existingContact = await contactRepo.getContactWithEmail(user, participantVM.email)
+            existingContact = await contactRepo.findContact(user, participantVM)
+            if existingContact and existingContact.id in existingContactIds:
+                raise EventRepoError('Duplicate contact found.')
+
+            if existingContact:
+                existingContactIds.add(existingContact.id)
+
+            participant = EventParticipant(participantVM.email, participantVM.contact_id)
             participant.contact = existingContact
             eventDb.participants.append(participant)
 

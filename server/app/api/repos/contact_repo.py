@@ -3,8 +3,16 @@ from typing import Optional, List
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
+
 from app.db.models import User, Contact
 from app.db.sql.contact_search import CONTACT_SEARCH_QUERY
+from app.api.repos.event_utils import EventParticipantVM
+
+
+class ContactRepoError(Exception):
+    """Base class for exceptions in this module."""
+
+    pass
 
 
 class ContactRepository:
@@ -27,6 +35,18 @@ class ContactRepository:
             select(Contact).where(Contact.user_id == user.id).limit(limit)
         )
         return result.scalars().all()
+
+    async def findContact(self, user: User, participantVM: EventParticipantVM) -> Optional[Contact]:
+        existingContact = None
+
+        if participantVM.contact_id:
+            existingContact = await self.getContact(user, participantVM.contact_id)
+            if not existingContact:
+                raise ContactRepoError('Invalid Participant.')
+        elif participantVM.email:
+            existingContact = await self.getContactWithEmail(user, participantVM.email)
+
+        return existingContact
 
     async def getContact(self, user: User, contactId: str) -> Optional[Contact]:
         return (

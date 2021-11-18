@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from app.api.repos.event_utils import (
+    EventParticipantVM,
     getExpandedRecurringEvents,
     getAllExpandedRecurringEventsList,
     createOrUpdateEvent,
@@ -168,7 +169,7 @@ async def test_createEvent_allDay(user: User, session, async_client):
 
 
 @pytest.mark.asyncio
-async def test_createEvent_withParticipants(user: User, session, async_client):
+async def test_createAndUpdateEvent_withParticipants(user: User, session, async_client):
     """Create event with participants emails.
     If the user has the contact stored, make sure that it's linked to the participant.
     """
@@ -179,7 +180,7 @@ async def test_createEvent_withParticipants(user: User, session, async_client):
     user.contacts.append(contact)
     await session.commit()
 
-    # Create Event with Participants
+    # CREATE: New event with Participants
 
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
     start = datetime.fromisoformat("2021-01-11T00:00:00+00:00")
@@ -191,7 +192,10 @@ async def test_createEvent_withParticipants(user: User, session, async_client):
         "start_day": start.strftime('%Y-%m-%d'),
         "end_day": end.strftime('%Y-%m-%d'),
         "calendar_id": calendar.id,
-        "participants": [{'email': contactEmail}, {'email': 'adam@example.com'}],
+        "participants": [
+            {'contact_id': contact.id},
+            {'email': 'adam@example.com'},
+        ],
     }
 
     resp = await async_client.post(
@@ -208,10 +212,12 @@ async def test_createEvent_withParticipants(user: User, session, async_client):
 
     # Make sure the event has the added participants
 
-    res = await async_client.get(
-        f'/api/v1/events/{eventId}', headers={'Authorization': getAuthToken(user)}
-    )
-    participants = res.json()['participants']
+    eventJson = (
+        await async_client.get(
+            f'/api/v1/events/{eventId}', headers={'Authorization': getAuthToken(user)}
+        )
+    ).json()
+    participants = eventJson['participants']
 
     assert len(participants) == 2
     assert participants[0]['email'] == contactEmail

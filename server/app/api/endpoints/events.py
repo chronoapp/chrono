@@ -6,7 +6,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.logger import logger
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
-from app.api.repos.event_repo import EventRepository, CalendarNotFound, EventNotFound, InputError
+from app.api.repos.event_repo import (
+    EventRepoError,
+    EventRepository,
+    CalendarNotFound,
+    EventNotFound,
+    InputError,
+)
 from app.api.repos.event_utils import (
     EventBaseVM,
     EventInDBVM,
@@ -75,6 +81,8 @@ async def createEvent(
 
         return eventDb
 
+    except EventRepoError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
     except CalendarNotFound:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail='Calendar not found.')
     except Exception as e:
@@ -88,11 +96,15 @@ async def getEvent(
     """TODO: Fetch recurring event."""
     eventRepo = EventRepository(session)
 
-    event = await eventRepo.getEvent(user, event_id)
-    if not event:
-        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    try:
+        event = await eventRepo.getEvent(user, event_id)
+        if not event:
+            raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    return event
+        return event
+
+    except EventRepoError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=e.message)
 
 
 @router.put('/events/{event_id}', response_model=EventInDBVM)
@@ -118,6 +130,8 @@ async def updateEvent(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
     except InputError as e:
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e))
+    except EventRepoError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=e.message)
     except Exception as e:
         print(e)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR)
