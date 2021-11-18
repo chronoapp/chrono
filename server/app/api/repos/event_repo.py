@@ -21,12 +21,8 @@ from app.api.repos.event_utils import (
     getAllExpandedRecurringEventsList,
     getExpandedRecurringEvents,
 )
-from app.sync.google.calendar import (
-    insertGoogleEvent,
-    deleteGoogleEvent,
-    moveGoogleEvent,
-    updateGoogleEvent,
-)
+
+import app.sync.google.calendar as gcal
 from app.api.endpoints.labels import LabelInDbVM, Label, combineLabels
 
 """
@@ -120,7 +116,7 @@ class EventRepository:
 
         # Sync with google calendar. TODO: Add flag for sync status
         if calendarDb.google_id:
-            resp = insertGoogleEvent(user, eventDb)
+            resp = gcal.insertGoogleEvent(user, eventDb)
             eventDb.g_id = resp.get('id')
 
         return eventDb
@@ -146,7 +142,7 @@ class EventRepository:
             # Delete from Google
             if event.g_id:
                 try:
-                    _ = deleteGoogleEvent(user, event)
+                    _ = gcal.deleteGoogleEvent(user, event)
                 except HttpError as e:
                     logger.error(e)
 
@@ -252,11 +248,11 @@ class EventRepository:
                     for e in childEvents:
                         e.calendar_id = updatedEvent.calendar_id
 
-                    moveGoogleEvent(user, recurringEvent, prevCalendarId)
+                    gcal.moveGoogleEvent(user, recurringEvent, prevCalendarId)
                 else:
-                    moveGoogleEvent(user, updatedEvent, prevCalendarId)
+                    gcal.moveGoogleEvent(user, updatedEvent, prevCalendarId)
 
-            _ = updateGoogleEvent(user, updatedEvent)
+            _ = gcal.updateGoogleEvent(user, updatedEvent)
 
         return updatedEvent
 
