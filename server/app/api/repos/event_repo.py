@@ -15,6 +15,7 @@ from app.api.repos.contact_repo import ContactRepository
 from app.api.repos.event_utils import (
     EventBaseVM,
     EventInDBVM,
+    EventParticipantVM,
     createOrUpdateEvent,
     getRecurringEventId,
     getAllExpandedRecurringEventsList,
@@ -110,27 +111,10 @@ class EventRepository:
             event.original_timezone = event.timezone
 
         eventDb = createOrUpdateEvent(None, event)
-        eventDb.labels = await getCombinedLabels(user, event.labels, self.session)
         eventDb.calendar = calendarDb
 
-        # Add participants, matched with contacts.
-        contactRepo = ContactRepository(self.session)
-        eventDb.participants = []
-        existingContactIds = set()  # Make sure we don't add duplicate contacts
-
-        for participantVM in event.participants:
-            existingContact = await contactRepo.findContact(user, participantVM)
-            if existingContact and existingContact.id in existingContactIds:
-                raise EventRepoError('Duplicate contact found.')
-
-            if existingContact:
-                existingContactIds.add(existingContact.id)
-
-            participant = EventParticipant(participantVM.email, participantVM.contact_id)
-            participant.contact = existingContact
-            eventDb.participants.append(participant)
-
-        # TODO: Send invites to participants.
+        eventDb.labels = await getCombinedLabels(user, event.labels, self.session)
+        await self.updateEventParticipants(user, eventDb, event.participants)
 
         user.events.append(eventDb)
 
@@ -212,8 +196,6 @@ class EventRepository:
 
             updatedEvent = createOrUpdateEvent(None, event, overrideId=eventId, googleId=googleId)
 
-            # TODO: update participants.
-
             user.events.append(updatedEvent)
             await self.session.commit()
             await self.session.refresh(updatedEvent)
@@ -243,6 +225,8 @@ class EventRepository:
 
         updatedEvent.labels.clear()
         updatedEvent.labels = await getCombinedLabels(user, event.labels, self.session)
+
+        await self.updateEventParticipants(user, updatedEvent, event.participants)
 
         if updatedEvent.calendar.google_id:
             if prevCalendarId and prevCalendarId != updatedEvent.calendar_id:
@@ -304,6 +288,33 @@ class EventRepository:
         result = await self.session.execute(selectStmt)
 
         return result.scalars().all()
+
+    async def updateEventParticipants(
+        self, user: User, event: Event, newParticipants: List[EventParticipantVM]
+    ):
+        """Create and update event participants.
+        # TODO: Check the errors first.
+        # TODO: Send invites to participants.
+        """
+        # Remove previous participants.
+        event.participants = []
+
+        # Add participants, matched with contacts.
+        contactRepo = ContactRepository(self.session)
+        existingContactIds = set()  # Make sure we don't add duplicate contacts
+
+        for participantVM in newParticipants:
+            existingContact = await contactRepo.findContact(user, participantVM)
+            if existingContact and existingContact.id in existingContactIds:
+                raise EventRepoError('Duplicate contact found.')
+
+            if existingContact:
+                existingContactIds.add(existingContact.id)
+
+            participant = EventParticipant(participantVM.email, participantVM.contact_id)
+            participant.contact = existingContact
+
+            event.participants.append(participant)
 
 
 async def getCombinedLabels(

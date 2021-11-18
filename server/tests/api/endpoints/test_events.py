@@ -169,18 +169,17 @@ async def test_createEvent_allDay(user: User, session, async_client):
 
 
 @pytest.mark.asyncio
-async def test_createAndUpdateEvent_withParticipants(user: User, session, async_client):
+async def test_createEvent_withParticipants(user: User, session, async_client):
     """Create event with participants emails.
     If the user has the contact stored, make sure that it's linked to the participant.
     """
 
     # Setup Existing Contact
-    contactEmail = 'jon@example.com'
-    contact = Contact('Jon', 'Snow', contactEmail, 'test-img.png', None)
+    contact = Contact('Jon', 'Snow', 'jon@example.com', 'test-img.png', None)
     user.contacts.append(contact)
     await session.commit()
 
-    # CREATE: New event with Participants
+    # Create new event with participants
 
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
     start = datetime.fromisoformat("2021-01-11T00:00:00+00:00")
@@ -207,7 +206,7 @@ async def test_createAndUpdateEvent_withParticipants(user: User, session, async_
     eventId = resp.json().get('id')
     eventDb = (await session.execute(select(Event).where(Event.id == eventId))).scalar()
     for participant in eventDb.participants:
-        if participant.email == contactEmail:
+        if participant.email == contact.email:
             assert participant.contact_id == contact.id
 
     # Make sure the event has the added participants
@@ -220,8 +219,57 @@ async def test_createAndUpdateEvent_withParticipants(user: User, session, async_
     participants = eventJson['participants']
 
     assert len(participants) == 2
-    assert participants[0]['email'] == contactEmail
+    assert participants[0]['email'] == contact.email
     assert participants[0]['photo_url'] == 'test-img.png'
+
+
+@pytest.mark.asyncio
+async def test_updateEvent_withParticipants(user: User, session, async_client):
+    # Setup Existing Contact
+    contact = Contact('Jon', 'Snow', 'jon@example.com', 'test-img.png', None)
+    user.contacts.append(contact)
+
+    # Create an event with participants.
+    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+    start = datetime.fromisoformat('2020-01-02T12:00:00-05:00')
+    event1 = createEvent(calendar, start, start + timedelta(hours=1))
+    session.add(event1)
+
+    await session.commit()
+
+    participant = EventParticipant(contact.email, contact.id)
+    participant.event = event1
+    session.add(participant)
+
+    await session.commit()
+
+    # Update: add a participant and remove another.
+    eventJson = (
+        await async_client.get(
+            f'/api/v1/events/{event1.id}', headers={'Authorization': getAuthToken(user)}
+        )
+    ).json()
+
+    eventJson['participants'] = [
+        {'email': 'new@example.com', 'photoUrl': 'xyz.png'},
+    ]
+
+    _ = await async_client.put(
+        f'/api/v1/events/{event1.id}',
+        headers={'Authorization': getAuthToken(user)},
+        data=json.dumps(eventJson),
+    )
+
+    # Make sure the event is updated in the DB.
+
+    event = (
+        await session.execute(
+            select(Event).where(Event.id == event1.id).options(selectinload(Event.participants))
+        )
+    ).scalar()
+
+    assert len(event.participants) == 1
+    assert event.participants[0].email == 'new@example.com'
 
 
 @pytest.mark.asyncio
