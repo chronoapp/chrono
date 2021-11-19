@@ -21,6 +21,7 @@
     "linkifyjs": "^2.1.9",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.33",
+    "nanoid": "^3.1.30",
     "next": "^10.0.8",
     "node-sass": "^4.14.1",
     "nprogress": "^0.2.0",
