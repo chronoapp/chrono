@@ -113,9 +113,7 @@ function TimeSelect(props: IProps) {
         ml="1"
         size="sm"
         maxHeight="12em"
-        border="0"
-        borderBottom="3px solid"
-        borderBottomColor="gray.200"
+        variant="unstyled"
         icon={<FiChevronDown />}
         value={startIdx}
         onChange={(e) => {
@@ -134,9 +132,7 @@ function TimeSelect(props: IProps) {
       <Select
         ml="1"
         size="sm"
-        border="0"
-        borderBottom="3px solid"
-        borderBottomColor="gray.200"
+        variant="unstyled"
         icon={<FiChevronDown />}
         value={endIdx}
         onChange={(e) => {

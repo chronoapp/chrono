@@ -427,8 +427,7 @@ function EventPopover(props: IProps) {
               size="sm"
               maxWidth="15em"
               border="0"
-              borderBottom="3px solid"
-              borderBottomColor="gray.200"
+              variant="flushed"
               value={format(eventFields.start, 'YYYY-MM-DD')}
               onChange={(e) => {
                 const m = moment(e.target.value, 'YYYY-MM-DD')
