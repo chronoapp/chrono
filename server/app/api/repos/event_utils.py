@@ -49,6 +49,8 @@ class EventBaseVM(BaseModel):
     """
 
     title: Optional[str]
+    title_short: Optional[str]
+
     description: Optional[str] = None
     status: EventStatus = 'active'
     start: datetime

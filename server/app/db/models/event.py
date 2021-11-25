@@ -1,6 +1,8 @@
+import re
+import shortuuid
+
 from datetime import datetime
 from typing import Optional, List, Literal, TYPE_CHECKING
-import shortuuid
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import (
@@ -17,6 +19,9 @@ from sqlalchemy.orm import relationship, backref
 
 from app.db.base_class import Base
 
+if TYPE_CHECKING:
+    from app.db.models import Calendar
+
 event_label_association_table = Table(
     'event_label',
     Base.metadata,
@@ -26,8 +31,12 @@ event_label_association_table = Table(
 
 EventStatus = Literal['deleted', 'tentative', 'active']
 
-if TYPE_CHECKING:
-    from app.db.models import Calendar
+# Title that has extra entities like Contact.
+TAGGED_INPUT_PATTERN = r'@\[([\w\d\.\-\_ \@]+)\]\(\[id:([\w]+)\]\[type:([\w]+)\]\)'
+
+
+def stripParticipants(title: str):
+    return re.sub(TAGGED_INPUT_PATTERN, r'\1', title)
 
 
 def isValidTimezone(timeZone: str):
@@ -92,6 +101,10 @@ class Event(Base):
     original_start = Column(DateTime(timezone=True))
     original_start_day = Column(String(10))
     original_timezone = Column(String(255))
+
+    @property
+    def title_short(self):
+        return stripParticipants(self.title)
 
     @property
     def all_day(self):

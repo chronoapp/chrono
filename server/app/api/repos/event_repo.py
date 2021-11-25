@@ -25,10 +25,6 @@ from app.api.repos.event_utils import (
 import app.sync.google.calendar as gcal
 from app.api.endpoints.labels import LabelInDbVM, Label, combineLabels
 
-"""
-Combination of a Service / Repository over events.
-Provides an abstraction over SQLAlchemy.
-"""
 
 
 class EventRepoError(Exception):
@@ -52,6 +48,11 @@ class CalendarNotFound(EventRepoError):
 
 
 class EventRepository:
+    """
+    Combination of a Service / Repository over events.
+    Provides an abstraction over SQLAlchemy.
+    """
+
     def __init__(self, session: AsyncSession):
         self.session = session
 
