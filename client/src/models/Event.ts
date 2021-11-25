@@ -1,9 +1,8 @@
-import { immerable, produce } from 'immer'
+import { immerable } from 'immer'
 import { Label } from './Label'
 import { hexToHSL } from '../calendar/utils/Colors'
 import { localFullDate, fullDayFormat } from '../util/localizer'
-
-import * as dates from '@/util/dates'
+import EventParticipant from './EventParticipant'
 
 export const UNSAVED_EVENT_ID = 'unsaved-event'
 export const EMPTY_TITLE = '(No title)'
@@ -14,7 +13,6 @@ export const EMPTY_TITLE = '(No title)'
  */
 export default class Event {
   [immerable] = true
-  public labels: Label[]
 
   constructor(
     readonly id: string,
@@ -27,17 +25,16 @@ export default class Event {
     readonly end: Date,
     readonly start_day: string | null,
     readonly end_day: string | null,
-    labels: Label[],
+    readonly labels: Label[],
     readonly all_day: boolean,
     readonly backgroundColor: string,
     readonly foregroundColor: string,
     readonly recurrences: string[] | null,
     readonly original_start: Date | null,
     readonly original_start_day: string | null,
-    readonly original_timezone: string | null
-  ) {
-    this.labels = labels
-  }
+    readonly original_timezone: string | null,
+    readonly participants: Partial<EventParticipant>[]
+  ) {}
 
   static fromJson(eventJson): Event {
     return new Event(
@@ -61,7 +58,8 @@ export default class Event {
           ? localFullDate(eventJson.original_start_day)
           : new Date(eventJson.original_start)),
       eventJson.original_start_day,
-      eventJson.original_timezone
+      eventJson.original_timezone,
+      eventJson.participants.map((participantJson) => EventParticipant.fromJson(participantJson))
     )
   }
 
@@ -102,7 +100,8 @@ export default class Event {
       null,
       null,
       null,
-      null
+      null,
+      []
     )
   }
 
