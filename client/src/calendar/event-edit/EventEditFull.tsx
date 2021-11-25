@@ -15,27 +15,32 @@ import {
   MenuItem,
   MenuList,
   MenuDivider,
+  Input,
+  Flex,
 } from '@chakra-ui/react'
 
 import produce from 'immer'
-import * as dates from '@/util/dates'
 import moment from 'moment'
-import { getAuthToken, getEvent } from '@/util/Api'
-
 import { FiMail } from 'react-icons/fi'
 import { FiCalendar, FiAlignLeft, FiClock, FiChevronDown } from 'react-icons/fi'
 
+import makeId from '@/lib/js-lib/makeId'
+import * as dates from '@/util/dates'
+import * as API from '@/util/Api'
 import { EventActionContext, EditRecurringAction } from '@/calendar/EventActionContext'
 import { CalendarsContext } from '@/contexts/CalendarsContext'
 import Event, { UNSAVED_EVENT_ID } from '@/models/Event'
+import Contact from '@/models/Contact'
 import { Label } from '@/models/Label'
+
 import { format, fullDayFormat } from '@/util/localizer'
 import ContentEditable from '@/lib/ContentEditable'
 import { LabelTag } from '@/components/LabelTag'
 import { LabelContext, LabelContextType } from '@/contexts/LabelsContext'
-
 import { addNewLabels } from '@/calendar/utils/LabelUtils'
 import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
+import EventParticipant from '@/models/EventParticipant'
+
 import SelectCalendar from './SelectCalendar'
 import RecurringEventEditor from './RecurringEventEditor'
 import TaggableInput from './TaggableInput'
@@ -43,6 +48,7 @@ import TimeSelect from './TimeSelect'
 import TimeSelectFullDay from './TimeSelectFullDay'
 import useEventService from './useEventService'
 import EventFields from './EventFields'
+import ParticipantList from './ParticipantList'
 
 /**
  * Full view for event editing.
@@ -68,6 +74,10 @@ export default function EventEditFull(props: { event: Event }) {
       props.event.recurrences ? props.event.recurrences.join('\n') : null
     )
   )
+  const [participants, setParticipants] = useState<Partial<EventParticipant>[]>(
+    props.event.participants
+  )
+
   const defaultDays = eventFields.allDay
     ? Math.max(dates.diff(eventFields.start, eventFields.end, 'day'), 1)
     : 1
@@ -78,7 +88,11 @@ export default function EventEditFull(props: { event: Event }) {
   const isExistingRecurringEvent = !isUnsavedEvent && props.event.recurrences != null
 
   function getEventData(): Event {
-    return { ...props.event, ...EventFields.getMutableEventFields(eventFields) }
+    return {
+      ...props.event,
+      ...EventFields.getMutableEventFields(eventFields),
+      participants: participants.map((p) => EventParticipant.getMutableFields(p)),
+    }
   }
 
   /**
@@ -97,6 +111,7 @@ export default function EventEditFull(props: { event: Event }) {
 
   async function onSaveEvent() {
     const eventData = getEventData()
+    console.log(eventData)
 
     if (!isExistingRecurringEvent) {
       // Update the individual event
@@ -112,7 +127,7 @@ export default function EventEditFull(props: { event: Event }) {
           return await saveEvent(eventData)
 
         case 'ALL':
-          const parent = await getEvent(getAuthToken(), props.event.recurring_event_id)
+          const parent = await API.getEvent(API.getAuthToken(), props.event.recurring_event_id)
           return await updateRecurringEvent(parent)
 
         case 'THIS_AND_FOLLOWING':
@@ -121,10 +136,9 @@ export default function EventEditFull(props: { event: Event }) {
            * 1) The recurrence up to this event. We then use the recurrence to update the parent event.
            * 2) The recurrence from this event onwards, to create a new series of events.
            */
-          const parentEvent = await getEvent(getAuthToken(), props.event.recurring_event_id)
+          const parentEvent = await API.getEvent(API.getAuthToken(), props.event.recurring_event_id)
 
           if (dates.eq(parentEvent.start, props.event.original_start)) {
-            console.log('updateRecurringEvent')
             return updateRecurringEvent(parentEvent)
           } else {
             // 1) Update the base event's recurrence, cut off at the current event's original start date.
@@ -162,6 +176,14 @@ export default function EventEditFull(props: { event: Event }) {
     } else if (action === 'SINGLE') {
       return 'Editing this event in series'
     }
+  }
+
+  function isExistingParticipant(contact: Contact) {
+    return (
+      participants.filter(
+        (p) => (p.email && contact.email === p.email) || contact.id == p.contact_id
+      ).length > 0
+    )
   }
 
   function renderRecurringEventSelectionMenu() {
@@ -249,7 +271,7 @@ export default function EventEditFull(props: { event: Event }) {
         <ModalCloseButton />
 
         <ModalBody>
-          <div className="is-flex is-align-items-center">
+          <Flex alignItems="center">
             <span className="mr-2" style={{ width: '1.25em' }} />
             <TaggableInput
               labels={labels}
@@ -268,12 +290,33 @@ export default function EventEditFull(props: { event: Event }) {
                 setEventFields({ ...eventFields, title, labels: updatedLabels })
               }}
               onBlur={() => {
-                eventActions.eventDispatch({ type: 'UPDATE_EDIT_EVENT', payload: getEventData() })
+                eventActions.eventDispatch({
+                  type: 'UPDATE_EDIT_EVENT',
+                  payload: getEventData(),
+                })
+              }}
+              onUpdateContacts={(contacts: Contact[]) => {
+                const newParticipants = contacts
+                  .filter((c) => !isExistingParticipant(c))
+                  .map(
+                    (c) =>
+                      new EventParticipant(
+                        makeId(),
+                        c.email,
+                        c.id,
+                        'needsAction',
+                        c.displayName,
+                        c.photoUrl
+                      )
+                  )
+
+                const updatedParticipants = [...participants, ...newParticipants]
+                setParticipants(updatedParticipants)
               }}
             />
-          </div>
+          </Flex>
 
-          <div className="is-flex is-align-items-center is-flex-wrap-wrap">
+          <Flex alignItems="center" flexWrap="wrap">
             <span className="mr-2" style={{ width: '1.25em' }} />
             {eventFields.labels.map((label) => (
               <div key={label.id} className="mt-2">
@@ -290,23 +333,12 @@ export default function EventEditFull(props: { event: Event }) {
                 />
               </div>
             ))}
-          </div>
+          </Flex>
 
-          <div className="mt-2 is-flex is-align-items-center">
-            <FiMail className="mr-2" size={'1.25em'} />
-            <input
-              className="input"
-              type="email"
-              placeholder="participants"
-              value="todo"
-              onChange={(e) => {}}
-            />
-          </div>
-
-          <div className="mt-2 is-flex is-align-items-center">
+          <Flex alignItems="center" mt="2" justifyContent="left">
             <FiClock className="mr-2" size={'1.2em'} />
-            <input
-              className="input is-small"
+            <Input
+              size="sm"
               type="date"
               value={format(eventFields.start, 'YYYY-MM-DD')}
               onChange={(e) => {
@@ -345,7 +377,11 @@ export default function EventEditFull(props: { event: Event }) {
                 startDate={eventFields.start}
                 onSelectNumDays={(days) => {
                   const endDate = dates.add(eventFields.start, days, 'day')
-                  setEventFields({ ...eventFields, end: endDate, endDay: fullDayFormat(endDate) })
+                  setEventFields({
+                    ...eventFields,
+                    end: endDate,
+                    endDay: fullDayFormat(endDate),
+                  })
                 }}
               />
             )}
@@ -429,7 +465,7 @@ export default function EventEditFull(props: { event: Event }) {
             >
               All day
             </Checkbox>
-          </div>
+          </Flex>
 
           {(recurringAction !== 'SINGLE' || isUnsavedEvent) && (
             <RecurringEventEditor
@@ -447,7 +483,21 @@ export default function EventEditFull(props: { event: Event }) {
             />
           )}
 
-          <div className="mt-2 is-flex is-align-items-center">
+          <Flex alignItems="center" mt="2" justifyContent="left">
+            <FiMail className="mr-2" size={'1.25em'} />
+            <Input variant="outline" placeholder="Add Participant" size="sm" />
+          </Flex>
+
+          <Flex alignItems="center" ml="7" mt="2" justifyContent="left">
+            <ParticipantList
+              participants={participants}
+              onUpdateParticipants={(participants) => {
+                setParticipants(participants)
+              }}
+            />
+          </Flex>
+
+          <Flex alignItems="center" mt="2">
             <Box mr="2">
               <FiCalendar size={'1.25em'} />
             </Box>
@@ -468,9 +518,9 @@ export default function EventEditFull(props: { event: Event }) {
                 })
               }}
             />
-          </div>
+          </Flex>
 
-          <div className="mt-2 is-flex is-align-items-top">
+          <Flex alignItems="top" mt="2">
             <FiAlignLeft className="mr-2" size={'1.25em'} />
 
             <ContentEditable
@@ -479,7 +529,7 @@ export default function EventEditFull(props: { event: Event }) {
               onChange={(e) => setEventFields({ ...eventFields, description: e.target.value })}
               style={{ minHeight: '4em' }}
             />
-          </div>
+          </Flex>
         </ModalBody>
 
         <ModalFooter>

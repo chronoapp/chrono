@@ -1,9 +1,13 @@
 import React, { useEffect, useRef } from 'react'
 import clsx from 'clsx'
+import { Image } from '@chakra-ui/react'
 import { MentionsInput, Mention } from 'react-mentions'
 
-import { Label } from '../../models/Label'
-import { LabelTagColor } from '../../components/LabelTag'
+import * as API from '@/util/Api'
+import Contact from '@/models/Contact'
+import { Label } from '@/models/Label'
+import { LabelTagColor } from '@/components/LabelTag'
+import ContactCache from './ContactCache'
 
 interface IProps {
   labels: Label[]
@@ -11,9 +15,43 @@ interface IProps {
   portalCls?: string
   title: string
   handleChange?: (newValue: string, labelIds: number[]) => void
+  onUpdateContacts?: (contacts: Contact[]) => void
   onBlur?: (v) => void
   isHeading: boolean
   placeholder?: string
+}
+
+type TagType = 'Label' | 'Contact'
+
+interface TagDisplay {
+  id: number | string
+  display: string
+}
+
+interface ContactTagDisplay extends TagDisplay {
+  photoUrl: string
+}
+
+interface LabelTagDisplay extends TagDisplay {
+  colorHex: string
+}
+
+/**
+ * Id containing both the type and id of the tag
+ * that we can extract it from the text input.
+ */
+function compositeId(id: number | string, type: TagType) {
+  return `[id:${id}][type:${type}]`
+}
+
+function getIdAndType(idTxt: string) {
+  const m = idTxt.match(/\[id:([\w]+)\]\[type:([\w]+)\]/)
+  if (m) {
+    const [_, id, type] = m
+    return { id, type }
+  }
+
+  throw new Error(`Invalid Composite ID: ${idTxt}`)
 }
 
 const defaultStyle = {
@@ -39,19 +77,12 @@ const defaultStyle = {
   },
 }
 
-function difference(setA, setB) {
-  let _difference = new Set(setA)
-  for (let elem of setB) {
-    _difference.delete(elem)
-  }
-  return _difference
-}
-
 /**
  * Input that allows #s to add tags.
  */
 function TaggableInput(props: IProps) {
   const titleInputRef = useRef<HTMLInputElement>()
+  const contactCache = new ContactCache()
 
   useEffect(() => {
     if (props.isHeading) {
@@ -65,8 +96,23 @@ function TaggableInput(props: IProps) {
     titleInputRef.current?.focus()
   }, [])
 
-  const labels = props.labels.map((label) => {
-    return { id: label.id, display: label.title, colorHex: label.color_hex }
+  async function fetchContacts(query: string | undefined, callback) {
+    if (!query) {
+      return
+    }
+
+    const contacts = await API.getContacts(API.getAuthToken(), query)
+    const contactsDisplay = contacts.map((contact) => ({
+      id: compositeId(contact.id, 'Contact'),
+      display: contact.displayName,
+      photoUrl: contact.photoUrl,
+    }))
+
+    callback(contactsDisplay)
+  }
+
+  const labels: LabelTagDisplay[] = props.labels.map((label) => {
+    return { id: compositeId(label.id, 'Label'), display: label.title, colorHex: label.color_hex }
   })
 
   function renderLabels(val) {
@@ -75,26 +121,51 @@ function TaggableInput(props: IProps) {
       .slice(0, 8)
   }
 
-  function handleChange(_evt, newValue: string, newPlainTextValue: string, newLabels) {
-    if (props.handleChange) {
-      let title = newValue
-
-      const labelIds = newLabels.map((l) => parseInt(l.id))
-      if (labelIds) {
-        const strippedTitle = title.replace(/#\[[\w\d]+\]\(\d+\)/g, '')
-        title = strippedTitle
-      }
-      props.handleChange(title, labelIds)
-    }
-  }
-
-  function renderSuggestion(entry, _search, highlightedDisplay) {
+  function renderLabelSuggestion(entry: LabelTagDisplay, _search, highlightedDisplay) {
     return (
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <LabelTagColor colorHex={entry.colorHex} />{' '}
         <span className="ml-1">{highlightedDisplay}</span>
       </div>
     )
+  }
+
+  function renderContactSuggestion(entry: ContactTagDisplay, _search, highlightedDisplay) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <Image borderRadius="full" boxSize="24px" src={entry.photoUrl} />
+        <span className="ml-1">{highlightedDisplay}</span>
+      </div>
+    )
+  }
+
+  /**
+   * On every key stroke, check if we have a new entity (contact or label).
+   */
+  async function handleChange(_evt, newValue: string, newPlainTextValue: string, newEntities) {
+    if (props.handleChange) {
+      let title = newValue
+
+      const labelIds: number[] = newEntities
+        .filter((e) => getIdAndType(e.id).type === 'Label')
+        .map((l) => parseInt(getIdAndType(l.id).id))
+
+      const contactIds: string[] = newEntities
+        .filter((e) => getIdAndType(e.id).type === 'Contact')
+        .map((l) => getIdAndType(l.id).id)
+
+      if (labelIds.length > 0) {
+        title = title.replace(/#\[[\w\d ]+\]\(.+\)/g, '')
+      }
+
+      props.handleChange(title, labelIds)
+
+      if (contactIds.length > 0) {
+        Promise.all(contactIds.map((id) => contactCache.get(id))).then((contacts) => {
+          props.onUpdateContacts && props.onUpdateContacts(contacts)
+        })
+      }
+    }
   }
 
   return (
@@ -116,7 +187,15 @@ function TaggableInput(props: IProps) {
           className="tag-highlight"
           markup={'#[__display__](__id__)'}
           displayTransform={(_id, display) => ` #${display}`}
-          renderSuggestion={renderSuggestion}
+          renderSuggestion={renderLabelSuggestion}
+        />
+        <Mention
+          trigger="@"
+          data={fetchContacts}
+          className="tag-highlight"
+          markup={'@[__display__](__id__)'}
+          displayTransform={(_id, display) => `@${display}`}
+          renderSuggestion={renderContactSuggestion}
         />
       </MentionsInput>
     </div>

@@ -398,6 +398,9 @@ function EventPopover(props: IProps) {
               )
               setEventFields({ ...eventFields, title, labels: updatedLabels })
             }}
+            onUpdateContacts={(contacts) => {
+              console.log('TODO: onUpdateContacts')
+            }}
           />
 
           <Flex mt="2" alignItems="center" flexWrap="wrap" justifyContent="left">
