@@ -170,7 +170,7 @@ class EventList extends React.Component<Props, State> {
 
     // If labelRule doesn't exist, add to add to all labels?
     // TODO: rethink the UI or make it more performant
-    const labelRules = await getLabelRules(event.title, label.id, authToken)
+    const labelRules = await getLabelRules(event.title_short, label.id, authToken)
     const labelRuleState = {
       event: event,
       label: label,
@@ -180,7 +180,7 @@ class EventList extends React.Component<Props, State> {
     }
 
     if (labelRules.length == 0) {
-      const eventsWithTitle = await getEvents(authToken, event.title)
+      const eventsWithTitle = await getEvents(authToken, event.title_short)
       labelRuleState.addLabelRuleModalActive = true
       labelRuleState.numEvents = eventsWithTitle.length
       this.setState({ labelRuleState })
@@ -195,7 +195,7 @@ class EventList extends React.Component<Props, State> {
     if (!labelRuleState) return
 
     if (labelRuleState.applyAll) {
-      const labelRule = new LabelRule(labelRuleState.event.title, labelRuleState.label.id)
+      const labelRule = new LabelRule(labelRuleState.event.title_short, labelRuleState.label.id)
       putLabelRule(labelRule, this.props.authToken).then((_labelRule) => {
         // this.refreshEvents()
       })

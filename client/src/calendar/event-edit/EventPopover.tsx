@@ -319,7 +319,7 @@ function EventPopover(props: IProps) {
         </div>
 
         <div className="cal-event-modal is-flex is-flex-direction-column">
-          <div className="has-text-grey-darker is-size-5">{eventFields.title}</div>
+          <div className="has-text-grey-darker is-size-5">{props.event.title_short}</div>
 
           {props.event.labels && (
             <div style={{ display: 'flex' }}>

@@ -108,7 +108,7 @@ function TimeGridEvent(props: IProps) {
   }
 
   const diffMin = getEventDurationMinutes()
-  const displayTitle = Event.getDefaultTitle(event.title)
+  const displayTitle = Event.getDefaultTitle(event.title_short)
 
   const tagColors = event.labels.map((label, idx) => (
     <LabelTagColor
