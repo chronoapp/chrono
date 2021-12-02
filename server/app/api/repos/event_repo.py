@@ -22,9 +22,8 @@ from app.api.repos.event_utils import (
     getExpandedRecurringEvents,
 )
 
-import app.sync.google.calendar as gcal
+import app.sync.google.gcal as gcal
 from app.api.endpoints.labels import LabelInDbVM, Label, combineLabels
-
 
 
 class EventRepoError(Exception):
@@ -308,7 +307,9 @@ class EventRepository:
             if existingContact:
                 existingContactIds.add(existingContact.id)
 
-            participant = EventParticipant(participantVM.email, participantVM.contact_id)
+            participant = EventParticipant(
+                participantVM.email, participantVM.contact_id, participantVM.response_status
+            )
             participant.contact = existingContact
 
             event.participants.append(participant)

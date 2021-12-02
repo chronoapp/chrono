@@ -11,7 +11,7 @@ from app.main import app
 
 from app.api.utils.security import get_current_user
 from app.api.utils.db import get_db
-
+from app.api.repos.event_repo import EventRepository
 
 SQLALCHEMY_DATABASE_URI = "postgresql+asyncpg://{0}:{1}@{2}/{3}".format(
     'postgres', 'postgres', 'postgres_test', 'postgres'
@@ -56,6 +56,11 @@ async def session(engine, create):
         app.dependency_overrides[get_db] = getDbSession
 
         yield session
+
+
+@pytest.fixture
+def event_repo(session):
+    yield EventRepository(session)
 
 
 @pytest.fixture

@@ -18,9 +18,13 @@ from app.core.logger import logger
 from app.core import config
 from app.api.repos.event_utils import (
     EventBaseVM,
+    EventParticipantVM,
     createOrUpdateEvent,
     getRecurringEventId,
 )
+from app.api.repos.event_repo import EventRepository
+
+from app.sync.google.gcal import getCalendarService
 
 """
 Adapter to sync to and from google calendar.
@@ -104,13 +108,6 @@ def mapGoogleColor(color: str) -> str:
         return NEW_COLORS[OLD_COLORS.index(color)]
     else:
         return color
-
-
-def getCalendarService(user: User):
-    credentials = Credentials(**user.credentials.token_data)
-    service = build('calendar', 'v3', credentials=credentials, cache_discovery=False)
-
-    return service
 
 
 def syncGoogleCalendars(user: User):
@@ -254,6 +251,8 @@ async def syncEventsToDb(
     We know which recurring event it is with the composite id of {id}_{start_date}.
     """
 
+    eventRepo = EventRepository(session)
+
     # Keep track of added events this session while the models have not been added to the db yet.
     addedEventsCache: Dict[str, Event] = {}
 
@@ -266,7 +265,7 @@ async def syncEventsToDb(
             await syncDeletedEvent(calendar, existingEvent, eventItem, addedEventsCache, session)
         else:
             event = await syncCreatedOrUpdatedGoogleEvent(
-                calendar, existingEvent, eventItem, addedEventsCache, session
+                calendar, eventRepo, existingEvent, eventItem, addedEventsCache, session
             )
 
             await autoLabelEvents(event, user, session)
@@ -400,6 +399,7 @@ async def getOrCreateBaseRecurringEvent(
 
 async def syncCreatedOrUpdatedGoogleEvent(
     calendar: Calendar,
+    eventRepo: EventRepository,
     existingEvent: Optional[Event],
     eventItem: Dict[str, Any],
     addedEventsCache: Dict[str, Event],
@@ -419,6 +419,8 @@ async def syncCreatedOrUpdatedGoogleEvent(
 
     event = createOrUpdateEvent(existingEvent, eventVM, googleId=eventVM.g_id)
     calendar.user.events.append(event)
+
+    await eventRepo.updateEventParticipants(calendar.user, event, eventVM.participants)
 
     if baseRecurringEvent:
         recurringEventId = None
@@ -481,6 +483,16 @@ def googleEventToEventVM(calendarId: str, eventItem: Dict[str, Any]) -> GoogleEv
     recurringEventGId = eventItem.get('recurringEventId')
     status = convertStatus(eventItem['status'])
 
+    participants = []
+    for attendee in eventItem.get('attendees', []):
+        participant = EventParticipantVM(
+            id=attendee.get('id'),
+            display_name=attendee.get('displayName'),
+            email=attendee.get('email'),
+            response_status=attendee.get('responseStatus'),
+        )
+        participants.append(participant)
+
     eventVM = GoogleEventVM(
         g_id=eventId,
         title=eventSummary,
@@ -496,75 +508,9 @@ def googleEventToEventVM(calendarId: str, eventItem: Dict[str, Any]) -> GoogleEv
         recurring_event_g_id=recurringEventGId,
         original_start=originalStartDateTime,
         original_start_day=originalStartDay,
+        participants=participants,
     )
     return eventVM
-
-
-"""Handle writes from Timecouncil => Google
-"""
-
-
-def insertGoogleEvent(user: User, event: Event):
-    timeZone = event.calendar.timezone
-    eventBody = getEventBody(event, timeZone)
-
-    return (
-        getCalendarService(user)
-        .events()
-        .insert(calendarId=event.calendar_id, body=eventBody)
-        .execute()
-    )
-
-
-def moveGoogleEvent(user: User, event: Event, prevCalendarId: str):
-    """Moves an event to another calendar, i.e. changes an event's organizer."""
-    return (
-        getCalendarService(user)
-        .events()
-        .move(calendarId=prevCalendarId, eventId=event.g_id, destination=event.calendar_id)
-        .execute()
-    )
-
-
-def updateGoogleEvent(user: User, event: Event):
-    timeZone = event.calendar.timezone
-    eventBody = getEventBody(event, timeZone)
-    return (
-        getCalendarService(user)
-        .events()
-        .patch(calendarId=event.calendar_id, eventId=event.g_id, body=eventBody)
-        .execute()
-    )
-
-
-def deleteGoogleEvent(user: User, event: Event):
-    return (
-        getCalendarService(user)
-        .events()
-        .delete(calendarId=event.calendar_id, eventId=event.g_id)
-        .execute()
-    )
-
-
-def createCalendar(user: User, calendar: Calendar):
-    """Creates a calendar and adds it to my list."""
-    body = {
-        'summary': calendar.summary,
-        'description': calendar.description,
-        'timeZone': calendar.timezone,
-    }
-    return getCalendarService(user).calendars().insert(body=body).execute()
-
-
-def updateCalendar(user: User, calendar: Calendar):
-    body = {
-        'selected': calendar.selected or False,
-        'foregroundColor': calendar.foreground_color,
-        'backgroundColor': calendar.background_color,
-    }
-    return (
-        getCalendarService(user).calendarList().patch(calendarId=calendar.id, body=body).execute()
-    )
 
 
 async def createWebhook(calendar: Calendar, session) -> None:
@@ -610,28 +556,3 @@ def cancelWebhook(user: User, webhook: Webhook, session: AsyncSession):
         logger.error(e)
 
     session.delete(webhook)
-
-
-def getEventBody(event: Event, timeZone: str):
-    eventBody = {
-        'summary': event.title,
-        'description': event.description,
-        'recurrence': event.recurrences,
-    }
-
-    if event.all_day:
-        eventBody['start'] = {'date': event.start_day, 'timeZone': timeZone, 'dateTime': None}
-        eventBody['end'] = {'date': event.end_day, 'timeZone': timeZone, 'dateTime': None}
-    else:
-        eventBody['start'] = {
-            'dateTime': convertToLocalTime(event.start, timeZone).isoformat(),
-            'timeZone': timeZone,
-            'date': None,
-        }
-        eventBody['end'] = {
-            'dateTime': convertToLocalTime(event.end, timeZone).isoformat(),
-            'timeZone': timeZone,
-            'date': None,
-        }
-
-    return eventBody

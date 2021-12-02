@@ -11,6 +11,7 @@ from app.sync.google.calendar import (
     syncCreatedOrUpdatedGoogleEvent,
     syncDeletedEvent,
 )
+from app.api.repos.event_repo import EventRepository
 
 EVENT_ITEM_RECURRING = {
     'kind': 'calendar#event',
@@ -31,13 +32,15 @@ EVENT_ITEM_RECURRING = {
 
 
 @pytest.mark.asyncio
-async def test_syncCreatedOrUpdatedGoogleEvent_single(user, session):
+async def test_syncCreatedOrUpdatedGoogleEvent_single(user, session, event_repo):
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     eventItem = EVENT_ITEM_RECURRING.copy()
     del eventItem['recurrence']
 
-    event = await syncCreatedOrUpdatedGoogleEvent(calendar, None, eventItem, {}, session)
+    event = await syncCreatedOrUpdatedGoogleEvent(
+        calendar, event_repo, None, eventItem, {}, session
+    )
     await session.commit()
 
     assert event.title == eventItem.get('summary')
@@ -49,10 +52,34 @@ async def test_syncCreatedOrUpdatedGoogleEvent_single(user, session):
 
 
 @pytest.mark.asyncio
-async def test_syncCreatedOrUpdatedGoogleEvent_recurring(user, session):
+async def test_syncCreatedOrUpdatedGoogleEvent_single_with_attendees(user, session, event_repo):
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
-    event = await syncCreatedOrUpdatedGoogleEvent(calendar, None, EVENT_ITEM_RECURRING, {}, session)
+    eventItem = EVENT_ITEM_RECURRING.copy()
+    del eventItem['recurrence']
+
+    # Add participants
+    eventItem['attendees'] = [
+        {'email': 'test@example.com', 'self': True, 'displayName': 'My Name'},
+        {'email': 'test2@example.com'},
+    ]
+
+    event = await syncCreatedOrUpdatedGoogleEvent(
+        calendar, event_repo, None, eventItem, {}, session
+    )
+
+    await session.commit()
+
+    assert len(event.participants) == 2
+
+
+@pytest.mark.asyncio
+async def test_syncCreatedOrUpdatedGoogleEvent_recurring(user, session, event_repo):
+    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+
+    event = await syncCreatedOrUpdatedGoogleEvent(
+        calendar, event_repo, None, EVENT_ITEM_RECURRING, {}, session
+    )
     await session.commit()
 
     assert event.g_id == EVENT_ITEM_RECURRING.get('id')
@@ -67,7 +94,7 @@ async def test_syncCreatedOrUpdatedGoogleEvent_recurring(user, session):
 
 
 @pytest.mark.asyncio
-async def test_syncCreatedOrUpdatedGoogleEvent_allDay(user, session):
+async def test_syncCreatedOrUpdatedGoogleEvent_allDay(user, session, event_repo):
     eventItem = {
         'id': '20201225_60o30chp64o30c1g60o30dr56g',
         'status': 'confirmed',
@@ -81,7 +108,9 @@ async def test_syncCreatedOrUpdatedGoogleEvent_allDay(user, session):
     }
 
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
-    event = await syncCreatedOrUpdatedGoogleEvent(calendar, None, eventItem, {}, session)
+    event = await syncCreatedOrUpdatedGoogleEvent(
+        calendar, event_repo, None, eventItem, {}, session
+    )
 
     assert event.all_day
     assert event.start_day == '2020-12-25'
