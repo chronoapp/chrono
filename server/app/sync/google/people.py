@@ -18,6 +18,31 @@ async def syncContacts(user: User, session: AsyncSession, fullSync: bool = False
     """Sync contacts from Google to the DB."""
     service = getPeopleService(user)
 
+    await syncOtherContacts(service, user, session)
+    await syncConnections(service, user, session)
+
+
+async def syncOtherContacts(service, user: User, session: AsyncSession):
+    nextPageToken = None
+    while True:
+        results = (
+            service.otherContacts()
+            .list(
+                readMask='names,emailAddresses,photos',
+                pageToken=nextPageToken,
+            )
+            .execute()
+        )
+
+        contacts = results.get('otherContacts', [])
+        await syncContactsToDB(user, contacts, session)
+
+        nextPageToken = results.get('nextPageToken')
+        if not nextPageToken:
+            break
+
+
+async def syncConnections(service, user: User, session: AsyncSession):
     nextPageToken = None
     while True:
         results = (

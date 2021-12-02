@@ -46,7 +46,7 @@ async def getContact(
 async def getContacts(
     user: User = Depends(get_current_user),
     query: str = "",
-    limit: int = 50,
+    limit: int = 25,
     session: AsyncSession = Depends(get_db),
 ):
     """TODO: Pagination."""
