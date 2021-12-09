@@ -28,6 +28,12 @@ router = APIRouter()
 
 # ================================== Google OAuth2 ==================================
 
+GOOGLE_API_SCOPES = [
+    'https://www.googleapis.com/auth/calendar',
+    'https://www.googleapis.com/auth/contacts.readonly',
+    'https://www.googleapis.com/auth/contacts.other.readonly',
+]
+
 
 class AuthData(BaseModel):
     code: str
@@ -72,12 +78,7 @@ def googleAuth():
     """Redirects to google oauth consent screen.
     https://developers.google.com/identity/protocols/OAuth2WebServer
     """
-
-    scopes = [
-        'https://www.googleapis.com/auth/calendar',
-        'https://www.googleapis.com/auth/contacts.readonly',
-    ]
-    flow = getAuthFlow(scopes)
+    flow = getAuthFlow(GOOGLE_API_SCOPES)
     authorization_url, state = flow.authorization_url(
         access_type='offline', prompt='consent', include_granted_scopes='true'
     )
