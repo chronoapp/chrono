@@ -10,9 +10,20 @@ import {
   MenuItem,
   MenuDivider,
   Kbd,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  InputRightElement,
 } from '@chakra-ui/react'
 
-import { FiChevronDown, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
+import {
+  FiChevronDown,
+  FiChevronLeft,
+  FiChevronRight,
+  FiSearch,
+  FiX,
+  FiArrowLeft,
+} from 'react-icons/fi'
 import { EventActionContext, Display } from './EventActionContext'
 import { LabelContext } from '@/contexts/LabelsContext'
 import { format } from '@/util/localizer'
@@ -24,6 +35,110 @@ import Week from './Week'
 import Month from './Month'
 import WorkWeek from './WorkWeek'
 
+function DateHeaderSearch(props: {
+  searchValue: string
+  setSearchValue: (s: string) => void
+  disableSearchMode: () => void
+}) {
+  return (
+    <Flex alignItems="center">
+      <InputGroup mr="1" w="xl">
+        <InputLeftElement>
+          <IconButton
+            _hover={{}}
+            variant="ghost"
+            aria-label="disable search"
+            icon={<FiArrowLeft />}
+            onClick={props.disableSearchMode}
+          />
+        </InputLeftElement>
+
+        <Input
+          size="md"
+          placeholder="Search"
+          value={props.searchValue}
+          onChange={(e) => props.setSearchValue(e.target.value)}
+        />
+        <InputRightElement>
+          {props.searchValue && (
+            <Button variant="link" onClick={() => props.setSearchValue('')}>
+              <FiX />
+            </Button>
+          )}
+        </InputRightElement>
+      </InputGroup>
+
+      <IconButton mr="1" variant="solid" aria-label="search" icon={<FiSearch />} />
+    </Flex>
+  )
+}
+
+function DropdownMenu(props: { display: Display; selectDisplay: (d: Display) => void }) {
+  function titleForDisplay(display: Display) {
+    switch (display) {
+      case 'WorkWeek': {
+        return 'Work week'
+      }
+      default: {
+        return display
+      }
+    }
+  }
+
+  return (
+    <Menu>
+      <MenuButton
+        color="gray.600"
+        borderRadius="xs"
+        size="sm"
+        as={Button}
+        rightIcon={<FiChevronDown />}
+        fontWeight="normal"
+      >
+        {titleForDisplay(props.display)}
+      </MenuButton>
+
+      <MenuList zIndex={2}>
+        <MenuItem
+          onClick={() => props.selectDisplay('Day')}
+          display="flex"
+          justifyContent="space-between"
+        >
+          <Text>Day</Text>
+          <Kbd>d</Kbd>
+        </MenuItem>
+        <MenuDivider m="0" />
+        <MenuItem
+          display="flex"
+          justifyContent="space-between"
+          onClick={() => props.selectDisplay('Week')}
+        >
+          <Text>Week </Text>
+          <Kbd>w</Kbd>
+        </MenuItem>
+        <MenuDivider m="0" />
+        <MenuItem
+          display="flex"
+          justifyContent="space-between"
+          onClick={() => props.selectDisplay('WorkWeek')}
+        >
+          <Text>Work week </Text>
+          <Kbd>x</Kbd>
+        </MenuItem>
+        <MenuDivider m="0" />
+        <MenuItem
+          display="flex"
+          justifyContent="space-between"
+          onClick={() => props.selectDisplay('Month')}
+        >
+          <Text>Month </Text>
+          <Kbd>m</Kbd>
+        </MenuItem>
+      </MenuList>
+    </Menu>
+  )
+}
+
 /**
  * Calendar header for date selection.
  */
@@ -33,6 +148,9 @@ export default function Header() {
 
   const [displayToggleActive, setDisplayToggleActive] = React.useState<boolean>(false)
   const displayToggleRef = React.useRef<HTMLDivElement>(null)
+
+  const [isSearchMode, setIsSearchMode] = React.useState<boolean>(false)
+  const [searchValue, setSearchValue] = React.useState<string>('')
 
   const today = new Date()
   const display = eventsContext.display
@@ -57,37 +175,32 @@ export default function Header() {
   }
 
   function handleKeyboardShortcuts(e: KeyboardEvent) {
-    if (e.key === 'Escape') {
-      eventsContext.eventDispatch({ type: 'CANCEL_SELECT' })
-      setDisplayToggleActive(false)
-    }
-
-    if (!isEditing()) {
-      if (e.key === 'd') {
-        selectDisplay('Day')
+    if (isSearchMode) {
+      if (e.key === 'Escape') {
+        disableSearch()
+      }
+    } else {
+      if (e.key === 'Escape') {
+        eventsContext.eventDispatch({ type: 'CANCEL_SELECT' })
+        setDisplayToggleActive(false)
       }
 
-      if (e.key === 'w') {
-        selectDisplay('Week')
-      }
+      if (!isEditing()) {
+        if (e.key === 'd') {
+          selectDisplay('Day')
+        }
 
-      if (e.key === 'x') {
-        selectDisplay('WorkWeek')
-      }
+        if (e.key === 'w') {
+          selectDisplay('Week')
+        }
 
-      if (e.key === 'm') {
-        selectDisplay('Month')
-      }
-    }
-  }
+        if (e.key === 'x') {
+          selectDisplay('WorkWeek')
+        }
 
-  function titleForDisplay(display: Display) {
-    switch (display) {
-      case 'WorkWeek': {
-        return 'Work week'
-      }
-      default: {
-        return display
+        if (e.key === 'm') {
+          selectDisplay('Month')
+        }
       }
     }
   }
@@ -114,8 +227,16 @@ export default function Header() {
     setDisplayToggleActive(false)
   }
 
-  return (
-    <Flex w="100%" pl="2" justifyContent="space-between" alignItems="center">
+  function disableSearch() {
+    setSearchValue('')
+    setIsSearchMode(false)
+  }
+
+  /**
+   * Header display when it's not in search mode.
+   */
+  function DateHeaderNonSearch() {
+    return (
       <Flex alignItems="center">
         <Button
           color="gray.600"
@@ -135,11 +256,10 @@ export default function Header() {
 
         <IconButton
           ml="1"
-          borderRadius="xs"
           aria-label="previous date range"
           variant="ghost"
           icon={<FiChevronLeft />}
-          size="md"
+          size="sm"
           onClick={() => {
             if (display == 'Day') {
               eventsContext.setSelectedDate(dates.subtract(eventsContext.selectedDate, 1, 'day'))
@@ -154,10 +274,9 @@ export default function Header() {
         />
 
         <IconButton
-          borderRadius="xs"
           aria-label="next date range"
           variant="ghost"
-          size="md"
+          size="sm"
           icon={<FiChevronRight />}
           onClick={() => {
             if (display == 'Day') {
@@ -171,61 +290,45 @@ export default function Header() {
           }}
         />
 
-        <Text pl="2" color="gray.600">
+        <Text pl="2" color="gray.600" fontSize={'sm'}>
           {title}
         </Text>
       </Flex>
+    )
+  }
 
-      <Menu>
-        <MenuButton
-          color="gray.600"
-          borderRadius="xs"
-          size="sm"
-          as={Button}
-          rightIcon={<FiChevronDown />}
-          fontWeight="normal"
-        >
-          {titleForDisplay(display)}
-        </MenuButton>
+  return (
+    <Flex w="100%" pl="2" justifyContent="space-between" alignItems="center">
+      {isSearchMode ? (
+        <DateHeaderSearch
+          searchValue={searchValue}
+          setSearchValue={setSearchValue}
+          disableSearchMode={disableSearch}
+        />
+      ) : (
+        <DateHeaderNonSearch />
+      )}
 
-        <MenuList zIndex={2}>
-          <MenuItem
-            onClick={() => selectDisplay('Day')}
-            display="flex"
-            justifyContent="space-between"
-          >
-            <Text>Day</Text>
-            <Kbd>d</Kbd>
-          </MenuItem>
-          <MenuDivider m="0" />
-          <MenuItem
-            display="flex"
-            justifyContent="space-between"
-            onClick={() => selectDisplay('Week')}
-          >
-            <Text>Week </Text>
-            <Kbd>w</Kbd>
-          </MenuItem>
-          <MenuDivider m="0" />
-          <MenuItem
-            display="flex"
-            justifyContent="space-between"
-            onClick={() => selectDisplay('WorkWeek')}
-          >
-            <Text>Work week </Text>
-            <Kbd>x</Kbd>
-          </MenuItem>
-          <MenuDivider m="0" />
-          <MenuItem
-            display="flex"
-            justifyContent="space-between"
-            onClick={() => selectDisplay('Month')}
-          >
-            <Text>Month </Text>
-            <Kbd>m</Kbd>
-          </MenuItem>
-        </MenuList>
-      </Menu>
+      <Flex alignItems={'center'}>
+        {!isSearchMode && (
+          <IconButton
+            mr="2"
+            ml="1"
+            aria-label="search"
+            variant="ghost"
+            h="8"
+            icon={<FiSearch />}
+            onClick={() => {
+              if (isSearchMode) {
+                disableSearch()
+              } else {
+                setIsSearchMode(true)
+              }
+            }}
+          />
+        )}
+        <DropdownMenu display={display} selectDisplay={selectDisplay} />
+      </Flex>
     </Flex>
   )
 }
