@@ -33,6 +33,7 @@ import { CalendarsContext } from '@/contexts/CalendarsContext'
 import { LabelContext, LabelContextType } from '@/contexts/LabelsContext'
 import { LabelTag } from '@/components/LabelTag'
 import LabelTree from '@/components/LabelTree'
+import * as API from '@/util/Api'
 
 import TimeSelect from './TimeSelect'
 import TimeSelectFullDay from './TimeSelectFullDay'
@@ -40,8 +41,8 @@ import SelectCalendar from './SelectCalendar'
 import ContentEditable from '@/lib/ContentEditable'
 import TaggableInput from './TaggableInput'
 import useEventService from './useEventService'
-import { getEvent, getAuthToken } from '@/util/Api'
 import EventFields from './EventFields'
+
 interface IProps {
   event: Event
 }
@@ -95,15 +96,7 @@ function EventPopover(props: IProps) {
   function getUpdatedEvent(e: Event, fields: EventFields) {
     const event = {
       ...e,
-      title: fields.title,
-      description: fields.description,
-      calendar_id: fields.calendarId,
-      labels: fields.labels,
-      all_day: fields.allDay,
-      start: fields.start,
-      end: fields.end,
-      start_day: fields.startDay,
-      end_day: fields.endDay,
+      ...EventFields.getMutableEventFields(fields),
     }
 
     return event
@@ -341,7 +334,11 @@ function EventPopover(props: IProps) {
           {props.event.description && (
             <div className="mt-2 is-flex is-align-items-flex-start">
               <FiAlignLeft className="mr-2 is-flex-shrink-0" />
-              <div dangerouslySetInnerHTML={{ __html: linkifyHtml(props.event.description) }}></div>
+              <Box
+                maxW="100%"
+                pr="4"
+                dangerouslySetInnerHTML={{ __html: linkifyHtml(props.event.description) }}
+              ></Box>
             </div>
           )}
 
@@ -644,7 +641,7 @@ function EventPopover(props: IProps) {
       throw Error('Invalid Recurring Event')
     }
 
-    const parentEvent = await getEvent(getAuthToken(), event.recurring_event_id)
+    const parentEvent = await API.getEvent(API.getAuthToken(), event.recurring_event_id)
 
     const rules = getSplitRRules(
       event.recurrences!.join('\n'),

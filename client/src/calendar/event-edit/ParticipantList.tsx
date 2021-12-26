@@ -15,7 +15,7 @@ export default function ParticipantList(props: IProps) {
   return (
     <Flex spacing={2} direction="column">
       {props.participants.map((participant, idx) => (
-        <Flex mb="2" justifyContent="space-between" align="center" w="20em">
+        <Flex key={idx} mb="2" justifyContent="space-between" align="center" w="20em">
           <Flex direction="row" align="center">
             {participant.photo_url && (
               <Avatar size={'xs'} src={participant.photo_url} mr={2} mt={1} mb={1} boxSize="24px" />

@@ -1,6 +1,12 @@
 import { Label } from '@/models/Label'
 import Event from '@/models/Event'
 
+const TitleRegex = /@\[([\wd.-_ @]+)\]\(\[id:\w+\]\[type:\w+\]\)/
+
+function getShortTitle(title: string) {
+  return title.replace(TitleRegex, '$1')
+}
+
 /**
  * Editable fields in event.
  */
@@ -21,6 +27,7 @@ export default class EventFields {
   static getMutableEventFields(eventFields: EventFields): Partial<Event> {
     return {
       title: eventFields.title,
+      title_short: getShortTitle(eventFields.title),
       description: eventFields.description,
       start: eventFields.start,
       end: eventFields.end,
