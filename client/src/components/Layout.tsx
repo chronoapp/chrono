@@ -32,7 +32,7 @@ import Header from '@/calendar/Header'
 
 interface Props {
   title: string
-  children: any
+  children: React.ReactNode
   canCreateEvent: boolean
   includeLeftPanel: boolean
 }
@@ -62,6 +62,86 @@ function NewEventButton() {
   )
 }
 
+function NavItems(props: { refreshCalendar: () => void; canCreateEvent: boolean }) {
+  const router = useRouter()
+
+  return (
+    <Flex height="3.25rem" borderBottom="1px solid #dfdfdf">
+      <Box w="100%" display="flex">
+        <Flex alignItems="stretch" className="navbar-menu">
+          <Flex href="#" alignItems="center" justifyContent="center" padding="2">
+            <img
+              src={'./timecouncil-symbol.png'}
+              style={{ maxHeight: '2.5rem', width: '2.5rem' }}
+            />
+          </Flex>
+
+          <Flex>
+            <Link href="/">
+              <Button
+                variant="unstyled"
+                borderRadius="0"
+                ml="2"
+                padding="2"
+                pl="0"
+                height="100%"
+                color={router.pathname === '/' ? 'primary.800' : 'gray.500'}
+                fontWeight={'medium'}
+              >
+                Calendar
+              </Button>
+            </Link>
+            <Link href="/events">
+              <Button
+                variant="unstyled"
+                borderRadius="0"
+                ml="2"
+                padding="2"
+                height="100%"
+                color={router.pathname === '/events' ? 'primary.800' : 'gray.500'}
+                fontWeight={'medium'}
+              >
+                Events
+              </Button>
+            </Link>
+          </Flex>
+        </Flex>
+
+        {props.canCreateEvent && <Header />}
+      </Box>
+
+      <Flex justifyContent="flex-end">
+        <Flex alignItems="center" justifyContent="center" padding="2">
+          <Settings refreshCalendar={props.refreshCalendar} />
+        </Flex>
+      </Flex>
+    </Flex>
+  )
+}
+
+function Settings(props: { refreshCalendar: () => void }) {
+  const router = useRouter()
+
+  return (
+    <Menu>
+      <MenuButton ml="2" mr="2">
+        <Avatar size="sm" />
+      </MenuButton>
+      <MenuList zIndex="2">
+        <MenuItem onClick={props.refreshCalendar}>Refresh Events</MenuItem>
+        <MenuDivider m="0" />
+        <MenuItem icon={<FiSettings />} onClick={() => router.push('/settings')}>
+          Settings
+        </MenuItem>
+        <MenuDivider m="0" />
+        <MenuItem icon={<FiLogOut />} onClick={signOut}>
+          Sign Out
+        </MenuItem>
+      </MenuList>
+    </Menu>
+  )
+}
+
 /**
  * Top Level Layout for the navigation and body.
  */
@@ -84,86 +164,6 @@ function Layout(props: Props) {
     })
   }
 
-  function Settings() {
-    const router = useRouter()
-
-    return (
-      <Menu>
-        <MenuButton ml="2" mr="2">
-          <Avatar size="sm" />
-        </MenuButton>
-        <MenuList zIndex="2">
-          <MenuItem onClick={refreshCalendar}>Refresh Events</MenuItem>
-          <MenuDivider m="0" />
-          <MenuItem icon={<FiSettings />} onClick={() => router.push('/settings')}>
-            Settings
-          </MenuItem>
-          <MenuDivider m="0" />
-          <MenuItem icon={<FiLogOut />} onClick={signOut}>
-            Sign Out
-          </MenuItem>
-        </MenuList>
-      </Menu>
-    )
-  }
-
-  function renderNavItems() {
-    const router = useRouter()
-
-    return (
-      <Flex height="3.25rem" borderBottom="1px solid #dfdfdf">
-        <Box w="100%" display="flex">
-          <Flex alignItems="stretch" className="navbar-menu">
-            <Flex href="#" alignItems="center" justifyContent="center" padding="2">
-              <img
-                src={'./timecouncil-symbol.png'}
-                style={{ maxHeight: '2.5rem', width: '2.5rem' }}
-              />
-            </Flex>
-
-            <Flex>
-              <Link href="/">
-                <Button
-                  variant="unstyled"
-                  borderRadius="0"
-                  ml="2"
-                  padding="2"
-                  pl="0"
-                  height="100%"
-                  color={router.pathname === '/' ? 'primary.800' : 'gray.500'}
-                  fontWeight={'medium'}
-                >
-                  Calendar
-                </Button>
-              </Link>
-              <Link href="/events">
-                <Button
-                  variant="unstyled"
-                  borderRadius="0"
-                  ml="2"
-                  padding="2"
-                  height="100%"
-                  color={router.pathname === '/events' ? 'primary.800' : 'gray.500'}
-                  fontWeight={'medium'}
-                >
-                  Events
-                </Button>
-              </Link>
-            </Flex>
-          </Flex>
-
-          {props.canCreateEvent && <Header />}
-        </Box>
-
-        <Flex justifyContent="flex-end">
-          <Flex alignItems="center" justifyContent="center" padding="2">
-            <Settings />
-          </Flex>
-        </Flex>
-      </Flex>
-    )
-  }
-
   return (
     <Box className="App">
       <Head>
@@ -174,7 +174,7 @@ function Layout(props: Props) {
         <link rel="icon" href="/favicon-128.ico" type="image/x-icon" />
       </Head>
 
-      {renderNavItems()}
+      <NavItems refreshCalendar={refreshCalendar} canCreateEvent={props.canCreateEvent} />
 
       <Flex height="calc(100vh - 3.25rem)" width="100%" overflowY="auto">
         {props.includeLeftPanel && (
