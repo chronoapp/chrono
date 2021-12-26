@@ -1,0 +1,19 @@
+{
+    "name": "Hyperspeed Codespace",
+    "dockerComposeFile": "docker-compose.yml",
+    "workspaceFolder": "/app",
+    "service": "docker-in-docker",
+
+	"mounts": [ "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind" ],
+	"settings": { 
+		"terminal.integrated.shell.linux": "/bin/bash"
+	},
+
+    // Use 'postCreateCommand' to run commands after the container is created.
+	"postCreateCommand": "docker --version",
+    "forwardPorts": [3000, 8888],
+    
+    "extensions": [
+		  "ms-azuretools.vscode-docker"
+	  ]
+}

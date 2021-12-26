@@ -1,0 +1,18 @@
+.cal-plugin-active {
+  background-color: $grey-lightest;
+  cursor: pointer;
+  transition: $fade-in-transition;
+
+  svg {
+    color: lighten($secondary, 10%) !important;
+  }
+  span {
+    color: $grey-dark !important;
+  }
+}
+
+.cal-plugin-icon {
+  &:hover {
+    @extend .cal-plugin-active;
+  }
+}

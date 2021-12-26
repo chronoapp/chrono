@@ -1,0 +1,99 @@
+/* Create New Event */
+
+.cal-event-modal-container {
+  background-color: white;
+  border-radius: $event-border-radius;
+  box-shadow: $event-shadow;
+  z-index: 30;
+  overflow: visible !important;
+}
+
+.cal-event-modal {
+  padding: 0px 20px 10px 20px;
+}
+
+.cal-event-modal-header {
+  height: 32px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.cal-event-edit-description {
+  background-color: $white-ter;
+  padding: 0.25rem;
+  border-radius: $event-border-radius;
+  width: 100%;
+  line-height: 1.1;
+}
+
+.cal-event-edit-description[contenteditable]:focus {
+  outline: 0px solid transparent;
+  border: 1px solid $link;
+}
+
+// Taggable Input
+
+.input__input {
+  @extend %input;
+}
+
+.input-heading {
+  .input {
+    font-size: $size-5; // title
+    border: none;
+    box-shadow: none;
+    padding-left: 0;
+
+    &:focus {
+      border: none;
+    }
+  }
+  .input__input {
+    border: none;
+    box-shadow: none;
+    padding-left: 0;
+  }
+  .input__highlighter {
+    border: none !important;
+  }
+}
+
+.tag-highlight {
+  padding: 1px 0;
+  padding-right: 0.5px;
+  border-radius: 4px;
+  background-color: $grey-lightest;
+  border: 1px solid $grey-light;
+  margin-left: -1px;
+  color: transparent;
+}
+
+// RecurringEventEditor
+
+.recurring-days {
+  display: flex;
+  flex-direction: row;
+}
+
+.recurring-day {
+  display: flex;
+  justify-content: center;
+
+  font-size: $size-6;
+  padding: 0.25em;
+  border-radius: 1em;
+
+  width: 2em;
+  height: 2em;
+
+  border: 1px solid $border-light;
+  color: $grey;
+  cursor: pointer;
+
+  &.selected {
+    background-color: $primary;
+    color: $grey-lightest;
+  }
+}

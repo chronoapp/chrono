@@ -1,0 +1,133 @@
+$sidebar-width: 260px;
+
+html {
+  overflow-y: auto;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-y: auto;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  animation: App-logo-spin infinite 20s linear;
+  height: 40vmin;
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.navbar {
+  border-bottom: 1px solid #dfdfdf;
+  height: 3.25rem;
+}
+
+.navbar-menu {
+  min-width: $sidebar-width;
+}
+
+.left-section {
+  min-width: $sidebar-width;
+  display: flex;
+  flex-direction: column;
+  background-color: whitesmoke;
+  padding-left: 0.75em;
+}
+
+/* MISC: TODO: move these */
+
+.radio-list {
+  .radio {
+    display: block;
+
+    & + .radio {
+      margin-left: 0;
+      margin-top: 0.5em;
+    }
+
+    & span {
+      margin-left: 0.5em;
+    }
+  }
+}
+
+.event-label {
+  border-radius: 0.3em;
+  width: 1.25em;
+  height: 1.25em;
+
+  &--hoverable {
+    &:hover {
+      transform: scale(1.1);
+      box-shadow: 0.05em 0.1em 0.2em 0 rgba(50, 50, 50, 0.4);
+    }
+  }
+}
+
+.event-label-small {
+  @extend .event-label;
+  width: 1em;
+  height: 1em;
+}
+
+.has-icon-grey {
+  svg {
+    fill: $grey;
+  }
+}
+
+.icon-button {
+  &:hover {
+    svg {
+      background-color: $grey-lightest;
+      border-radius: 2px;
+    }
+  }
+}
+
+// TODO: helper class
+
+.has-width-100 {
+  width: 100%;
+}
+
+.z-index-50 {
+  z-index: 50;
+}
+
+.has-shadow {
+  box-shadow: $event-shadow;
+}

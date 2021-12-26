@@ -1,0 +1,9 @@
+{
+  "printWidth": 100,
+  "singleQuote": true,
+  "trailingComma": "es5",
+  "semi": false,
+  "newline-before-return": true,
+  "no-var-keyword": true,
+  "tabWidth": 2
+}

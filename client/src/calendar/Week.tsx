@@ -1,0 +1,24 @@
+import React from 'react'
+import { weekRangeFormat, getWeekRange } from '../util/localizer'
+import TimeGrid from './TimeGrid'
+import Event from '../models/Event'
+
+interface IProps {
+  events: Event[]
+  date: Date
+  updateEvent: (event: Event) => void
+}
+
+function Week(props: IProps) {
+  const range = getWeekRange(props.date)
+  const now = new Date()
+
+  return <TimeGrid now={now} events={props.events} range={range} updateEvent={props.updateEvent} />
+}
+
+Week.getTitle = function (date: Date): string {
+  const [start, ...rest] = getWeekRange(date)
+  return weekRangeFormat(start, rest.pop()!)
+}
+
+export default Week

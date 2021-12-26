@@ -1,0 +1,117 @@
+.cal-month-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 0;
+  width: 100%;
+  height: 100%;
+}
+
+.cal-row-wrapper {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  flex: 1 0 0;
+  overflow: hidden;
+  height: 100%; // ie-fix
+  border-top: 1px solid $cell-border;
+}
+
+.cal-row-bg {
+  @extend .cal-abs-full;
+  display: flex;
+  flex-direction: row;
+  flex: 1 0 0;
+  overflow: hidden;
+}
+
+.cal-day-bg {
+  flex: 1 0 0%;
+  border-left: 1px solid $cell-border;
+}
+
+.cal-row-content {
+  z-index: 1;
+  user-select: none;
+}
+
+.cal-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.cal-date-cell {
+  text-align: center;
+  flex: 1 0 0;
+  padding: 5px 0 5px 0;
+  font-size: 0.8em;
+}
+
+.cal-off-range {
+  color: #999999;
+}
+
+.cal-today-bg-month {
+  @extend .cal-today-bg;
+  width: 30px;
+}
+
+.cal-row-segment {
+  z-index: 1;
+  padding: 0 3px 1px 1px;
+
+  .cal-event-content {
+    @extend .cal-ellipsis;
+    font-weight: 500;
+    padding-left: 3px;
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.cal-event-row {
+  box-sizing: border-box;
+  box-shadow: none;
+  text-align: left;
+  font-size: 75%;
+  width: 100%;
+  padding: $event-padding;
+  border-radius: $event-border-radius;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    background-color: $light;
+  }
+}
+
+.cal-label-circle {
+  background-color: $cal-primary;
+  height: 8px;
+  width: 8px;
+  border-radius: 50%;
+  margin-right: 3px;
+}
+
+// Drag and Drop Row
+
+.cal-dnd-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.cal-dnd-row-body {
+  position: relative;
+}
+
+.cal-event-preview-full {
+  box-shadow: $event-shadow;
+}
+
+.cal-event-preview {
+  background: rgba($light, 0.8);
+  box-shadow: $event-shadow;
+}

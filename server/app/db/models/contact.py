@@ -1,0 +1,50 @@
+from typing import Optional
+import shortuuid
+
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean
+from sqlalchemy.orm import relationship, backref
+
+from app.db.base_class import Base
+
+
+class Contact(Base):
+    __tablename__ = 'contact'
+
+    id = Column(String(255), primary_key=True, default=shortuuid.uuid)
+    google_id = Column(String(255), unique=True, nullable=True)
+
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    user = relationship('User', backref=backref('contacts', lazy='dynamic', cascade='all,delete'))
+
+    first_name = Column(String(255), nullable=True)
+    last_name = Column(String(255), nullable=True)
+    email = Column(String(255), nullable=True, index=True)
+    photo_url = Column(String(255), nullable=True)
+
+    @property
+    def display_name(self):
+        if self.first_name and self.last_name:
+            return f'{self.first_name} {self.last_name}'
+        elif self.first_name:
+            return self.first_name
+        elif self.last_name:
+            return self.last_name
+        else:
+            return self.email
+
+    def __init__(
+        self,
+        first_name: Optional[str],
+        last_name: Optional[str],
+        email: Optional[str],
+        photo_url: Optional[str],
+        google_id: Optional[str],
+    ):
+        self.first_name = first_name
+        self.last_name = last_name
+        self.email = email
+        self.photo_url = photo_url
+        self.google_id = google_id
+
+    def __repr__(self):
+        return f'<Contact {self.id} {self.display_name}>'

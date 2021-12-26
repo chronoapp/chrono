@@ -1,0 +1,112 @@
+// Custom Overrides for elements go here for now. Separate it out once it gets
+// unwieldly. Switch to custom elements built with TailwindCSS in the long term.
+
+.tag-block {
+  align-items: center;
+  color: #363636;
+  display: flex;
+  justify-content: flex-start;
+
+  cursor: pointer;
+}
+
+/** Checkbox **/
+
+.cal-checkbox {
+  background: #fff;
+  color: #333;
+  content: '\2713';
+  text-align: center;
+}
+
+/* Hide the browser's default checkbox */
+.cal-checkbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+/* Create a custom checkbox */
+.cal-checkmark {
+  top: 0;
+  left: 0;
+  height: 1.25em;
+  width: 1.25em;
+  background-color: #eee;
+  border-radius: 5px;
+}
+
+/* Background when checked */
+.cal-checkbox-container input:checked ~ .cal-checkmark {
+  background-color: #2196f3;
+}
+
+.cal-checkmark:after {
+  content: '';
+  display: none;
+}
+
+.cal-checkbox-container input:checked ~ .cal-checkmark:after {
+  display: block;
+}
+
+.cal-checkbox-container .cal-checkmark:after {
+  height: 0.7em;
+  width: 0.4em;
+  margin-left: 0.4em;
+  margin-top: 0.2em;
+
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  -webkit-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+
+// Form Elements
+
+.button-invert-active {
+  &.is-active {
+    border: none;
+    background-color: $white-ter !important;
+    box-shadow: inset 0px 1px 5px rgba(0, 0, 0, 0.2) !important;
+    color: $black-ter !important;
+  }
+}
+
+.button-underline {
+  border-style: none none solid none;
+  box-shadow: none;
+  border-radius: 0;
+  border-width: 3px;
+  min-height: 38px;
+  border-color: $grey-lighter;
+
+  &.button {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    padding-bottom: 0.25em;
+  }
+
+  &.is-active {
+    font-weight: bold;
+    border-color: $black-ter;
+  }
+
+  &:focus:not(:active) {
+    border-style: none none solid none;
+    box-shadow: none;
+  }
+}
+
+.is-delete-solid {
+  margin-right: 0.25em;
+  margin-left: 0.15em !important;
+
+  &:hover {
+    color: $grey-darker !important;
+    background-color: rgba($grey-lighter, 0.5) !important;
+  }
+}

@@ -1,0 +1,9 @@
+root = true
+
+[app/client/**.{js,tsx,ts}]
+indent_style = space
+indent_size = 2
+
+[app/**.py]
+indent_style = space
+indent_size = 4

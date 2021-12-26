@@ -1,0 +1,59 @@
+// Mini Calendar
+
+.cal-mini-month-day {
+  text-align: center;
+  flex: 1;
+  font-size: $size-7;
+  padding: 0.25em;
+  border-radius: 5px;
+
+  &:hover {
+    @extend .cal-mini-month-day-selected;
+  }
+}
+
+.cal-mini-month-day-selected {
+  cursor: pointer;
+  background-color: $grey-lighter;
+}
+
+.cal-mini-month-today-bg {
+  @extend .cal-today-bg;
+  width: 15px;
+}
+
+.animate-bottom {
+  position: relative;
+  animation-name: animatebottom;
+  animation-duration: 0.2s;
+}
+
+@keyframes animatebottom {
+  from {
+    bottom: -3rem;
+    opacity: 0;
+  }
+
+  to {
+    bottom: 0;
+    opacity: 1;
+  }
+}
+
+.animate-top {
+  position: relative;
+  animation-name: top;
+  animation-duration: 0.2s;
+}
+
+@keyframes top {
+  from {
+    bottom: 3rem;
+    opacity: 0;
+  }
+
+  to {
+    bottom: 0;
+    opacity: 1;
+  }
+}
