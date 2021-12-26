@@ -356,8 +356,12 @@ export async function syncCalendar(authToken: string) {
 
 // Contacts
 
-export async function getContacts(authToken: string, query?: string): Promise<Contact[]> {
-  return fetch(`${API_URL}/contacts/?query=${query || ''}`, {
+export async function getContacts(
+  authToken: string,
+  query?: string,
+  limit?: number
+): Promise<Contact[]> {
+  return fetch(`${API_URL}/contacts/?query=${query || ''}&limit=${limit || 10}`, {
     method: 'GET',
     headers: getHeaders(authToken),
   })
