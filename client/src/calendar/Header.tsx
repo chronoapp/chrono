@@ -39,9 +39,16 @@ import WorkWeek from './WorkWeek'
 function DateHeaderSearch(props: { disableSearchMode: () => void; defaultSearchQuery: string }) {
   const router = useRouter()
   const [searchValue, setSearchValue] = React.useState<string>(props.defaultSearchQuery)
+  const inputRef = React.useRef<HTMLInputElement>(null)
+
+  React.useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
 
   function executeSearchQuery(search: string) {
-    router.push(`/?search=${search}`, undefined, { shallow: true })
+    if (search) {
+      router.push(`/?search=${search}`, undefined, { shallow: true })
+    }
   }
 
   function disableSearch() {
@@ -63,6 +70,7 @@ function DateHeaderSearch(props: { disableSearchMode: () => void; defaultSearchQ
         </InputLeftElement>
 
         <Input
+          ref={inputRef}
           size="md"
           placeholder="Search"
           value={searchValue}
@@ -173,6 +181,7 @@ export default function Header(props: { search: string }) {
   const displayToggleRef = React.useRef<HTMLDivElement>(null)
 
   const [isSearchMode, setIsSearchMode] = React.useState<boolean>(!!props.search)
+  const router = useRouter()
 
   const today = new Date()
   const display = eventsContext.display
@@ -206,6 +215,7 @@ export default function Header(props: { search: string }) {
     if (isSearchMode) {
       if (e.key === 'Escape') {
         setIsSearchMode(false)
+        router.push(`/`, undefined, { shallow: true })
       }
     } else {
       if (e.key === 'Escape') {
