@@ -1,5 +1,5 @@
 import React from 'react'
-import { Flex, Text, Tag, TagCloseButton } from '@chakra-ui/react'
+import { Flex, Text, Tag, TagCloseButton, TagLabel } from '@chakra-ui/react'
 
 import clsx from 'clsx'
 import { Label } from '../models/Label'
@@ -27,12 +27,24 @@ LabelTagColor.defaultProps = {
 
 interface LabelTagProps {
   label: Label
-  allowEdit: boolean
+  variant: 'outline' | 'icon'
   classNames?: string
   onClickDelete?: (e) => void
 }
 
 export function LabelTag(props: LabelTagProps) {
+  if (props.variant === 'icon') {
+    return <LabelTagWithIcon {...props} />
+  } else {
+    return <LabelTagOutline {...props} />
+  }
+}
+
+LabelTag.defaultProps = {
+  variant: 'outline',
+}
+
+export function LabelTagWithIcon(props: LabelTagProps) {
   return (
     <Flex
       bg="gray.100"
@@ -42,18 +54,35 @@ export function LabelTag(props: LabelTagProps) {
       pl="2"
       pr="2"
       mr="2"
-      className={clsx(props.allowEdit && 'pr-0', props.classNames && props.classNames)}
+      className={clsx(props.onClickDelete && 'pr-0', props.classNames && props.classNames)}
     >
       <LabelTagColor colorHex={props.label.color_hex} />
       <Text fontSize="sm" pl="1">
         {props.label.title}
       </Text>
 
-      {props.allowEdit && (
+      {props.onClickDelete && (
         <Tag size={'md'} borderRadius="sm" pl="0">
           <TagCloseButton onClick={(e) => props.onClickDelete && props.onClickDelete(e)} />
         </Tag>
       )}
+    </Flex>
+  )
+}
+
+function LabelTagOutline(props: LabelTagProps) {
+  return (
+    <Flex
+      pr="2"
+      mr="2"
+      className={clsx(props.onClickDelete && 'pr-0', props.classNames && props.classNames)}
+    >
+      <Tag size={'sm'} borderRadius="md" variant="subtle" color={props.label.color_hex}>
+        <TagLabel>#{props.label.title}</TagLabel>
+        {props.onClickDelete && (
+          <TagCloseButton onClick={(e) => props.onClickDelete && props.onClickDelete(e)} />
+        )}
+      </Tag>
     </Flex>
   )
 }

@@ -15,6 +15,7 @@ import {
   InputLeftElement,
   InputRightElement,
 } from '@chakra-ui/react'
+import { useRouter } from 'next/router'
 
 import {
   FiChevronDown,
@@ -35,13 +36,21 @@ import Week from './Week'
 import Month from './Month'
 import WorkWeek from './WorkWeek'
 
-function DateHeaderSearch(props: {
-  searchValue: string
-  setSearchValue: (s: string) => void
-  disableSearchMode: () => void
-}) {
+function DateHeaderSearch(props: { disableSearchMode: () => void; defaultSearchQuery: string }) {
+  const router = useRouter()
+  const [searchValue, setSearchValue] = React.useState<string>(props.defaultSearchQuery)
+
+  function executeSearchQuery(search: string) {
+    router.push(`/?search=${search}`, undefined, { shallow: true })
+  }
+
+  function disableSearch() {
+    props.disableSearchMode()
+    router.push(`/`, undefined, { shallow: true })
+  }
+
   return (
-    <Flex alignItems="center">
+    <Flex alignItems="center" width={{ sm: '20em', md: '25em', lg: '100%' }}>
       <InputGroup mr="1" w="xl">
         <InputLeftElement>
           <IconButton
@@ -49,26 +58,39 @@ function DateHeaderSearch(props: {
             variant="ghost"
             aria-label="disable search"
             icon={<FiArrowLeft />}
-            onClick={props.disableSearchMode}
+            onClick={disableSearch}
           />
         </InputLeftElement>
 
         <Input
           size="md"
           placeholder="Search"
-          value={props.searchValue}
-          onChange={(e) => props.setSearchValue(e.target.value)}
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
+          onKeyPress={(e) => {
+            if (e.key === 'Enter') {
+              executeSearchQuery(searchValue)
+            }
+          }}
         />
         <InputRightElement>
-          {props.searchValue && (
-            <Button variant="link" onClick={() => props.setSearchValue('')}>
+          {searchValue && (
+            <Button variant="link" onClick={() => setSearchValue('')}>
               <FiX />
             </Button>
           )}
         </InputRightElement>
       </InputGroup>
 
-      <IconButton mr="1" variant="solid" aria-label="search" icon={<FiSearch />} />
+      <IconButton
+        mr="1"
+        variant="solid"
+        aria-label="search"
+        icon={<FiSearch />}
+        onClick={() => {
+          executeSearchQuery(searchValue)
+        }}
+      />
     </Flex>
   )
 }
@@ -88,6 +110,7 @@ function DropdownMenu(props: { display: Display; selectDisplay: (d: Display) => 
   return (
     <Menu>
       <MenuButton
+        variant={'outline'}
         color="gray.600"
         borderRadius="xs"
         size="sm"
@@ -142,15 +165,14 @@ function DropdownMenu(props: { display: Display; selectDisplay: (d: Display) => 
 /**
  * Calendar header for date selection.
  */
-export default function Header() {
+export default function Header(props: { search: string }) {
   const eventsContext = React.useContext(EventActionContext)
   const labelsContext = React.useContext(LabelContext)
 
   const [displayToggleActive, setDisplayToggleActive] = React.useState<boolean>(false)
   const displayToggleRef = React.useRef<HTMLDivElement>(null)
 
-  const [isSearchMode, setIsSearchMode] = React.useState<boolean>(false)
-  const [searchValue, setSearchValue] = React.useState<string>('')
+  const [isSearchMode, setIsSearchMode] = React.useState<boolean>(!!props.search)
 
   const today = new Date()
   const display = eventsContext.display
@@ -163,12 +185,18 @@ export default function Header() {
   })
 
   React.useEffect(() => {
+    if (!props.search && isSearchMode) {
+      setIsSearchMode(false)
+    }
+  }, [props.search])
+
+  React.useEffect(() => {
     document.addEventListener('keydown', handleKeyboardShortcuts)
 
     return () => {
       document.removeEventListener('keydown', handleKeyboardShortcuts)
     }
-  }, [eventsContext.eventState.editingEvent, labelsContext.labelState.editingLabel])
+  }, [eventsContext.eventState.editingEvent, labelsContext.labelState.editingLabel, props.search])
 
   function isEditing() {
     return !!eventsContext.eventState.editingEvent || labelsContext.labelState.editingLabel.active
@@ -177,7 +205,7 @@ export default function Header() {
   function handleKeyboardShortcuts(e: KeyboardEvent) {
     if (isSearchMode) {
       if (e.key === 'Escape') {
-        disableSearch()
+        setIsSearchMode(false)
       }
     } else {
       if (e.key === 'Escape') {
@@ -227,11 +255,6 @@ export default function Header() {
     setDisplayToggleActive(false)
   }
 
-  function disableSearch() {
-    setSearchValue('')
-    setIsSearchMode(false)
-  }
-
   /**
    * Header display when it's not in search mode.
    */
@@ -239,6 +262,7 @@ export default function Header() {
     return (
       <Flex alignItems="center">
         <Button
+          variant={'outline'}
           color="gray.600"
           size="sm"
           fontWeight="normal"
@@ -301,9 +325,8 @@ export default function Header() {
     <Flex w="100%" pl="2" justifyContent="space-between" alignItems="center">
       {isSearchMode ? (
         <DateHeaderSearch
-          searchValue={searchValue}
-          setSearchValue={setSearchValue}
-          disableSearchMode={disableSearch}
+          defaultSearchQuery={props.search}
+          disableSearchMode={() => setIsSearchMode(false)}
         />
       ) : (
         <DateHeaderNonSearch />
@@ -319,11 +342,7 @@ export default function Header() {
             h="8"
             icon={<FiSearch />}
             onClick={() => {
-              if (isSearchMode) {
-                disableSearch()
-              } else {
-                setIsSearchMode(true)
-              }
+              setIsSearchMode(true)
             }}
           />
         )}

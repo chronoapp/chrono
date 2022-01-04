@@ -29,6 +29,7 @@ import Toast from '@/components/Toast'
 import { EventActionContext } from '@/calendar/EventActionContext'
 
 import Header from '@/calendar/Header'
+import SearchResults from '@/components/SearchResults'
 
 interface Props {
   title: string
@@ -62,7 +63,11 @@ function NewEventButton() {
   )
 }
 
-function NavItems(props: { refreshCalendar: () => void; canCreateEvent: boolean }) {
+function TopNavigationBar(props: {
+  refreshCalendar: () => void
+  canCreateEvent: boolean
+  searchQuery: string
+}) {
   const router = useRouter()
 
   return (
@@ -107,7 +112,7 @@ function NavItems(props: { refreshCalendar: () => void; canCreateEvent: boolean 
           </Flex>
         </Flex>
 
-        {props.canCreateEvent && <Header />}
+        {props.canCreateEvent && <Header search={props.searchQuery} />}
       </Box>
 
       <Flex justifyContent="flex-end">
@@ -148,6 +153,8 @@ function Settings(props: { refreshCalendar: () => void }) {
 // export default class Layout extends React.Component<Props, {}> {
 function Layout(props: Props) {
   const toast = useToast({ duration: 2000, position: 'top' })
+  const router = useRouter()
+  const searchQuery = (router.query.search as string) || ''
 
   async function refreshCalendar() {
     const toastId = toast({
@@ -174,7 +181,11 @@ function Layout(props: Props) {
         <link rel="icon" href="/favicon-128.ico" type="image/x-icon" />
       </Head>
 
-      <NavItems refreshCalendar={refreshCalendar} canCreateEvent={props.canCreateEvent} />
+      <TopNavigationBar
+        refreshCalendar={refreshCalendar}
+        canCreateEvent={props.canCreateEvent}
+        searchQuery={searchQuery}
+      />
 
       <Flex height="calc(100vh - 3.25rem)" width="100%" overflowY="auto">
         {props.includeLeftPanel && (
@@ -187,7 +198,7 @@ function Layout(props: Props) {
             </Flex>
           </Box>
         )}
-        {props.children}
+        {searchQuery ? <SearchResults search={searchQuery} /> : props.children}
         <Plugins />
       </Flex>
 
