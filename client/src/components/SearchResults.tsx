@@ -2,7 +2,6 @@ import React from 'react'
 import { Flex, Box, Text } from '@chakra-ui/react'
 
 import { CalendarsContext, CalendarsContextType } from '@/contexts/CalendarsContext'
-import { LabelContext, LabelContextType } from '@/contexts/LabelsContext'
 import { format, timeRangeFormat } from '@/util/localizer'
 import { LabelTag } from '@/components/LabelTag'
 
@@ -15,7 +14,7 @@ interface IProps {
 
 function EventItem(props: { event: Event }) {
   const calendarContext = React.useContext<CalendarsContextType>(CalendarsContext)
-  const dateDisplay = format(props.event.start, 'D MMM YYYY')
+  const dateDisplay = format(props.event.start, 'D MMM YYYY, ddd')
   const color = calendarContext.getCalendarColor(props.event.calendar_id)
 
   return (
@@ -27,15 +26,17 @@ function EventItem(props: { event: Event }) {
       pt="1"
       pb="1"
     >
-      <Box w="7rem">
+      <Box w="8em" flexShrink={0}>
         <Text fontSize="sm" align="left">
           {dateDisplay}
         </Text>
       </Box>
       <Flex direction={'column'}>
         <Flex alignItems={'center'}>
-          <Box pl="1" bgColor={color} w="1em" h="1em" borderRadius={'5'}></Box>
-          <Box pl="2">{props.event.title_short}</Box>
+          <Box pl="1" bgColor={color} w="1em" h="1em" borderRadius={'5'} flexShrink={0}></Box>
+          <Text pl="2" fontSize="sm" textAlign={'left'}>
+            {props.event.title_short}
+          </Text>
           <Flex pl="2" alignItems={'center'}>
             {props.event.labels.map((label) => {
               return <LabelTag key={`${props.event.id}-${label.id}`} label={label} />
