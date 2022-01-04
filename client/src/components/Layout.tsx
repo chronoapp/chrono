@@ -96,19 +96,6 @@ function TopNavigationBar(props: {
                 Calendar
               </Button>
             </Link>
-            <Link href="/events">
-              <Button
-                variant="unstyled"
-                borderRadius="0"
-                ml="2"
-                padding="2"
-                height="100%"
-                color={router.pathname === '/events' ? 'primary.800' : 'gray.500'}
-                fontWeight={'medium'}
-              >
-                Events
-              </Button>
-            </Link>
           </Flex>
         </Flex>
 
