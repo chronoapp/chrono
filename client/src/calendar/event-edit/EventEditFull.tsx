@@ -322,7 +322,6 @@ export default function EventEditFull(props: { event: Event }) {
               <div key={label.id} className="mt-2">
                 <LabelTag
                   label={label}
-                  allowEdit={true}
                   onClickDelete={(e) => {
                     const rmIdx = eventFields.labels.indexOf(label)
                     const updatedLabels = produce(eventFields.labels, (labels) => {

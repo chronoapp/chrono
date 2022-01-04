@@ -317,7 +317,7 @@ function EventPopover(props: IProps) {
           {props.event.labels && (
             <div style={{ display: 'flex' }}>
               {props.event.labels.map((label) => (
-                <LabelTag key={label.id} label={label} allowEdit={false} />
+                <LabelTag key={label.id} label={label} />
               ))}
             </div>
           )}
@@ -405,7 +405,6 @@ function EventPopover(props: IProps) {
               <Box mb="1" key={label.id}>
                 <LabelTag
                   label={label}
-                  allowEdit={true}
                   onClickDelete={(e) => {
                     const rmIdx = eventFields.labels.indexOf(label)
                     const updatedLabels = produce(eventFields.labels, (labels) => {
