@@ -1,5 +1,5 @@
 import React from 'react'
-import { Flex, Box, Text } from '@chakra-ui/react'
+import { Flex, Box, Text, Center } from '@chakra-ui/react'
 import { Portal, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from '@chakra-ui/react'
 
 import { EventActionContext, EventActionContextType } from '@/calendar/EventActionContext'
@@ -91,13 +91,29 @@ function EventItem(props: { event: Event }) {
 }
 
 export default function SearchResults(props: IProps) {
-  const sortedEvents = props.events.sort((a, b) => -sortEvents(a, b))
+  const eventActionContext = React.useContext<EventActionContextType>(EventActionContext)
+  if (eventActionContext.eventState.loading) {
+    return (
+      <Center w="100%" h="5em" overflow="auto">
+        <Text color="gray.500">Searching..</Text>
+      </Center>
+    )
+  }
 
-  return (
-    <Box w="100%" height="calc(100vh - 3.25rem)" overflow="auto">
-      {sortedEvents.map((event, idx, arr) => (
-        <EventItem key={idx} event={event} />
-      ))}
-    </Box>
-  )
+  const sortedEvents = props.events.sort((a, b) => -sortEvents(a, b))
+  if (sortedEvents.length === 0) {
+    return (
+      <Center w="100%" h="5em" overflow="auto">
+        <Text color="gray.500">We couldn't find anything</Text>
+      </Center>
+    )
+  } else {
+    return (
+      <Box w="100%" height="calc(100vh - 3.25rem)" overflow="auto">
+        {sortedEvents.map((event, idx, arr) => (
+          <EventItem key={idx} event={event} />
+        ))}
+      </Box>
+    )
+  }
 }
