@@ -14,8 +14,6 @@ import {
 import Tree from 'rc-tree'
 import { EventDataNode, DataNode } from 'rc-tree/lib/interface'
 import { FiChevronDown, FiChevronRight, FiMoreHorizontal, FiTrash, FiEdit } from 'react-icons/fi'
-
-import clsx from 'clsx'
 import Hoverable from '@/lib/Hoverable'
 
 import { LABEL_COLORS } from '@/models/LabelColors'
@@ -23,6 +21,7 @@ import Toast from '@/components/Toast'
 import { LabelContext, LabelContextType } from '@/contexts/LabelsContext'
 import { Label } from '@/models/Label'
 import ColorPicker from './ColorPicker'
+import { LabelTagColor } from './LabelTag'
 
 import { getAuthToken, putLabel, putLabels, deleteLabel } from '../util/Api'
 
@@ -178,10 +177,7 @@ function LabelTree(props: IProps) {
             {({ onClose, isOpen }) => (
               <>
                 <MenuButton>
-                  <div
-                    style={{ backgroundColor: label.color_hex }}
-                    className={clsx('event-label', allowEdit && 'event-label--hoverable')}
-                  ></div>
+                  <LabelTagColor colorHex={label.color_hex} />
                 </MenuButton>
                 {isOpen && (
                   <MenuList>
@@ -200,11 +196,10 @@ function LabelTree(props: IProps) {
         )
       } else {
         return (
-          <div
+          <LabelTagColor
+            colorHex={label.color_hex}
             onClick={() => props.onSelect && props.onSelect(label)}
-            style={{ backgroundColor: label.color_hex }}
-            className={clsx('event-label', allowEdit && 'event-label--hoverable')}
-          ></div>
+          />
         )
       }
     }
