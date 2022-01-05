@@ -6,6 +6,7 @@ EVENT_SEARCH_QUERY = """
         FROM event
         WHERE event.user_id = :userId
         AND event.recurrences is NULL
+        AND event.status != 'deleted'
     ) search
     WHERE search.doc @@ to_tsquery(:query || ':*')
     ORDER BY ts_rank(search.doc, to_tsquery(:query || ':*')) DESC
