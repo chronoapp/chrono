@@ -205,7 +205,12 @@ export default function Header(props: { search: string }) {
     return () => {
       document.removeEventListener('keydown', handleKeyboardShortcuts)
     }
-  }, [eventsContext.eventState.editingEvent, labelsContext.labelState.editingLabel, props.search])
+  }, [
+    eventsContext.eventState.editingEvent,
+    labelsContext.labelState.editingLabel,
+    props.search,
+    isSearchMode,
+  ])
 
   function isEditing() {
     return !!eventsContext.eventState.editingEvent || labelsContext.labelState.editingLabel.active
@@ -214,11 +219,13 @@ export default function Header(props: { search: string }) {
   function handleKeyboardShortcuts(e: KeyboardEvent) {
     if (isSearchMode) {
       if (e.key === 'Escape') {
+        e.preventDefault()
         setIsSearchMode(false)
         router.push(`/`, undefined, { shallow: true })
       }
     } else {
       if (e.key === 'Escape') {
+        e.preventDefault()
         eventsContext.eventDispatch({ type: 'CANCEL_SELECT' })
         setDisplayToggleActive(false)
       }
@@ -351,9 +358,7 @@ export default function Header(props: { search: string }) {
             variant="ghost"
             h="8"
             icon={<FiSearch />}
-            onClick={() => {
-              setIsSearchMode(true)
-            }}
+            onClick={() => setIsSearchMode(true)}
           />
         )}
         <DropdownMenu display={display} selectDisplay={selectDisplay} />
