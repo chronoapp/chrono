@@ -1,20 +1,21 @@
 import React, { useEffect, useContext } from 'react'
 import produce from 'immer'
+import { useRouter } from 'next/router'
 
 import TimeGrid from './TimeGrid'
 import Week from './Week'
 import Month from './Month'
 import WorkWeek from './WorkWeek'
 import EventEditFull from './event-edit/EventEditFull'
-
-import * as dates from '../util/dates'
-import { startOfWeek, formatDateTime } from '../util/localizer'
-import { getAuthToken, getEvents } from '../util/Api'
-
-import { CalendarsContext, CalendarsContextType } from '../contexts/CalendarsContext'
-import { EventActionContext } from './EventActionContext'
-import { GlobalEvent } from '../util/global'
 import useEventService from './event-edit/useEventService'
+import { EventActionContext } from './EventActionContext'
+import { CalendarsContext, CalendarsContextType } from '@/contexts/CalendarsContext'
+import SearchResults from '@/calendar/SearchResults'
+
+import { GlobalEvent } from '@/util/global'
+import { startOfWeek, formatDateTime } from '@/util/localizer'
+import * as dates from '@/util/dates'
+import * as API from '@/util/Api'
 
 function Calendar() {
   const firstOfWeek = startOfWeek()
@@ -24,6 +25,9 @@ function Calendar() {
   // TODO: Store startDate and endDate to prevent unnecessary refreshes.
   const calendarContext = useContext<CalendarsContextType>(CalendarsContext)
   const eventsContext = useContext(EventActionContext)
+
+  const router = useRouter()
+  const searchQuery = (router.query.search as string) || ''
 
   useEffect(() => {
     document.addEventListener(GlobalEvent.refreshCalendar, loadCurrentViewEvents)
@@ -35,26 +39,25 @@ function Calendar() {
 
   useEffect(() => {
     loadCurrentViewEvents()
-  }, [eventsContext.display, eventsContext.selectedDate])
+  }, [eventsContext.display, eventsContext.selectedDate, searchQuery])
 
   async function loadCurrentViewEvents() {
-    if (eventsContext.display == 'Day') {
+    if (searchQuery) {
+      const events = await API.searchEvents(API.getAuthToken(), searchQuery)
+      eventsContext.eventDispatch({ type: 'INIT', payload: events })
+    } else if (eventsContext.display == 'Day') {
       const start = dates.startOf(eventsContext.selectedDate, 'day')
       const end = dates.endOf(eventsContext.selectedDate, 'day')
 
       loadEvents(start, end)
-    }
-
-    if (eventsContext.display == 'Week' || eventsContext.display == 'WorkWeek') {
+    } else if (eventsContext.display == 'Week' || eventsContext.display == 'WorkWeek') {
       const lastWeek = dates.subtract(eventsContext.selectedDate, 1, 'week')
       const nextWeek = dates.add(eventsContext.selectedDate, 1, 'week')
 
       const start = dates.startOf(lastWeek, 'week', firstOfWeek)
       const end = dates.endOf(nextWeek, 'week', firstOfWeek)
       loadEvents(start, end)
-    }
-
-    if (eventsContext.display == 'Month') {
+    } else if (eventsContext.display == 'Month') {
       const month = dates.visibleDays(eventsContext.selectedDate, firstOfWeek)
       const start = month[0]
       const end = month[month.length - 1]
@@ -65,8 +68,8 @@ function Calendar() {
   }
 
   async function loadEvents(start: Date, end: Date) {
-    const authToken = getAuthToken()
-    const events = await getEvents(authToken, '', formatDateTime(start), formatDateTime(end))
+    const authToken = API.getAuthToken()
+    const events = await API.getEvents(authToken, '', formatDateTime(start), formatDateTime(end))
 
     eventsContext.eventDispatch({ type: 'INIT', payload: events })
   }
@@ -88,7 +91,9 @@ function Calendar() {
       (event) => !event.calendar_id || selectedCalendarIds.includes(event.calendar_id)
     )
 
-    if (eventsContext.display == 'Day') {
+    if (searchQuery) {
+      return <SearchResults events={events} search={searchQuery} />
+    } else if (eventsContext.display == 'Day') {
       return (
         <TimeGrid
           updateEvent={updateEvent}
