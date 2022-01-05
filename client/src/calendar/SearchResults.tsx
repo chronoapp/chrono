@@ -1,6 +1,7 @@
 import React from 'react'
-import { Flex, Box, Text, Center } from '@chakra-ui/react'
+import { Flex, Box, Text, Center, Tooltip } from '@chakra-ui/react'
 import { Portal, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from '@chakra-ui/react'
+import { FiRepeat } from 'react-icons/fi'
 
 import { EventActionContext, EventActionContextType } from '@/calendar/EventActionContext'
 import EventPopover from '@/calendar/event-edit/EventPopover'
@@ -22,6 +23,7 @@ function EventItem(props: { event: Event }) {
 
   const dateDisplay = format(props.event.start, 'D MMM YYYY, ddd')
   const color = calendarContext.getCalendarColor(props.event.calendar_id)
+  const calendar = calendarContext.getDefaultCalendar(props.event.calendar_id)
 
   const editingEvent = eventActionContext.eventState.editingEvent
   const isEditing = editingEvent?.id === props.event.id && editingEvent?.editMode !== 'FULL_EDIT'
@@ -55,7 +57,9 @@ function EventItem(props: { event: Event }) {
         </Box>
         <Flex direction={'column'}>
           <Flex alignItems={'center'}>
-            <Box pl="1" bgColor={color} w="1em" h="1em" borderRadius={'5'} flexShrink={0}></Box>
+            <Tooltip label={calendar.summary}>
+              <Box pl="1" bgColor={color} w="1em" h="1em" borderRadius={'5'} flexShrink={0}></Box>
+            </Tooltip>
             <Text pl="2" fontSize="sm" textAlign={'left'}>
               {props.event.title_short}
             </Text>
@@ -65,8 +69,13 @@ function EventItem(props: { event: Event }) {
               })}
             </Flex>
           </Flex>
-          <Flex>
+          <Flex alignItems={'center'}>
             <Text fontSize="xs">{timeRangeFormat(props.event.start, props.event.end)}</Text>
+            {props.event.recurring_event_id && (
+              <Box ml="2">
+                <FiRepeat size={'0.8em'} />
+              </Box>
+            )}
           </Flex>
         </Flex>
       </Flex>
