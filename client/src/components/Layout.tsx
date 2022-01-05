@@ -29,7 +29,6 @@ import Toast from '@/components/Toast'
 import { EventActionContext } from '@/calendar/EventActionContext'
 
 import Header from '@/calendar/Header'
-import SearchResults from '@/components/SearchResults'
 
 interface Props {
   title: string
@@ -185,7 +184,7 @@ function Layout(props: Props) {
             </Flex>
           </Box>
         )}
-        {searchQuery ? <SearchResults search={searchQuery} /> : props.children}
+        {props.children}
         <Plugins />
       </Flex>
 

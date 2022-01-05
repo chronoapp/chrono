@@ -2,6 +2,7 @@ import React from 'react'
 import { Flex, Box, Text } from '@chakra-ui/react'
 
 import { CalendarsContext, CalendarsContextType } from '@/contexts/CalendarsContext'
+import { EventActionContext, EventActionContextType } from '@/calendar/EventActionContext'
 import { format, timeRangeFormat } from '@/util/localizer'
 import { LabelTag } from '@/components/LabelTag'
 
@@ -10,6 +11,7 @@ import * as API from '@/util/Api'
 
 interface IProps {
   search: string
+  events: Event[]
 }
 
 function EventItem(props: { event: Event }) {
@@ -52,17 +54,9 @@ function EventItem(props: { event: Event }) {
 }
 
 export default function SearchResults(props: IProps) {
-  const [events, setEvents] = React.useState<Event[]>([])
-
-  React.useEffect(() => {
-    API.searchEvents(API.getAuthToken(), props.search).then((events) => {
-      setEvents(events)
-    })
-  }, [props.search])
-
   return (
     <Box w="100%" height="calc(100vh - 3.25rem)" overflow="auto">
-      {events.map((event, idx, arr) => (
+      {props.events.map((event, idx, arr) => (
         <EventItem key={idx} event={event} />
       ))}
     </Box>
