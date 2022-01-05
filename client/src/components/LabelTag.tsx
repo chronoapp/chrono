@@ -1,5 +1,6 @@
 import React from 'react'
 import { Flex, Text, Tag, TagCloseButton, TagLabel } from '@chakra-ui/react'
+import tinycolor from 'tinycolor2'
 
 import clsx from 'clsx'
 import { Label } from '../models/Label'
@@ -71,13 +72,14 @@ export function LabelTagWithIcon(props: LabelTagProps) {
 }
 
 function LabelTagOutline(props: LabelTagProps) {
+  const color = tinycolor(props.label.color_hex).getLuminance() < 0.5 ? 'white' : '#4a4a4a'
   return (
     <Flex
       pr="2"
       mr="2"
       className={clsx(props.onClickDelete && 'pr-0', props.classNames && props.classNames)}
     >
-      <Tag size={'sm'} borderRadius="md" variant="subtle" color={props.label.color_hex}>
+      <Tag size={'sm'} borderRadius="md" bgColor={props.label.color_hex} color={color}>
         <TagLabel>#{props.label.title}</TagLabel>
         {props.onClickDelete && (
           <TagCloseButton onClick={(e) => props.onClickDelete && props.onClickDelete(e)} />
