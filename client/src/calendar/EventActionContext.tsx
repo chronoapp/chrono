@@ -58,6 +58,7 @@ export interface EventState {
 }
 
 type ActionType =
+  | { type: 'RESET' }
   | { type: 'INIT'; payload: Event[] }
   | { type: 'INIT_EDIT_NEW_EVENT'; payload: Event }
   | { type: 'INIT_EDIT_EVENT'; payload: { event: Event; selectTailSegment?: boolean } }
@@ -76,6 +77,12 @@ function eventReducer(state: EventState, action: ActionType) {
   const { eventsById } = state
 
   switch (action.type) {
+    case 'RESET':
+      return {
+        ...state,
+        loading: true,
+      }
+
     case 'INIT':
       console.log(`INIT: ${action.payload.length} events.`)
       return {

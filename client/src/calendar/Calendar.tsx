@@ -43,7 +43,9 @@ function Calendar() {
 
   async function loadCurrentViewEvents() {
     if (searchQuery) {
+      eventsContext.eventDispatch({ type: 'RESET' })
       const events = await API.searchEvents(API.getAuthToken(), searchQuery)
+
       eventsContext.eventDispatch({ type: 'INIT', payload: events })
     } else if (eventsContext.display == 'Day') {
       const start = dates.startOf(eventsContext.selectedDate, 'day')
