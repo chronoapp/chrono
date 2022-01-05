@@ -30,7 +30,6 @@ import { LabelContext } from '@/contexts/LabelsContext'
 import { format } from '@/util/localizer'
 import { GlobalEvent } from '@/util/global'
 import * as dates from '@/util/dates'
-import useClickOutside from '@/lib/hooks/useClickOutside'
 
 import Week from './Week'
 import Month from './Month'
@@ -51,11 +50,6 @@ function DateHeaderSearch(props: { disableSearchMode: () => void; defaultSearchQ
     }
   }
 
-  function disableSearch() {
-    props.disableSearchMode()
-    router.push(`/`, undefined, { shallow: true })
-  }
-
   return (
     <Flex alignItems="center" width={{ sm: '20em', md: '25em', lg: '100%' }}>
       <InputGroup mr="1" w="xl">
@@ -65,7 +59,7 @@ function DateHeaderSearch(props: { disableSearchMode: () => void; defaultSearchQ
             variant="ghost"
             aria-label="disable search"
             icon={<FiArrowLeft />}
-            onClick={disableSearch}
+            onClick={props.disableSearchMode}
           />
         </InputLeftElement>
 
@@ -177,21 +171,12 @@ export default function Header(props: { search: string }) {
   const eventsContext = React.useContext(EventActionContext)
   const labelsContext = React.useContext(LabelContext)
 
-  const [displayToggleActive, setDisplayToggleActive] = React.useState<boolean>(false)
-  const displayToggleRef = React.useRef<HTMLDivElement>(null)
-
   const [isSearchMode, setIsSearchMode] = React.useState<boolean>(!!props.search)
   const router = useRouter()
 
   const today = new Date()
   const display = eventsContext.display
   const title = getViewTitle(display)
-
-  useClickOutside(displayToggleRef, () => {
-    if (displayToggleActive) {
-      setDisplayToggleActive(false)
-    }
-  })
 
   React.useEffect(() => {
     if (!props.search && isSearchMode) {
@@ -220,14 +205,18 @@ export default function Header(props: { search: string }) {
     if (isSearchMode) {
       if (e.key === 'Escape') {
         e.preventDefault()
-        setIsSearchMode(false)
-        router.push(`/`, undefined, { shallow: true })
+
+        if (eventsContext.eventState.editingEvent) {
+          eventsContext.eventDispatch({ type: 'CANCEL_SELECT' })
+        } else {
+          setIsSearchMode(false)
+          router.push(`/`, undefined, { shallow: true })
+        }
       }
     } else {
       if (e.key === 'Escape') {
         e.preventDefault()
         eventsContext.eventDispatch({ type: 'CANCEL_SELECT' })
-        setDisplayToggleActive(false)
       }
 
       if (!isEditing()) {
@@ -269,7 +258,6 @@ export default function Header(props: { search: string }) {
     }
 
     eventsContext.setDisplay(display)
-    setDisplayToggleActive(false)
   }
 
   /**
@@ -343,7 +331,10 @@ export default function Header(props: { search: string }) {
       {isSearchMode ? (
         <DateHeaderSearch
           defaultSearchQuery={props.search}
-          disableSearchMode={() => setIsSearchMode(false)}
+          disableSearchMode={() => {
+            setIsSearchMode(false)
+            router.push(`/`, undefined, { shallow: true })
+          }}
         />
       ) : (
         <DateHeaderNonSearch />
