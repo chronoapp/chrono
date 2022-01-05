@@ -28,7 +28,7 @@ class EventParticipantVM(BaseModel):
     contact_id: Optional[str]
     email: Optional[str]
 
-    response_status: Optional[ResponseStatus]
+    response_status: Optional[ResponseStatus] = 'needsAction'
     display_name: Optional[str]
     photo_url: Optional[str]
 
