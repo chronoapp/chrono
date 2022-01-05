@@ -1,5 +1,5 @@
 import React from 'react'
-import { Flex, Text, Tag, TagCloseButton, TagLabel } from '@chakra-ui/react'
+import { Box, Flex, Text, Tag, TagCloseButton, TagLabel } from '@chakra-ui/react'
 import tinycolor from 'tinycolor2'
 
 import clsx from 'clsx'
@@ -8,6 +8,7 @@ import { Label } from '../models/Label'
 interface LabelTagColorProps {
   colorHex: string
   lighten: boolean
+  onClick?: () => void
   title?: string
   style?
 }
@@ -19,7 +20,14 @@ export function LabelTagColor(props: LabelTagColorProps) {
     style = { ...style, ...props.style }
   }
 
-  return <div title={props.title} style={style} className={clsx('event-label-small')} />
+  return (
+    <Box
+      onClick={props.onClick}
+      title={props.title}
+      style={style}
+      className={clsx('event-label')}
+    />
+  )
 }
 
 LabelTagColor.defaultProps = {
