@@ -1,33 +1,36 @@
 import React from 'react'
-import { FormControl, FormLabel, Input, Flex, Box, Button, Text } from '@chakra-ui/react'
+import { FormControl, FormLabel, Input, Flex, Box, Button, Text, Image } from '@chakra-ui/react'
+import Cookies from 'universal-cookie'
 
-import { getGoogleOauthUrl, getMsftOauthUrl } from '../util/Api'
+import * as dates from '@/util/dates'
+import { getGoogleOauthUrl, getMsftOauthUrl, loginWithEmail } from '@/util/Api'
+
+const COOKIE_EXPIRE_DAYS = 30
 
 /**
  * TODO: Redirect to home if already logged in.
  */
 function Login() {
+  const [email, setEmail] = React.useState<string>('')
+  const [password, setPassword] = React.useState<string>('')
+
   return (
-    <div
-      style={{
-        width: '400px',
-        position: 'fixed',
-        top: '30%',
-        left: '50%',
-        transform: 'translate(-50%, -30%)',
-      }}
-    >
-      <Flex justifyContent="center">
-        <img src={'./timecouncil-logo-250.jpg'} style={{ width: '15em' }} />
+    <Box width="400px" position="fixed" top="30%" left="50%" transform="translate(-50%, -30%)">
+      <Flex alignItems="center" justifyContent="center">
+        <Image
+          fallbackSrc={'./chrono.svg'}
+          src={'./chrono.svg'}
+          alt="Chrono logo"
+          boxSize={'5em'}
+        />
       </Flex>
       <Box boxShadow="lg" padding="5">
-        <Text textAlign="center" mt="2">
-          Sign in to Timecouncil
+        <Text textAlign="center" mt="2" fontSize="lg">
+          Sign in to Chrono
         </Text>
 
-        <br />
-
         <Button
+          mt="4"
           variant="outline"
           w="100%"
           onClick={() => (window.location.href = getGoogleOauthUrl())}
@@ -48,24 +51,53 @@ function Login() {
 
         <hr />
 
-        <Text textAlign="center" color="gray.500" mt="2">
+        <Text textAlign="center" color="gray.500" mt="4">
           Or, sign in with email
         </Text>
 
         <FormControl id="calendar-description" mt="2">
           <FormLabel>Email</FormLabel>
-          <Input className="input" type="text" placeholder="Email" />
+          <Input
+            className="input"
+            type="text"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value)
+            }}
+          />
         </FormControl>
         <FormControl id="calendar-description" mt="2">
           <FormLabel>Password</FormLabel>
-          <Input className="input" type="password" placeholder="Password" />
+          <Input
+            className="input"
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value)
+            }}
+          />
         </FormControl>
 
-        <Button colorScheme="blue" w="100%" mt="2">
+        <Button
+          colorScheme="blue"
+          w="100%"
+          mt="2"
+          onClick={async () => {
+            const resp = await loginWithEmail(email, password)
+
+            const cookies = new Cookies()
+            cookies.set('auth_token', resp.token, {
+              expires: dates.add(Date.now(), COOKIE_EXPIRE_DAYS, 'day'),
+            })
+            window.location.replace('/')
+          }}
+        >
           Sign in
         </Button>
       </Box>
-    </div>
+    </Box>
   )
 }
 
