@@ -35,7 +35,7 @@ function renderImageForSource(source: CalendarSource) {
   if (source === 'google') {
     return <img src={'./google.svg'} width={22} />
   } else {
-    return <img src={'./timecouncil-symbol.png'} width={22} height="100%" />
+    return <img src={'./chrono.svg'} width={22} height="100%" />
   }
 }
 
@@ -274,7 +274,7 @@ export default function CalendarsPanel() {
               return
             }
 
-            const groupName = calendarSource == 'google' ? 'Google' : 'Timecouncil'
+            const groupName = calendarSource == 'google' ? 'Google' : 'Chrono'
 
             return (
               <AccordionItem key={calendarSource} border="0" mt="1">

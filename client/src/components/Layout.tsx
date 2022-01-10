@@ -10,6 +10,7 @@ import {
   MenuItem,
   MenuDivider,
   useToast,
+  Image,
 } from '@chakra-ui/react'
 import { FiSettings, FiLogOut } from 'react-icons/fi'
 
@@ -73,29 +74,32 @@ function TopNavigationBar(props: {
     <Flex height="3.25rem" borderBottom="1px solid #dfdfdf">
       <Box w="100%" display="flex">
         <Flex alignItems="stretch" className="navbar-menu">
-          <Flex href="#" alignItems="center" justifyContent="center" padding="2">
-            <img
-              src={'./timecouncil-symbol.png'}
-              style={{ maxHeight: '2.5rem', width: '2.5rem' }}
-            />
-          </Flex>
-
-          <Flex>
-            <Link href="/">
+          <Link href="/">
+            <Flex href="#" alignItems="center" justifyContent="center" padding="2" ml="2">
+              <Image
+                fallbackSrc={'./chrono.svg'}
+                src={'./chrono.svg'}
+                alt="Chrono logo"
+                boxSize={'2em'}
+                _hover={{
+                  cursor: 'pointer',
+                }}
+              />
               <Button
-                variant="unstyled"
-                borderRadius="0"
                 ml="2"
+                mb="1"
                 padding="2"
                 pl="0"
+                variant="unstyled"
+                borderRadius="0"
                 height="100%"
                 color={router.pathname === '/' ? 'primary.800' : 'gray.500'}
                 fontWeight={'medium'}
               >
                 Calendar
               </Button>
-            </Link>
-          </Flex>
+            </Flex>
+          </Link>
         </Flex>
 
         {props.canCreateEvent && <Header search={props.searchQuery} />}
@@ -163,8 +167,7 @@ function Layout(props: Props) {
         <title>{props.title}</title>
         <meta charSet="utf-8" />
         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
-        <link rel="shortcut icon" href="/favicon-128.ico" type="image/x-icon" />
-        <link rel="icon" href="/favicon-128.ico" type="image/x-icon" />
+        <link rel="icon" type="image/svg+xml" href="/chrono.svg" />
       </Head>
 
       <TopNavigationBar
@@ -194,7 +197,7 @@ function Layout(props: Props) {
 }
 
 Layout.defaultProps = {
-  title: 'Timecouncil',
+  title: 'Chrono',
   canCreateEvent: false,
   includeLeftPanel: true,
 }
