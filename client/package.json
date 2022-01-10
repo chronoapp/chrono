@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "dev": "next -p 3000",
+    "dev": "next -p 3300",
     "build": "next build",
     "start": "next start",
     "type-check": "tsc",
