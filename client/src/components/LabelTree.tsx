@@ -251,6 +251,8 @@ function LabelTree(props: IProps) {
                   onMouseEnter={onMouseEnter}
                   onMouseLeave={onMouseLeave}
                   justifyContent="space-between"
+                  alignItems="center"
+                  paddingBottom="2px"
                 >
                   <Text fontSize="sm">{item.title}</Text>
                   {(isMouseInside || curMenuExpanded) && (
