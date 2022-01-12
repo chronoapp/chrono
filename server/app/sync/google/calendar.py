@@ -253,7 +253,8 @@ async def syncEventsToDb(
 
     eventRepo = EventRepository(session)
 
-    # Keep track of added events this session while the models have not been added to the db yet.
+    # Keep track of added events this session.
+    # Since we only commit at the end, we can't query by ID yet.
     addedEventsCache: Dict[str, Event] = {}
 
     for eventItem in eventItems:
@@ -420,8 +421,6 @@ async def syncCreatedOrUpdatedGoogleEvent(
     event = createOrUpdateEvent(existingEvent, eventVM, googleId=eventVM.g_id)
     calendar.user.events.append(event)
 
-    await eventRepo.updateEventParticipants(calendar.user, event, eventVM.participants)
-
     if baseRecurringEvent:
         recurringEventId = None
         if eventVM.original_start:
@@ -440,6 +439,8 @@ async def syncCreatedOrUpdatedGoogleEvent(
             raise Exception(f'No start time for event: {eventVM.g_id}')
 
         event.id = recurringEventId
+
+    await eventRepo.updateEventParticipants(calendar.user, event, eventVM.participants)
 
     return event
 
