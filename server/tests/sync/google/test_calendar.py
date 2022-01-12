@@ -210,3 +210,41 @@ async def test_syncEventsToDb_recurring(user, session):
 
     for e in events:
         assert e.recurring_event.id == parent.id
+
+
+@pytest.mark.asyncio
+async def test_syncEventsToDb_recurring_withParticipants(user, session):
+    """Make sure participants are created."""
+    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+
+    eventItem = EVENT_ITEM_RECURRING.copy()
+    eventItem['id'] = 'abcabc_20210712T153000Z'
+    eventItem['recurringEventId'] = 'abcabc'
+    eventItem['originalStartTime'] = {
+        'dateTime': '2020-07-12T10:30:00-05:00',
+        'timeZone': 'America/Chicago',
+    }
+
+    # Add participants
+    eventItem['attendees'] = [
+        {'email': 'test1@example.com', 'responseStatus': 'needsAction'},
+        {'email': 'test2@example.com', 'responseStatus': 'needsAction'},
+    ]
+
+    await syncEventsToDb(calendar, [eventItem], session)
+
+    result = await session.execute(user.getSingleEventsStmt(showRecurring=True))
+    events = result.scalars().all()
+
+    # Created both base recurring event and the instance.
+    assert len(events) == 2
+
+    recurringEventInstance = next(e for e in events if e.recurring_event_id != None)
+
+    assert recurringEventInstance.g_id == eventItem['id']
+    assert len(recurringEventInstance.participants) == 2
+
+    participantEmails = {p.email for p in recurringEventInstance.participants}
+
+    assert 'test1@example.com' in participantEmails
+    assert 'test2@example.com' in participantEmails

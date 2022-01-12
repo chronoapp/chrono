@@ -290,7 +290,7 @@ class EventRepository:
     ):
         """Create and update event participants.
         # TODO: Check the errors first.
-        # TODO: Send invites to participants.
+        # TODO: Option to send invites to participants.
         """
         # Remove previous participants.
         event.participants = []
