@@ -16,6 +16,14 @@ from app.db.models.event_participant import EventParticipant
 
 from tests.utils import createEvent
 from app.db.models import User, Event, Contact
+from app.db.models.event import stripParticipants
+
+
+@pytest.mark.asyncio
+async def test_stripParticipants():
+    title = """eat with @[jony]([id:abcabc123][type:Contact])"""
+
+    assert stripParticipants(title) == 'eat with jony'
 
 
 @pytest.mark.asyncio
