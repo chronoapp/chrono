@@ -10,6 +10,9 @@
 
 .cal-event-modal {
   padding: 0px 20px 10px 20px;
+  max-height: 35rem;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .cal-event-modal-header {
