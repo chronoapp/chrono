@@ -271,14 +271,19 @@ export async function getTrends(
   start: Date,
   end: Date
 ) {
-  return fetch(
-    `${API_URL}/trends/${labelId}?time_period=${timePeriod}&start=${formatDateTime(
-      start
-    )}&end=${formatDateTime(end)}`,
-    {
-      headers: getHeaders(authToken),
-    }
-  ).then(handleErrors)
+  const params = {
+    start: formatDateTime(start),
+    end: formatDateTime(end),
+    time_period: timePeriod,
+  }
+  const queryString = Object.keys(params)
+    .filter((key) => params[key])
+    .map((key) => key + '=' + encodeURIComponent(params[key]))
+    .join('&')
+
+  return fetch(`${API_URL}/trends/${labelId}?${queryString}`, {
+    headers: getHeaders(authToken),
+  }).then(handleErrors)
 }
 
 // Labels
