@@ -211,7 +211,7 @@ class EventRepository:
             # Delete from Google
             if event.g_id:
                 try:
-                    _ = gcal.deleteGoogleEvent(user, event)
+                    _ = gcal.deleteGoogleEvent(user, userCalendar, event)
                 except HttpError as e:
                     logger.error(e)
 
