@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.pool import NullPool
 
 from app.db.base_class import Base
-from app.db.models import User, Calendar
+from app.db.models import User, UserCalendar
+from app.db.models.calendar import Calendar
 from app.main import app
 
 from app.api.utils.security import get_current_user
@@ -59,7 +60,7 @@ async def session(engine, create):
 
 
 @pytest.fixture
-def event_repo(session):
+def eventRepo(session):
     yield EventRepository(session)
 
 
@@ -67,11 +68,16 @@ def event_repo(session):
 async def user(session):
     """Default user with a primary calendar."""
     user = User('test@example.com', 'Test User', None)
+
     calendar = Calendar(
-        'default',
-        'America/Toronto',
-        'Default Calendar',
+        'calendar-id',
+        'summary',
         'description',
+        'America/Toronto',
+    )
+    userCalendar = UserCalendar(
+        'calendar-id',
+        None,
         '#ffffff',
         '#000000',
         True,
@@ -79,7 +85,9 @@ async def user(session):
         True,
         False,
     )
-    user.calendars.append(calendar)
+    userCalendar.calendar = calendar
+    user.calendars.append(userCalendar)
+
     session.add(user)
     await session.commit()
 

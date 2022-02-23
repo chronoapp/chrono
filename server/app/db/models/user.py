@@ -5,8 +5,9 @@ from sqlalchemy.orm import relationship, selectinload
 
 from app.db.base_class import Base
 from app.db.models.user_credentials import ProviderType
+from app.db.models.user_calendar import UserCalendar
 from app.db.models.calendar import Calendar
-from app.db.models.event import Event
+from app.db.models.event import Event, EventCalendar
 
 
 class User(Base):
@@ -48,40 +49,29 @@ class User(Base):
             and self.credentials.token_data
         )
 
-    def getPrimaryCalendarStmt(self) -> Calendar:
-        return select(Calendar).where(Calendar.user_id == self.id, Calendar.primary == True)
-
-    def getRecurringEventsStmt(self):
-        return (
-            select(Event)
-            .filter(
-                and_(
-                    Event.user_id == self.id,
-                    Event.recurrences != None,
-                    Event.recurring_event_id == None,
-                    Event.status != 'deleted',
-                )
-            )
-            .options(selectinload(Event.participants))
-            .options(selectinload(Event.labels))
+    def getPrimaryCalendarStmt(self) -> UserCalendar:
+        return select(UserCalendar).where(
+            UserCalendar.user_id == self.id, UserCalendar.primary == True
         )
 
     def getSingleEventsStmt(self, showDeleted=False, showRecurring=True):
         """Events query without the base recurring events."""
         stmt = (
             select(Event)
-            .where(
-                and_(
-                    Event.user_id == self.id,
-                    Event.recurrences == None,
-                )
-            )
             .options(selectinload(Event.participants))
             .options(selectinload(Event.labels))
+            .join(Event.calendars)
+            .join(EventCalendar.calendar)
+            .join(Calendar.user_calendars)
+            .join(User)
+            .where(
+                User.id == self.id,
+                Event.recurrences == None,
+            )
         )
 
         if not showRecurring:
-            stmt = stmt.filter_by(recurring_event_id=None)
+            stmt = stmt.filter(Event.recurring_event_id == None)
 
         if showDeleted:
             return stmt

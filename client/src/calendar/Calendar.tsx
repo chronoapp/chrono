@@ -39,7 +39,12 @@ function Calendar() {
 
   useEffect(() => {
     loadCurrentViewEvents()
-  }, [eventsContext.display, eventsContext.selectedDate, searchQuery])
+  }, [
+    eventsContext.display,
+    eventsContext.selectedDate,
+    searchQuery,
+    calendarContext.calendarsById,
+  ])
 
   async function loadCurrentViewEvents() {
     if (searchQuery) {
@@ -71,9 +76,33 @@ function Calendar() {
 
   async function loadEvents(start: Date, end: Date) {
     const authToken = API.getAuthToken()
-    const events = await API.getEvents(authToken, '', formatDateTime(start), formatDateTime(end))
 
-    eventsContext.eventDispatch({ type: 'INIT', payload: events })
+    const eventPromises = Object.values(calendarContext.calendarsById)
+      .filter((cal) => cal.selected)
+      .map((calendar) => {
+        try {
+          return API.getCalendarEvents(
+            authToken,
+            calendar.id,
+            formatDateTime(start),
+            formatDateTime(end)
+          )
+        } catch (err) {
+          return Promise.resolve([])
+        }
+      })
+
+    const calEvents = (await Promise.allSettled(eventPromises)).map((p) => {
+      if (p.status === 'fulfilled') {
+        return p.value
+      } else {
+        return []
+      }
+    })
+
+    var allEvents = Array.prototype.concat.apply([], calEvents)
+
+    eventsContext.eventDispatch({ type: 'INIT', payload: allEvents })
   }
 
   function renderCalendar() {

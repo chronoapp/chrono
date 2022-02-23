@@ -3,12 +3,8 @@ import { FiCheck, FiTrash } from 'react-icons/fi'
 import { useToast } from '@chakra-ui/react'
 
 import { GlobalEvent } from '@/util/global'
-import {
-  getAuthToken,
-  createEvent,
-  updateEvent as updateEventReq,
-  deleteEvent as deleteEventReq,
-} from '@/util/Api'
+
+import * as API from '@/util/Api'
 import Event, { UNSAVED_EVENT_ID } from '@/models/Event'
 import Toast from '@/components/Toast'
 
@@ -22,19 +18,23 @@ export default function useEventService() {
   const eventActions = React.useContext(EventActionContext)
   const toast = useToast({ duration: 2000, position: 'top' })
 
-  function deleteEvent(eventId: string, deleteMethod: EditRecurringAction = 'SINGLE') {
+  function deleteEvent(
+    calendarId: string,
+    eventId: string,
+    deleteMethod: EditRecurringAction = 'SINGLE'
+  ) {
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
     eventActions.eventDispatch({
       type: 'DELETE_EVENT',
       payload: { eventId, deleteMethod },
     })
-    const token = getAuthToken()
+    const token = API.getAuthToken()
 
     const toastId = toast({
       render: (props) => <Toast title={'Deleting Event..'} showSpinner={true} {...props} />,
     })
 
-    deleteEventReq(token, eventId).then(() => {
+    API.deleteEvent(token, calendarId, eventId).then(() => {
       toastId && toast.close(toastId)
       toast({
         render: (props) => (
@@ -79,7 +79,7 @@ export default function useEventService() {
         })
 
       // TODO: Queue overrides from server to prevent race condition.
-      return updateEventReq(getAuthToken(), event)
+      return API.updateEvent(API.getAuthToken(), event.calendar_id!, event)
         .then((event) => {
           if (Event.isParentRecurringEvent(event)) {
             document.dispatchEvent(new CustomEvent(GlobalEvent.refreshCalendar))
@@ -106,7 +106,7 @@ export default function useEventService() {
    * @returns a promise of the updated event.
    */
   function saveEvent(event: Event, showToast: boolean = true) {
-    const token = getAuthToken()
+    const token = API.getAuthToken()
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
 
     const toastId =
@@ -122,7 +122,7 @@ export default function useEventService() {
         payload: { event: event, replaceEventId: event.id },
       })
 
-      return updateEventReq(token, event)
+      return API.updateEvent(token, event.calendar_id, event)
         .then((event) => {
           eventActions.eventDispatch({
             type: 'UPDATE_EVENT',
@@ -147,7 +147,7 @@ export default function useEventService() {
         })
     } else {
       eventActions.eventDispatch({ type: 'CREATE_EVENT', payload: event })
-      return createEvent(token, event).then((event) => {
+      return API.createEvent(token, event.calendar_id, event).then((event) => {
         console.log(`Created event in db: ${event.id}`)
 
         if (event.recurrences) {

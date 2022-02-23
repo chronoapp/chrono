@@ -1,4 +1,5 @@
 from uuid import uuid4
+import shortuuid
 from typing import Optional, Dict, Tuple, List, Any
 
 from sqlalchemy import select
@@ -11,9 +12,10 @@ from dateutil.rrule import rrulestr
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from app.api.repos.calendar_repo import CalendarRepo
 
 from app.db.session import AsyncSession
-from app.db.models import User, Event, LabelRule, Calendar, Webhook
+from app.db.models import User, Event, LabelRule, UserCalendar, Calendar, Webhook, EventCalendar
 from app.core.logger import logger
 from app.core import config
 from app.api.repos.event_utils import (
@@ -110,64 +112,76 @@ def mapGoogleColor(color: str) -> str:
         return color
 
 
-def syncGoogleCalendars(user: User):
-    service = getCalendarService(user)
-    calendarList = service.calendarList().list().execute()
-    calendarsMap = {cal.id: cal for cal in user.calendars}
+def syncGoogleCalendars(user: User, calendarList):
+    calendarsMap = {cal.google_id: cal for cal in user.calendars if cal.google_id is not None}
 
-    for calendar in calendarList.get('items'):
-        calId = calendar.get('id')
-        calSummary = calendar.get('summary')
+    for calendarItem in calendarList:
+        gCalId = calendarItem.get('id')
+        calSummary = calendarItem.get('summary')
 
-        print(f'Update Calendar: {calId}: {calSummary}')
-        backgroundColor = mapGoogleColor(calendar.get('backgroundColor'))
+        print(f'Update Calendar: {gCalId}: {calSummary}')
+        backgroundColor = mapGoogleColor(calendarItem.get('backgroundColor'))
 
-        userCalendar = calendarsMap.get(calId)
+        userCalendar = calendarsMap.get(gCalId)
         if userCalendar:
-            userCalendar.google_id = calId
-            userCalendar.timezone = calendar.get('timeZone')
-            userCalendar.summary = calSummary
-            userCalendar.description = calendar.get('description')
+            userCalendar.calendar.timezone = calendarItem.get('timeZone')
+            userCalendar.calendar.summary = calSummary
+            userCalendar.calendar.description = calendarItem.get('description')
+            userCalendar.calendar.timezone = calendarItem.get('timeZone')
+
+            userCalendar.google_id = gCalId
             userCalendar.background_color = backgroundColor
-            userCalendar.foreground_color = calendar.get('foregroundColor')
-            userCalendar.selected = calendar.get('selected')
-            userCalendar.access_role = calendar.get('accessRole')
-            userCalendar.primary = calendar.get('primary', False)
-            userCalendar.deleted = calendar.get('deleted')
+            userCalendar.foreground_color = calendarItem.get('foregroundColor')
+            userCalendar.selected = calendarItem.get('selected')
+            userCalendar.access_role = calendarItem.get('accessRole')
+            userCalendar.primary = calendarItem.get('primary', False)
+            userCalendar.deleted = calendarItem.get('deleted')
         else:
-            userCalendar = Calendar(
-                calId,
-                calendar.get('timeZone'),
-                calSummary,
-                calendar.get('description'),
-                backgroundColor,
-                calendar.get('foregroundColor'),
-                calendar.get('selected'),
-                calendar.get('accessRole'),
-                calendar.get('primary'),
-                calendar.get('deleted'),
+            calId = shortuuid.uuid()
+            calendar = Calendar(
+                calId, calSummary, calendarItem.get('description'), calendarItem.get('timeZone')
             )
-            userCalendar.google_id = calId
+            calendar.google_id = gCalId
+
+            userCalendar = UserCalendar(
+                calId,
+                calendarItem.get('summaryOverride'),
+                backgroundColor,
+                calendarItem.get('foregroundColor'),
+                calendarItem.get('selected'),
+                calendarItem.get('accessRole'),
+                calendarItem.get('primary'),
+                calendarItem.get('deleted'),
+            )
+            userCalendar.google_id = gCalId
+            userCalendar.calendar = calendar
             user.calendars.append(userCalendar)
 
 
 async def syncAllEvents(userId: int, fullSync: bool = False):
     """Syncs events from google calendar."""
+
     async with AsyncSession() as session:
         stmt = select(User).where(User.id == userId).options(selectinload(User.credentials))
         user = (await session.execute(stmt)).scalar()
-        syncGoogleCalendars(user)
+
+        service = getCalendarService(user)
+        calendarList = service.calendarList().list().execute()
+        syncGoogleCalendars(user, calendarList.get('items'))
 
         await session.commit()
 
         for calendar in user.calendars:
             if calendar.google_id != None:
+                print(f'Sync {calendar}')
                 await syncCalendar(calendar, session, fullSync=fullSync)
 
         await session.commit()
 
 
-async def syncCalendar(calendar: Calendar, session: AsyncSession, fullSync: bool = False) -> None:
+async def syncCalendar(
+    calendar: UserCalendar, session: AsyncSession, fullSync: bool = False
+) -> None:
     service = getCalendarService(calendar.user)
     await createWebhook(calendar, session)
 
@@ -180,7 +194,7 @@ async def syncCalendar(calendar: Calendar, session: AsyncSession, fullSync: bool
                 eventsResult = (
                     service.events()
                     .list(
-                        calendarId=calendar.id,
+                        calendarId=calendar.google_id,
                         timeMax=None if calendar.sync_token else end,
                         maxResults=250,
                         singleEvents=False,
@@ -200,7 +214,7 @@ async def syncCalendar(calendar: Calendar, session: AsyncSession, fullSync: bool
             eventsResult = (
                 service.events()
                 .list(
-                    calendarId=calendar.id,
+                    calendarId=calendar.google_id,
                     timeMax=end,
                     maxResults=250,
                     singleEvents=False,
@@ -222,23 +236,8 @@ async def syncCalendar(calendar: Calendar, session: AsyncSession, fullSync: bool
     await session.commit()
 
 
-async def getEventWithCache(
-    user: User, addedEventsCache: Dict[str, Event], googleEventId: str, session
-) -> Optional[Event]:
-    """Since we aren't committing on every event insert, store
-    added / updated events in memory.
-    """
-    if googleEventId in addedEventsCache:
-        return addedEventsCache[googleEventId]
-    else:
-        stmt = select(Event).where(Event.g_id == googleEventId, Event.user_id == user.id)
-        result = await session.execute(stmt)
-
-        return result.scalar()
-
-
 async def syncEventsToDb(
-    calendar: Calendar, eventItems: List[Dict[str, Any]], session: AsyncSession
+    calendar: UserCalendar, eventItems: List[Dict[str, Any]], session: AsyncSession
 ) -> None:
     """Sync items from google to the calendar.
 
@@ -250,30 +249,23 @@ async def syncEventsToDb(
     TODO: There's no guarantee that the recurring event is expanded first.
     We know which recurring event it is with the composite id of {id}_{start_date}.
     """
-
     eventRepo = EventRepository(session)
-
-    # Keep track of added events this session.
-    # Since we only commit at the end, we can't query by ID yet.
-    addedEventsCache: Dict[str, Event] = {}
 
     for eventItem in eventItems:
         user = calendar.user
         googleEventId = eventItem['id']
-        existingEvent = await getEventWithCache(user, addedEventsCache, googleEventId, session)
+        existingEvent = await eventRepo.getGoogleEvent(user, googleEventId)
 
         if eventItem['status'] == 'cancelled':
-            await syncDeletedEvent(calendar, existingEvent, eventItem, addedEventsCache, session)
+            await syncDeletedEvent(calendar, existingEvent, eventItem, eventRepo, session)
         else:
             event = await syncCreatedOrUpdatedGoogleEvent(
-                calendar, eventRepo, existingEvent, eventItem, addedEventsCache, session
+                calendar, eventRepo, existingEvent, eventItem, session
             )
 
             await autoLabelEvents(event, user, session)
 
-            addedEventsCache[event.g_id] = event
-
-    await session.commit()
+        await session.commit()
 
 
 async def autoLabelEvents(event: Event, user: User, session: AsyncSession):
@@ -300,25 +292,25 @@ async def autoLabelEvents(event: Event, user: User, session: AsyncSession):
 
 
 async def syncDeletedEvent(
-    calendar: Calendar,
+    userCalendar: UserCalendar,
     existingEvent: Optional[Event],
     eventItem: Dict[str, Any],
-    addedEventsCache: Dict[str, Event],
+    eventRepo: EventRepository,
     session: AsyncSession,
 ):
     """Sync deleted events to the DB.
     If the base event has not been created at this point, add a temporary event to the DB
     so that we can add a foreign key reference.
     """
-    user = calendar.user
+    user = userCalendar.user
 
-    if existingEvent and calendar.id == existingEvent.calendar_id:
+    if existingEvent:
         existingEvent.status = 'deleted'
 
     googleRecurringEventId = eventItem.get('recurringEventId')
     if not existingEvent and googleRecurringEventId:
         baseRecurringEvent = await getOrCreateBaseRecurringEvent(
-            calendar, addedEventsCache, googleRecurringEventId, session
+            userCalendar, googleRecurringEventId, eventRepo, session
         )
 
         googleEventId = eventItem.get('id')
@@ -341,7 +333,7 @@ async def syncDeletedEvent(
             None,
             None,
             None,
-            calendar.id,
+            userCalendar.id,
             None,
             None,
             startDt,
@@ -352,24 +344,23 @@ async def syncDeletedEvent(
         event.id = recurringEventId
         event.recurring_event = baseRecurringEvent
 
-        user.events.append(event)
-        addedEventsCache[event.g_id] = event
+        assoc = EventCalendar()
+        assoc.event = event
+        userCalendar.calendar.events.append(assoc)
 
 
 async def getOrCreateBaseRecurringEvent(
-    calendar: Calendar,
-    addedEventsCache: Dict[str, Event],
+    userCalendar: UserCalendar,
     googleRecurringEventId: str,
+    eventRepo: EventRepository,
     session: AsyncSession,
 ) -> Event:
     """Retrieves the existing base recurring event, or make a stub event in case
     the parent has not been created yet. For the stub parent event, we only need a primary ID,
     since the rest of the info will be populated then the parent is synced.
     """
-    user = calendar.user
-    baseRecurringEvent = await getEventWithCache(
-        user, addedEventsCache, googleRecurringEventId, session
-    )
+    user = userCalendar.user
+    baseRecurringEvent = await eventRepo.getGoogleEvent(user, googleRecurringEventId)
 
     if not baseRecurringEvent:
         baseRecurringEvent = Event(
@@ -380,7 +371,7 @@ async def getOrCreateBaseRecurringEvent(
             None,
             None,
             None,
-            calendar.id,
+            userCalendar.id,
             None,
             None,
             None,
@@ -388,38 +379,45 @@ async def getOrCreateBaseRecurringEvent(
             None,
             status='active',
         )
-        user.events.append(baseRecurringEvent)
-        addedEventsCache[baseRecurringEvent.g_id] = baseRecurringEvent
+
+        assoc = EventCalendar()
+        assoc.event = baseRecurringEvent
+        userCalendar.calendar.events.append(assoc)
 
     if not baseRecurringEvent.id:
-        print(f'Add ID for Base: {baseRecurringEvent}')
         await session.commit()
 
     return baseRecurringEvent
 
 
 async def syncCreatedOrUpdatedGoogleEvent(
-    calendar: Calendar,
+    userCalendar: UserCalendar,
     eventRepo: EventRepository,
     existingEvent: Optional[Event],
     eventItem: Dict[str, Any],
-    addedEventsCache: Dict[str, Event],
     session: AsyncSession,
 ) -> Event:
     """Syncs new event, or update existing from Google.
     For recurring events, translate the google reference to the internal event reference.
     """
-    eventVM = googleEventToEventVM(calendar.id, eventItem)
+    eventVM = googleEventToEventVM(userCalendar.id, eventItem)
 
     baseRecurringEvent = None
     if eventVM.recurring_event_g_id:
         baseRecurringEvent = await getOrCreateBaseRecurringEvent(
-            calendar, addedEventsCache, eventVM.recurring_event_g_id, session
+            userCalendar, eventVM.recurring_event_g_id, eventRepo, session
         )
         eventVM.recurring_event_id = baseRecurringEvent.id
 
     event = createOrUpdateEvent(existingEvent, eventVM, googleId=eventVM.g_id)
-    calendar.user.events.append(event)
+
+    addToCalendar = not existingEvent or (
+        existingEvent and not await eventRepo.isMember(userCalendar.id, existingEvent.id)
+    )
+    if addToCalendar:
+        assoc = EventCalendar()
+        assoc.event = event
+        userCalendar.calendar.events.append(assoc)
 
     if baseRecurringEvent:
         recurringEventId = None
@@ -440,7 +438,7 @@ async def syncCreatedOrUpdatedGoogleEvent(
 
         event.id = recurringEventId
 
-    await eventRepo.updateEventParticipants(calendar.user, event, eventVM.participants)
+    await eventRepo.updateEventParticipants(userCalendar.user, event, eventVM.participants)
 
     return event
 
@@ -514,7 +512,7 @@ def googleEventToEventVM(calendarId: str, eventItem: Dict[str, Any]) -> GoogleEv
     return eventVM
 
 
-async def createWebhook(calendar: Calendar, session) -> None:
+async def createWebhook(calendar: UserCalendar, session) -> None:
     """Create a webhook for the calendar to watche for event updates."""
     if not config.API_URL:
         logger.debug(f'No API URL specified.')
@@ -541,7 +539,7 @@ async def createWebhook(calendar: Calendar, session) -> None:
     resp = (
         getCalendarService(calendar.user)
         .events()
-        .watch(calendarId=calendar.id, body=body)
+        .watch(calendarId=calendar.google_id, body=body)
         .execute()
     )
     webhook = Webhook(resp.get('id'), resp.get('resourceId'), resp.get('resourceUri'))

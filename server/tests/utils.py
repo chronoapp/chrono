@@ -3,12 +3,12 @@ from typing import Optional, List
 
 from datetime import datetime
 
-from app.db.models.event import Event
-from app.db.models.calendar import Calendar
+from app.db.models.event import Event, EventCalendar
+from app.db.models.user_calendar import UserCalendar
 
 
 def createEvent(
-    calendar: Calendar,
+    userCalendar: UserCalendar,
     start: datetime,
     end: datetime,
     googleId: Optional[str] = None,
@@ -28,13 +28,19 @@ def createEvent(
         end,
         None,
         None,
-        calendar.id,
+        userCalendar.id,  # TODO: Remove
         timezone,
         recurrences,
         originalStart,
         None,
         None,
     )
-    event.calendar = calendar
-    event.user = calendar.user
+
+    assoc = EventCalendar()
+    assoc.event = event
+    userCalendar.calendar.events.append(assoc)
+
+    # TODO: Remove
+    event.user = userCalendar.user
+
     return event

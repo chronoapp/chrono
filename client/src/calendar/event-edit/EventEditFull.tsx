@@ -127,7 +127,11 @@ export default function EventEditFull(props: { event: Event }) {
           return await saveEvent(eventData)
 
         case 'ALL':
-          const parent = await API.getEvent(API.getAuthToken(), props.event.recurring_event_id)
+          const parent = await API.getEvent(
+            API.getAuthToken(),
+            props.event.calendar_id,
+            props.event.recurring_event_id
+          )
           return await updateRecurringEvent(parent)
 
         case 'THIS_AND_FOLLOWING':
@@ -136,7 +140,11 @@ export default function EventEditFull(props: { event: Event }) {
            * 1) The recurrence up to this event. We then use the recurrence to update the parent event.
            * 2) The recurrence from this event onwards, to create a new series of events.
            */
-          const parentEvent = await API.getEvent(API.getAuthToken(), props.event.recurring_event_id)
+          const parentEvent = await API.getEvent(
+            API.getAuthToken(),
+            props.event.calendar_id,
+            props.event.recurring_event_id
+          )
 
           if (dates.eq(parentEvent.start, props.event.original_start)) {
             return updateRecurringEvent(parentEvent)

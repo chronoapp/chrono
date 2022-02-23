@@ -17,8 +17,8 @@ $cal-primary: $primary;
 $out-of-range-color: lighten(#333, 40%) !default;
 $out-of-range-bg-color: lighten(#333, 70%) !default;
 
-$calendar-border: #ddd !default;
-$cell-border: #ddd !default;
+$cell-border: rgb(235, 235, 235) !default;
+$calendar-border: $cell-border !default;
 
 $border-color: #ccc !default;
 $time-selection-color: white !default;
