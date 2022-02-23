@@ -63,17 +63,17 @@ def insertGoogleEvent(userCalendar: UserCalendar, event: Event):
     return (
         getCalendarService(userCalendar.user)
         .events()
-        .insert(calendarId=event.calendar_id, body=eventBody)
+        .insert(calendarId=userCalendar.google_id, body=eventBody)
         .execute()
     )
 
 
-def moveGoogleEvent(user: User, event: Event, prevCalendarId: str):
+def moveGoogleEvent(user: User, event: Event, prevCalendarId: str, toCalendarId: str):
     """Moves an event to another calendar, i.e. changes an event's organizer."""
     return (
         getCalendarService(user)
         .events()
-        .move(calendarId=prevCalendarId, eventId=event.g_id, destination=event.calendar_id)
+        .move(calendarId=prevCalendarId, eventId=event.g_id, destination=toCalendarId)
         .execute()
     )
 
@@ -89,11 +89,11 @@ def updateGoogleEvent(userCalendar: UserCalendar, event: Event):
     )
 
 
-def deleteGoogleEvent(user: User, event: Event):
+def deleteGoogleEvent(user: User, calendar: UserCalendar, event: Event):
     return (
         getCalendarService(user)
         .events()
-        .delete(calendarId=event.calendar_id, eventId=event.g_id)
+        .delete(calendarId=calendar.google_id, eventId=event.g_id)
         .execute()
     )
 
