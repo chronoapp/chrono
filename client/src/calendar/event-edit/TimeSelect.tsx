@@ -1,6 +1,6 @@
 import React from 'react'
-import { Flex, Select, Text } from '@chakra-ui/react'
-import { FiChevronDown } from 'react-icons/fi'
+import { Flex, Select, Icon } from '@chakra-ui/react'
+import { FiArrowRight } from 'react-icons/fi'
 
 import { format } from '../../util/localizer'
 import * as dates from '../../util/dates'
@@ -114,7 +114,6 @@ function TimeSelect(props: IProps) {
         size="sm"
         maxHeight="12em"
         variant="unstyled"
-        icon={<FiChevronDown />}
         value={startIdx}
         onChange={(e) => {
           const idx = parseInt(e.target.value)
@@ -128,12 +127,11 @@ function TimeSelect(props: IProps) {
           </option>
         ))}
       </Select>
-      <Text ml="1">to</Text>
+      <Icon as={FiArrowRight} />
       <Select
         ml="1"
         size="sm"
         variant="unstyled"
-        icon={<FiChevronDown />}
         value={endIdx}
         onChange={(e) => {
           const idx = parseInt(e.target.value)

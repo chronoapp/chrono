@@ -20,14 +20,8 @@ from sqlalchemy.orm import relationship, backref
 from app.db.base_class import Base
 
 if TYPE_CHECKING:
-    from app.db.models import Calendar
+    from app.db.models import UserCalendar, Calendar
 
-event_label_association_table = Table(
-    'event_label',
-    Base.metadata,
-    Column('event_id', String, ForeignKey('event.id', ondelete='CASCADE')),
-    Column('label_id', Integer, ForeignKey('label.id', ondelete='CASCADE')),
-)
 
 EventStatus = Literal['deleted', 'tentative', 'active']
 
@@ -47,6 +41,23 @@ def isValidTimezone(timeZone: str):
         return False
 
 
+event_label_association_table = Table(
+    'event_label',
+    Base.metadata,
+    Column('event_id', String, ForeignKey('event.id', ondelete='CASCADE')),
+    Column('label_id', Integer, ForeignKey('label.id', ondelete='CASCADE')),
+)
+
+
+class EventCalendar(Base):
+    __tablename__ = 'event_calendar'
+    event_id = Column(String, ForeignKey('event.id', ondelete='CASCADE'), primary_key=True)
+    calendar_id = Column(String, ForeignKey('calendar.id', ondelete='CASCADE'), primary_key=True)
+
+    event = relationship("Event", back_populates="calendars")
+    calendar = relationship("Calendar", back_populates="events")
+
+
 class Event(Base):
     """Recurring events are modelled as an adjacency list."""
 
@@ -56,15 +67,15 @@ class Event(Base):
     # Google-specific
     g_id = Column(String(255), unique=True)
 
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    user = relationship('User', backref=backref('events', lazy='dynamic', cascade='all,delete'))
+    # TODO: Remove reference to user
+    user_id = Column(Integer, ForeignKey('user.id', ondelete='SET NULL'), nullable=True)
+    user = relationship('User', backref=backref('events', lazy='dynamic'))
 
-    calendar_id = Column(String(255), ForeignKey('calendar.id', ondelete='CASCADE'), nullable=False)
-    calendar: 'Calendar' = relationship(
-        'Calendar',
-        backref=backref(
-            'events', lazy='dynamic', cascade='all,delete', order_by='Event.start.asc()'
-        ),
+    calendars = relationship(
+        'EventCalendar',
+        lazy='dynamic',
+        cascade="all,delete",
+        back_populates="event",
     )
 
     title = Column(String(255), index=True)
@@ -151,7 +162,6 @@ class Event(Base):
         self.end = end
         self.start_day = start_day
         self.end_day = end_day
-        self.calendar_id = calendar_id
         self.time_zone = timezone
         self.recurrences = recurrences
         self.recurring_event_id = recurringEventId

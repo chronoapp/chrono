@@ -114,6 +114,8 @@ export async function authenticate(code: string, state: string) {
   }).then(handleErrors)
 }
 
+// ================== Calendars ==================
+
 export async function createCalendar(
   authToken: string,
   summary: string,
@@ -170,25 +172,24 @@ export async function deleteCalendar(calendarId: string, authToken: string) {
   }).then(handleErrors)
 }
 
-export async function getEvents(
+// ================== Events ==================
+
+export async function getCalendarEvents(
   authToken: string,
-  title: string = '',
-  startDate?: string,
-  endDate?: string,
-  limit: number = 250
+  calendarId: string,
+  startDate: string,
+  endDate: string
 ): Promise<Event[]> {
   const params = {
-    title,
     start_date: startDate,
     end_date: endDate,
-    limit,
   }
   var queryString = Object.keys(params)
     .filter((key) => params[key])
-    .map((key) => key + '=' + params[key])
+    .map((key) => key + '=' + encodeURIComponent(params[key]))
     .join('&')
 
-  return fetch(`${API_URL}/events/?${queryString}`, {
+  return fetch(`${API_URL}/calendars/${calendarId}/events/?${queryString}`, {
     headers: getHeaders(authToken),
   })
     .then(handleErrors)
@@ -197,8 +198,12 @@ export async function getEvents(
     })
 }
 
-export async function getEvent(authToken: string, eventId: string): Promise<Event> {
-  return fetch(`${API_URL}/events/${eventId}`, {
+export async function getEvent(
+  authToken: string,
+  calendarId: string,
+  eventId: string
+): Promise<Event> {
+  return fetch(`${API_URL}/calendars/${calendarId}/events/${eventId}`, {
     headers: getHeaders(authToken),
   })
     .then(handleErrors)
@@ -207,8 +212,12 @@ export async function getEvent(authToken: string, eventId: string): Promise<Even
     })
 }
 
-export async function createEvent(authToken: string, event: Event): Promise<Event> {
-  return fetch(`${API_URL}/events/`, {
+export async function createEvent(
+  authToken: string,
+  calendarId: string,
+  event: Event
+): Promise<Event> {
+  return fetch(`${API_URL}/calendars/${calendarId}/events/`, {
     method: 'POST',
     headers: getHeaders(authToken),
     body: JSON.stringify(event),
@@ -217,8 +226,12 @@ export async function createEvent(authToken: string, event: Event): Promise<Even
     .then((resp) => Event.fromJson(resp))
 }
 
-export async function updateEvent(authToken: string, event: Partial<Event>): Promise<Event> {
-  return fetch(`${API_URL}/events/${event.id}`, {
+export async function updateEvent(
+  authToken: string,
+  calendarId: string,
+  event: Partial<Event>
+): Promise<Event> {
+  return fetch(`${API_URL}/calendars/${calendarId}/events/${event.id}`, {
     method: 'PUT',
     headers: getHeaders(authToken),
     body: JSON.stringify(event),
@@ -227,8 +240,12 @@ export async function updateEvent(authToken: string, event: Partial<Event>): Pro
     .then((resp) => Event.fromJson(resp))
 }
 
-export async function deleteEvent(authToken: string, eventId: string): Promise<{}> {
-  return fetch(`${API_URL}/events/${eventId}`, {
+export async function deleteEvent(
+  authToken: string,
+  calendarId: string,
+  eventId: string
+): Promise<{}> {
+  return fetch(`${API_URL}/calendars/${calendarId}/events/${eventId}`, {
     method: 'DELETE',
     headers: getHeaders(authToken),
     body: JSON.stringify(event),

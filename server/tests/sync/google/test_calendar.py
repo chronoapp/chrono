@@ -32,27 +32,27 @@ EVENT_ITEM_RECURRING = {
 
 
 @pytest.mark.asyncio
-async def test_syncCreatedOrUpdatedGoogleEvent_single(user, session, event_repo):
+async def test_syncCreatedOrUpdatedGoogleEvent_single(
+    user, session: Session, eventRepo: EventRepository
+):
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     eventItem = EVENT_ITEM_RECURRING.copy()
     del eventItem['recurrence']
 
-    event = await syncCreatedOrUpdatedGoogleEvent(
-        calendar, event_repo, None, eventItem, {}, session
-    )
+    event = await syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
     await session.commit()
 
     assert event.title == eventItem.get('summary')
     assert event.g_id == eventItem.get('id')
 
-    stmt = select(func.count()).where(Event.calendar_id == calendar.id)
-    count = (await session.execute(stmt)).scalar()
-    assert count == 1
+    events = await eventRepo.getSingleEvents(user, calendar.id)
+
+    assert len(events) == 1
 
 
 @pytest.mark.asyncio
-async def test_syncCreatedOrUpdatedGoogleEvent_single_with_attendees(user, session, event_repo):
+async def test_syncCreatedOrUpdatedGoogleEvent_single_with_attendees(user, session, eventRepo):
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     eventItem = EVENT_ITEM_RECURRING.copy()
@@ -64,9 +64,7 @@ async def test_syncCreatedOrUpdatedGoogleEvent_single_with_attendees(user, sessi
         {'email': 'test2@example.com'},
     ]
 
-    event = await syncCreatedOrUpdatedGoogleEvent(
-        calendar, event_repo, None, eventItem, {}, session
-    )
+    event = await syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
 
     await session.commit()
 
@@ -74,19 +72,22 @@ async def test_syncCreatedOrUpdatedGoogleEvent_single_with_attendees(user, sessi
 
 
 @pytest.mark.asyncio
-async def test_syncCreatedOrUpdatedGoogleEvent_recurring(user, session, event_repo):
+async def test_syncCreatedOrUpdatedGoogleEvent_recurring(user, session, eventRepo):
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     event = await syncCreatedOrUpdatedGoogleEvent(
-        calendar, event_repo, None, EVENT_ITEM_RECURRING, {}, session
+        calendar, eventRepo, None, EVENT_ITEM_RECURRING, session
     )
     await session.commit()
 
     assert event.g_id == EVENT_ITEM_RECURRING.get('id')
 
-    stmt = select(func.count()).where(Event.calendar_id == calendar.id)
-    count = (await session.execute(stmt)).scalar()
-    assert count == 1
+    eventRepo = EventRepository(session)
+    events = await eventRepo.getRecurringEvents(
+        user, calendar.id, datetime.fromisoformat('2021-01-01')
+    )
+
+    assert len(events) == 1
 
     stmt = select(func.count()).where(Event.recurrences == None)
     nonRecurringCount = (await session.execute(stmt)).scalar()
@@ -94,7 +95,7 @@ async def test_syncCreatedOrUpdatedGoogleEvent_recurring(user, session, event_re
 
 
 @pytest.mark.asyncio
-async def test_syncCreatedOrUpdatedGoogleEvent_allDay(user, session, event_repo):
+async def test_syncCreatedOrUpdatedGoogleEvent_allDay(user, session, eventRepo):
     eventItem = {
         'id': '20201225_60o30chp64o30c1g60o30dr56g',
         'status': 'confirmed',
@@ -108,9 +109,7 @@ async def test_syncCreatedOrUpdatedGoogleEvent_allDay(user, session, event_repo)
     }
 
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
-    event = await syncCreatedOrUpdatedGoogleEvent(
-        calendar, event_repo, None, eventItem, {}, session
-    )
+    event = await syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
 
     assert event.all_day
     assert event.start_day == '2020-12-25'
@@ -120,7 +119,7 @@ async def test_syncCreatedOrUpdatedGoogleEvent_allDay(user, session, event_repo)
 
 
 @pytest.mark.asyncio
-async def test_syncEventsToDb_deleted(user, session):
+async def test_syncEventsToDb_deleted(user, session: Session):
     """TODO: Ensures that all child events are deleted when the parent
     recurring event is deleted.
     """
@@ -129,14 +128,10 @@ async def test_syncEventsToDb_deleted(user, session):
     await syncEventsToDb(calendar, [EVENT_ITEM_RECURRING], session)
     await session.commit()
 
-    stmt = (
-        select(Event)
-        .where(Event.calendar_id == calendar.id)
-        .options(selectinload(Event.labels))
-        .options(selectinload(Event.participants))
+    eventRepo = EventRepository(session)
+    events = await eventRepo.getRecurringEvents(
+        user, calendar.id, datetime.fromisoformat('2021-01-01')
     )
-
-    events = (await session.execute(stmt)).scalars().all()
 
     assert len(events) == 1
     assert events[0].status == 'active'
@@ -148,20 +143,14 @@ async def test_syncEventsToDb_deleted(user, session):
     await syncEventsToDb(calendar, [eventItem], session)
     await session.commit()
 
-    stmt = (
-        select(Event)
-        .where(Event.calendar_id == calendar.id)
-        .options(selectinload(Event.labels))
-        .options(selectinload(Event.participants))
+    events = await eventRepo.getRecurringEvents(
+        user, calendar.id, datetime.fromisoformat('2021-01-01')
     )
-    events = (await session.execute(stmt)).scalars().all()
-
-    assert len(events) == 1
-    assert events[0].status == 'deleted'
+    assert len(events) == 0
 
 
 @pytest.mark.asyncio
-async def test_syncEventsToDb_recurring(user, session):
+async def test_syncEventsToDb_recurring(user, session: Session):
     """Event from 11:00-11:30pm: at 01-09, (EXCLUDE 01-10), 01-11, 01-12
     - UPDATE event's time at 01-10 -> 10-11
     - DELETE event at 01-12
@@ -217,29 +206,49 @@ async def test_syncEventsToDb_recurring_withParticipants(user, session):
     """Make sure participants are created."""
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
+    # Add the recurring event instance
+
     eventItem = EVENT_ITEM_RECURRING.copy()
     eventItem['id'] = 'abcabc_20210712T153000Z'
     eventItem['recurringEventId'] = 'abcabc'
     eventItem['originalStartTime'] = {
         'dateTime': '2020-07-12T10:30:00-05:00',
-        'timeZone': 'America/Chicago',
+        'timeZone': 'America/Toronto',
     }
-
-    # Add participants
     eventItem['attendees'] = [
         {'email': 'test1@example.com', 'responseStatus': 'needsAction'},
         {'email': 'test2@example.com', 'responseStatus': 'needsAction'},
     ]
+    del eventItem['recurrence']
 
-    await syncEventsToDb(calendar, [eventItem], session)
+    # Add the parent event
+
+    eventItemParent = EVENT_ITEM_RECURRING.copy()
+    eventItemParent['id'] = 'abcabc'
+    eventItemParent['start'] = {
+        'dateTime': '2020-12-10T11:00:00-05:00',
+        'timeZone': 'America/Toronto',
+    }
+    eventItemParent['end'] = {
+        'dateTime': '2020-12-10T12:00:00-05:00',
+        'timeZone': 'America/Toronto',
+    }
+    eventItemParent['attendees'] = [
+        {'email': 'test1@example.com', 'responseStatus': 'needsAction'},
+        {'email': 'test2@example.com', 'responseStatus': 'needsAction'},
+    ]
+
+    await syncEventsToDb(calendar, [eventItem, eventItemParent], session)
+
+    eventRepo = EventRepository(session)
+    events = await eventRepo.getSingleEvents(user, calendar.id)
 
     result = await session.execute(user.getSingleEventsStmt(showRecurring=True))
     events = result.scalars().all()
 
-    # Created both base recurring event and the instance.
-    assert len(events) == 2
+    assert len(events) == 1
 
-    recurringEventInstance = next(e for e in events if e.recurring_event_id != None)
+    recurringEventInstance = events[0]
 
     assert recurringEventInstance.g_id == eventItem['id']
     assert len(recurringEventInstance.participants) == 2
@@ -248,3 +257,54 @@ async def test_syncEventsToDb_recurring_withParticipants(user, session):
 
     assert 'test1@example.com' in participantEmails
     assert 'test2@example.com' in participantEmails
+
+
+@pytest.mark.asyncio
+async def test_syncEventsToDb_eventInMultipleCalendars(user: User, session: Session):
+    """Event is in multiple calendars.
+    1) Add same event to multiple calendars
+    2) Delete event from guest's calendar
+    """
+    from app.db.models import Calendar, UserCalendar
+    from app.api.repos.event_repo import getBaseEventsStmt
+
+    # Add another calendar
+    readOnlyCalendar = UserCalendar(
+        'calendar-id-2',
+        None,
+        '#ffffff',
+        '#000000',
+        True,
+        'owner',
+        True,
+        False,
+    )
+    readOnlyCalendar.calendar = Calendar(
+        'calendar-id-2',
+        'Another calendar',
+        'description',
+        'America/Toronto',
+    )
+    user.calendars.append(readOnlyCalendar)
+
+    myCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+
+    # Create events in both calendar
+    eventItem = EVENT_ITEM_RECURRING.copy()
+    del eventItem['recurrence']
+
+    await syncEventsToDb(readOnlyCalendar, [eventItem], session)
+    await syncEventsToDb(myCalendar, [eventItem], session)
+
+    stmt = getBaseEventsStmt().where(User.id == user.id, Calendar.id == readOnlyCalendar.id)
+    result = await session.execute(stmt)
+    cal1Events = result.scalars().all()
+
+    assert len(cal1Events) == 1
+
+    stmt = getBaseEventsStmt().where(User.id == user.id, Calendar.id == myCalendar.id)
+    result = await session.execute(stmt)
+    cal2Events = result.scalars().all()
+
+    assert len(cal2Events) == 1
+    assert cal1Events[0].id == cal2Events[0].id

@@ -1,19 +1,13 @@
 from datetime import datetime
-from itertools import islice
-import logging
 
-from sqlalchemy import and_, or_, select
-from sqlalchemy.orm import aliased, selectinload
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Dict, Optional, Literal, Tuple, Generator, Any, AsyncGenerator
+from typing import List, Dict, Optional, Literal, Any
 
 from dateutil.rrule import rrule, rruleset, rrulestr
-from datetime import timedelta
 from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, validator
 from app.api.endpoints.labels import LabelInDbVM
-from app.db.models import Event, User, Calendar
+from app.db.models import Event
 from app.db.models.event import EventStatus
 from app.db.models.event_participant import ResponseStatus
 
@@ -62,7 +56,7 @@ class EventBaseVM(BaseModel):
     all_day: Optional[bool]
     background_color: Optional[str]
     timezone: Optional[str]
-    calendar_id: str
+    calendar_id: Optional[str]
     recurrences: Optional[List[str]]
     recurring_event_id: Optional[str]
 
@@ -187,7 +181,6 @@ def createOrUpdateEvent(
         eventDb.end = eventVM.end or eventDb.end
         eventDb.start_day = eventVM.start_day or eventDb.start_day
         eventDb.end_day = eventVM.end_day or eventDb.end_day
-        eventDb.calendar_id = eventVM.calendar_id or eventDb.calendar_id
         eventDb.recurring_event_id = eventVM.recurring_event_id or eventDb.recurring_event_id
         eventDb.recurrences = recurrences or eventDb.recurrences
 
@@ -202,152 +195,3 @@ def getRecurringEventId(baseEventId: str, startDate: datetime, isAllDay: bool) -
         "%Y%m%d" if isAllDay else "%Y%m%dT%H%M%SZ"
     )
     return f'{baseEventId}_{dtStr}'
-
-
-async def getAllExpandedRecurringEventsList(
-    user: User, startDate: datetime, endDate: datetime, session
-) -> List[EventInDBVM]:
-    expandedEvents = [
-        i async for i in getAllExpandedRecurringEvents(user, startDate, endDate, session)
-    ]
-
-    return sorted(
-        expandedEvents,
-        key=lambda event: event.start,
-    )
-
-
-async def getAllExpandedRecurringEvents(
-    user: User, startDate: datetime, endDate: datetime, session
-) -> AsyncGenerator[EventInDBVM, None]:
-    """Expands the rule in the event to get all events between the start and end.
-    TODO: This expansion is a huge perf bottleneck..
-    - Date expansions are CPU bound so we could rewrite the date rrules expansion in a rust binding.
-    - Don't need to expand ALL baseRecurringEvents, just ones in between the range.
-    - => cache the end dates properties to recurring events on insert / update.
-
-    TODO: Update EXDATE on write so we don't have to manually override events.
-    """
-    overrides = user.getSingleEventsStmt(showDeleted=True).where(
-        Event.recurring_event_id != None,
-    )
-
-    # Moved from outside of this time range to within.
-    movedFromOutsideOverrides = overrides.where(
-        Event.end >= startDate,
-        Event.start <= endDate,
-        Event.status != 'deleted',
-        # Original is outside the current range.
-        or_(
-            Event.original_start == None,  # TODO: remove None
-            or_(
-                Event.original_start < startDate,
-                Event.original_start > endDate,
-            ),
-        ),
-    )
-    result = await session.execute(movedFromOutsideOverrides)
-
-    for eventOverride in result.scalars():
-        yield EventInDBVM.from_orm(eventOverride)
-
-    # Overrides from within this time range.
-    movedFromInsideOverrides = overrides.where(
-        or_(
-            Event.original_start == None,
-            and_(
-                Event.original_start >= startDate,
-                Event.original_start <= endDate,
-            ),
-        )
-    )
-
-    result = await session.execute(movedFromInsideOverrides)
-    eventOverridesMap: Dict[str, Event] = {e.id: e for e in result.scalars()}
-
-    result = await session.execute(
-        user.getRecurringEventsStmt()
-        .where(Event.start <= endDate)
-        .options(selectinload(Event.calendar))
-    )
-    baseRecurringEvents = result.scalars().all()
-
-    for baseRecurringEvent in baseRecurringEvents:
-        for e in getExpandedRecurringEvents(
-            user, baseRecurringEvent, eventOverridesMap, startDate, endDate
-        ):
-            yield e
-
-
-def getExpandedRecurringEvents(
-    user: User,
-    baseRecurringEvent: Event,
-    eventOverridesMap: Dict[str, Event],
-    startDate: datetime,
-    endDate: datetime,
-) -> Generator[EventInDBVM, None, None]:
-    """Precondition: Make sure calendar is joined with the baseRecurringEvent
-
-    For now, assumes that the ruleset composes only of one rrule, and exdates so that
-    we can do optimizations like checking for _dtstart and _until.
-    """
-    duration = baseRecurringEvent.end - baseRecurringEvent.start
-    isAllDay = baseRecurringEvent.all_day
-    baseEventVM = EventInDBVM.from_orm(baseRecurringEvent)
-    calendar = baseRecurringEvent.calendar
-    timezone = baseRecurringEvent.time_zone or calendar.timezone or user.timezone
-
-    if not baseEventVM.recurrences:
-        logging.error(f'Empty Recurrence: {baseEventVM.id}')
-
-    else:
-        ruleSet = recurrenceToRuleSet(
-            '\n'.join(baseEventVM.recurrences), timezone, baseEventVM.start, baseEventVM.start_day
-        )
-
-        # All day events use naiive dates.
-        # Events from google are represented with UTC times, so we need the timezone aware
-        # start & end filters. Pretty hacky.
-        if isAllDay or (hasattr(ruleSet, '_dtstart') and not ruleSet._dtstart.tzinfo):  # type: ignore
-            startDate = startDate.replace(tzinfo=None)
-            endDate = endDate.replace(tzinfo=None)
-        else:
-            zone = baseRecurringEvent.time_zone or calendar.timezone or user.timezone
-            startDate = startDate.astimezone(ZoneInfo(zone))
-            endDate = endDate.astimezone(ZoneInfo(zone))
-
-        untilIsBeforeStartDate = hasattr(ruleSet, '_until') and ruleSet._until and ruleSet._until < startDate  # type: ignore
-
-        if not untilIsBeforeStartDate:
-            # Expand events, inclusive
-            dates = ruleSet.between(
-                startDate - timedelta(seconds=1), endDate + timedelta(seconds=1)
-            )
-
-            for date in islice(dates, MAX_RECURRING_EVENT_COUNT):
-                start = date.replace(tzinfo=ZoneInfo(timezone))
-                end = start + duration
-
-                eventId = getRecurringEventId(baseEventVM.id, start, isAllDay)
-
-                if eventId in eventOverridesMap:
-                    eventOverride = eventOverridesMap[eventId]
-                    if eventOverride.status != 'deleted':
-                        eventOverride.recurrences = baseRecurringEvent.recurrences
-
-                        yield EventInDBVM.from_orm(eventOverride)
-                else:
-                    eventVM = baseEventVM.copy(
-                        update={
-                            'id': eventId,
-                            'start': start,
-                            'end': end,
-                            'start_day': start.strftime('%Y-%m-%d') if isAllDay else None,
-                            'end_day': end.strftime('%Y-%m-%d') if isAllDay else None,
-                            'recurring_event_id': baseRecurringEvent.id,
-                            'recurrences': baseRecurringEvent.recurrences,
-                            'original_start': start,
-                            'original_start_day': start.strftime('%Y-%m-%d') if isAllDay else None,
-                        }
-                    )
-                    yield eventVM

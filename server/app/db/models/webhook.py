@@ -5,13 +5,13 @@ from app.db.base_class import Base
 
 
 class Webhook(Base):
-    """Google webhook to track calendar updates
-    """
+    """Google webhook to track calendar updates"""
+
     __tablename__ = 'webhook'
     id = Column(String, primary_key=True, nullable=False)
 
-    calendar_id = Column(String(255), ForeignKey('calendar.id'), nullable=False)
-    calendar = relationship('Calendar', back_populates='webhook')
+    calendar_id = Column(String(255), ForeignKey('user_calendar.id'), nullable=False)
+    calendar = relationship('UserCalendar', back_populates='webhook')
 
     resource_id = Column(String())
     resource_uri = Column(String())

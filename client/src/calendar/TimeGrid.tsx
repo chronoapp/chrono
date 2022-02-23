@@ -1,5 +1,6 @@
 import React from 'react'
 import scrollbarSize from 'dom-helpers/scrollbarSize'
+import { Box } from '@chakra-ui/react'
 
 import * as dates from '../util/dates'
 import Event from '../models/Event'
@@ -186,7 +187,11 @@ class TimeGrid extends React.Component<IProps, IState> {
 
     return (
       <div className="cal-time-gutter-box" key={idx}>
-        {idx === 0 ? null : <span className="cal-time-gutter-label">{timeRange}</span>}
+        {idx === 0 ? null : (
+          <Box className="cal-time-gutter-label" color="gray.600">
+            {timeRange}
+          </Box>
+        )}
       </div>
     )
   }

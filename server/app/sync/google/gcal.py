@@ -2,7 +2,7 @@ from typing import Optional
 from zoneinfo import ZoneInfo
 
 from datetime import datetime
-from app.db.models import Event, User, Calendar
+from app.db.models import Event, User, UserCalendar
 
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -56,12 +56,12 @@ def getEventBody(event: Event, timeZone: str):
 """
 
 
-def insertGoogleEvent(user: User, event: Event):
-    timeZone = event.calendar.timezone
+def insertGoogleEvent(userCalendar: UserCalendar, event: Event):
+    timeZone = userCalendar.timezone
     eventBody = getEventBody(event, timeZone)
 
     return (
-        getCalendarService(user)
+        getCalendarService(userCalendar.user)
         .events()
         .insert(calendarId=event.calendar_id, body=eventBody)
         .execute()
@@ -78,13 +78,13 @@ def moveGoogleEvent(user: User, event: Event, prevCalendarId: str):
     )
 
 
-def updateGoogleEvent(user: User, event: Event):
-    timeZone = event.calendar.timezone
+def updateGoogleEvent(userCalendar: UserCalendar, event: Event):
+    timeZone = userCalendar.timezone
     eventBody = getEventBody(event, timeZone)
     return (
-        getCalendarService(user)
+        getCalendarService(userCalendar.user)
         .events()
-        .patch(calendarId=event.calendar_id, eventId=event.g_id, body=eventBody)
+        .patch(calendarId=userCalendar.google_id, eventId=event.g_id, body=eventBody)
         .execute()
     )
 
@@ -98,7 +98,7 @@ def deleteGoogleEvent(user: User, event: Event):
     )
 
 
-def createCalendar(user: User, calendar: Calendar):
+def createCalendar(user: User, calendar: UserCalendar):
     """Creates a calendar and adds it to my list."""
     body = {
         'summary': calendar.summary,
@@ -108,12 +108,15 @@ def createCalendar(user: User, calendar: Calendar):
     return getCalendarService(user).calendars().insert(body=body).execute()
 
 
-def updateCalendar(user: User, calendar: Calendar):
+def updateCalendar(user: User, calendar: UserCalendar):
     body = {
         'selected': calendar.selected or False,
         'foregroundColor': calendar.foreground_color,
         'backgroundColor': calendar.background_color,
     }
     return (
-        getCalendarService(user).calendarList().patch(calendarId=calendar.id, body=body).execute()
+        getCalendarService(user)
+        .calendarList()
+        .patch(calendarId=calendar.google_id, body=body)
+        .execute()
     )
