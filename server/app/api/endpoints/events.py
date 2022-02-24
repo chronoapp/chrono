@@ -106,8 +106,6 @@ async def createCalendarEvent(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
     except EventRepoError as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST)
 
 
 @router.get('/calendars/{calendar_id}/events/{event_id}', response_model=EventInDBVM)
