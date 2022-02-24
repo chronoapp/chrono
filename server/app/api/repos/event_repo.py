@@ -107,11 +107,13 @@ class EventRepository:
             getBaseEventsStmt()
             .where(
                 User.id == user.id,
+                UserCalendar.id == calendarId,
                 Event.recurrences == None,
                 Event.recurring_event_id == None,
-                UserCalendar.id == calendarId,
+                Event.end >= startDate,
+                Event.start <= endDate,
+                Event.status != 'deleted',
             )
-            .filter(and_(Event.end >= startDate, Event.start <= endDate))
             .order_by(asc(Event.start))
             .limit(limit)
         )
