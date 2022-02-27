@@ -309,13 +309,8 @@ class EventRepository:
         )
         rowIds = [r[0] for r in rows]
 
-        stmt = (
-            select(Event)
-            .filter(Event.id.in_(rowIds))
-            .order_by(desc(Event.end))
-            .options(selectinload(Event.labels))
-            .options(selectinload(Event.participants))
-        )
+        # TODO: GET the calendar ID
+        stmt = getBaseEventsStmt().filter(Event.id.in_(rowIds)).order_by(desc(Event.end))
         result = await self.session.execute(stmt)
 
         return result.scalars().all()
