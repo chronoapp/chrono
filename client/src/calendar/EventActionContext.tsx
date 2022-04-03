@@ -17,14 +17,20 @@ type EditMode = 'READ' | 'EDIT' | 'FULL_EDIT'
 export interface DragDropAction {
   action: Action
   event: Event
+  pointerDate: Date | null
   interacting: boolean | undefined
   direction: Direction | undefined
 }
 
 export interface EventActionContextType {
-  onStart: () => void
-  onEnd: (Event?) => void
-  onBeginAction: (event: Event, action: Action, direction?: Direction) => void
+  onInteractionStart: () => void
+  onInteractionEnd: (Event?) => void
+  onBeginAction: (
+    event: Event,
+    action: Action,
+    pointerDate: Date | null,
+    direction?: Direction
+  ) => void
   dragAndDropAction?: DragDropAction
 
   eventState: EventState
@@ -104,8 +110,6 @@ function eventReducer(state: EventState, action: ActionType) {
       }
 
     case 'INIT_EDIT_EVENT':
-      console.log('INIT_EDIT_EVENT')
-
       const { selectTailSegment } = action.payload
       return {
         ...state,
@@ -242,10 +246,14 @@ export function EventActionProvider(props: any) {
     setDragDropAction(undefined)
   }
 
-  function handleBeginAction(event: Event, action: Action, direction?: Direction) {
-    console.log('handleBeginAction')
-    const interacting = dragDropAction ? dragDropAction.interacting : false
-    setDragDropAction({ event, action, direction, interacting })
+  function handleBeginAction(
+    event: Event,
+    action: Action,
+    pointerDate: Date | null,
+    direction?: Direction
+  ) {
+    let interacting = dragDropAction?.interacting || false
+    setDragDropAction({ event, action, direction, interacting, pointerDate })
 
     if (event.id !== eventState.editingEvent?.id) {
       eventDispatch({ type: 'CANCEL_SELECT' })
@@ -253,8 +261,8 @@ export function EventActionProvider(props: any) {
   }
 
   const defaultContext: EventActionContextType = {
-    onStart: handleInteractionStart,
-    onEnd: handleInteractionEnd,
+    onInteractionStart: handleInteractionStart,
+    onInteractionEnd: handleInteractionEnd,
     dragAndDropAction: dragDropAction,
     onBeginAction: handleBeginAction,
 

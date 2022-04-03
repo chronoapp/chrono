@@ -217,6 +217,7 @@ export default function Header(props: { search: string }) {
       if (e.key === 'Escape') {
         e.preventDefault()
         eventsContext.eventDispatch({ type: 'CANCEL_SELECT' })
+        eventsContext.onInteractionEnd()
       }
 
       if (!isEditing()) {

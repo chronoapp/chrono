@@ -1,12 +1,5 @@
 import React from 'react'
-import {
-  Selection,
-  Rect,
-  EventData,
-  getBoundsForNode,
-  getEventNodeFromPoint,
-  SelectRect,
-} from '../util/Selection'
+import { Selection, Rect, EventData, getBoundsForNode, SelectRect } from '../util/Selection'
 
 import TimeGridEvent from './TimeGridEvent'
 import * as dates from '../util/dates'
@@ -16,7 +9,6 @@ import Event, { UNSAVED_EVENT_ID } from '../models/Event'
 import SlotMetrics from './utils/SlotMetrics'
 import { GlobalEvent } from '../util/global'
 
-const SCROLL_WRAPPER_SELECTOR = '.cal-time-content'
 const GRID_WRAPPER_SELECTOR = '.cal-time-view'
 
 interface IProps {
@@ -36,17 +28,11 @@ function pointInColumn(bounds: Rect, x: number, y: number): boolean {
 }
 
 /**
- * Handles drag & drop and resizing of existing events.
- * TODO: Handle drag & drag across multiple days with preview.
- * TODO: Multiple day event: eventOffsetTop is not preserved.
+ * Handles Resizing of existing events.
  */
-class DragDropEventContainer extends React.Component<IProps, IState> {
+class ResizeEventContainer extends React.Component<IProps, IState> {
   private containerRef
   private selection?: Selection
-
-  // Cursor offset from top of the event.
-  private eventOffsetTop: number = 0
-  private isBeingDragged: boolean = false
 
   context!: React.ContextType<typeof EventActionContext>
   static contextType = EventActionContext
@@ -114,53 +100,6 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
     this.updateEvent(event, start, range.endDate, range.top, range.height)
   }
 
-  /**
-   * Scrolls while moving the event up or down.
-   */
-  private scrollToEventIfNecessary(
-    eventTopPercent: number,
-    eventHeightPercent: number,
-    scrollWrapper: HTMLElement
-  ) {
-    const eventTop = (eventTopPercent / 100) * scrollWrapper.scrollHeight
-    const eventBottom = eventTop + (eventHeightPercent / 100) * scrollWrapper.scrollHeight
-
-    const viewportBottom = scrollWrapper.scrollTop + scrollWrapper.clientHeight
-    const eventOverflows = eventTop < scrollWrapper.scrollTop && eventBottom > viewportBottom
-    if (eventOverflows) {
-      return
-    }
-
-    if (eventTop < scrollWrapper.scrollTop) {
-      scrollWrapper.scrollTop = Math.max(eventTop, 0)
-    }
-
-    if (eventBottom > viewportBottom) {
-      scrollWrapper.scrollTop = eventBottom - scrollWrapper.clientHeight
-    }
-  }
-
-  private handleMove(point: SelectRect, bounds: Rect, scrollWrapper: HTMLElement) {
-    const { event } = this.context.dragAndDropAction!
-    const { slotMetrics } = this.props
-
-    if (!pointInColumn(bounds, point.x, point.y)) {
-      this.reset()
-      return
-    }
-
-    const currentSlot = slotMetrics.closestSlotFromPoint(
-      point.y - this.eventOffsetTop,
-      bounds,
-      true
-    )
-    const end = dates.add(currentSlot, dates.diff(event.start, event.end, 'minutes'), 'minutes')
-    const range = slotMetrics.getRange(currentSlot, end, false, true)
-
-    this.updateEvent(event, currentSlot, end, range.top, range.height)
-    this.scrollToEventIfNecessary(range.top, range.height, scrollWrapper)
-  }
-
   private reset() {
     if (this.state.event) {
       this.setState({ event: null, top: 0, height: 0 })
@@ -192,32 +131,24 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
     if (current) {
       const node = current
       const selection = (this.selection = new Selection(node.closest(GRID_WRAPPER_SELECTOR)))
-      const scrollWrapper = node.closest(SCROLL_WRAPPER_SELECTOR) as HTMLElement
 
       selection.on('beforeSelect', (point: EventData) => {
         const dragAndDropAction: DragDropAction = this.context.dragAndDropAction!
-        if (!dragAndDropAction) {
-          return false
-        }
 
-        if (dragAndDropAction.action === 'RESIZE') {
+        if (dragAndDropAction?.action === 'RESIZE') {
           return pointInColumn(getBoundsForNode(node), point.x, point.y)
-        }
-
-        const eventNode = getEventNodeFromPoint(node, point.clientX, point.clientY)
-        if (!eventNode) {
+        } else {
+          // Let DragDropZone handle moving events.
+          // So, don't add more event listeners here.
           return false
         }
+      })
 
-        this.eventOffsetTop = this.getOffsetFromTopOfEvent(
-          point,
-          eventNode as HTMLElement,
-          dragAndDropAction.event
-        )
+      selection.on('selectStart', () => {
+        this.context.onInteractionStart()
       })
 
       selection.on('selecting', (point: SelectRect) => {
-        const bounds = getBoundsForNode(node)
         const { dragAndDropAction } = this.context
 
         // Don't drag full day events to the grid.
@@ -225,31 +156,21 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
           return
         }
 
-        if (dragAndDropAction!.action === 'RESIZE') {
+        if (dragAndDropAction?.action === 'RESIZE') {
+          const bounds = getBoundsForNode(node)
           this.handleResize(point, bounds)
-        } else if (dragAndDropAction!.action === 'MOVE') {
-          this.handleMove(point, bounds, scrollWrapper)
         }
-      })
-
-      selection.on('selectStart', () => {
-        this.isBeingDragged = true
-        this.context.onStart()
       })
 
       selection.on('select', (point) => {
-        const bounds = getBoundsForNode(node)
-        this.isBeingDragged = false
-
-        if (!this.state.event || !pointInColumn(bounds, point.x, point.y)) {
+        const { event } = this.state
+        if (!event) {
           return
         }
 
-        const { event } = this.state
         this.reset()
-
         this.props.onEventUpdated(event)
-        this.context.onEnd(event)
+        this.context.onInteractionEnd(event)
 
         if (event.start < this.props.slotMetrics.start && event.id == UNSAVED_EVENT_ID) {
           document.dispatchEvent(
@@ -259,16 +180,12 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
       })
 
       selection.on('click', () => {
-        if (this.isBeingDragged) {
-          this.reset()
-        }
-
-        this.context.onEnd()
+        this.context.onInteractionEnd()
       })
 
       selection.on('reset', () => {
         this.reset()
-        this.context.onEnd()
+        this.context.onInteractionEnd()
       })
     }
   }
@@ -299,4 +216,4 @@ class DragDropEventContainer extends React.Component<IProps, IState> {
   }
 }
 
-export default DragDropEventContainer
+export default ResizeEventContainer

@@ -30,21 +30,16 @@
   }
 }
 
-.cal-time-content {
+@mixin cal-time-content {
   display: flex;
   flex: 1 0 0%;
   align-items: flex-start;
   width: 100%;
-  border-top: 1px solid $calendar-border;
   overflow-y: scroll;
   position: relative;
 
   > .cal-time-gutter {
     flex: none;
-  }
-
-  > * + * > * {
-    border-left: 1px solid $cell-border;
   }
 
   .cal-rtl & > * + * > * {
@@ -56,6 +51,19 @@
     width: 100%;
     user-select: none;
     -webkit-user-select: none;
+  }
+}
+
+.cal-time-content-zone {
+  @include cal-time-content;
+}
+
+.cal-time-content {
+  @include cal-time-content;
+
+  border-top: 1px solid $calendar-border;
+  > * + * > * {
+    border-left: 1px solid $cell-border;
   }
 }
 

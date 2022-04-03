@@ -178,7 +178,7 @@ class WeekRowContainer extends React.Component<IProps, IState> {
         }
 
         const { event } = this.state.segment
-        this.context.onEnd(event)
+        this.context.onInteractionEnd(event)
 
         // Don't save if it hasn't been created yet.
         this.props.onUpdatedEvent(event)
@@ -186,15 +186,15 @@ class WeekRowContainer extends React.Component<IProps, IState> {
         this.reset()
       })
 
-      selection.on('selectStart', () => this.context.onStart())
+      selection.on('selectStart', () => this.context.onInteractionStart())
 
       selection.on('click', (clickEvent: EventData) => {
-        this.context.onEnd(null)
+        this.context.onInteractionEnd(null)
       })
 
       selection.on('reset', () => {
         this.reset()
-        this.context.onEnd()
+        this.context.onInteractionEnd()
         this.context?.eventDispatch({ type: 'CANCEL_SELECT' })
       })
     }
