@@ -13,7 +13,7 @@ import TimeSlotGroup from './TimeSlotGroup'
 import TimeGridEvent from './TimeGridEvent'
 import EventPopover from './event-edit/EventPopover'
 
-import DragDropEventContainer from './DragDropEventContainer'
+import ResizeEventContainer from './ResizeEventContainer'
 import { EventActionContext } from './EventActionContext'
 
 interface IProps {
@@ -382,12 +382,12 @@ class DayColumn extends React.Component<IProps, IState> {
           <TimeSlotGroup key={`timeslot-${idx}`} group={group} />
         ))}
 
-        <DragDropEventContainer
+        <ResizeEventContainer
           onEventUpdated={this.props.updateEvent}
           slotMetrics={this.slotMetrics}
         >
           <div className="cal-events-container">{this.renderEvents(this.slotMetrics)}</div>
-        </DragDropEventContainer>
+        </ResizeEventContainer>
 
         {selecting && selectRange && this.renderSelection(selectRange)}
         {this.props.isCurrentDay && this.intervalTriggered && (

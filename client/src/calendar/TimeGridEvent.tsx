@@ -17,7 +17,7 @@ interface IProps {
   now: Date
   isTailSegment?: boolean
   innerRef?: React.Ref<HTMLDivElement>
-  getContainerRef?: () => React.RefObject<HTMLDivElement>
+  getContainerRef: () => React.RefObject<HTMLDivElement>
 }
 
 function stringifyPercent(v: number | string) {
@@ -29,6 +29,7 @@ function TimeGridEvent(props: IProps) {
   const calendarsContext = useContext(CalendarsContext)
   // Tiny gap to separate events.
   const eventHeight = props.style.height - 0.15
+  const ref = React.useRef<HTMLDivElement>(null)
 
   const event = props.event
   const calendar = calendarsContext.getDefaultCalendar(event.calendar_id)
@@ -36,13 +37,13 @@ function TimeGridEvent(props: IProps) {
   function handleResize(e, direction: Direction) {
     if (e.button === 0 && calendar.isWritable()) {
       e.stopPropagation()
-      eventActionContext?.onBeginAction(props.event, 'RESIZE', direction)
+      eventActionContext?.onBeginAction(props.event, 'RESIZE', null, direction)
     }
   }
 
   function handleStartDragging(e) {
     if (e.button === 0 && calendar.isWritable()) {
-      eventActionContext?.onBeginAction(props.event, 'MOVE')
+      eventActionContext?.onBeginAction(props.event, 'MOVE', null)
     }
   }
 
@@ -50,6 +51,9 @@ function TimeGridEvent(props: IProps) {
     const curEventNotSelected = props.event.id !== eventActionContext.eventState.editingEvent?.id
     const changedSelection =
       eventActionContext.eventState.editingEvent?.selectTailSegment !== props.isTailSegment
+
+    // Stop the dragging event.
+    eventActionContext?.onInteractionEnd()
 
     if (curEventNotSelected || changedSelection) {
       eventActionContext?.eventDispatch({
@@ -105,6 +109,24 @@ function TimeGridEvent(props: IProps) {
       const displayEnd: Date = dates.min(event.end, dates.endOf(event.start, 'day'))
       return (displayEnd.getTime() - event.start.getTime()) / 60000
     }
+  }
+
+  /**
+   * Gets the Date for where the drag event started.
+   */
+  function getDateOfClick(evt: React.DragEvent) {
+    const containerRef = props.getContainerRef()
+    const { current } = containerRef
+
+    const wrapper = current?.closest('.cal-time-content') as HTMLElement
+    const offsetTop = evt.clientY - wrapper.offsetTop + wrapper.scrollTop
+    const totalHeight = wrapper.scrollHeight
+
+    const startOfDay: Date = dates.startOf(event.end, 'day')
+    const minutes = ((dates.MILLI.day / dates.MILLI.minutes) * offsetTop) / totalHeight
+    const dateOfDrag = dates.add(startOfDay, minutes, 'minutes')
+
+    return dateOfDrag
   }
 
   const diffMin = getEventDurationMinutes()
@@ -174,6 +196,12 @@ function TimeGridEvent(props: IProps) {
       }}
       onMouseDown={handleStartDragging}
       onTouchStart={handleStartDragging}
+      draggable={true}
+      onDragStart={(evt: React.DragEvent) => {
+        evt.dataTransfer.setData('text', event.id)
+        const dateOfClick = getDateOfClick(evt)
+        eventActionContext?.onBeginAction(props.event, 'MOVE', dateOfClick)
+      }}
       onClick={handleClickEvent}
     >
       {inner}

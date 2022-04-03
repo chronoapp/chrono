@@ -6,6 +6,7 @@ import * as dates from '../util/dates'
 import Event from '../models/Event'
 import DayColumn from './DayColumn'
 import TimeGridHeader from './TimeGridHeader'
+import DragDropZone from './DragDropZone'
 import SlotMetrics from './utils/SlotMetrics'
 import { timeFormatShort } from '../util/localizer'
 import { inRange, sortEvents } from './utils/eventLevels'
@@ -220,12 +221,16 @@ class TimeGrid extends React.Component<IProps, IState> {
               return this.renderDateLabel(group, idx)
             })}
           </div>
+
           <div className="cal-time-gutter">
             {this.slotMetrics.groups.map((_group, idx) => {
               return this.renderDateTick(idx)
             })}
           </div>
-          {this.renderDays(this.props.range)}
+
+          <DragDropZone scrollContainerRef={this.contentRef} range={this.props.range}>
+            {this.renderDays(this.props.range)}
+          </DragDropZone>
         </div>
       </div>
     )

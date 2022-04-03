@@ -20,7 +20,7 @@ export function EventItem(props: { event: Event; isPreview: boolean; now: Date }
 
   function handleStartDragging(e) {
     if (e.button === 0 && calendar.isWritable()) {
-      eventActionContext.onBeginAction(event, 'MOVE')
+      eventActionContext.onBeginAction(event, 'MOVE', null)
     }
   }
 
