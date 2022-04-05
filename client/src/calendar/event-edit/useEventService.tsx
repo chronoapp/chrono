@@ -26,7 +26,7 @@ export default function useEventService() {
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
     eventActions.eventDispatch({
       type: 'DELETE_EVENT',
-      payload: { eventId, deleteMethod },
+      payload: { calendarId, eventId, deleteMethod },
     })
     const token = API.getAuthToken()
 
@@ -67,7 +67,7 @@ export default function useEventService() {
       eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
       eventActions.eventDispatch({
         type: 'DELETE_EVENT',
-        payload: { eventId: event.id, deleteMethod: 'ALL' },
+        payload: { calendarId: event.calendar_id!, eventId: event.id, deleteMethod: 'ALL' },
       })
     }
 
@@ -107,6 +107,8 @@ export default function useEventService() {
    */
   function saveEvent(event: Event, showToast: boolean = true) {
     const token = API.getAuthToken()
+    const calendarId = event.calendar_id
+
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
 
     const toastId =
@@ -117,16 +119,17 @@ export default function useEventService() {
 
     const isExistingEvent = event.id !== UNSAVED_EVENT_ID
     if (isExistingEvent) {
+      // Optimistically create the event in the UI.
       eventActions.eventDispatch({
         type: 'UPDATE_EVENT',
-        payload: { event: event, replaceEventId: event.id },
+        payload: { calendarId, event: event, replaceEventId: event.id },
       })
 
-      return API.updateEvent(token, event.calendar_id, event)
+      return API.updateEvent(token, calendarId, event)
         .then((event) => {
           eventActions.eventDispatch({
             type: 'UPDATE_EVENT',
-            payload: { event, replaceEventId: UNSAVED_EVENT_ID },
+            payload: { calendarId, event, replaceEventId: UNSAVED_EVENT_ID },
           })
 
           return event
@@ -147,7 +150,7 @@ export default function useEventService() {
         })
     } else {
       eventActions.eventDispatch({ type: 'CREATE_EVENT', payload: event })
-      return API.createEvent(token, event.calendar_id, event).then((event) => {
+      return API.createEvent(token, calendarId, event).then((event) => {
         console.log(`Created event in db: ${event.id}`)
 
         if (event.recurrences) {
@@ -155,7 +158,7 @@ export default function useEventService() {
         } else {
           eventActions.eventDispatch({
             type: 'UPDATE_EVENT',
-            payload: { event, replaceEventId: UNSAVED_EVENT_ID },
+            payload: { calendarId, event, replaceEventId: UNSAVED_EVENT_ID },
           })
         }
 

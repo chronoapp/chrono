@@ -29,7 +29,6 @@ function TimeGridEvent(props: IProps) {
   const calendarsContext = useContext(CalendarsContext)
   // Tiny gap to separate events.
   const eventHeight = props.style.height - 0.15
-  const ref = React.useRef<HTMLDivElement>(null)
 
   const event = props.event
   const calendar = calendarsContext.getDefaultCalendar(event.calendar_id)
@@ -48,14 +47,17 @@ function TimeGridEvent(props: IProps) {
   }
 
   function handleClickEvent(e) {
-    const curEventNotSelected = props.event.id !== eventActionContext.eventState.editingEvent?.id
+    const isSelected =
+      props.event.id === eventActionContext.eventState.editingEvent?.id &&
+      props.event.calendar_id === eventActionContext.eventState.editingEvent?.event.calendar_id
+
     const changedSelection =
       eventActionContext.eventState.editingEvent?.selectTailSegment !== props.isTailSegment
 
     // Stop the dragging event.
     eventActionContext?.onInteractionEnd()
 
-    if (curEventNotSelected || changedSelection) {
+    if (!isSelected || changedSelection) {
       eventActionContext?.eventDispatch({
         type: 'INIT_EDIT_EVENT',
         payload: { event: props.event, selectTailSegment: props.isTailSegment },
@@ -198,7 +200,6 @@ function TimeGridEvent(props: IProps) {
       onTouchStart={handleStartDragging}
       draggable={true}
       onDragStart={(evt: React.DragEvent) => {
-        evt.dataTransfer.setData('text', event.id)
         const dateOfClick = getDateOfClick(evt)
         eventActionContext?.onBeginAction(props.event, 'MOVE', dateOfClick)
       }}

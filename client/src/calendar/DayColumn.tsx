@@ -151,13 +151,22 @@ class DayColumn extends React.Component<IProps, IState> {
 
     return styledEvents.map(({ event, style }, idx) => {
       const label = timeRangeFormat(event.start, event.end)
-      const isInteracting = dnd && dnd.interacting && dnd.event.id === event.id
+      const isInteracting =
+        dnd &&
+        dnd.interacting &&
+        dnd.event.id === event.id &&
+        dnd.event.calendar_id === event.calendar_id
+
       const isTailSegment = this.isTailEndofMultiDayEvent(event)
       const isSegmentSelected =
         (editingEvent?.selectTailSegment && isTailSegment) ||
         (!editingEvent?.selectTailSegment && !isTailSegment)
+
       const isEditing =
-        editingEvent?.id === event.id && editingEvent?.editMode !== 'FULL_EDIT' && isSegmentSelected
+        editingEvent?.id === event.id &&
+        editingEvent?.event?.calendar_id === event.calendar_id &&
+        editingEvent?.editMode !== 'FULL_EDIT' &&
+        isSegmentSelected
 
       if (isEditing && !isInteracting) {
         // TODO: Update the placement depending on the event's location.

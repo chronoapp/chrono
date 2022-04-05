@@ -13,7 +13,7 @@ import { CalendarsContext, CalendarsContextType } from '@/contexts/CalendarsCont
 import SearchResults from '@/calendar/SearchResults'
 
 import { GlobalEvent } from '@/util/global'
-import { startOfWeek, formatDateTime } from '@/util/localizer'
+import { startOfWeek } from '@/util/localizer'
 import * as dates from '@/util/dates'
 import * as API from '@/util/Api'
 
@@ -50,8 +50,7 @@ function Calendar() {
     if (searchQuery) {
       eventsContext.eventDispatch({ type: 'RESET' })
       const events = await API.searchEvents(API.getAuthToken(), searchQuery)
-
-      eventsContext.eventDispatch({ type: 'INIT', payload: events })
+      // TODO: Fix Search
     } else if (eventsContext.display == 'Day') {
       const start = dates.startOf(eventsContext.selectedDate, 'day')
       const end = dates.endOf(eventsContext.selectedDate, 'day')
@@ -76,51 +75,51 @@ function Calendar() {
 
   async function loadEvents(start: Date, end: Date) {
     const authToken = API.getAuthToken()
+    const eventsByCalendar = await API.getAllEvents(
+      authToken,
+      start,
+      end,
+      Object.values(calendarContext.calendarsById)
+    )
 
-    const eventPromises = Object.values(calendarContext.calendarsById)
-      .filter((cal) => cal.selected)
-      .map((calendar) => {
-        try {
-          return API.getCalendarEvents(
-            authToken,
-            calendar.id,
-            formatDateTime(start),
-            formatDateTime(end)
-          )
-        } catch (err) {
-          return Promise.resolve([])
-        }
-      })
-
-    const calEvents = (await Promise.allSettled(eventPromises)).map((p) => {
-      if (p.status === 'fulfilled') {
-        return p.value
-      } else {
-        return []
-      }
+    eventsContext.eventDispatch({
+      type: 'INIT_EVENTS',
+      payload: { eventsByCalendar },
     })
-
-    var allEvents = Array.prototype.concat.apply([], calEvents)
-
-    eventsContext.eventDispatch({ type: 'INIT', payload: allEvents })
   }
 
-  function renderCalendar() {
-    const { loading, eventsById, editingEvent } = eventsContext.eventState
-
+  function getAllVisibleEvents() {
+    const { editingEvent, eventsByCalendar } = eventsContext.eventState
     const selectedCalendarIds = Object.values(calendarContext.calendarsById)
       .filter((cal) => cal.selected)
       .map((cal) => cal.id)
 
-    const eventByIdWithEditingEvent = produce(eventsById, (draft) => {
-      if (editingEvent) {
-        draft[editingEvent.id] = editingEvent.event
-      }
-    })
+    const defaultCalendar = calendarContext.getPrimaryCalendar()
 
-    const events = Object.values(eventByIdWithEditingEvent).filter(
-      (event) => !event.calendar_id || selectedCalendarIds.includes(event.calendar_id)
+    let eventWithEditing = Object.fromEntries(
+      selectedCalendarIds.map((calId) => {
+        return [calId, eventsByCalendar[calId] || {}]
+      })
     )
+
+    if (editingEvent) {
+      eventWithEditing = produce(eventWithEditing, (draft) => {
+        const calendarId = editingEvent.event.calendar_id || defaultCalendar.id
+        if (draft.hasOwnProperty(calendarId)) {
+          draft[calendarId][editingEvent.id] = editingEvent.event
+        }
+        return draft
+      })
+    }
+
+    return Object.values(eventWithEditing).flatMap((eventMap) => {
+      return Object.values(eventMap)
+    })
+  }
+
+  function renderCalendar() {
+    const { loading } = eventsContext.eventState
+    const events = getAllVisibleEvents()
 
     if (searchQuery) {
       return <SearchResults events={events} search={searchQuery} />
