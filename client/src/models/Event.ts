@@ -36,11 +36,11 @@ export default class Event {
     readonly participants: Partial<EventParticipant>[]
   ) {}
 
-  static fromJson(eventJson): Event {
+  static fromJson(calendarId: string, eventJson): Event {
     return new Event(
       eventJson.id,
       eventJson.recurring_event_id,
-      eventJson.calendar_id,
+      calendarId,
       eventJson.title,
       eventJson.title_short,
       eventJson.description,

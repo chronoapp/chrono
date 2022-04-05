@@ -255,7 +255,7 @@ export default function Header(props: { search: string }) {
   function selectDisplay(display: Display) {
     if (display === 'Month') {
       // HACK: Prevents flicker when switching months
-      eventsContext.eventDispatch({ type: 'INIT', payload: [] })
+      eventsContext.eventDispatch({ type: 'INIT_EVENTS', payload: { eventsByCalendar: {} } })
     }
 
     eventsContext.setDisplay(display)
@@ -297,7 +297,10 @@ export default function Header(props: { search: string }) {
               eventsContext.setSelectedDate(dates.subtract(eventsContext.selectedDate, 7, 'day'))
             } else if (display == 'Month') {
               // HACK: Prevents flicker when switching months
-              eventsContext.eventDispatch({ type: 'INIT', payload: [] })
+              eventsContext.eventDispatch({
+                type: 'INIT_EVENTS',
+                payload: { eventsByCalendar: {} },
+              })
               eventsContext.setSelectedDate(dates.subtract(eventsContext.selectedDate, 1, 'month'))
             }
           }}
@@ -314,7 +317,10 @@ export default function Header(props: { search: string }) {
             } else if (display == 'Week' || display == 'WorkWeek') {
               eventsContext.setSelectedDate(dates.add(eventsContext.selectedDate, 7, 'day'))
             } else if (display == 'Month') {
-              eventsContext.eventDispatch({ type: 'INIT', payload: [] })
+              eventsContext.eventDispatch({
+                type: 'INIT_EVENTS',
+                payload: { eventsByCalendar: {} },
+              })
               eventsContext.setSelectedDate(dates.add(eventsContext.selectedDate, 1, 'month'))
             }
           }}

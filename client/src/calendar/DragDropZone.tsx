@@ -47,16 +47,6 @@ export default function DragDropZone(props: IProps) {
   const [isDragging, setIsDragging] = React.useState(false)
   const numColumns = props.range.length
 
-  React.useEffect(() => {
-    const container = containerRef.current
-    console.log(container?.clientHeight, container?.clientWidth)
-
-    if (container) {
-      const bounds = getBoundsForNode(container)
-      console.debug('Bounds ', bounds)
-    }
-  }, [])
-
   function scrollToEventIfNecessary(mouseTop: number) {
     const scrollWrapper = props.scrollContainerRef.current
     const stepSize = 0.3

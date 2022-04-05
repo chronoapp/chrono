@@ -174,6 +174,38 @@ export async function deleteCalendar(calendarId: string, authToken: string) {
 
 // ================== Events ==================
 
+export async function getAllEvents(
+  authToken: string,
+  start: Date,
+  end: Date,
+  calendars: Calendar[]
+) {
+  const eventPromises = calendars
+    .filter((cal) => cal.selected)
+    .map((calendar) => {
+      try {
+        return {
+          eventsPromise: getCalendarEvents(
+            authToken,
+            calendar.id,
+            formatDateTime(start),
+            formatDateTime(end)
+          ),
+          calendarId: calendar.id,
+        }
+      } catch (err) {
+        return { eventsPromise: Promise.resolve([]), calendarId: calendar.id }
+      }
+    })
+
+  const records: Record<string, Event[]> = {}
+  for (const e of eventPromises) {
+    records[e.calendarId] = await e.eventsPromise
+  }
+
+  return records
+}
+
 export async function getCalendarEvents(
   authToken: string,
   calendarId: string,
@@ -194,7 +226,7 @@ export async function getCalendarEvents(
   })
     .then(handleErrors)
     .then((resp) => {
-      return resp.map((eventJson: any) => Event.fromJson(eventJson))
+      return resp.map((eventJson: any) => Event.fromJson(calendarId, eventJson))
     })
 }
 
@@ -208,7 +240,7 @@ export async function getEvent(
   })
     .then(handleErrors)
     .then((resp) => {
-      return Event.fromJson(resp)
+      return Event.fromJson(calendarId, resp)
     })
 }
 
@@ -223,7 +255,7 @@ export async function createEvent(
     body: JSON.stringify(event),
   })
     .then(handleErrors)
-    .then((resp) => Event.fromJson(resp))
+    .then((resp) => Event.fromJson(calendarId, resp))
 }
 
 export async function updateEvent(
@@ -237,7 +269,7 @@ export async function updateEvent(
     body: JSON.stringify(event),
   })
     .then(handleErrors)
-    .then((resp) => Event.fromJson(resp))
+    .then((resp) => Event.fromJson(calendarId, resp))
 }
 
 export async function deleteEvent(
@@ -258,7 +290,8 @@ export async function searchEvents(authToken: string, query: string): Promise<Ev
   })
     .then(handleErrors)
     .then((resp) => {
-      return resp.map((eventJson: any) => Event.fromJson(eventJson))
+      // TODO: Index by calendar ID
+      return resp.map((eventJson: any) => Event.fromJson(eventJson.calendar_id, eventJson))
     })
 }
 

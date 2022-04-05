@@ -51,9 +51,11 @@ export const EventActionContext = createContext<EventActionContextType>(undefine
  *  (e.g. day columns) will not update.
  */
 
+type EventDict = Record<string, Event>
+
 export interface EventState {
   loading: boolean
-  eventsById: Record<string, Event>
+  eventsByCalendar: Record<string, EventDict>
   editingEvent: {
     id: string
     editMode: EditMode
@@ -65,14 +67,17 @@ export interface EventState {
 
 type ActionType =
   | { type: 'RESET' }
-  | { type: 'INIT'; payload: Event[] }
+  | { type: 'INIT_EVENTS'; payload: { eventsByCalendar: Record<string, Event[]> } }
   | { type: 'INIT_EDIT_NEW_EVENT'; payload: Event }
   | { type: 'INIT_EDIT_EVENT'; payload: { event: Event; selectTailSegment?: boolean } }
   | { type: 'INIT_NEW_EVENT_AT_DATE'; payload: { date: Date; allDay: boolean } }
   | { type: 'CREATE_EVENT'; payload: Event }
-  | { type: 'DELETE_EVENT'; payload: { eventId: string; deleteMethod?: EditRecurringAction } }
+  | {
+      type: 'DELETE_EVENT'
+      payload: { calendarId: string; eventId: string; deleteMethod?: EditRecurringAction }
+    }
   | { type: 'CANCEL_SELECT' }
-  | { type: 'UPDATE_EVENT'; payload: { event: Event; replaceEventId: string } }
+  | { type: 'UPDATE_EVENT'; payload: { calendarId: string; event: Event; replaceEventId: string } }
   | { type: 'UPDATE_EDIT_EVENT'; payload: Partial<Event> }
   | {
       type: 'UPDATE_EDIT_MODE'
@@ -80,7 +85,7 @@ type ActionType =
     }
 
 function eventReducer(state: EventState, action: ActionType) {
-  const { eventsById } = state
+  const { eventsByCalendar } = state
 
   switch (action.type) {
     case 'RESET':
@@ -89,14 +94,23 @@ function eventReducer(state: EventState, action: ActionType) {
         loading: true,
       }
 
-    case 'INIT':
-      console.log(`INIT: ${action.payload.length} events.`)
+    case 'INIT_EVENTS':
+      const calendarMap = action.payload.eventsByCalendar
+
+      const normalizedMap: Record<string, EventDict> = {}
+      for (const calendarId of Object.keys(calendarMap)) {
+        normalizedMap[calendarId] = normalizeArr(calendarMap[calendarId], 'id')
+      }
+
       return {
         ...state,
         loading: false,
-        eventsById: normalizeArr(action.payload, 'id'),
+        eventsByCalendar: normalizedMap,
       }
 
+    /**
+     * Start editing a new event.
+     */
     case 'INIT_EDIT_NEW_EVENT':
       return {
         ...state,
@@ -109,6 +123,9 @@ function eventReducer(state: EventState, action: ActionType) {
         },
       }
 
+    /**
+     * Starts editing an existing event.
+     */
     case 'INIT_EDIT_EVENT':
       const { selectTailSegment } = action.payload
       return {
@@ -146,13 +163,15 @@ function eventReducer(state: EventState, action: ActionType) {
      */
     case 'UPDATE_EVENT':
       return produce(state, (stateDraft) => {
-        delete stateDraft.eventsById[action.payload.replaceEventId]
-        stateDraft.eventsById[action.payload.event.id] = action.payload.event
+        const calendarId = action.payload.calendarId
+        const replacedEventId = action.payload.replaceEventId
+        delete stateDraft.eventsByCalendar[calendarId][replacedEventId]
+        stateDraft.eventsByCalendar[calendarId][action.payload.event.id] = action.payload.event
       })
 
     case 'CREATE_EVENT':
       return produce(state, (stateDraft) => {
-        stateDraft.eventsById[action.payload.id] = action.payload
+        stateDraft.eventsByCalendar[action.payload.calendar_id][action.payload.id] = action.payload
       })
 
     case 'DELETE_EVENT':
@@ -162,20 +181,21 @@ function eventReducer(state: EventState, action: ActionType) {
       if (deleteMethod === 'ALL') {
         return {
           ...state,
-          eventsById: produce(eventsById, (draft) => {
-            delete draft[delEventId]
-            Object.values(draft).map((event) => {
+          eventsByCalendar: produce(eventsByCalendar, (draft) => {
+            delete draft[action.payload.calendarId][delEventId]
+
+            for (const event of Object.values(draft[action.payload.calendarId])) {
               if (event.recurring_event_id === delEventId) {
-                delete draft[event.id]
+                delete draft[action.payload.calendarId][event.id]
               }
-            })
+            }
           }),
         }
       } else {
         return {
           ...state,
-          eventsById: produce(eventsById, (eventsByIdDraft) => {
-            delete eventsByIdDraft[delEventId]
+          eventsByCalendar: produce(eventsByCalendar, (draft) => {
+            delete draft[action.payload.calendarId][delEventId]
           }),
         }
       }
@@ -183,9 +203,6 @@ function eventReducer(state: EventState, action: ActionType) {
     case 'CANCEL_SELECT':
       return {
         ...state,
-        eventsById: produce(eventsById, (draftEventsById) => {
-          delete draftEventsById[UNSAVED_EVENT_ID]
-        }),
         editingEvent: null,
       }
 
@@ -228,7 +245,7 @@ export function EventActionProvider(props: any) {
   const [display, setDisplay] = useState<Display>('Week')
   const [eventState, eventDispatch] = useReducer(eventReducer, {
     loading: true,
-    eventsById: {},
+    eventsByCalendar: {},
     editingEvent: null,
   })
 
@@ -240,7 +257,10 @@ export function EventActionProvider(props: any) {
 
   function handleInteractionEnd(event?: Event) {
     if (event) {
-      eventDispatch({ type: 'UPDATE_EVENT', payload: { event, replaceEventId: event.id } })
+      eventDispatch({
+        type: 'UPDATE_EVENT',
+        payload: { calendarId: event.calendar_id, event, replaceEventId: event.id },
+      })
     }
 
     setDragDropAction(undefined)
