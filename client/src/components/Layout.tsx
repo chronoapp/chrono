@@ -71,41 +71,15 @@ function TopNavigationBar(props: {
   const router = useRouter()
 
   return (
-    <Flex height="3.25rem" borderBottom="1px solid #dfdfdf">
-      <Box w="100%" display="flex">
-        <Flex alignItems="stretch" className="navbar-menu">
-          <Link href="/">
-            <Flex href="#" alignItems="center" justifyContent="center" padding="2" ml="2">
-              <Image
-                fallbackSrc={'./chrono.svg'}
-                src={'./chrono.svg'}
-                alt="Chrono logo"
-                boxSize={'2em'}
-                _hover={{
-                  cursor: 'pointer',
-                }}
-              />
-              <Button
-                ml="2"
-                mb="1"
-                padding="2"
-                pl="0"
-                variant="unstyled"
-                borderRadius="0"
-                height="100%"
-                color={router.pathname === '/' ? 'primary.800' : 'gray.500'}
-                fontWeight={'medium'}
-              >
-                Calendar
-              </Button>
-            </Flex>
-          </Link>
-        </Flex>
+    <Flex
+      height="3.25rem"
+      borderBottom="1px solid #dfdfdf"
+      alignItems="stretch"
+      className="navbar-menu"
+    >
+      {props.canCreateEvent && <Header search={props.searchQuery} />}
 
-        {props.canCreateEvent && <Header search={props.searchQuery} />}
-      </Box>
-
-      <Flex justifyContent="flex-end">
+      <Flex justifyContent="flex-end" align="flex-end">
         <Flex alignItems="center" justifyContent="center" padding="2">
           <Settings refreshCalendar={props.refreshCalendar} />
         </Flex>
@@ -170,13 +144,7 @@ function Layout(props: Props) {
         <link rel="icon" type="image/svg+xml" href="/chrono.svg" />
       </Head>
 
-      <TopNavigationBar
-        refreshCalendar={refreshCalendar}
-        canCreateEvent={props.canCreateEvent}
-        searchQuery={searchQuery}
-      />
-
-      <Flex height="calc(100vh - 3.25rem)" width="100%" overflowY="auto">
+      <Flex height="100vh" width="100%" overflowY={'auto'}>
         {props.includeLeftPanel && (
           <Box className="left-section">
             {props.canCreateEvent && <NewEventButton />}
@@ -187,7 +155,17 @@ function Layout(props: Props) {
             </Flex>
           </Box>
         )}
-        {props.children}
+
+        <Flex direction="column" width="100%">
+          <TopNavigationBar
+            refreshCalendar={refreshCalendar}
+            canCreateEvent={props.canCreateEvent}
+            searchQuery={searchQuery}
+          />
+
+          <Box overflowY="auto">{props.children}</Box>
+        </Flex>
+
         <Plugins />
       </Flex>
 
