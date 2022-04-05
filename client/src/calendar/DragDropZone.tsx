@@ -80,6 +80,12 @@ export default function DragDropZone(props: IProps) {
     }
   }
 
+  function resetDrag() {
+    setDropRect(null)
+    setIsDragging(false)
+    eventsContext.onInteractionEnd()
+  }
+
   return (
     <div
       className="cal-time-content-zone"
@@ -151,11 +157,11 @@ export default function DragDropZone(props: IProps) {
         } else {
           saveEvent(updatedEvent, true)
         }
+
+        resetDrag()
       }}
       onDragEnd={(e) => {
-        setDropRect(null)
-        setIsDragging(false)
-        eventsContext.onInteractionEnd()
+        resetDrag()
       }}
     >
       {dropRect && (
