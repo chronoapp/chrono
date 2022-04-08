@@ -17,10 +17,15 @@ NProgress.configure({ showSpinner: false })
 import 'nprogress/nprogress.css'
 import 'style/index.scss'
 
+import '@fontsource/inter/400.css'
+import '@fontsource/inter/500.css'
+import '@fontsource/inter/700.css'
+
 const theme = extendTheme({
   fonts: {
-    body: `-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Ubuntu', 'Cantarell',
+    body: `Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Ubuntu', 'Cantarell',
     'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;`,
+    heading: 'Inter',
   },
   colors: {
     primary: {
