@@ -142,7 +142,6 @@ class Event(Base):
         end: Optional[datetime],
         start_day: Optional[str],
         end_day: Optional[str],
-        calendar_id: str,
         timezone: Optional[str],
         recurrences: Optional[List[str]],
         originalStart: Optional[datetime],

@@ -1,17 +1,16 @@
 import pytest
-from typing import Tuple
 from datetime import datetime
 
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 
-from app.db.models import User, Event
+from app.db.models import User, Event, Calendar, UserCalendar
 from app.sync.google.calendar import (
     syncEventsToDb,
     syncCreatedOrUpdatedGoogleEvent,
-    syncDeletedEvent,
 )
-from app.api.repos.event_repo import EventRepository
+from app.api.repos.event_utils import getRecurringEventId
+from app.api.repos.event_repo import EventRepository, getBaseEventsStmt
 
 EVENT_ITEM_RECURRING = {
     'kind': 'calendar#event',
@@ -29,6 +28,27 @@ EVENT_ITEM_RECURRING = {
     'sequence': 0,
     'reminders': {'useDefault': True},
 }
+
+
+def getRecurringEventItem(eventItem, datetime: datetime):
+    """Creates an overidden instance of a recurring event."""
+    eventItem = eventItem.copy()
+    originalId = eventItem['id']
+
+    eventItem['id'] = getRecurringEventId(originalId, datetime, False)
+    eventItem['summary'] = eventItem['summary'] + ' - override'
+    eventItem['recurringEventId'] = originalId
+    eventItem['originalStartTime'] = {
+        'dateTime': datetime.isoformat(),
+        'timeZone': 'America/Toronto',
+    }
+    eventItem['attendees'] = [
+        {'email': 'test1@example.com', 'responseStatus': 'needsAction'},
+        {'email': 'test2@example.com', 'responseStatus': 'needsAction'},
+    ]
+    del eventItem['recurrence']
+
+    return eventItem
 
 
 @pytest.mark.asyncio
@@ -206,37 +226,20 @@ async def test_syncEventsToDb_recurring_withParticipants(user, session):
     """Make sure participants are created."""
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
-    # Add the recurring event instance
-
-    eventItem = EVENT_ITEM_RECURRING.copy()
-    eventItem['id'] = 'abcabc_20210712T153000Z'
-    eventItem['recurringEventId'] = 'abcabc'
-    eventItem['originalStartTime'] = {
-        'dateTime': '2020-07-12T10:30:00-05:00',
-        'timeZone': 'America/Toronto',
-    }
-    eventItem['attendees'] = [
-        {'email': 'test1@example.com', 'responseStatus': 'needsAction'},
-        {'email': 'test2@example.com', 'responseStatus': 'needsAction'},
-    ]
-    del eventItem['recurrence']
-
     # Add the parent event
 
     eventItemParent = EVENT_ITEM_RECURRING.copy()
     eventItemParent['id'] = 'abcabc'
-    eventItemParent['start'] = {
-        'dateTime': '2020-12-10T11:00:00-05:00',
-        'timeZone': 'America/Toronto',
-    }
-    eventItemParent['end'] = {
-        'dateTime': '2020-12-10T12:00:00-05:00',
-        'timeZone': 'America/Toronto',
-    }
     eventItemParent['attendees'] = [
         {'email': 'test1@example.com', 'responseStatus': 'needsAction'},
         {'email': 'test2@example.com', 'responseStatus': 'needsAction'},
     ]
+
+    # Add the recurring event instance
+
+    eventItem = getRecurringEventItem(
+        eventItemParent, datetime.fromisoformat('2020-12-11T11:00:00-05:00')
+    )
 
     await syncEventsToDb(calendar, [eventItem, eventItemParent], session)
 
@@ -265,8 +268,6 @@ async def test_syncEventsToDb_eventInMultipleCalendars(user: User, session: Sess
     1) Add same event to multiple calendars
     2) Delete event from guest's calendar
     """
-    from app.db.models import Calendar, UserCalendar
-    from app.api.repos.event_repo import getBaseEventsStmt
 
     # Add another calendar
     readOnlyCalendar = UserCalendar(
@@ -308,3 +309,43 @@ async def test_syncEventsToDb_eventInMultipleCalendars(user: User, session: Sess
 
     assert len(cal2Events) == 1
     assert cal1Events[0].id == cal2Events[0].id
+
+
+@pytest.mark.asyncio
+async def test_syncEventsToDb_changedRecurringEvent(user: User, session: Session):
+    """Sync a google event where:
+    - Event id is the same, but the recurring event has changed.
+    """
+    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+
+    parentEvent = EVENT_ITEM_RECURRING.copy()
+    recurringEvent = getRecurringEventItem(
+        parentEvent, datetime.fromisoformat('2020-07-12T10:30:00-05:00')
+    )
+
+    await syncEventsToDb(calendar, [parentEvent, recurringEvent], session)
+
+    stmt = getBaseEventsStmt().where(User.id == user.id, Calendar.id == calendar.id)
+    result = await session.execute(stmt)
+    calEvents = result.scalars().all()
+    assert len(calEvents) == 2
+
+    # Sync the event again. The Event ID is the same, but base recurring event has changed.
+
+    parentEvent2 = parentEvent.copy()
+    parentEvent2['id'] = 'different-id'
+
+    recurringEvent2 = getRecurringEventItem(
+        parentEvent2, datetime.fromisoformat('2020-07-12T10:30:00-05:00')
+    )
+    recurringEvent2['id'] = recurringEvent['id']
+
+    await syncEventsToDb(calendar, [recurringEvent2, parentEvent2], session)
+
+    stmt = getBaseEventsStmt().where(User.id == user.id, Calendar.id == calendar.id)
+    result = await session.execute(stmt)
+    calEvents = result.scalars().all()
+
+    googleEventIds = set(e.g_id for e in calEvents)
+    assert recurringEvent2['id'] in googleEventIds
+    assert parentEvent2['id'] in googleEventIds

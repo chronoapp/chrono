@@ -28,7 +28,6 @@ def createEvent(
         end,
         None,
         None,
-        userCalendar.id,  # TODO: Remove
         timezone,
         recurrences,
         originalStart,

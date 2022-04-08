@@ -383,7 +383,6 @@ async def createOverrideDeletedEvent(
         None,
         None,
         None,
-        calendar.id,
         None,
         None,
         eventVM.original_start,
