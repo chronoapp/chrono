@@ -350,13 +350,15 @@ async def getCombinedLabels(
 ) -> List[Label]:
     """"List of labels, with parents removed if the list includes the child"""
     labels: List[Label] = []
+
+    userLabels = {l.id: l for l in user.labels}
     for labelVM in labelVMs:
-        # TODO: Bulk Query
-        stmt = select(Label).where(and_(User.id == user.id, Label.id == labelVM.id))
-        label = (await session.execute(stmt)).scalar()
+        label = userLabels.get(labelVM.id)
 
         if label:
             labels.append(label)
+        else:
+            raise EventRepoError(f'Label "{labelVM.title}" not found.')
 
     return combineLabels(labels)
 

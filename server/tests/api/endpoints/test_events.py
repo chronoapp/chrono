@@ -194,6 +194,69 @@ async def test_createEvent_allDay(user: User, session, async_client, eventRepo: 
 
 
 @pytest.mark.asyncio
+async def test_createEvent_withLabels(user: User, session, async_client):
+    """Create event with label"""
+    userCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+    from app.api.endpoints.labels import createOrUpdateLabel, LabelVM, LabelInDbVM
+
+    # Create a label in DB
+    labelVM = LabelVM(title='label-1', color_hex='#ffffff')
+    label = await createOrUpdateLabel(user, None, labelVM, session)
+    await session.commit()
+    labelInDB = LabelInDbVM.from_orm(label)
+
+    # Create an event with the existing label
+    start = datetime.fromisoformat("2021-01-11T05:00:00+00:00")
+    end = start + timedelta(hours=1)
+
+    event = {
+        'title': 'laundry',
+        'start': start.isoformat(),
+        'end': end.isoformat(),
+        'calendar_id': userCalendar.id,
+        'labels': [labelInDB.dict()],
+    }
+
+    resp = await async_client.post(
+        f'/api/v1/calendars/{userCalendar.id}/events/',
+        headers={'Authorization': getAuthToken(user)},
+        data=json.dumps(event),
+    )
+    
+    # Make sure the label is attached.
+    assert resp.status_code == 200
+
+    labels = resp.json()['labels']
+    assert len(labels) == 1
+    assert labels[0]['id'] == labelInDB.id
+
+
+@pytest.mark.asyncio
+async def test_createEvent_withLabels_nonExisting(user: User, session, async_client):
+    """Create event with label"""
+    userCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+
+    # Create an event with a non existing label
+    start = datetime.fromisoformat("2021-01-11T05:00:00+00:00")
+    end = start + timedelta(hours=1)
+
+    event = {
+        'title': 'laundry',
+        'start': start.isoformat(),
+        'end': end.isoformat(),
+        'calendar_id': userCalendar.id,
+        'labels': [{'id': 123, 'title': 'chore', 'color_hex': '#ffffff'}],
+    }
+
+    resp = await async_client.post(
+        f'/api/v1/calendars/{userCalendar.id}/events/',
+        headers={'Authorization': getAuthToken(user)},
+        data=json.dumps(event),
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
 async def test_createEvent_withParticipants(user: User, session, async_client):
     """Create event with participants emails.
     If the user has the contact stored, make sure that it's linked to the participant.
