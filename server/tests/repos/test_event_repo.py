@@ -72,7 +72,6 @@ async def test_event_repo_deleteRecurring(user: User, session: AsyncSession):
 
     eventRepo = EventRepository(session)
     event = await eventRepo.getEventVM(user, userCalendar, eventId)
-    print(event.id)
 
     await eventRepo.deleteEvent(user, userCalendar, event.id)
 

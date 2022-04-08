@@ -38,4 +38,4 @@ class Label(Base):
         self.position = 0
 
     def __repr__(self):
-        return f'<Label {self.id}-{self.parent_id} {self.title} {self.position=}/>'
+        return f'<Label {self.id} {self.parent_id=} {self.title=} {self.position=}/>'

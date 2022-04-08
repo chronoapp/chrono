@@ -333,7 +333,6 @@ async def syncDeletedEvent(
             None,
             None,
             None,
-            userCalendar.id,
             None,
             None,
             startDt,
@@ -371,7 +370,6 @@ async def getOrCreateBaseRecurringEvent(
             None,
             None,
             None,
-            userCalendar.id,
             None,
             None,
             None,
@@ -403,13 +401,23 @@ async def syncCreatedOrUpdatedGoogleEvent(
     eventVM = googleEventToEventVM(userCalendar.id, eventItem)
 
     baseRecurringEvent = None
+    overrideId = existingEvent.id if existingEvent else None
     if eventVM.recurring_event_g_id:
         baseRecurringEvent = await getOrCreateBaseRecurringEvent(
             userCalendar, eventVM.recurring_event_g_id, eventRepo, session
         )
+
+        # Case: we've moved a recurring event to another calendar
+        if existingEvent and existingEvent.recurring_event_id != baseRecurringEvent.id:
+            await session.delete(existingEvent)
+            await session.commit()
+            existingEvent = None
+
         eventVM.recurring_event_id = baseRecurringEvent.id
 
-    event = createOrUpdateEvent(existingEvent, eventVM, googleId=eventVM.g_id)
+    event = createOrUpdateEvent(
+        existingEvent, eventVM, overrideId=overrideId, googleId=eventVM.g_id
+    )
 
     addToCalendar = not existingEvent or (
         existingEvent and not await eventRepo.isMember(userCalendar.id, existingEvent.id)

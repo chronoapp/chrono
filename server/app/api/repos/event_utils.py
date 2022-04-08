@@ -164,7 +164,6 @@ def createOrUpdateEvent(
             eventVM.end,
             eventVM.start_day,
             eventVM.end_day,
-            eventVM.calendar_id,
             eventVM.timezone,
             recurrences,
             eventVM.original_start,
