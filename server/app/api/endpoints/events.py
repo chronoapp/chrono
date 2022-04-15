@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Union, Iterable
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel
 
 from app.core.logger import logger
 from app.api.utils.db import get_db
@@ -46,7 +47,9 @@ async def getEvents(
         tsQuery = ' & '.join(query.split())
         return await eventRepo.search(user.id, tsQuery, limit=limit)
     else:
-        return []
+
+class MoveCalendarRequest(BaseModel):
+    calendar_id: str
 
 
 @router.get('/calendars/{calendarId}/events/', response_model=List[EventInDBVM])
@@ -158,6 +161,28 @@ async def updateCalendarEvent(
 
     except InputError as e:
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e))
+    except NotFoundError as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+    except EventRepoError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post('/calendars/{calendarId}/events/{eventId}/move')
+async def moveEventCalendar(
+    calendarId: str,
+    eventId: str,
+    calReq: MoveCalendarRequest,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> Event:
+    try:
+        eventRepo = EventRepository(session)
+
+        event = await eventRepo.moveEvent(user, eventId, calendarId, calReq.calendar_id)
+        await session.commit()
+
+        return event
+
     except NotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
     except EventRepoError as e:

@@ -1,7 +1,7 @@
 import pytest
 from datetime import datetime, timedelta
 from app.db.models.user_calendar import UserCalendar
-from tests.utils import createEvent
+from tests.utils import createEvent, createCalendar
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -219,3 +219,38 @@ async def test_getAllExpandedRecurringEvents_withTimezone(user, session):
         'EXDATE;TZID=America/Toronto:20201019T213000',
         'RRULE:FREQ=WEEKLY;BYDAY=MO',
     ]
+
+
+@pytest.mark.asyncio
+async def test_event_repo_moveEvent(user, session):
+    """Moved the event from one calendar to another and make sure
+    we've updated the association table.
+    """
+    userCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+
+    # Create a new calendar
+    userCalendar2 = createCalendar(user, 'calendar-id-2')
+
+    # Create an event in the first calendar.
+    start = datetime.fromisoformat('2020-01-01T12:00:00-05:00')
+    end = start + timedelta(hours=1)
+    event = createEvent(userCalendar, start, end, title='Do stuff')
+    session.add(event)
+    await session.commit()
+
+    eventId = event.id
+
+    # Move the event to second calendar.
+    eventRepo = EventRepository(session)
+
+    eventResult = await eventRepo.getEvent(user, userCalendar, eventId)
+    assert eventResult is not None
+
+    event = await eventRepo.moveEvent(user, eventId, userCalendar.id, userCalendar2.id)
+
+    # Ensure it exists in the new calendar
+    eventResult = await eventRepo.getEvent(user, userCalendar, eventId)
+    assert eventResult is None
+
+    eventResult = await eventRepo.getEvent(user, userCalendar2, eventId)
+    assert eventResult.id == eventId
