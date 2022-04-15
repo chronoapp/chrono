@@ -28,12 +28,13 @@ function Calendar() {
 
   const router = useRouter()
   const searchQuery = (router.query.search as string) || ''
+  const [update, setUpdater] = React.useState(0)
 
   useEffect(() => {
-    document.addEventListener(GlobalEvent.refreshCalendar, loadCurrentViewEvents)
+    document.addEventListener(GlobalEvent.refreshCalendar, () => setUpdater(update + 1))
 
     return function cleanup() {
-      document.removeEventListener(GlobalEvent.refreshCalendar, loadCurrentViewEvents)
+      document.removeEventListener(GlobalEvent.refreshCalendar, () => setUpdater(update + 1))
     }
   }, [])
 
@@ -44,6 +45,7 @@ function Calendar() {
     eventsContext.selectedDate,
     searchQuery,
     calendarContext.calendarsById,
+    update,
   ])
 
   async function loadCurrentViewEvents() {
