@@ -68,12 +68,12 @@ def insertGoogleEvent(userCalendar: UserCalendar, event: Event):
     )
 
 
-def moveGoogleEvent(user: User, event: Event, prevCalendarId: str, toCalendarId: str):
+def moveGoogleEvent(user: User, eventGoogleId: str, prevCalendarId: str, toCalendarId: str):
     """Moves an event to another calendar, i.e. changes an event's organizer."""
     return (
         getCalendarService(user)
         .events()
-        .move(calendarId=prevCalendarId, eventId=event.g_id, destination=toCalendarId)
+        .move(calendarId=prevCalendarId, eventId=eventGoogleId, destination=toCalendarId)
         .execute()
     )
 

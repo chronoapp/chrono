@@ -3,8 +3,36 @@ from typing import Optional, List
 
 from datetime import datetime
 
+from app.db.models.user import User
 from app.db.models.event import Event, EventCalendar
 from app.db.models.user_calendar import UserCalendar
+from app.db.models.calendar import Calendar
+
+
+def createCalendar(
+    user: User,
+    calendarId: str,
+):
+    calendar = Calendar(
+        calendarId,
+        'summary',
+        'description',
+        'America/Toronto',
+    )
+    userCalendar = UserCalendar(
+        calendarId,
+        None,
+        '#ffffff',
+        '#000000',
+        True,
+        'owner',
+        True,
+        False,
+    )
+    userCalendar.calendar = calendar
+    user.calendars.append(userCalendar)
+
+    return userCalendar
 
 
 def createEvent(

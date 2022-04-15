@@ -7,7 +7,7 @@ from itertools import islice
 from datetime import timedelta
 import logging
 
-from sqlalchemy import asc, and_, select, delete, or_
+from sqlalchemy import asc, and_, select, delete, or_, update
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import exists
 
@@ -266,9 +266,6 @@ class EventRepository:
             event.original_timezone = event.timezone
 
             updatedEvent = createOrUpdateEvent(None, event, overrideId=eventId, googleId=googleId)
-            ec = EventCalendar()
-            ec.event = updatedEvent
-            userCalendar.calendar.events.append(ec)
 
             await self.session.commit()
             await self.session.refresh(updatedEvent)
@@ -301,6 +298,34 @@ class EventRepository:
             gcal.updateGoogleEvent(userCalendar, updatedEvent)
 
         return updatedEvent
+
+    async def moveEvent(self, user: User, eventId: str, fromCalendarId: str, toCalendarId: str):
+        calendarRepo = CalendarRepo(self.session)
+
+        fromCalendar: Calendar = await calendarRepo.getCalendar(user, fromCalendarId)
+        toCalendar: Calendar = await calendarRepo.getCalendar(user, toCalendarId)
+        if fromCalendar.id == toCalendar.id:
+            raise EventRepoError('Cannot move between same calendars')
+
+        event: Event = await self.getEvent(user, fromCalendar, eventId)
+        if not event:
+            raise EventRepoError(f'Cannot move the event.')
+
+        if event.recurring_event_id is not None:
+            raise EventRepoError('Cannot move instance of recurring event.')
+
+        stmt = (
+            update(EventCalendar)
+            .where(EventCalendar.event_id == eventId, EventCalendar.calendar_id == fromCalendar.id)
+            .values(calendar_id=toCalendar.id)
+        )
+        await self.session.execute(stmt)
+
+        # Makes sure both are google calendars.
+        if event.g_id and fromCalendar.google_id and toCalendar.google_id:
+            gcal.moveGoogleEvent(user, event.g_id, fromCalendar.google_id, toCalendar.google_id)
+
+        return event
 
     async def search(self, userId: int, searchQuery: str, limit: int = 250) -> List[Event]:
         """TODO: Handle searches for instances of recurring events."""
@@ -481,8 +506,7 @@ async def getAllExpandedRecurringEvents(
     overridesStmt = getBaseEventsStmt().where(
         User.id == user.id,
         Event.recurrences == None,
-        Event.recurring_event_id != None,
-        Calendar.id == calendar.id,
+        Event.recurring_event_id != None,  # child event
     )
 
     # Moved from outside of this time range to within.
