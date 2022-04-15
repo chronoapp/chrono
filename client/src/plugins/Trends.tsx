@@ -1,10 +1,7 @@
 import React, { useState, useContext } from 'react'
-import { Container, Box, Heading, Text } from '@chakra-ui/react'
 import dynamic from 'next/dynamic'
 
 import { LabelContext, LabelContextType } from '@/contexts/LabelsContext'
-import Layout from '@/components/Layout'
-import { auth } from '@/util/Api'
 import { TrendView } from '@/trends/ViewSelector'
 import { Label } from '@/models/Label'
 
@@ -36,7 +33,7 @@ function Trends(props: IProps) {
         setSelectedView={setSelectedView}
       />
     )
-  } else {
+  } else if (selectedView === 'HABIT_GRAPH') {
     return (
       <HabitGraph
         setSelectedLabel={(label) => {
@@ -46,28 +43,9 @@ function Trends(props: IProps) {
         setSelectedView={setSelectedView}
       />
     )
+  } else {
+    throw Error("Invalid View")
   }
 }
 
-class TrendsPage extends React.Component<{ authToken: string }, {}> {
-  static async getInitialProps(ctx) {
-    const authToken = auth(ctx)
-    return { authToken }
-  }
-
-  render() {
-    return (
-      <Layout>
-        <Container minW="3xl" maxW="5xl" mt="2">
-          <Heading m="3" fontSize="2xl" align="left" color="gray.700">
-            Trends
-          </Heading>
-
-          <Trends authToken={this.props.authToken} />
-        </Container>
-      </Layout>
-    )
-  }
-}
-
-export default TrendsPage
+export default Trends
