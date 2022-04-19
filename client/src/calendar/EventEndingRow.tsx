@@ -14,11 +14,13 @@ import { format } from '../util/localizer'
 import { eventLevels, EventSegment } from './utils/eventLevels'
 import { renderSpan, EventItem } from './EventRow'
 import { EventActionContext } from './EventActionContext'
+import { EventService } from './event-edit/useEventService'
 
 interface IProps {
   segments: EventSegment[]
   slots: number
   now: Date
+  eventService: EventService
 }
 
 let isSegmentInSlot = (seg: EventSegment, slot: number) => seg.left <= slot && seg.right >= slot
@@ -29,7 +31,12 @@ function range(start: number, count: number) {
   return Array.from(Array(count), (_, i) => start + i)
 }
 
-function InnerPopoverContent(props: { segments: EventSegment[]; slot: number; now: Date }) {
+function InnerPopoverContent(props: {
+  segments: EventSegment[]
+  slot: number
+  now: Date
+  eventService: EventService
+}) {
   const events = eventsInSlot(props.segments, props.slot).map((seg) => seg.event)
 
   return (
@@ -41,7 +48,12 @@ function InnerPopoverContent(props: { segments: EventSegment[]; slot: number; no
         {events.map((e, idx) => {
           return (
             <Box className="cal-row-segment" key={`evt_${idx}`}>
-              <EventItem isPreview={false} event={e} now={props.now} />
+              <EventItem
+                isPreview={false}
+                event={e}
+                now={props.now}
+                eventService={props.eventService}
+              />
             </Box>
           )
         })}
@@ -81,7 +93,12 @@ export default function EventEndingRow(props: IProps) {
 
         <Portal>
           <PopoverContent>
-            <InnerPopoverContent slot={slot} segments={props.segments} now={props.now} />
+            <InnerPopoverContent
+              slot={slot}
+              segments={props.segments}
+              now={props.now}
+              eventService={props.eventService}
+            />
           </PopoverContent>
         </Portal>
       </Popover>
@@ -109,7 +126,14 @@ export default function EventEndingRow(props: IProps) {
     let gap: number = Math.max(0, left - lastEnd)
 
     if (canRenderSlotEvent(left, span)) {
-      let content = <EventItem isPreview={false} event={event} now={props.now} />
+      let content = (
+        <EventItem
+          isPreview={false}
+          event={event}
+          now={props.now}
+          eventService={props.eventService}
+        />
+      )
 
       if (gap) {
         row.push(renderSpan(slots, gap, key + '_gap'))

@@ -17,14 +17,15 @@ import {
 } from '../util/Selection'
 import { pointInBox, getSlotAtX } from '../util/selection-utils'
 import { fullDayFormat } from '../util/localizer'
+import { EventService } from './event-edit/useEventService'
 
 interface IProps {
   children: any
   dayMetrics: DateSlotMetrics
-  onUpdatedEvent: (e: Event) => void
   rowClassname: string
   wrapperClassname: string
   ignoreNewEventYBoundCheck: boolean
+  eventService: EventService
 }
 
 interface IState {
@@ -181,7 +182,7 @@ class WeekRowContainer extends React.Component<IProps, IState> {
         this.context.onInteractionEnd(event)
 
         // Don't save if it hasn't been created yet.
-        this.props.onUpdatedEvent(event)
+        this.props.eventService.updateEvent(event)
 
         this.reset()
       })
@@ -242,6 +243,7 @@ class WeekRowContainer extends React.Component<IProps, IState> {
             segments={[this.state.segment]}
             slotMetrics={this.props.dayMetrics}
             isPreview={true}
+            eventService={this.props.eventService}
           />
         )}
       </div>

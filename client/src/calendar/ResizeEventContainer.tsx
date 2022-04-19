@@ -5,7 +5,7 @@ import TimeGridEvent from './TimeGridEvent'
 import * as dates from '../util/dates'
 import { timeRangeFormat } from '../util/localizer'
 import { EventActionContext, DragDropAction } from './EventActionContext'
-import Event, { UNSAVED_EVENT_ID } from '../models/Event'
+import Event from '../models/Event'
 import SlotMetrics from './utils/SlotMetrics'
 import { GlobalEvent } from '../util/global'
 
@@ -172,7 +172,7 @@ class ResizeEventContainer extends React.Component<IProps, IState> {
         this.props.onEventUpdated(event)
         this.context.onInteractionEnd(event)
 
-        if (event.start < this.props.slotMetrics.start && event.id == UNSAVED_EVENT_ID) {
+        if (event.start < this.props.slotMetrics.start && !event.synced) {
           document.dispatchEvent(
             new CustomEvent(GlobalEvent.scrollToEvent, { detail: event.start })
           )

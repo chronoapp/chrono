@@ -9,7 +9,7 @@ body {
   padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-y: hidden;
+  overflow-y: auto;
 }
 
 code {
@@ -65,6 +65,7 @@ code {
   flex-direction: column;
   background-color: whitesmoke;
   padding-left: 0.75em;
+  padding-top: 0.25em;
 }
 
 /* MISC: TODO: move these */

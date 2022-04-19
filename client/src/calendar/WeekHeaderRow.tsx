@@ -6,11 +6,12 @@ import EventRow from './EventRow'
 import Event from '../models/Event'
 
 import WeekRowContainer from './WeekRowContainer'
-import useEventService from './event-edit/useEventService'
+import { EventService } from './event-edit/useEventService'
 
 interface IProps {
   range: Date[]
   events: Event[]
+  eventService: EventService
 }
 
 const CELL_WRAPPER_CLS = 'cal-allday-cell'
@@ -22,7 +23,6 @@ const CELL_WRAPPER_CLS = 'cal-allday-cell'
  */
 function WeekHeaderRow(props: IProps) {
   const dayMetrics = new DateSlotMetrics(props.range, props.events, 8, 1)
-  const { updateEvent } = useEventService()
 
   function renderBackgroundCells() {
     return (
@@ -40,13 +40,19 @@ function WeekHeaderRow(props: IProps) {
       <div className="cal-row-content">
         <WeekRowContainer
           dayMetrics={dayMetrics}
-          onUpdatedEvent={updateEvent}
           rowClassname={CELL_WRAPPER_CLS}
           wrapperClassname={'cal-time-header-content'}
           ignoreNewEventYBoundCheck={true}
+          eventService={props.eventService}
         >
           {dayMetrics.levels.map((segments, idx) => (
-            <EventRow key={idx} isPreview={false} segments={segments} slotMetrics={dayMetrics} />
+            <EventRow
+              key={idx}
+              isPreview={false}
+              segments={segments}
+              slotMetrics={dayMetrics}
+              eventService={props.eventService}
+            />
           ))}
         </WeekRowContainer>
       </div>

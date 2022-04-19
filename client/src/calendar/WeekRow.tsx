@@ -8,7 +8,7 @@ import DateSlotMetrics from './utils/DateSlotMetrics'
 import Event from '../models/Event'
 import EventRow from './EventRow'
 import WeekRowContainer from './WeekRowContainer'
-import useEventService from './event-edit/useEventService'
+import { EventService } from './event-edit/useEventService'
 import EventEndingRow from './EventEndingRow'
 
 interface IProps {
@@ -19,6 +19,7 @@ interface IProps {
   events: Event[]
   loading: boolean
   showDatesOfWeek: boolean
+  eventService: EventService
 }
 
 const MIN_ROWS = 1
@@ -29,8 +30,6 @@ const MAX_ROWS = 5
  * TODO: Handle Show More.
  */
 function WeekRow(props: IProps) {
-  const { updateEvent } = useEventService()
-
   const dayMetrics = new DateSlotMetrics(props.range, props.events, MAX_ROWS, MIN_ROWS)
 
   function renderBackgroundCells() {
@@ -68,10 +67,10 @@ function WeekRow(props: IProps) {
 
         <WeekRowContainer
           dayMetrics={dayMetrics}
-          onUpdatedEvent={updateEvent}
           rowClassname="cal-row-wrapper"
           wrapperClassname="cal-month-view"
           ignoreNewEventYBoundCheck={false}
+          eventService={props.eventService}
         >
           {!props.loading && (
             <>
@@ -81,6 +80,7 @@ function WeekRow(props: IProps) {
                   segments={segments}
                   slotMetrics={dayMetrics}
                   isPreview={false}
+                  eventService={props.eventService}
                 />
               ))}
 
@@ -89,6 +89,7 @@ function WeekRow(props: IProps) {
                   segments={dayMetrics.extra}
                   slots={dayMetrics.slots}
                   now={props.today}
+                  eventService={props.eventService}
                 />
               )}
             </>

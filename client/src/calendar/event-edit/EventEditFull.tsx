@@ -29,7 +29,7 @@ import * as dates from '@/util/dates'
 import * as API from '@/util/Api'
 import { EventActionContext, EditRecurringAction } from '@/calendar/EventActionContext'
 import { CalendarsContext } from '@/contexts/CalendarsContext'
-import Event, { UNSAVED_EVENT_ID } from '@/models/Event'
+import Event from '@/models/Event'
 import Contact from '@/models/Contact'
 import { Label } from '@/models/Label'
 
@@ -46,18 +46,17 @@ import RecurringEventEditor from './RecurringEventEditor'
 import TaggableInput from './TaggableInput'
 import TimeSelect from './TimeSelect'
 import TimeSelectFullDay from './TimeSelectFullDay'
-import useEventService from './useEventService'
+import { EventService } from './useEventService'
 import EventFields from './EventFields'
 import ParticipantList from './ParticipantList'
 
 /**
  * Full view for event editing.
  */
-export default function EventEditFull(props: { event: Event }) {
+export default function EventEditFull(props: { event: Event; eventService: EventService }) {
   const eventActions = useContext(EventActionContext)
   const calendarContext = useContext(CalendarsContext)
   const { labelState } = useContext<LabelContextType>(LabelContext)
-  const { saveEvent, updateEvent } = useEventService()
 
   // Event data and overrides
   const [eventFields, setEventFields] = useState(
@@ -84,7 +83,7 @@ export default function EventEditFull(props: { event: Event }) {
 
   // Derived Properties
   const recurringAction = eventActions.eventState.editingEvent?.editRecurringAction
-  const isUnsavedEvent = props.event.id === UNSAVED_EVENT_ID
+  const isUnsavedEvent = !props.event.synced
   const isExistingRecurringEvent = !isUnsavedEvent && props.event.recurrences != null
 
   function getEventData(): Event {
@@ -106,7 +105,7 @@ export default function EventEditFull(props: { event: Event }) {
       event.labels = eventFields.labels
     })
 
-    return await updateEvent(updatedParent)
+    return await props.eventService.updateEvent(updatedParent)
   }
 
   async function onSaveEvent() {
@@ -115,7 +114,7 @@ export default function EventEditFull(props: { event: Event }) {
 
     if (!isExistingRecurringEvent) {
       // Update the individual event
-      return await saveEvent(eventData)
+      return await props.eventService.saveEvent(eventData)
     } else {
       // Update a recurring event.
       if (!props.event.recurring_event_id || !props.event.original_start) {
@@ -124,7 +123,7 @@ export default function EventEditFull(props: { event: Event }) {
 
       switch (recurringAction) {
         case 'SINGLE':
-          return await saveEvent(eventData)
+          return await props.eventService.saveEvent(eventData)
 
         case 'ALL':
           const parent = await API.getEvent(
@@ -156,17 +155,17 @@ export default function EventEditFull(props: { event: Event }) {
               props.event.original_start
             )
             const updatedParentEvent = { ...parentEvent, recurrences: [rules.start.toString()] }
-            const req1 = updateEvent(updatedParentEvent)
+            const req1 = props.eventService.updateEvent(updatedParentEvent)
 
             // 2) Create a new recurring event for the the rest of the events
             // TODO: Use the new recurrence this & following starting at this date.
             const thisAndFollowingEvent = {
               ...eventData,
               recurrences: [rules.end.toString()],
-              id: UNSAVED_EVENT_ID,
               recurring_event_id: null,
+              saved: false,
             }
-            const req2 = saveEvent(thisAndFollowingEvent, false)
+            const req2 = props.eventService.saveEvent(thisAndFollowingEvent, false)
 
             return Promise.all([req1, req2])
           }

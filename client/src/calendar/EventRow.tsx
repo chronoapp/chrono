@@ -10,8 +10,14 @@ import EventPopover from './event-edit/EventPopover'
 import Event from '../models/Event'
 import { CalendarsContext } from '@/contexts/CalendarsContext'
 import { EventActionContext } from './EventActionContext'
+import { EventService } from './event-edit/useEventService'
 
-export function EventItem(props: { event: Event; isPreview: boolean; now: Date }) {
+export function EventItem(props: {
+  event: Event
+  isPreview: boolean
+  now: Date
+  eventService: EventService
+}) {
   const calendarsContext = React.useContext(CalendarsContext)
   const eventActionContext = React.useContext(EventActionContext)
   const { event } = props
@@ -77,7 +83,7 @@ export function EventItem(props: { event: Event; isPreview: boolean; now: Date }
         <Portal>
           <PopoverContent w="25em">
             <PopoverArrow />
-            <EventPopover event={event} />
+            <EventPopover event={event} eventService={props.eventService} />
           </PopoverContent>
         </Portal>
       </Popover>
@@ -92,6 +98,7 @@ interface IProps {
   slotMetrics: DateSlotMetrics
   className?: string
   isPreview: boolean
+  eventService: EventService
 }
 
 export function renderSpan(slots: number, len: number, key: string, content?: React.ReactElement) {
@@ -121,7 +128,14 @@ export default function EventRow(props: IProps) {
         const key = '_lvl_' + idx
         const gap = segment.left - lastEnd
 
-        const content = <EventItem isPreview={props.isPreview} event={segment.event} now={now} />
+        const content = (
+          <EventItem
+            isPreview={props.isPreview}
+            event={segment.event}
+            now={now}
+            eventService={props.eventService}
+          />
+        )
         if (gap > 0) {
           row.push(renderSpan(numSlots, gap, `gap_${key}`))
         }

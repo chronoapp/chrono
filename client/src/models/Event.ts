@@ -1,10 +1,11 @@
 import { immerable } from 'immer'
+import makeId from '@/lib/js-lib/makeId'
+
 import { Label } from './Label'
 import { hexToHSL } from '../calendar/utils/Colors'
 import { localFullDate, fullDayFormat } from '../util/localizer'
 import EventParticipant from './EventParticipant'
 
-export const UNSAVED_EVENT_ID = 'unsaved-event'
 export const EMPTY_TITLE = '(No title)'
 
 /**
@@ -17,7 +18,6 @@ export default class Event {
   constructor(
     readonly id: string,
     readonly recurring_event_id: string | null,
-    readonly calendar_id: string,
     readonly title: string,
     readonly title_short: string,
     readonly description: string,
@@ -33,14 +33,17 @@ export default class Event {
     readonly original_start: Date | null,
     readonly original_start_day: string | null,
     readonly original_timezone: string | null,
-    readonly participants: Partial<EventParticipant>[]
+    readonly participants: Partial<EventParticipant>[],
+
+    // For UI only.
+    readonly calendar_id: string,
+    readonly synced: boolean
   ) {}
 
   static fromJson(calendarId: string, eventJson): Event {
     return new Event(
       eventJson.id,
       eventJson.recurring_event_id,
-      calendarId,
       eventJson.title,
       eventJson.title_short,
       eventJson.description,
@@ -59,12 +62,10 @@ export default class Event {
           : new Date(eventJson.original_start)),
       eventJson.original_start_day,
       eventJson.original_timezone,
-      eventJson.participants.map((participantJson) => EventParticipant.fromJson(participantJson))
+      eventJson.participants.map((participantJson) => EventParticipant.fromJson(participantJson)),
+      calendarId,
+      true
     )
-  }
-
-  static isNewEvent(event: Event) {
-    return event.id == UNSAVED_EVENT_ID
   }
 
   static getBackgroundColor(event: Event, defaultColor: string, today: Date) {
@@ -82,10 +83,11 @@ export default class Event {
   }
 
   static newDefaultEvent(startDate: Date, endDate: Date, allDay: boolean) {
+    const tempId = makeId()
+
     return new Event(
-      UNSAVED_EVENT_ID,
+      tempId,
       null,
-      '',
       '',
       '',
       '',
@@ -101,7 +103,9 @@ export default class Event {
       null,
       null,
       null,
-      []
+      [],
+      '',
+      false
     )
   }
 
