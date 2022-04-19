@@ -4,7 +4,7 @@ import { produce } from 'immer'
 import { normalizeArr } from '../lib/normalizer'
 
 import * as dates from '../util/dates'
-import Event, { UNSAVED_EVENT_ID } from '../models/Event'
+import Event from '../models/Event'
 
 export type Action = 'MOVE' | 'RESIZE'
 export type Direction = 'UP' | 'DOWN'
@@ -58,6 +58,7 @@ export interface EventState {
   eventsByCalendar: Record<string, EventDict>
   editingEvent: {
     id: string
+    originalCalendarId: string | undefined
     editMode: EditMode
     selectTailSegment: boolean
     event: Event
@@ -73,10 +74,18 @@ type ActionType =
   | { type: 'INIT_NEW_EVENT_AT_DATE'; payload: { date: Date; allDay: boolean } }
   | { type: 'CREATE_EVENT'; payload: Event }
   | {
+      type: 'MOVE_EVENT_CALENDAR'
+      payload: { prevCalendarId: string; newCalendarId: string; eventId: string }
+    }
+  | {
       type: 'DELETE_EVENT'
       payload: { calendarId: string; eventId: string; deleteMethod?: EditRecurringAction }
     }
   | { type: 'CANCEL_SELECT' }
+  | {
+      type: 'UPDATE_EVENT_ID'
+      payload: { calendarId: string; prevEventId: string; newEventId: string }
+    }
   | { type: 'UPDATE_EVENT'; payload: { calendarId: string; event: Event; replaceEventId: string } }
   | { type: 'UPDATE_EDIT_EVENT'; payload: Partial<Event> }
   | {
@@ -116,6 +125,7 @@ function eventReducer(state: EventState, action: ActionType) {
         ...state,
         editingEvent: {
           id: action.payload.id,
+          originalCalendarId: undefined,
           editMode: 'EDIT' as EditMode,
           event: action.payload,
           selectTailSegment: false,
@@ -132,6 +142,7 @@ function eventReducer(state: EventState, action: ActionType) {
         ...state,
         editingEvent: {
           id: action.payload.event.id,
+          originalCalendarId: action.payload.event.calendar_id,
           editMode: 'READ' as EditMode,
           event: action.payload.event,
           selectTailSegment: !!selectTailSegment,
@@ -150,6 +161,7 @@ function eventReducer(state: EventState, action: ActionType) {
         ...state,
         editingEvent: {
           id: event.id,
+          originalCalendarId: undefined,
           editMode: 'EDIT' as EditMode,
           event,
           selectTailSegment: false,
@@ -165,13 +177,58 @@ function eventReducer(state: EventState, action: ActionType) {
       return produce(state, (stateDraft) => {
         const calendarId = action.payload.calendarId
         const replacedEventId = action.payload.replaceEventId
-        delete stateDraft.eventsByCalendar[calendarId][replacedEventId]
+
+        for (let calId in stateDraft.eventsByCalendar) {
+          if (stateDraft.eventsByCalendar[calId].hasOwnProperty(replacedEventId)) {
+            delete stateDraft.eventsByCalendar[calId][replacedEventId]
+          }
+        }
+
         stateDraft.eventsByCalendar[calendarId][action.payload.event.id] = action.payload.event
+      })
+
+    /**
+     * Overrides an existing event ID when we get a successful response from the server
+     * and sets the event to saved.
+     */
+    case 'UPDATE_EVENT_ID':
+      return produce(state, (stateDraft) => {
+        const calendarId = action.payload.calendarId
+        const prevEventId = action.payload.prevEventId
+        const newEventId = action.payload.newEventId
+
+        const event = stateDraft.eventsByCalendar[calendarId][prevEventId]
+        const updatedEvent = { ...event, synced: true, id: newEventId }
+        stateDraft.eventsByCalendar[calendarId][newEventId] = updatedEvent
+        delete stateDraft.eventsByCalendar[calendarId][prevEventId]
+
+        if (stateDraft.editingEvent?.id === prevEventId) {
+          stateDraft.editingEvent.id = newEventId
+          stateDraft.editingEvent.event.synced = true
+        }
       })
 
     case 'CREATE_EVENT':
       return produce(state, (stateDraft) => {
         stateDraft.eventsByCalendar[action.payload.calendar_id][action.payload.id] = action.payload
+      })
+
+    /**
+     * Moved an event from prevCalendarId to newCalendarId
+     */
+    case 'MOVE_EVENT_CALENDAR':
+      return produce(state, (stateDraft) => {
+        const prevCalendarId = action.payload.prevCalendarId
+        const newCalendarId = action.payload.newCalendarId
+        const eventId = action.payload.eventId
+
+        const prevEvent = stateDraft.eventsByCalendar[prevCalendarId][eventId]
+        if (prevEvent) {
+          stateDraft.eventsByCalendar[newCalendarId][eventId] = prevEvent
+          delete stateDraft.eventsByCalendar[prevCalendarId][eventId]
+        } else {
+          throw Error(`Event with id=${eventId} not found`)
+        }
       })
 
     case 'DELETE_EVENT':

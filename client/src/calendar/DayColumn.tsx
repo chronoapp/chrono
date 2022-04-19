@@ -15,7 +15,7 @@ import EventPopover from './event-edit/EventPopover'
 
 import ResizeEventContainer from './ResizeEventContainer'
 import { EventActionContext } from './EventActionContext'
-
+import { EventService } from '@/calendar/event-edit/useEventService'
 interface IProps {
   date: Date
   step: number
@@ -25,7 +25,7 @@ interface IProps {
   events: Event[]
   isCurrentDay: boolean
   now: Date
-  updateEvent: (event: Event) => void
+  eventService: EventService
 }
 
 interface IState {
@@ -186,7 +186,7 @@ class DayColumn extends React.Component<IProps, IState> {
             <Portal>
               <PopoverContent w="25em">
                 <PopoverArrow />
-                <EventPopover event={editingEvent!.event} />
+                <EventPopover event={editingEvent!.event} eventService={this.props.eventService} />
               </PopoverContent>
             </Portal>
           </Popover>
@@ -392,7 +392,7 @@ class DayColumn extends React.Component<IProps, IState> {
         ))}
 
         <ResizeEventContainer
-          onEventUpdated={this.props.updateEvent}
+          onEventUpdated={this.props.eventService.updateEvent}
           slotMetrics={this.slotMetrics}
         >
           <div className="cal-events-container">{this.renderEvents(this.slotMetrics)}</div>

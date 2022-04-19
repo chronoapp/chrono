@@ -272,6 +272,21 @@ export async function updateEvent(
     .then((resp) => Event.fromJson(calendarId, resp))
 }
 
+export async function moveEvent(
+  authToken: string,
+  eventId: string,
+  fromCalendarId: string,
+  toCalendarId: string
+): Promise<Event> {
+  return fetch(`${API_URL}/calendars/${fromCalendarId}/events/${eventId}/move`, {
+    method: 'POST',
+    headers: getHeaders(authToken),
+    body: JSON.stringify({ calendar_id: toCalendarId }),
+  })
+    .then(handleErrors)
+    .then((resp) => Event.fromJson(toCalendarId, resp))
+}
+
 export async function deleteEvent(
   authToken: string,
   calendarId: string,

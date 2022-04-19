@@ -7,7 +7,7 @@ import Week from './Week'
 import Month from './Month'
 import WorkWeek from './WorkWeek'
 import EventEditFull from './event-edit/EventEditFull'
-import useEventService from './event-edit/useEventService'
+import useEventService, { EventService } from './event-edit/useEventService'
 import { EventActionContext } from './EventActionContext'
 import { CalendarsContext, CalendarsContextType } from '@/contexts/CalendarsContext'
 import SearchResults from '@/calendar/SearchResults'
@@ -20,7 +20,7 @@ import * as API from '@/util/Api'
 function Calendar() {
   const firstOfWeek = startOfWeek()
   const today = new Date()
-  const { updateEvent } = useEventService()
+  const eventService: EventService = useEventService()
 
   // TODO: Store startDate and endDate to prevent unnecessary refreshes.
   const calendarContext = useContext<CalendarsContextType>(CalendarsContext)
@@ -124,21 +124,25 @@ function Calendar() {
     const events = getAllVisibleEvents()
 
     if (searchQuery) {
-      return <SearchResults events={events} search={searchQuery} />
+      return <SearchResults events={events} search={searchQuery} eventService={eventService} />
     } else if (eventsContext.display == 'Day') {
       return (
         <TimeGrid
-          updateEvent={updateEvent}
+          eventService={eventService}
           now={eventsContext.selectedDate}
           events={events}
           range={[eventsContext.selectedDate]}
         />
       )
     } else if (eventsContext.display == 'Week') {
-      return <Week date={eventsContext.selectedDate} events={events} updateEvent={updateEvent} />
+      return <Week date={eventsContext.selectedDate} events={events} eventService={eventService} />
     } else if (eventsContext.display == 'WorkWeek') {
       return (
-        <WorkWeek date={eventsContext.selectedDate} events={events} updateEvent={updateEvent} />
+        <WorkWeek
+          date={eventsContext.selectedDate}
+          events={events}
+          updateEvent={eventService.updateEvent}
+        />
       )
     } else if (eventsContext.display == 'Month') {
       return (
@@ -153,7 +157,7 @@ function Calendar() {
       const fullEditMode = eventState.editingEvent?.editMode == 'FULL_EDIT'
       if (fullEditMode) {
         const event = eventState.editingEvent.event
-        return event && <EventEditFull event={event} />
+        return event && <EventEditFull eventService={eventService} event={event} />
       }
     }
   }

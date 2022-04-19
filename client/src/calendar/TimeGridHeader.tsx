@@ -6,12 +6,13 @@ import * as dates from '../util/dates'
 
 import Event from '../models/Event'
 import WeekHeaderRow from './WeekHeaderRow'
-
+import { EventService } from './event-edit/useEventService'
 interface IProps {
   range: Date[]
   events: Event[]
   leftPad: number
   marginRight: number
+  eventService: EventService
 }
 
 function TimeGridHeader(props: IProps) {
@@ -48,7 +49,11 @@ function TimeGridHeader(props: IProps) {
       <div style={{ width: props.leftPad }} className="rbc-label cal-time-header-gutter" />
       <div className="cal-time-header-content">
         <div className="cal-row">{renderHeaderCells()}</div>
-        <WeekHeaderRow range={props.range} events={props.events} />
+        <WeekHeaderRow
+          range={props.range}
+          events={props.events}
+          eventService={props.eventService}
+        />
       </div>
     </div>
   )

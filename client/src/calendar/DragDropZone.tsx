@@ -3,8 +3,7 @@ import { Box } from '@chakra-ui/react'
 
 import { getBoundsForNode } from '@/util/Selection'
 import { EventActionContext } from './EventActionContext'
-import useEventService from './event-edit/useEventService'
-import { UNSAVED_EVENT_ID } from '@/models/Event'
+import { EventService } from './event-edit/useEventService'
 
 import * as dates from '@/util/dates'
 
@@ -27,6 +26,7 @@ interface IProps {
   children: any
   range: Date[]
   scrollContainerRef: React.RefObject<HTMLInputElement>
+  eventService: EventService
 }
 
 /**
@@ -42,7 +42,6 @@ export default function DragDropZone(props: IProps) {
 
   const eventsContext = React.useContext(EventActionContext)
   const [dropRect, setDropRect] = React.useState<DropRect | null>(null)
-  const { saveEvent, updateEvent } = useEventService()
 
   const [isDragging, setIsDragging] = React.useState(false)
   const numColumns = props.range.length
@@ -142,10 +141,10 @@ export default function DragDropZone(props: IProps) {
           end: dates.add(dropDateStart, eventMins, 'minutes'),
         }
 
-        if (updatedEvent.id === UNSAVED_EVENT_ID) {
-          updateEvent(updatedEvent, true)
+        if (!updatedEvent.synced) {
+          props.eventService.updateEvent(updatedEvent, true)
         } else {
-          saveEvent(updatedEvent, true)
+          props.eventService.saveEvent(updatedEvent, true)
         }
 
         resetDrag()

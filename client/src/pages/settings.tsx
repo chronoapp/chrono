@@ -5,7 +5,7 @@ import Layout from '@/components/Layout'
 
 function Settings() {
   return (
-    <Layout canCreateEvent={true} includeLeftPanel={false}>
+    <Layout canCreateEvent={false} includeLeftPanel={false}>
       <Container maxW="4xl" textAlign="left" mt="4">
         <Heading>Settings</Heading>
         <Text fontSize="lg">Customize your calendar settings.</Text>

@@ -11,6 +11,7 @@ import SlotMetrics from './utils/SlotMetrics'
 import { timeFormatShort } from '../util/localizer'
 import { inRange, sortEvents } from './utils/eventLevels'
 import { GlobalEvent } from '../util/global'
+import { EventService } from '@/calendar/event-edit/useEventService'
 
 function remToPixels(rem) {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
@@ -24,7 +25,7 @@ interface IProps {
   max: Date
   events: Event[]
   now: Date
-  updateEvent: (event: Event) => void
+  eventService: EventService
 }
 
 interface IState {
@@ -164,7 +165,7 @@ class TimeGrid extends React.Component<IProps, IState> {
           max={dates.merge(date, this.props.max)}
           isCurrentDay={dates.eq(date, this.props.now, 'day')}
           now={this.props.now}
-          updateEvent={this.props.updateEvent}
+          eventService={this.props.eventService}
         />
       )
     })
@@ -213,6 +214,7 @@ class TimeGrid extends React.Component<IProps, IState> {
           range={this.props.range}
           leftPad={gutterWidth}
           marginRight={scrollbarSize}
+          eventService={this.props.eventService}
         />
 
         <div ref={this.contentRef} className="cal-time-content">
@@ -228,7 +230,11 @@ class TimeGrid extends React.Component<IProps, IState> {
             })}
           </div>
 
-          <DragDropZone scrollContainerRef={this.contentRef} range={this.props.range}>
+          <DragDropZone
+            scrollContainerRef={this.contentRef}
+            range={this.props.range}
+            eventService={this.props.eventService}
+          >
             {this.renderDays(this.props.range)}
           </DragDropZone>
         </div>

@@ -11,13 +11,15 @@ import { CalendarsContext, CalendarsContextType } from '@/contexts/CalendarsCont
 import { format, timeRangeFormat } from '@/util/localizer'
 import { LabelTag } from '@/components/LabelTag'
 import Event from '@/models/Event'
+import { EventService } from './event-edit/useEventService'
 
 interface IProps {
   search: string
   events: Event[]
+  eventService: EventService
 }
 
-function EventItem(props: { event: Event }) {
+function EventItem(props: { event: Event; eventService: EventService }) {
   const calendarContext = React.useContext<CalendarsContextType>(CalendarsContext)
   const eventActionContext = React.useContext<EventActionContextType>(EventActionContext)
 
@@ -89,7 +91,7 @@ function EventItem(props: { event: Event }) {
         <Portal>
           <PopoverContent w="25em">
             <PopoverArrow />
-            <EventPopover event={props.event} />
+            <EventPopover event={props.event} eventService={props.eventService} />
           </PopoverContent>
         </Portal>
       </Popover>

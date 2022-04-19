@@ -25,7 +25,7 @@ import { format, fullDayFormat } from '@/util/localizer'
 import { addNewLabels } from '@/calendar/utils/LabelUtils'
 import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 
-import Event, { UNSAVED_EVENT_ID } from '@/models/Event'
+import Event from '@/models/Event'
 import Calendar from '@/models/Calendar'
 import { Label } from '@/models/Label'
 import { EditRecurringAction, EventActionContext } from '../EventActionContext'
@@ -40,18 +40,18 @@ import TimeSelectFullDay from './TimeSelectFullDay'
 import SelectCalendar from './SelectCalendar'
 import ContentEditable from '@/lib/ContentEditable'
 import TaggableInput from './TaggableInput'
-import useEventService from './useEventService'
+import { EventService } from './useEventService'
 import EventFields from './EventFields'
 
 interface IProps {
   event: Event
+  eventService: EventService
 }
 
 function EventPopover(props: IProps) {
   const eventActions = useContext(EventActionContext)
   const calendarContext = useContext(CalendarsContext)
   const { labelState } = useContext<LabelContextType>(LabelContext)
-  const { saveEvent, updateEvent, deleteEvent } = useEventService()
 
   const [eventFields, setEventFields] = useState(
     new EventFields(
@@ -72,7 +72,7 @@ function EventPopover(props: IProps) {
     ? Math.max(dates.diff(eventFields.end, eventFields.start, 'day'), 1)
     : 1
 
-  const isExistingEvent = props.event.id !== UNSAVED_EVENT_ID
+  const isExistingEvent = props.event.synced
   const contentEditableRef = createRef<HTMLInputElement>()
 
   useEffect(() => {
@@ -88,7 +88,7 @@ function EventPopover(props: IProps) {
   function keyboardEvents(e: KeyboardEvent) {
     if (e.key === 'Enter') {
       if (contentEditableRef.current && document.activeElement !== contentEditableRef.current) {
-        saveEvent(getUpdatedEvent(props.event, eventFields))
+        props.eventService.saveEvent(getUpdatedEvent(props.event, eventFields))
       }
     }
   }
@@ -208,7 +208,9 @@ function EventPopover(props: IProps) {
           <MenuList mt="-2">
             <MenuItem
               fontSize="sm"
-              onClick={() => deleteEvent(props.event.calendar_id, props.event.id)}
+              onClick={() =>
+                props.eventService.deleteEvent(props.event.calendar_id, props.event.id)
+              }
             >
               This event
             </MenuItem>
@@ -221,7 +223,11 @@ function EventPopover(props: IProps) {
               fontSize="sm"
               onClick={() => {
                 props.event.recurring_event_id &&
-                  deleteEvent(props.event.calendar_id, props.event.recurring_event_id, 'ALL')
+                  props.eventService.deleteEvent(
+                    props.event.calendar_id,
+                    props.event.recurring_event_id,
+                    'ALL'
+                  )
               }}
             >
               All events
@@ -237,7 +243,7 @@ function EventPopover(props: IProps) {
           size="sm"
           fontWeight="normal"
           leftIcon={<FiTrash />}
-          onClick={() => deleteEvent(props.event.calendar_id, props.event.id)}
+          onClick={() => props.eventService.deleteEvent(props.event.calendar_id, props.event.id)}
         >
           Delete
         </Button>
@@ -591,7 +597,9 @@ function EventPopover(props: IProps) {
                 borderRadius="sm"
                 fontWeight="normal"
                 colorScheme="primary"
-                onClick={() => saveEvent(getUpdatedEvent(props.event, eventFields))}
+                onClick={() =>
+                  props.eventService.saveEvent(getUpdatedEvent(props.event, eventFields))
+                }
               >
                 Save
               </Button>
@@ -657,7 +665,7 @@ function EventPopover(props: IProps) {
     )
     const updatedParentEvent = { ...parentEvent, recurrences: [rules.start.toString()] }
 
-    return updateEvent(updatedParentEvent)
+    return props.eventService.updateEvent(updatedParentEvent)
   }
 }
 
