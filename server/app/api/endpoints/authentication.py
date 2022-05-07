@@ -32,6 +32,7 @@ GOOGLE_API_SCOPES = [
     'https://www.googleapis.com/auth/calendar',
     'https://www.googleapis.com/auth/contacts.readonly',
     'https://www.googleapis.com/auth/contacts.other.readonly',
+    'openid',
 ]
 
 
@@ -97,9 +98,9 @@ async def googleAuthCallback(authData: AuthData, session: AsyncSession = Depends
     except oauthlib.oauth2.rfc6749.errors.InvalidGrantError:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, 'Invalid oauth grant details.')
 
-    token = flow.credentials.token
-    resp = requests.get(f'https://www.googleapis.com/oauth2/v2/userinfo?access_token={token}')
-    userInfo = resp.json()
+    googleSession = flow.authorized_session()
+    userInfo = googleSession.get('https://www.googleapis.com/userinfo/v2/me').json()
+
     email = userInfo.get('email')
     name = userInfo.get('given_name')
     pictureUrl = userInfo.get('picture')
