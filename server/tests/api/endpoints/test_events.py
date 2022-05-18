@@ -222,7 +222,7 @@ async def test_createEvent_withLabels(user: User, session, async_client):
         headers={'Authorization': getAuthToken(user)},
         data=json.dumps(event),
     )
-    
+
     # Make sure the label is attached.
     assert resp.status_code == 200
 

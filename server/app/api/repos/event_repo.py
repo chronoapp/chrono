@@ -137,7 +137,9 @@ class EventRepository:
         return result.scalar()
 
     async def getEvent(self, user: User, calendar: UserCalendar, eventId: str) -> Optional[Event]:
-        """Gets an event that exists in the DB only."""
+        """Gets an event that exists in the DB only.
+        Does not include overriden instances of recurring events.
+        """
         curEvent: Optional[Event] = (
             await self.session.execute(
                 getBaseEventsStmt().where(
@@ -212,10 +214,7 @@ class EventRepository:
 
             # Delete from Google
             if event.g_id:
-                try:
-                    _ = gcal.deleteGoogleEvent(user, userCalendar, event)
-                except HttpError as e:
-                    logger.error(e)
+                _ = gcal.deleteGoogleEvent(user, userCalendar, event)
 
         else:
             # Virtual recurring event instance.
@@ -226,6 +225,10 @@ class EventRepository:
                 ec.event = event
                 userCalendar.calendar.events.append(ec)
 
+                # Delete from Google
+                if event.g_id:
+                    _ = gcal.deleteGoogleEvent(user, userCalendar, event)
+
             except InputError as e:
                 raise EventNotFoundError('Event not found.')
 
@@ -233,6 +236,9 @@ class EventRepository:
         self, user: User, userCalendar: UserCalendar, eventId: str, event: EventBaseVM
     ) -> Event:
         curEvent = await self.getEvent(user, userCalendar, eventId)
+
+        if not event.recurring_event_id and not await self.isMember(userCalendar.id, eventId):
+            raise EventRepoError("Invalid calendar event.")
 
         if curEvent and not userCalendar.canWriteEvent():
             raise EventRepoError("Can not update event with this calendar.")
@@ -247,6 +253,9 @@ class EventRepository:
 
             if not parentEvent:
                 raise EventNotFoundError(f'Invalid parent event {event.recurring_event_id}.')
+
+            if not await self.isMember(userCalendar.id, parentEvent.id):
+                raise EventRepoError("Invalid calendar event.")
 
             try:
                 eventVM = getRecurringEvent(userCalendar, eventId, parentEvent)
@@ -265,12 +274,21 @@ class EventRepository:
             event.original_start_day = event.start_day
             event.original_timezone = event.timezone
 
-            updatedEvent = createOrUpdateEvent(None, event, overrideId=eventId, googleId=googleId)
+            existingOverrideInstance = (
+                await self.session.execute(
+                    select(Event).where(
+                        Event.recurring_event_id == parentEvent.id, Event.id == eventId
+                    )
+                )
+            ).scalar()
+
+            updatedEvent = createOrUpdateEvent(
+                existingOverrideInstance, event, overrideId=eventId, googleId=googleId
+            )
+            self.session.add(updatedEvent)
 
             await self.session.commit()
             await self.session.refresh(updatedEvent)
-
-            logger.info(f'Created Override: {updatedEvent}')
 
         # We are overriding a parent recurring event.
         elif curEvent and curEvent.is_parent_recurring_event:
@@ -288,7 +306,6 @@ class EventRepository:
         else:
             updatedEvent = createOrUpdateEvent(curEvent, event)
 
-        logger.info(f'Updated Event: {updatedEvent}')
         updatedEvent.labels.clear()
         updatedEvent.labels = await getCombinedLabels(user, event.labels, self.session)
 
@@ -502,11 +519,23 @@ async def getAllExpandedRecurringEvents(
     TODO: Update EXDATE on write so we don't have to manually override events.
     """
 
-    # Events that override the base events in the recurrence.
-    overridesStmt = getBaseEventsStmt().where(
+    baseRecurringEventsStmt = getBaseEventsStmt().where(
         User.id == user.id,
-        Event.recurrences == None,
-        Event.recurring_event_id != None,  # child event
+        Calendar.id == calendar.id,
+        Event.recurrences != None,
+        Event.recurring_event_id == None,
+        Event.status != 'deleted',
+        Event.start <= endDate,
+    )
+
+    baseRecurringEvents = await session.execute(baseRecurringEventsStmt)
+
+    baseEventsSubQ = baseRecurringEventsStmt.subquery()
+    overridesStmt = (
+        select(Event)
+        .options(selectinload(Event.participants))
+        .options(selectinload(Event.labels))
+        .join(baseEventsSubQ, Event.recurring_event_id == baseEventsSubQ.c.id)
     )
 
     # Moved from outside of this time range to within.
@@ -542,17 +571,7 @@ async def getAllExpandedRecurringEvents(
     result = await session.execute(movedFromInsideOverrides)
     eventOverridesMap: Dict[str, Event] = {e.id: e for e in result.scalars()}
 
-    baseRecurringEventsStmt = getBaseEventsStmt().where(
-        User.id == user.id,
-        Calendar.id == calendar.id,
-        Event.recurrences != None,
-        Event.recurring_event_id == None,
-        Event.status != 'deleted',
-        Event.start <= endDate,
-    )
-
-    result = await session.execute(baseRecurringEventsStmt)
-    for baseRecurringEvent in result.scalars():
+    for baseRecurringEvent in baseRecurringEvents.scalars():
         for e in getExpandedRecurringEvents(
             user, calendar, baseRecurringEvent, eventOverridesMap, startDate, endDate
         ):
