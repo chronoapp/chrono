@@ -56,6 +56,15 @@ def getEventBody(event: Event, timeZone: str):
 """
 
 
+def getGoogleEvent(userCalendar: UserCalendar, eventId: str):
+    return (
+        getCalendarService(userCalendar.user)
+        .events()
+        .get(calendarId=userCalendar.id, eventId=eventId)
+        .execute()
+    )
+
+
 def insertGoogleEvent(userCalendar: UserCalendar, event: Event):
     timeZone = userCalendar.timezone
     eventBody = getEventBody(event, timeZone)

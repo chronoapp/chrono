@@ -77,7 +77,7 @@ async def test_event_repo_deleteRecurring(user: User, session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_getRecurringEventWithParent(user, session):
+async def test_event_repo_getRecurringEventWithParent(user, session):
     """Make sure we can fetch an instance of a recurring event and its parent."""
     userCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
@@ -97,7 +97,7 @@ async def test_getRecurringEventWithParent(user, session):
 
 
 @pytest.mark.asyncio
-async def test_getRecurringEvent(user, session):
+async def test_event_repo_getRecurringEvent(user, session):
     userCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     # Create a new recurring event.
@@ -126,12 +126,12 @@ async def test_getRecurringEvent(user, session):
 
 
 @pytest.mark.asyncio
-async def test_getAllExpandedRecurringEvents_override(user, session):
+async def test_event_repo_getAllExpandedRecurringEvents_override(user, session):
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     # Create a new recurring event. 01-02 to 01-07 => 6 events
     start = datetime.fromisoformat('2020-01-02T12:00:00')
-    createEvent(
+    baseEvent = createEvent(
         calendar,
         start,
         start + timedelta(hours=1),
@@ -158,21 +158,19 @@ async def test_getAllExpandedRecurringEvents_override(user, session):
     event = createOrUpdateEvent(None, events[1])
     event.title = 'Override'
     event.id = events[1].id
-
-    ec = EventCalendar()
-    ec.event = event
-    calendar.calendar.events.append(ec)
-
+    session.add(event)
     await session.commit()
 
     events = await getAllExpandedRecurringEventsList(
         user, calendar, start, start + timedelta(days=1), session
     )
+
+    assert events[0].title == baseEvent.title
     assert events[1].title == 'Override'
 
 
 @pytest.mark.asyncio
-async def test_getAllExpandedRecurringEvents_fullDay(user, session):
+async def test_event_repo_getAllExpandedRecurringEvents_fullDay(user, session):
     userCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     startDay = '2020-12-25'
@@ -207,18 +205,42 @@ async def test_getAllExpandedRecurringEvents_fullDay(user, session):
 
 
 @pytest.mark.asyncio
-async def test_getAllExpandedRecurringEvents_override_toOutside(user, session):
-    # TODO: Moved recurring event to outside a range.
-    pass
-
-
-@pytest.mark.asyncio
-async def test_getAllExpandedRecurringEvents_withTimezone(user, session):
+async def test_event_repo_getAllExpandedRecurringEvents_withTimezone(user, session):
     # TODO: Test expansions with timezone info in EXDate
     recurrences = [
         'EXDATE;TZID=America/Toronto:20201019T213000',
         'RRULE:FREQ=WEEKLY;BYDAY=MO',
     ]
+
+
+@pytest.mark.asyncio
+async def test_event_repo_updateEvent_recurring(user, session):
+    """Move recurring event to outside a range."""
+    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+
+    # Create a new recurring event. 01-02 to 01-07 => 6 events
+    start = datetime.fromisoformat('2020-01-02T12:00:00')
+    createEvent(
+        calendar,
+        start,
+        start + timedelta(hours=1),
+        recurrences=['RRULE:FREQ=DAILY;UNTIL=20200107T120000Z'],
+    )
+
+    # Override the recurring event
+    events = await getAllExpandedRecurringEventsList(
+        user, calendar, start, start + timedelta(days=1), session
+    )
+    eventRepo = EventRepository(session)
+    overrideEvent = events[1]
+    overrideEvent.title = 'Override'
+
+    event = await eventRepo.updateEvent(user, calendar, overrideEvent.id, overrideEvent)
+    assert event.title == overrideEvent.title
+
+    overrideEvent.title = 'Override 2'
+    event = await eventRepo.updateEvent(user, calendar, overrideEvent.id, overrideEvent)
+    assert event.title == overrideEvent.title
 
 
 @pytest.mark.asyncio
