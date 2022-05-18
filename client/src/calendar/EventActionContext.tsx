@@ -4,7 +4,7 @@ import { produce } from 'immer'
 import { normalizeArr } from '../lib/normalizer'
 
 import * as dates from '../util/dates'
-import Event from '../models/Event'
+import Event, { SyncStatus } from '../models/Event'
 
 export type Action = 'MOVE' | 'RESIZE'
 export type Direction = 'UP' | 'DOWN'
@@ -198,13 +198,14 @@ function eventReducer(state: EventState, action: ActionType) {
         const newEventId = action.payload.newEventId
 
         const event = stateDraft.eventsByCalendar[calendarId][prevEventId]
-        const updatedEvent = { ...event, synced: true, id: newEventId }
-        stateDraft.eventsByCalendar[calendarId][newEventId] = updatedEvent
         delete stateDraft.eventsByCalendar[calendarId][prevEventId]
+
+        const updatedEvent = { ...event, syncStatus: 'SYNCED' as SyncStatus, id: newEventId }
+        stateDraft.eventsByCalendar[calendarId][newEventId] = updatedEvent
 
         if (stateDraft.editingEvent?.id === prevEventId) {
           stateDraft.editingEvent.id = newEventId
-          stateDraft.editingEvent.event.synced = true
+          stateDraft.editingEvent.event.syncStatus = 'SYNCED'
         }
       })
 

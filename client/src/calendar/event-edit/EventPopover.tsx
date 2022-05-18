@@ -72,7 +72,7 @@ function EventPopover(props: IProps) {
     ? Math.max(dates.diff(eventFields.end, eventFields.start, 'day'), 1)
     : 1
 
-  const isExistingEvent = props.event.synced
+  const isExistingEvent = props.event.syncStatus !== 'NOT_SYNCED'
   const contentEditableRef = createRef<HTMLInputElement>()
 
   useEffect(() => {
@@ -665,7 +665,7 @@ function EventPopover(props: IProps) {
     )
     const updatedParentEvent = { ...parentEvent, recurrences: [rules.start.toString()] }
 
-    return props.eventService.updateEvent(updatedParentEvent)
+    return props.eventService.updateEventLocal(updatedParentEvent)
   }
 }
 
