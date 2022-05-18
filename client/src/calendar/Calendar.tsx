@@ -141,7 +141,7 @@ function Calendar() {
         <WorkWeek
           date={eventsContext.selectedDate}
           events={events}
-          updateEvent={eventService.updateEvent}
+          updateEvent={eventService.updateEventLocal}
         />
       )
     } else if (eventsContext.display == 'Month') {

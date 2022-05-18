@@ -83,7 +83,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
 
   // Derived Properties
   const recurringAction = eventActions.eventState.editingEvent?.editRecurringAction
-  const isUnsavedEvent = !props.event.synced
+  const isUnsavedEvent = props.event.syncStatus === 'NOT_SYNCED'
   const isExistingRecurringEvent = !isUnsavedEvent && props.event.recurrences != null
 
   function getEventData(): Event {
@@ -105,7 +105,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
       event.labels = eventFields.labels
     })
 
-    return await props.eventService.updateEvent(updatedParent)
+    return await props.eventService.updateEventLocal(updatedParent)
   }
 
   async function onSaveEvent() {
@@ -155,7 +155,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
               props.event.original_start
             )
             const updatedParentEvent = { ...parentEvent, recurrences: [rules.start.toString()] }
-            const req1 = props.eventService.updateEvent(updatedParentEvent)
+            const req1 = props.eventService.updateEventLocal(updatedParentEvent)
 
             // 2) Create a new recurring event for the the rest of the events
             // TODO: Use the new recurrence this & following starting at this date.

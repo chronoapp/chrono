@@ -141,8 +141,8 @@ export default function DragDropZone(props: IProps) {
           end: dates.add(dropDateStart, eventMins, 'minutes'),
         }
 
-        if (!updatedEvent.synced) {
-          props.eventService.updateEvent(updatedEvent, true)
+        if (updatedEvent.syncStatus === 'NOT_SYNCED') {
+          props.eventService.updateEventLocal(updatedEvent, true)
         } else {
           props.eventService.saveEvent(updatedEvent, true)
         }

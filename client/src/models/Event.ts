@@ -8,6 +8,8 @@ import EventParticipant from './EventParticipant'
 
 export const EMPTY_TITLE = '(No title)'
 
+export type SyncStatus = 'NOT_SYNCED' | 'SYNC_IN_PROGRESS' | 'SYNCED'
+
 /**
  * Derived preperties are static because we could use the spread operator {..event, ..}
  * to copy the event for drag & drop.
@@ -37,7 +39,7 @@ export default class Event {
 
     // For UI only.
     readonly calendar_id: string,
-    readonly synced: boolean
+    readonly syncStatus: SyncStatus
   ) {}
 
   static fromJson(calendarId: string, eventJson): Event {
@@ -64,7 +66,7 @@ export default class Event {
       eventJson.original_timezone,
       eventJson.participants.map((participantJson) => EventParticipant.fromJson(participantJson)),
       calendarId,
-      true
+      'SYNCED'
     )
   }
 
@@ -105,7 +107,7 @@ export default class Event {
       null,
       [],
       '',
-      false
+      'NOT_SYNCED'
     )
   }
 

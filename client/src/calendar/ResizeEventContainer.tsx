@@ -172,7 +172,7 @@ class ResizeEventContainer extends React.Component<IProps, IState> {
         this.props.onEventUpdated(event)
         this.context.onInteractionEnd(event)
 
-        if (event.start < this.props.slotMetrics.start && !event.synced) {
+        if (event.start < this.props.slotMetrics.start && event.syncStatus === 'NOT_SYNCED') {
           document.dispatchEvent(
             new CustomEvent(GlobalEvent.scrollToEvent, { detail: event.start })
           )

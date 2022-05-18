@@ -12,7 +12,7 @@ import useTaskQueue from '@/lib/hooks/useTaskQueue'
 
 export type EventService = {
   saveEvent: (event: Event, showToast?: boolean) => void
-  updateEvent: (event: Partial<Event>, showToast?: boolean) => void
+  updateEventLocal: (event: Event, showToast?: boolean) => void
   deleteEvent: (calendarId: string, eventId: string, deleteMethod?: EditRecurringAction) => void
 }
 
@@ -53,11 +53,11 @@ export default function useEventService(): EventService {
   }
 
   /**
-   * Update an existing event and handles updating the recurrence for a parent event.
+   * Update an existing (editing) event and handles updating the recurrence for a parent event.
    * Use instead of saveEvent when the event hasn't been synced to server yet.
    *
    */
-  function updateEvent(event: Partial<Event>, showToast: boolean = true) {
+  function updateEventLocal(event: Event, showToast: boolean = true) {
     if (!event.id) {
       throw new Error('updateEvent: event does not have id')
     }
@@ -76,14 +76,18 @@ export default function useEventService(): EventService {
     }
 
     // Update the the editing event copy.
+    console.log(`Editing ${event.id} ${eventActions.eventState.editingEvent?.id}`)
     if (event.id === eventActions.eventState.editingEvent?.id) {
       eventActions.eventDispatch({
         type: 'UPDATE_EDIT_EVENT',
         payload: event,
       })
+    } else {
+      eventActions.eventDispatch({
+        type: 'UPDATE_EVENT',
+        payload: { calendarId, event: event, replaceEventId: event.id },
+      })
     }
-
-    queueUpdateEvent(calendarId, event, !!event.synced)
   }
 
   /**
@@ -96,12 +100,18 @@ export default function useEventService(): EventService {
    * @returns a promise of the updated event.
    */
   function saveEvent(event: Event, showToast: boolean = true) {
-    const calendarId = event.calendar_id
     eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
 
+    const calendarId = event.calendar_id
     const { editingEvent } = eventActions.eventState
 
-    if (event.synced) {
+    if (event.syncStatus === 'NOT_SYNCED') {
+      eventActions.eventDispatch({
+        type: 'CREATE_EVENT',
+        payload: { ...event, syncStatus: 'SYNC_IN_PROGRESS' },
+      })
+      queueCreateEvent(calendarId, event, showToast)
+    } else {
       if (editingEvent?.originalCalendarId && editingEvent.originalCalendarId !== calendarId) {
         console.log(`Moved calendars from ${editingEvent.originalCalendarId} to ${calendarId}`)
         eventActions.eventDispatch({
@@ -116,16 +126,12 @@ export default function useEventService(): EventService {
         queueMoveEvent(event.id, editingEvent.originalCalendarId, calendarId)
       }
 
-      console.log(`Save Event update UI: ${event.title}`)
       eventActions.eventDispatch({
         type: 'UPDATE_EVENT',
         payload: { calendarId, event: event, replaceEventId: event.id },
       })
 
       queueUpdateEvent(calendarId, event, showToast)
-    } else {
-      eventActions.eventDispatch({ type: 'CREATE_EVENT', payload: event })
-      queueCreateEvent(calendarId, event, showToast)
     }
   }
 
@@ -182,7 +188,6 @@ export default function useEventService(): EventService {
         })
     }
 
-    console.log(`QUEUE createEventTask id=${event.id} ---`)
     taskQueue.addTask(createEventTask)
   }
 
@@ -205,28 +210,15 @@ export default function useEventService(): EventService {
 
     const updateEventTask = () => {
       console.log(`RUN updateEventTask ${event.title}..`)
-
-      const createdEventIds = createdEventIdsRef.current
-      let serverEventId: string | undefined = undefined
-      if (event.synced) {
-        serverEventId = event.id
-      } else if (event.id && createdEventIds.hasOwnProperty(event.id)) {
-        serverEventId = createdEventIds[event.id]
-      }
-
-      console.log(createdEventIds)
-      console.log(serverEventId)
+      let serverEventId = getLatestEventId(event.id, event.syncStatus === 'SYNCED')
 
       // Skip if this event hasn't been saved to the server.
       // => We can't created it yet,
       if (!serverEventId) {
-        console.log('Skip update event')
         return Promise.resolve()
       }
 
       return API.updateEvent(token, calendarId, { ...event, id: serverEventId }).then((event) => {
-        console.log(`Updated Event id=${event.id}.`)
-
         // Recurring event: TODO: Only refresh if moved calendar.
         if (Event.isParentRecurringEvent(event)) {
           document.dispatchEvent(new CustomEvent(GlobalEvent.refreshCalendar))
@@ -245,7 +237,6 @@ export default function useEventService(): EventService {
       })
     }
 
-    console.log(`QUEUE updateEventTask ${event.id}`)
     taskQueue.addTask(updateEventTask)
   }
 
@@ -285,5 +276,22 @@ export default function useEventService(): EventService {
     taskQueue.addTask(deleteEventTask)
   }
 
-  return { saveEvent, deleteEvent, updateEvent }
+  /**
+   * Gets the mapping from the local ID to the Server ID if we've created
+   * an event in this session.
+   */
+  function getLatestEventId(eventId: string | undefined, eventSynced: boolean) {
+    const createdEventIds = createdEventIdsRef.current
+    let serverEventId: string | undefined = undefined
+
+    if (eventSynced) {
+      serverEventId = eventId
+    } else if (eventId && createdEventIds.hasOwnProperty(eventId)) {
+      serverEventId = createdEventIds[eventId]
+    }
+
+    return serverEventId
+  }
+
+  return { saveEvent, deleteEvent, updateEventLocal }
 }
