@@ -107,7 +107,12 @@ function Calendar() {
     if (editingEvent) {
       eventWithEditing = produce(eventWithEditing, (draft) => {
         const calendarId = editingEvent.event.calendar_id || defaultCalendar.id
+
         if (draft.hasOwnProperty(calendarId)) {
+          if (editingEvent.originalCalendarId) {
+            delete draft[editingEvent.originalCalendarId][editingEvent.id]
+          }
+
           draft[calendarId][editingEvent.id] = editingEvent.event
         }
         return draft
