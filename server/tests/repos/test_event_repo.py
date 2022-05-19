@@ -66,14 +66,34 @@ async def test_event_repo_deleteRecurring(user: User, session: AsyncSession):
     recurringEvent.recurrences = ['RRULE:FREQ=DAILY;COUNT=5']
     await session.commit()
 
+    eventRepo = EventRepository(session)
+
+    # 1) Delete Event Normally
     eventId = getRecurringEventId(
         recurringEvent.id, datetime.fromisoformat('2020-12-02T12:00:00'), False
     )
-
-    eventRepo = EventRepository(session)
     event = await eventRepo.getEventVM(user, userCalendar, eventId)
-
     await eventRepo.deleteEvent(user, userCalendar, event.id)
+    await session.commit()
+
+    # 2) Delete Event Twice
+    eventId = getRecurringEventId(
+        recurringEvent.id, datetime.fromisoformat('2020-12-03T12:00:00'), False
+    )
+    event = await eventRepo.getEventVM(user, userCalendar, eventId)
+    await eventRepo.deleteEvent(user, userCalendar, event.id)
+    await eventRepo.deleteEvent(user, userCalendar, event.id)
+    await session.commit()
+
+    # 3) Override then delete event
+    eventId = getRecurringEventId(
+        recurringEvent.id, datetime.fromisoformat('2020-12-04T12:00:00'), False
+    )
+    event = await eventRepo.getEventVM(user, userCalendar, eventId)
+    event.title = 'override'
+    await eventRepo.updateEvent(user, userCalendar, event.id, event)
+    await eventRepo.deleteEvent(user, userCalendar, event.id)
+    await session.commit()
 
 
 @pytest.mark.asyncio
