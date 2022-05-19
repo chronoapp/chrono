@@ -214,20 +214,42 @@ class EventRepository:
 
             # Delete from Google
             if event.g_id:
-                _ = gcal.deleteGoogleEvent(user, userCalendar, event)
+                try:
+                    _ = gcal.deleteGoogleEvent(user, userCalendar, event)
+                except HttpError as e:
+                    # TODO: Error handling
+                    logger.error(e)
 
         else:
             # Virtual recurring event instance.
             try:
-                event = await createOverrideDeletedEvent(userCalendar, eventId, self.session)
+                eventVM, parentEvent = await getRecurringEventWithParent(
+                    userCalendar, eventId, self.session
+                )
 
-                ec = EventCalendar()
-                ec.event = event
-                userCalendar.calendar.events.append(ec)
+                eventOverride = (
+                    await self.session.execute(
+                        select(Event).where(
+                            Event.recurring_event_id == parentEvent.id, Event.id == eventId
+                        )
+                    )
+                ).scalar()
+
+                if eventOverride:
+                    eventOverride.status = 'deleted'
+                else:
+                    eventOverride = await createOverrideDeletedEvent(
+                        parentEvent, eventVM.original_start, eventVM.id
+                    )
+                    self.session.add(eventOverride)
 
                 # Delete from Google
-                if event.g_id:
-                    _ = gcal.deleteGoogleEvent(user, userCalendar, event)
+                if eventOverride.g_id:
+                    try:
+                        _ = gcal.deleteGoogleEvent(user, userCalendar, eventOverride)
+                    except HttpError as e:
+                        # TODO: Error handling
+                        logger.error(e)
 
             except InputError as e:
                 raise EventNotFoundError('Event not found.')
@@ -406,15 +428,15 @@ async def getCombinedLabels(
 
 
 async def createOverrideDeletedEvent(
-    calendar: UserCalendar, eventId: str, session: AsyncSession
+    parentEvent: Event,
+    originalStart: datetime,
+    eventId: str,
 ) -> Event:
-    # Override as a deleted event.
-    eventVM, parentEvent = await getRecurringEventWithParent(calendar, eventId, session)
-
+    """Overrides a recurring event as a deleted event."""
     googleId = None
     if parentEvent.recurring_event_gId:
         googleId = getRecurringEventId(
-            parentEvent.recurring_event_gId, eventVM.original_start, parentEvent.all_day
+            parentEvent.recurring_event_gId, originalStart, parentEvent.all_day
         )
 
     event = Event(
@@ -427,8 +449,8 @@ async def createOverrideDeletedEvent(
         None,
         None,
         None,
-        eventVM.original_start,
-        eventVM.original_start.strftime('%Y-%m-%d') if parentEvent.all_day else None,
+        originalStart,
+        originalStart.strftime('%Y-%m-%d') if parentEvent.all_day else None,
         parentEvent.time_zone,
         overrideId=eventId,
         recurringEventId=parentEvent.id,
@@ -439,7 +461,7 @@ async def createOverrideDeletedEvent(
 
 
 async def getRecurringEventWithParent(
-    calendar: Calendar, eventId: str, session: AsyncSession
+    calendar: UserCalendar, eventId: str, session: AsyncSession
 ) -> Tuple[EventInDBVM, Event]:
     """Returns the parent from the virtual eventId.
     Returns tuple of (parent event, datetime).
