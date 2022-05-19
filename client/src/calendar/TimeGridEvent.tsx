@@ -148,7 +148,7 @@ function TimeGridEvent(props: IProps) {
   if (diffMin <= 30) {
     inner = (
       <div
-        className={clsx('cal-event-content', diffMin <= 15 && 'cal-small-event', 'cal-ellipsis')}
+        className={clsx('cal-event-content', diffMin <= 20 && 'cal-small-event', 'cal-ellipsis')}
         style={{ display: 'flex', lineHeight: '12px' }}
       >
         <span>{displayTitle}</span>
