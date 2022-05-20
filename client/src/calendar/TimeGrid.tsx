@@ -12,20 +12,22 @@ import { timeFormatShort } from '../util/localizer'
 import { inRange, sortEvents } from './utils/eventLevels'
 import { GlobalEvent } from '../util/global'
 import { EventService } from '@/calendar/event-edit/useEventService'
+import Calendar from '@/models/Calendar'
 
 function remToPixels(rem) {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
 }
 
 interface IProps {
-  range: Date[]
   step: number
   timeslots: number
   min: Date
   max: Date
+  range: Date[]
   events: Event[]
   now: Date
   eventService: EventService
+  getPrimaryCalendar: () => Calendar
 }
 
 interface IState {
@@ -166,6 +168,7 @@ class TimeGrid extends React.Component<IProps, IState> {
           isCurrentDay={dates.eq(date, this.props.now, 'day')}
           now={this.props.now}
           eventService={this.props.eventService}
+          getPrimaryCalendar={this.props.getPrimaryCalendar}
         />
       )
     })

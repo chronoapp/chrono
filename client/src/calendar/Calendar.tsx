@@ -137,16 +137,25 @@ function Calendar() {
           now={eventsContext.selectedDate}
           events={events}
           range={[eventsContext.selectedDate]}
+          getPrimaryCalendar={calendarContext.getPrimaryCalendar}
         />
       )
     } else if (eventsContext.display == 'Week') {
-      return <Week date={eventsContext.selectedDate} events={events} eventService={eventService} />
+      return (
+        <Week
+          date={eventsContext.selectedDate}
+          events={events}
+          eventService={eventService}
+          getPrimaryCalendar={calendarContext.getPrimaryCalendar}
+        />
+      )
     } else if (eventsContext.display == 'WorkWeek') {
       return (
         <WorkWeek
           date={eventsContext.selectedDate}
           events={events}
-          updateEvent={eventService.updateEventLocal}
+          eventService={eventService}
+          getPrimaryCalendar={calendarContext.getPrimaryCalendar}
         />
       )
     } else if (eventsContext.display == 'Month') {

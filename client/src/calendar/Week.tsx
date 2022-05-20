@@ -4,11 +4,13 @@ import { EventService } from './event-edit/useEventService'
 import { weekRangeFormat, getWeekRange } from '../util/localizer'
 import TimeGrid from './TimeGrid'
 import Event from '../models/Event'
+import Calendar from '@/models/Calendar'
 
 interface IProps {
   events: Event[]
   date: Date
   eventService: EventService
+  getPrimaryCalendar: () => Calendar
 }
 
 function Week(props: IProps) {
@@ -16,7 +18,13 @@ function Week(props: IProps) {
   const now = new Date()
 
   return (
-    <TimeGrid now={now} events={props.events} range={range} eventService={props.eventService} />
+    <TimeGrid
+      now={now}
+      events={props.events}
+      range={range}
+      eventService={props.eventService}
+      getPrimaryCalendar={props.getPrimaryCalendar}
+    />
   )
 }
 

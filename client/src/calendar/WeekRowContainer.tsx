@@ -18,6 +18,7 @@ import {
 import { pointInBox, getSlotAtX } from '../util/selection-utils'
 import { fullDayFormat } from '../util/localizer'
 import { EventService } from './event-edit/useEventService'
+import Calendar from '@/models/Calendar'
 
 interface IProps {
   children: any
@@ -26,6 +27,7 @@ interface IProps {
   wrapperClassname: string
   ignoreNewEventYBoundCheck: boolean
   eventService: EventService
+  getPrimaryCalendar: () => Calendar
 }
 
 interface IState {
@@ -129,9 +131,10 @@ class WeekRowContainer extends React.Component<IProps, IState> {
         getSlotAtX(bounds, x, false, this.props.dayMetrics.slots)
       )
 
+      const calendar = this.props.getPrimaryCalendar()
       this.context?.eventDispatch({
         type: 'INIT_NEW_EVENT_AT_DATE',
-        payload: { date: startDate, allDay: true },
+        payload: { calendarId: calendar.id, date: startDate, allDay: true },
       })
     }
   }
@@ -182,7 +185,11 @@ class WeekRowContainer extends React.Component<IProps, IState> {
         this.context.onInteractionEnd(event)
 
         // Don't save if it hasn't been created yet.
-        this.props.eventService.updateEventLocal(event)
+        if (event.syncStatus === 'NOT_SYNCED') {
+          this.props.eventService.updateEventLocal(event, true)
+        } else {
+          this.props.eventService.saveEvent(event, true)
+        }
 
         this.reset()
       })

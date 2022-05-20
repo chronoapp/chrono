@@ -71,7 +71,7 @@ type ActionType =
   | { type: 'INIT_EVENTS'; payload: { eventsByCalendar: Record<string, Event[]> } }
   | { type: 'INIT_EDIT_NEW_EVENT'; payload: Event }
   | { type: 'INIT_EDIT_EVENT'; payload: { event: Event; selectTailSegment?: boolean } }
-  | { type: 'INIT_NEW_EVENT_AT_DATE'; payload: { date: Date; allDay: boolean } }
+  | { type: 'INIT_NEW_EVENT_AT_DATE'; payload: { calendarId: string; date: Date; allDay: boolean } }
   | { type: 'CREATE_EVENT'; payload: Event }
   | {
       type: 'MOVE_EVENT_CALENDAR'
@@ -155,7 +155,12 @@ function eventReducer(state: EventState, action: ActionType) {
      */
     case 'INIT_NEW_EVENT_AT_DATE':
       const endDate = dates.add(action.payload.date, 1, action.payload.allDay ? 'day' : 'hours')
-      const event = Event.newDefaultEvent(action.payload.date, endDate, action.payload.allDay)
+      const event = Event.newDefaultEvent(
+        action.payload.calendarId,
+        action.payload.date,
+        endDate,
+        action.payload.allDay
+      )
 
       return {
         ...state,

@@ -7,6 +7,7 @@ import Event from '../models/Event'
 
 import WeekRowContainer from './WeekRowContainer'
 import { EventService } from './event-edit/useEventService'
+import { CalendarsContext, CalendarsContextType } from '@/contexts/CalendarsContext'
 
 interface IProps {
   range: Date[]
@@ -23,6 +24,7 @@ const CELL_WRAPPER_CLS = 'cal-allday-cell'
  */
 function WeekHeaderRow(props: IProps) {
   const dayMetrics = new DateSlotMetrics(props.range, props.events, 8, 1)
+  const { getPrimaryCalendar } = React.useContext<CalendarsContextType>(CalendarsContext)
 
   function renderBackgroundCells() {
     return (
@@ -39,6 +41,7 @@ function WeekHeaderRow(props: IProps) {
       {renderBackgroundCells()}
       <div className="cal-row-content">
         <WeekRowContainer
+          getPrimaryCalendar={getPrimaryCalendar}
           dayMetrics={dayMetrics}
           rowClassname={CELL_WRAPPER_CLS}
           wrapperClassname={'cal-time-header-content'}

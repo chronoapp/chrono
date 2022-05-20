@@ -16,6 +16,8 @@ import EventPopover from './event-edit/EventPopover'
 import ResizeEventContainer from './ResizeEventContainer'
 import { EventActionContext } from './EventActionContext'
 import { EventService } from '@/calendar/event-edit/useEventService'
+import Calendar from '@/models/Calendar'
+
 interface IProps {
   date: Date
   step: number
@@ -26,6 +28,7 @@ interface IProps {
   isCurrentDay: boolean
   now: Date
   eventService: EventService
+  getPrimaryCalendar: () => Calendar
 }
 
 interface IState {
@@ -296,7 +299,12 @@ class DayColumn extends React.Component<IProps, IState> {
           if (this.state.selectRange) {
             console.log('Handle Select Event')
             const { startDate, endDate } = this.state.selectRange
-            const event = Event.newDefaultEvent(startDate, endDate, false)
+            const event = Event.newDefaultEvent(
+              this.props.getPrimaryCalendar().id,
+              startDate,
+              endDate,
+              false
+            )
 
             this.context?.eventDispatch({
               type: 'INIT_EDIT_NEW_EVENT',
@@ -325,7 +333,11 @@ class DayColumn extends React.Component<IProps, IState> {
         )
         this.context?.eventDispatch({
           type: 'INIT_NEW_EVENT_AT_DATE',
-          payload: { date: startDate, allDay: false },
+          payload: {
+            calendarId: this.props.getPrimaryCalendar().id,
+            date: startDate,
+            allDay: false,
+          },
         })
 
         this.setState({ selecting: false })
