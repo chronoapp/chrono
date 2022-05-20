@@ -6,12 +6,16 @@ import * as dates from '../util/dates'
 import { startOfWeek, monthTitleFormat } from '../util/localizer'
 import { inRange, sortEvents } from './utils/eventLevels'
 import WeekRow from './WeekRow'
+import Calendar from '@/models/Calendar'
+import { EventService } from './event-edit/useEventService'
 
 interface IProps {
   events: Event[]
   loading: boolean
   date: Date
   today: Date
+  eventService: EventService
+  getPrimaryCalendar: () => Calendar
 }
 
 function Month(props: IProps) {
@@ -31,6 +35,8 @@ function Month(props: IProps) {
         key={weekIdx}
         events={eventsForWeek}
         showDatesOfWeek={weekIdx == 0}
+        eventService={props.eventService}
+        getPrimaryCalendar={props.getPrimaryCalendar}
       />
     )
   }

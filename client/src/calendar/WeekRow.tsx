@@ -10,6 +10,7 @@ import EventRow from './EventRow'
 import WeekRowContainer from './WeekRowContainer'
 import { EventService } from './event-edit/useEventService'
 import EventEndingRow from './EventEndingRow'
+import Calendar from '@/models/Calendar'
 
 interface IProps {
   key: number
@@ -20,6 +21,7 @@ interface IProps {
   loading: boolean
   showDatesOfWeek: boolean
   eventService: EventService
+  getPrimaryCalendar: () => Calendar
 }
 
 const MIN_ROWS = 1
@@ -71,6 +73,7 @@ function WeekRow(props: IProps) {
           wrapperClassname="cal-month-view"
           ignoreNewEventYBoundCheck={false}
           eventService={props.eventService}
+          getPrimaryCalendar={props.getPrimaryCalendar}
         >
           {!props.loading && (
             <>
