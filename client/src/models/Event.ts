@@ -84,7 +84,7 @@ export default class Event {
     return event.end < today ? 'hsl(0, 0%, 45%)' : event.foregroundColor
   }
 
-  static newDefaultEvent(startDate: Date, endDate: Date, allDay: boolean) {
+  static newDefaultEvent(calendarId: string, startDate: Date, endDate: Date, allDay: boolean) {
     const tempId = makeId()
 
     return new Event(
@@ -106,7 +106,7 @@ export default class Event {
       null,
       null,
       [],
-      '',
+      calendarId,
       'NOT_SYNCED'
     )
   }

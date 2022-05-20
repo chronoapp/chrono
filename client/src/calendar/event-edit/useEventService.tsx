@@ -6,14 +6,18 @@ import { GlobalEvent } from '@/util/global'
 import * as API from '@/util/Api'
 import Event from '@/models/Event'
 import Toast from '@/components/Toast'
+import * as dates from '@/util/dates'
 
+import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 import { EventActionContext, EditRecurringAction } from '../EventActionContext'
 import useTaskQueue from '@/lib/hooks/useTaskQueue'
 
 export type EventService = {
-  saveEvent: (event: Event, showToast?: boolean) => void
   updateEventLocal: (event: Event, showToast?: boolean) => void
+  saveEvent: (event: Event, showToast?: boolean) => void
   deleteEvent: (calendarId: string, eventId: string, deleteMethod?: EditRecurringAction) => void
+  deleteAllRecurringEvents: (calendarId: string, eventId: string) => void
+  deleteThisAndFollowingEvents: (event: Event) => void
 }
 
 /**
@@ -38,19 +42,6 @@ export default function useEventService(): EventService {
 
   const createdEventIdsRef = React.useRef<Record<string, string>>({})
   const taskQueue = useTaskQueue({ shouldProcess: true })
-
-  function deleteEvent(
-    calendarId: string,
-    eventId: string,
-    deleteMethod: EditRecurringAction = 'SINGLE'
-  ) {
-    eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
-    eventActions.eventDispatch({
-      type: 'DELETE_EVENT',
-      payload: { calendarId, eventId, deleteMethod },
-    })
-    queueDeleteEvent(calendarId, eventId)
-  }
 
   /**
    * Update an existing (editing) event and handles updating the recurrence for a parent event.
@@ -133,6 +124,69 @@ export default function useEventService(): EventService {
 
       queueUpdateEvent(calendarId, event, showToast)
     }
+  }
+
+  function deleteEvent(
+    calendarId: string,
+    eventId: string,
+    deleteMethod: EditRecurringAction = 'SINGLE'
+  ) {
+    eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
+    eventActions.eventDispatch({
+      type: 'DELETE_EVENT',
+      payload: { calendarId, eventId, deleteMethod },
+    })
+    queueDeleteEvent(calendarId, eventId)
+  }
+
+  function deleteAllRecurringEvents(calendarId: string, eventId: string) {
+    eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
+    eventActions.eventDispatch({
+      type: 'DELETE_EVENT',
+      payload: { calendarId, eventId, deleteMethod: 'ALL' },
+    })
+    queueDeleteEvent(calendarId, eventId)
+  }
+
+  async function deleteThisAndFollowingEvents(event: Event) {
+    if (!event.recurrences || !event.recurring_event_id || !event.original_start) {
+      throw Error('Invalid Recurring Event')
+    }
+    const calendarId = event.calendar_id
+    const parentEvent = await API.getEvent(API.getAuthToken(), calendarId, event.recurring_event_id)
+
+    const rules = getSplitRRules(
+      event.recurrences!.join('\n'),
+      parentEvent.start,
+      event.original_start
+    )
+    const updatedParentEvent = { ...parentEvent, recurrences: [rules.start.toString()] }
+
+    // Optimistic UI Update.
+    eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
+
+    const eventsToDelete = Object.values(
+      eventActions.eventState.eventsByCalendar[calendarId]
+    ).filter((e) => {
+      return (
+        e.recurring_event_id == parentEvent.id &&
+        e.original_start &&
+        event.original_start &&
+        dates.gte(e.original_start, event.original_start)
+      )
+    })
+
+    for (const deleteEvent of eventsToDelete) {
+      eventActions.eventDispatch({
+        type: 'DELETE_EVENT',
+        payload: {
+          calendarId: calendarId,
+          eventId: deleteEvent.id,
+        },
+      })
+    }
+
+    queueUpdateEvent(calendarId, updatedParentEvent, true)
   }
 
   /**
@@ -293,5 +347,11 @@ export default function useEventService(): EventService {
     return serverEventId
   }
 
-  return { saveEvent, deleteEvent, updateEventLocal }
+  return {
+    saveEvent,
+    updateEventLocal,
+    deleteEvent,
+    deleteThisAndFollowingEvents,
+    deleteAllRecurringEvents,
+  }
 }

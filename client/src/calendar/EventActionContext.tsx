@@ -166,7 +166,7 @@ function eventReducer(state: EventState, action: ActionType) {
         ...state,
         editingEvent: {
           id: event.id,
-          originalCalendarId: undefined,
+          originalCalendarId: action.payload.calendarId,
           editMode: 'EDIT' as EditMode,
           event,
           selectTailSegment: false,
