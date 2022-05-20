@@ -215,7 +215,10 @@ function EventPopover(props: IProps) {
               This event
             </MenuItem>
             <MenuDivider m="0" />
-            <MenuItem fontSize="sm" onClick={() => deleteThisAndFollowingEvents(props.event)}>
+            <MenuItem
+              fontSize="sm"
+              onClick={() => props.eventService.deleteThisAndFollowingEvents(props.event)}
+            >
               This and following events
             </MenuItem>
             <MenuDivider m="0" />
@@ -223,10 +226,9 @@ function EventPopover(props: IProps) {
               fontSize="sm"
               onClick={() => {
                 props.event.recurring_event_id &&
-                  props.eventService.deleteEvent(
+                  props.eventService.deleteAllRecurringEvents(
                     props.event.calendar_id,
-                    props.event.recurring_event_id,
-                    'ALL'
+                    props.event.recurring_event_id
                   )
               }}
             >
@@ -645,27 +647,6 @@ function EventPopover(props: IProps) {
         </div>
       </>
     )
-  }
-
-  async function deleteThisAndFollowingEvents(event: Event) {
-    if (!event.recurrences || !event.recurring_event_id || !event.original_start) {
-      throw Error('Invalid Recurring Event')
-    }
-
-    const parentEvent = await API.getEvent(
-      API.getAuthToken(),
-      event.calendar_id,
-      event.recurring_event_id
-    )
-
-    const rules = getSplitRRules(
-      event.recurrences!.join('\n'),
-      parentEvent.start,
-      event.original_start
-    )
-    const updatedParentEvent = { ...parentEvent, recurrences: [rules.start.toString()] }
-
-    return props.eventService.updateEventLocal(updatedParentEvent)
   }
 }
 
