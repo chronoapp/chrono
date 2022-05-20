@@ -10,11 +10,9 @@ import {
   MenuItem,
   MenuDivider,
   useToast,
-  Image,
 } from '@chakra-ui/react'
 import { FiSettings, FiLogOut } from 'react-icons/fi'
 
-import Link from 'next/link'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 
@@ -28,6 +26,7 @@ import CalendarsPanel from './CalendarsPanel'
 import Plugins from './Plugins'
 import Toast from '@/components/Toast'
 import { EventActionContext } from '@/calendar/EventActionContext'
+import { CalendarsContext, CalendarsContextType } from '@/contexts/CalendarsContext'
 
 import Header from '@/calendar/Header'
 
@@ -40,6 +39,8 @@ interface Props {
 
 function NewEventButton() {
   const eventsContext = React.useContext(EventActionContext)
+  const { getPrimaryCalendar } = React.useContext<CalendarsContextType>(CalendarsContext)
+
   return (
     <Button
       borderRadius="sm"
@@ -54,7 +55,11 @@ function NewEventButton() {
         document.dispatchEvent(new Event(GlobalEvent.scrollToEvent))
         eventsContext.eventDispatch({
           type: 'INIT_NEW_EVENT_AT_DATE',
-          payload: { date: roundNext15Min(new Date()), allDay: false },
+          payload: {
+            calendarId: getPrimaryCalendar().id,
+            date: roundNext15Min(new Date()),
+            allDay: false,
+          },
         })
       }}
     >
