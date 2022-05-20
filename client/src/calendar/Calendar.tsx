@@ -160,7 +160,14 @@ function Calendar() {
       )
     } else if (eventsContext.display == 'Month') {
       return (
-        <Month today={today} loading={loading} date={eventsContext.selectedDate} events={events} />
+        <Month
+          today={today}
+          loading={loading}
+          date={eventsContext.selectedDate}
+          events={events}
+          eventService={eventService}
+          getPrimaryCalendar={calendarContext.getPrimaryCalendar}
+        />
       )
     }
   }
