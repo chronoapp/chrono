@@ -91,10 +91,10 @@ export default function useEventService(): EventService {
    * @returns a promise of the updated event.
    */
   function saveEvent(event: Event, showToast: boolean = true) {
-    eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
-
     const calendarId = event.calendar_id
     const { editingEvent } = eventActions.eventState
+
+    eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
 
     if (event.syncStatus === 'NOT_SYNCED') {
       eventActions.eventDispatch({
@@ -203,7 +203,7 @@ export default function useEventService(): EventService {
     }
 
     const createEventTask = () => {
-      console.log(`RUN createEventTask ${event.title}...`)
+      console.log(`RUN createEventTask id=${event.id} ${event.title}...`)
 
       return API.createEvent(token, calendarId, event)
         .then((event) => {

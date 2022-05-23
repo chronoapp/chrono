@@ -183,13 +183,16 @@ function eventReducer(state: EventState, action: ActionType) {
         const calendarId = action.payload.calendarId
         const replacedEventId = action.payload.replaceEventId
 
-        for (let calId in stateDraft.eventsByCalendar) {
-          if (stateDraft.eventsByCalendar[calId].hasOwnProperty(replacedEventId)) {
-            delete stateDraft.eventsByCalendar[calId][replacedEventId]
+        // Only replace an existing event.
+        if (stateDraft.eventsByCalendar[calendarId].hasOwnProperty(action.payload.event.id)) {
+          for (let calId in stateDraft.eventsByCalendar) {
+            if (stateDraft.eventsByCalendar[calId].hasOwnProperty(replacedEventId)) {
+              delete stateDraft.eventsByCalendar[calId][replacedEventId]
+            }
           }
-        }
 
-        stateDraft.eventsByCalendar[calendarId][action.payload.event.id] = action.payload.event
+          stateDraft.eventsByCalendar[calendarId][action.payload.event.id] = action.payload.event
+        }
       })
 
     /**
