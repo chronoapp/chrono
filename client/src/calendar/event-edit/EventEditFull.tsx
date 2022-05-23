@@ -110,7 +110,6 @@ export default function EventEditFull(props: { event: Event; eventService: Event
 
   async function onSaveEvent() {
     const eventData = getEventData()
-    console.log(eventData)
 
     if (!isExistingRecurringEvent) {
       // Update the individual event
