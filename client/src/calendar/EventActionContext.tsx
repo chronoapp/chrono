@@ -210,6 +210,7 @@ function eventReducer(state: EventState, action: ActionType) {
 
         if (stateDraft.editingEvent?.id === prevEventId) {
           stateDraft.editingEvent.id = newEventId
+          stateDraft.editingEvent.event.id = newEventId
           stateDraft.editingEvent.event.syncStatus = 'SYNCED'
         }
       })

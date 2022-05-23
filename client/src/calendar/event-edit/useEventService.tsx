@@ -264,7 +264,7 @@ export default function useEventService(): EventService {
 
     const updateEventTask = () => {
       console.log(`RUN updateEventTask ${event.title}..`)
-      let serverEventId = getLatestEventId(event.id, event.syncStatus === 'SYNCED')
+      let serverEventId = getLatestEventId(event.id)
 
       // Skip if this event hasn't been saved to the server.
       // => We can't created it yet,
@@ -334,13 +334,11 @@ export default function useEventService(): EventService {
    * Gets the mapping from the local ID to the Server ID if we've created
    * an event in this session.
    */
-  function getLatestEventId(eventId: string | undefined, eventSynced: boolean) {
+  function getLatestEventId(eventId: string | undefined) {
     const createdEventIds = createdEventIdsRef.current
-    let serverEventId: string | undefined = undefined
+    let serverEventId: string | undefined = eventId
 
-    if (eventSynced) {
-      serverEventId = eventId
-    } else if (eventId && createdEventIds.hasOwnProperty(eventId)) {
+    if (eventId && createdEventIds.hasOwnProperty(eventId)) {
       serverEventId = createdEventIds[eventId]
     }
 
