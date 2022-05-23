@@ -180,6 +180,7 @@ def createOrUpdateEvent(
         eventDb.end = eventVM.end or eventDb.end
         eventDb.start_day = eventVM.start_day or eventDb.start_day
         eventDb.end_day = eventVM.end_day or eventDb.end_day
+        eventDb.time_zone = eventVM.timezone
         eventDb.recurring_event_id = eventVM.recurring_event_id or eventDb.recurring_event_id
         eventDb.recurrences = recurrences or eventDb.recurrences
 
