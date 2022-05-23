@@ -404,7 +404,13 @@ class DayColumn extends React.Component<IProps, IState> {
         ))}
 
         <ResizeEventContainer
-          onEventUpdated={this.props.eventService.saveEvent}
+          onEventUpdated={(event) => {
+            if (event.syncStatus === 'NOT_SYNCED') {
+              this.props.eventService.updateEventLocal(event)
+            } else {
+              this.props.eventService.saveEvent(event)
+            }
+          }}
           slotMetrics={this.slotMetrics}
         >
           <div className="cal-events-container">{this.renderEvents(this.slotMetrics)}</div>
