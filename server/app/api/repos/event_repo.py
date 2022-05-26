@@ -130,11 +130,11 @@ class EventRepository:
 
         return allEvents
 
-    async def getGoogleEvent(self, user: User, googleEventId: str) -> Optional[Event]:
-        stmt = getBaseEventsStmt().where(User.id == user.id, Event.g_id == googleEventId)
-        result = await self.session.execute(stmt)
+    async def getGoogleEvent(self, googleEventId: str) -> Optional[Event]:
+        stmt = select(Event).where(Event.g_id == googleEventId)
+        googleEvent = (await self.session.execute(stmt)).scalar()
 
-        return result.scalar()
+        return googleEvent
 
     async def getEvent(self, user: User, calendar: UserCalendar, eventId: str) -> Optional[Event]:
         """Gets an event that exists in the DB only.

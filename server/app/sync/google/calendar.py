@@ -254,7 +254,7 @@ async def syncEventsToDb(
     for eventItem in eventItems:
         user = calendar.user
         googleEventId = eventItem['id']
-        existingEvent = await eventRepo.getGoogleEvent(user, googleEventId)
+        existingEvent = await eventRepo.getGoogleEvent(googleEventId)
 
         if eventItem['status'] == 'cancelled':
             await syncDeletedEvent(calendar, existingEvent, eventItem, eventRepo, session)
@@ -358,8 +358,7 @@ async def getOrCreateBaseRecurringEvent(
     the parent has not been created yet. For the stub parent event, we only need a primary ID,
     since the rest of the info will be populated then the parent is synced.
     """
-    user = userCalendar.user
-    baseRecurringEvent = await eventRepo.getGoogleEvent(user, googleRecurringEventId)
+    baseRecurringEvent = await eventRepo.getGoogleEvent(googleRecurringEventId)
 
     if not baseRecurringEvent:
         baseRecurringEvent = Event(
