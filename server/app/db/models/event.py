@@ -172,6 +172,3 @@ class Event(Base):
 
     def __repr__(self):
         return f'<Event {self.id} {self.title} start:{self.start} end:{self.end} {self.status}/>'
-
-    def isWritable(self) -> bool:
-        return self.calendar.access_role == 'writer' or self.calendar.access_role == 'owner'

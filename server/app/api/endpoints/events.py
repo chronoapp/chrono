@@ -149,8 +149,6 @@ async def updateCalendarEvent(
 ) -> Event:
     """Update an existing event. For recurring events, create the "override" event
     in the DB with the composite id of {baseId}_{date}.
-
-    TODO: Handle move between different calendars
     """
     try:
         eventRepo = EventRepository(session)

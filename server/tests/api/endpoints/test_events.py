@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
+from tests.utils import createCalendar
 
 from app.api.repos.event_repo import (
     EventRepository,
@@ -413,6 +414,47 @@ async def test_updateEvent_recurring(user: User, session, async_client):
 
     # The overriden event should be removed.
     assert len(events) == 5
+
+
+@pytest.mark.asyncio
+async def test_moveEvent_single(user, session, async_client):
+    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+    start = datetime.now()
+    end = start + timedelta(hours=1)
+    event = createEvent(calendar, start, end)
+    session.add(event)
+    await session.commit()
+
+    # Move in same calendar returns error message.
+    resp = await async_client.post(
+        f'/api/v1/calendars/{calendar.id}/events/{event.id}/move',
+        headers={'Authorization': getAuthToken(user)},
+        data=json.dumps({'calendar_id': calendar.id}),
+    )
+    assert resp.status_code == 400
+
+    # Move to different calendar
+    cal2 = createCalendar(user, 'calendar-id-2')
+
+    resp = await async_client.post(
+        f'/api/v1/calendars/{calendar.id}/events/{event.id}/move',
+        headers={'Authorization': getAuthToken(user)},
+        data=json.dumps({'calendar_id': cal2.id}),
+    )
+
+    # Make sure it's not in the old calendar
+    resp = await async_client.get(
+        f'/api/v1/calendars/{calendar.id}/events/{event.id}',
+        headers={'Authorization': getAuthToken(user)},
+    )
+    assert resp.status_code == 404
+
+    # Make sure we can fetch from the new calendar
+    resp = await async_client.get(
+        f'/api/v1/calendars/{cal2.id}/events/{event.id}',
+        headers={'Authorization': getAuthToken(user)},
+    )
+    assert resp.json().get('id') == event.id
 
 
 @pytest.mark.asyncio
