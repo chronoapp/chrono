@@ -23,6 +23,7 @@ class CalendarBaseVM(BaseModel):
     timezone: Optional[str]
     access_role: Optional[str] = Field(alias='accessRole')
     source: CalendarSource
+    email: Optional[str]
 
     @validator('timezone')
     def validateTimezone(cls, timezone: Optional[str]):
@@ -76,7 +77,7 @@ class CalendarRepo:
 
         calendarId = shortuuid.uuid()
         baseCalendar = Calendar(
-            calendarId, calendar.summary, calendar.description, calendar.timezone
+            calendarId, calendar.summary, calendar.description, calendar.timezone, user.email
         )
 
         userCalendar = UserCalendar(

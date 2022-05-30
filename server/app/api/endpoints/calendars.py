@@ -58,6 +58,8 @@ async def postCalendar(
     if calendar.source == 'google':
         resp = gcal.createCalendar(user, userCalendar)
         userCalendar.google_id = resp['id']
+    else:
+        userCalendar.calendar.email_ = user.email
 
     await session.commit()
 
