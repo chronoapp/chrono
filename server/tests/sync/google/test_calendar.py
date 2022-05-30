@@ -281,10 +281,7 @@ async def test_syncEventsToDb_eventInMultipleCalendars(user: User, session: Sess
         False,
     )
     readOnlyCalendar.calendar = Calendar(
-        'calendar-id-2',
-        'Another calendar',
-        'description',
-        'America/Toronto',
+        'calendar-id-2', 'Another calendar', 'description', 'America/Toronto', 'test@example.com'
     )
     user.calendars.append(readOnlyCalendar)
 

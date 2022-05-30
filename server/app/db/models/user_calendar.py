@@ -88,3 +88,7 @@ class UserCalendar(Base):
             return 'google'
         else:
             return 'timecouncil'
+
+    @property
+    def email(self) -> str:
+        return self.calendar.email

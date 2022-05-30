@@ -139,7 +139,11 @@ def syncGoogleCalendars(user: User, calendarList):
         else:
             calId = shortuuid.uuid()
             calendar = Calendar(
-                calId, calSummary, calendarItem.get('description'), calendarItem.get('timeZone')
+                calId,
+                calSummary,
+                calendarItem.get('description'),
+                calendarItem.get('timeZone'),
+                None,
             )
             calendar.google_id = gCalId
 
