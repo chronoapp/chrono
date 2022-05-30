@@ -473,7 +473,7 @@ async def getRecurringEventWithParent(
     """
     parts = eventId.split('_')
     if not len(parts) >= 2:
-        raise InputError(f'Invalid Event ID: {eventId}')
+        raise EventNotFoundError(f'Event ID {eventId} not found.')
 
     parentId = ''.join(parts[:-1])
 
@@ -481,7 +481,7 @@ async def getRecurringEventWithParent(
     parentEvent = (await session.execute(stmt)).scalar()
 
     if not parentEvent:
-        raise InputError(f'Invalid Event ID: {eventId}')
+        raise EventNotFoundError(f'Event ID {eventId} not found.')
 
     eventInDbVM = getRecurringEvent(calendar, eventId, parentEvent)
 
@@ -510,10 +510,10 @@ def getRecurringEvent(calendar: UserCalendar, eventId: str, parentEvent: Event) 
             if e.id == eventId:
                 return e
 
-        raise InputError('Invalid Event ID.')
+        raise InputError(f'Invalid Event ID: {eventId}')
 
     except ValueError:
-        raise InputError('Invalid Event ID.')
+        raise InputError(f'Invalid Event ID: {eventId}')
 
 
 async def getAllExpandedRecurringEventsList(

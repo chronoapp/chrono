@@ -290,7 +290,6 @@ async def autoLabelEvents(event: Event, user: User, session: AsyncSession):
             await session.refresh(event)
 
             for rule in labelRules:
-                print(rule.label)
                 if rule.label not in event.labels:
                     event.labels.append(rule.label)
 
