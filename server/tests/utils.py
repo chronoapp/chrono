@@ -13,12 +13,7 @@ def createCalendar(
     user: User,
     calendarId: str,
 ):
-    calendar = Calendar(
-        calendarId,
-        'summary',
-        'description',
-        'America/Toronto',
-    )
+    calendar = Calendar(calendarId, 'summary', 'description', 'America/Toronto', 'test@example.com')
     userCalendar = UserCalendar(
         calendarId,
         None,

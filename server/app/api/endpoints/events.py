@@ -13,6 +13,7 @@ from app.api.repos.event_repo import (
 )
 from app.api.repos.calendar_repo import CalendarRepo
 from app.api.repos.exceptions import (
+    RepoError,
     EventRepoError,
     InputError,
     NotFoundError,
@@ -134,6 +135,8 @@ async def getCalendarEvent(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
     except EventRepoError as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except RepoError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.put('/calendars/{calendar_id}/events/{event_id}', response_model=EventInDBVM)
@@ -167,7 +170,7 @@ async def updateCalendarEvent(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.post('/calendars/{calendarId}/events/{eventId}/move')
+@router.post('/calendars/{calendarId}/events/{eventId}/move', response_model=EventInDBVM)
 async def moveEventCalendar(
     calendarId: str,
     eventId: str,

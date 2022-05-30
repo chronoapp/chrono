@@ -70,10 +70,7 @@ async def user(session):
     user = User('test@example.com', 'Test User', None)
 
     calendar = Calendar(
-        'calendar-id',
-        'summary',
-        'description',
-        'America/Toronto',
+        'calendar-id', 'summary', 'description', 'America/Toronto', 'test@example.com'
     )
     userCalendar = UserCalendar(
         'calendar-id',
