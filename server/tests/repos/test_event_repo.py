@@ -11,7 +11,8 @@ from app.api.repos.event_repo import (
     getRecurringEvent,
     InputError,
     getAllExpandedRecurringEventsList,
-    getRecurringEventWithParent,
+    EventRepoError,
+    EventNotFoundError,
 )
 from app.api.repos.event_utils import EventBaseVM, createOrUpdateEvent, getRecurringEventId
 
@@ -109,7 +110,8 @@ async def test_event_repo_getRecurringEventWithParent(user, session):
     eventId = getRecurringEventId(
         recurringEvent.id, datetime.fromisoformat('2020-12-02T12:00:00'), False
     )
-    event, parent = await getRecurringEventWithParent(userCalendar, eventId, session)
+    eventRepo = EventRepository(session)
+    event, parent = await eventRepo.getRecurringEventWithParent(userCalendar, eventId, session)
 
     assert event.recurring_event_id == parent.id
     assert parent.id == recurringEvent.id
@@ -284,14 +286,58 @@ async def test_event_repo_moveEvent(user, session):
     # Move the event to second calendar.
     eventRepo = EventRepository(session)
 
-    eventResult = await eventRepo.getEvent(user, userCalendar, eventId)
-    assert eventResult is not None
+    event = await eventRepo.getEvent(user, userCalendar, eventId)
+    assert event is not None
 
-    event = await eventRepo.moveEvent(user, eventId, userCalendar.id, userCalendar2.id)
+    await eventRepo.moveEvent(user, eventId, userCalendar.id, userCalendar2.id)
 
     # Ensure it exists in the new calendar
-    eventResult = await eventRepo.getEvent(user, userCalendar, eventId)
-    assert eventResult is None
+    event = await eventRepo.getEvent(user, userCalendar, eventId)
+    assert event is None
 
-    eventResult = await eventRepo.getEvent(user, userCalendar2, eventId)
-    assert eventResult.id == eventId
+    event = await eventRepo.getEvent(user, userCalendar2, eventId)
+    assert event.id == eventId
+
+
+@pytest.mark.asyncio
+async def test_event_repo_moveEvent_recurring(user, session):
+    """Moved the event from one calendar to another.
+    Makes sure all the recurring events instances are expanded.
+    """
+    userCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+
+    # Create a new calendar
+    userCalendar2 = createCalendar(user, 'calendar-id-2')
+
+    # Create an event in the first calendar.
+    start = datetime.fromisoformat('2020-01-01T12:00:00-05:00')
+    end = start + timedelta(hours=1)
+    event = createEvent(
+        userCalendar,
+        start,
+        end,
+        title='Do stuff',
+        recurrences=['RRULE:FREQ=DAILY;UNTIL=20200107T120000Z'],
+    )
+    session.add(event)
+    await session.commit()
+    baseEventId = event.id
+
+    # Make sure we can't move an instance of a recurring event.
+    events = await getAllExpandedRecurringEventsList(
+        user, userCalendar, start, start + timedelta(days=1), session
+    )
+    eventInstanceId = events[0].id
+    eventRepo = EventRepository(session)
+
+    with pytest.raises(EventRepoError):
+        await eventRepo.moveEvent(user, eventInstanceId, userCalendar.id, userCalendar2.id)
+
+    # Move the base event to second calendar.
+    await eventRepo.moveEvent(user, baseEventId, userCalendar.id, userCalendar2.id)
+
+    with pytest.raises(EventNotFoundError):
+        event = await eventRepo.getEventVM(user, userCalendar, eventInstanceId)
+
+    event = await eventRepo.getEventVM(user, userCalendar2, eventInstanceId)
+    assert event.id == eventInstanceId

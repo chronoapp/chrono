@@ -159,7 +159,7 @@ class EventRepository:
             return EventInDBVM.from_orm(eventInDB)
         else:
             # Check if it's a virtual event within a recurrence.
-            event, _ = await getRecurringEventWithParent(calendar, eventId, self.session)
+            event, _ = await self.getRecurringEventWithParent(calendar, eventId, self.session)
 
             return event
 
@@ -222,7 +222,7 @@ class EventRepository:
         else:
             # Virtual recurring event instance.
             try:
-                eventVM, parentEvent = await getRecurringEventWithParent(
+                eventVM, parentEvent = await self.getRecurringEventWithParent(
                     userCalendar, eventId, self.session
                 )
 
@@ -407,6 +407,31 @@ class EventRepository:
 
             event.participants.append(participant)
 
+    async def getRecurringEventWithParent(
+        self, calendar: UserCalendar, eventId: str, session: AsyncSession
+    ) -> Tuple[EventInDBVM, Event]:
+        """Returns the parent from the virtual eventId.
+        Returns tuple of (parent event, datetime).
+
+        A recurring event will always have an ID of {event-id}_{datetime}.
+        For example, M8QdZr4AxuZ5snRJ932prW_20220124T150000Z.
+
+        Throws InputError if it's not a valid event ID.
+        """
+        parts = eventId.split('_')
+        if not len(parts) >= 2:
+            raise EventNotFoundError(f'Event ID {eventId} not found.')
+
+        parentId = ''.join(parts[:-1])
+        parentEvent = await self.getEvent(calendar.user, calendar, parentId)
+
+        if not parentEvent:
+            raise EventNotFoundError(f'Event ID {eventId} not found.')
+
+        eventInDbVM = getRecurringEvent(calendar, eventId, parentEvent)
+
+        return eventInDbVM, parentEvent
+
 
 async def getCombinedLabels(
     user: User, labelVMs: List[LabelInDbVM], session: AsyncSession
@@ -457,34 +482,6 @@ async def createOverrideDeletedEvent(
     )
 
     return event
-
-
-async def getRecurringEventWithParent(
-    calendar: UserCalendar, eventId: str, session: AsyncSession
-) -> Tuple[EventInDBVM, Event]:
-    """Returns the parent from the virtual eventId.
-    Returns tuple of (parent event, datetime).
-
-    A recurring event will always have an ID of {event-id}_{datetime}.
-    For example, M8QdZr4AxuZ5snRJ932prW_20220124T150000Z.
-
-    Throws InputError if it's not a valid event ID.
-    """
-    parts = eventId.split('_')
-    if not len(parts) >= 2:
-        raise EventNotFoundError(f'Event ID {eventId} not found.')
-
-    parentId = ''.join(parts[:-1])
-
-    stmt = select(Event).where(Calendar.id == calendar.id, Event.id == parentId)
-    parentEvent = (await session.execute(stmt)).scalar()
-
-    if not parentEvent:
-        raise EventNotFoundError(f'Event ID {eventId} not found.')
-
-    eventInDbVM = getRecurringEvent(calendar, eventId, parentEvent)
-
-    return eventInDbVM, parentEvent
 
 
 def getRecurringEvent(calendar: UserCalendar, eventId: str, parentEvent: Event) -> EventInDBVM:
