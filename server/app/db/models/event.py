@@ -2,7 +2,7 @@ import re
 import shortuuid
 
 from datetime import datetime
-from typing import Optional, List, Literal, TYPE_CHECKING
+from typing import Optional, List, Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import (
@@ -10,7 +10,6 @@ from sqlalchemy import (
     Integer,
     String,
     ForeignKey,
-    Table,
     Text,
     DateTime,
     ARRAY,
@@ -18,9 +17,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship, backref
 
 from app.db.base_class import Base
-
-if TYPE_CHECKING:
-    from app.db.models import UserCalendar, Calendar
+from app.db.models.event_label import event_label_association_table
 
 
 EventStatus = Literal['deleted', 'tentative', 'active']
@@ -39,23 +36,6 @@ def isValidTimezone(timeZone: str):
         return True
     except ZoneInfoNotFoundError:
         return False
-
-
-event_label_association_table = Table(
-    'event_label',
-    Base.metadata,
-    Column('event_id', String, ForeignKey('event.id', ondelete='CASCADE')),
-    Column('label_id', Integer, ForeignKey('label.id', ondelete='CASCADE')),
-)
-
-
-class EventCalendar(Base):
-    __tablename__ = 'event_calendar'
-    event_id = Column(String, ForeignKey('event.id', ondelete='CASCADE'), primary_key=True)
-    calendar_id = Column(String, ForeignKey('calendar.id', ondelete='CASCADE'), primary_key=True)
-
-    event = relationship("Event", back_populates="calendars")
-    calendar = relationship("Calendar", back_populates="events")
 
 
 class Event(Base):

@@ -14,7 +14,6 @@ from app.api.repos.event_repo import (
     getRecurringEventWithParent,
 )
 from app.api.repos.event_utils import EventBaseVM, createOrUpdateEvent, getRecurringEventId
-from app.db.models.event import EventCalendar
 
 
 @pytest.mark.asyncio

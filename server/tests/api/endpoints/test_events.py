@@ -20,8 +20,8 @@ from app.api.endpoints.authentication import getAuthToken
 from app.db.models.event_participant import EventParticipant
 
 from tests.utils import createEvent
-from app.db.models import User, Event, Contact
-from app.db.models.event import EventCalendar, stripParticipants
+from app.db.models import User, Event, Contact, EventCalendar
+from app.db.models.event import stripParticipants
 
 
 @pytest.mark.asyncio

@@ -7,7 +7,8 @@ from app.db.base_class import Base
 from app.db.models.user_credentials import ProviderType
 from app.db.models.user_calendar import UserCalendar
 from app.db.models.calendar import Calendar
-from app.db.models.event import Event, EventCalendar
+from app.db.models.event import Event
+from app.db.models.event_calendar import EventCalendar
 
 
 class User(Base):
