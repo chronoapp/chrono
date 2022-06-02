@@ -16,8 +16,7 @@ from sqlalchemy import text, desc
 
 from app.core.logger import logger
 from app.db.sql.event_search import EVENT_SEARCH_QUERY
-from app.db.models import Event, User, UserCalendar, Calendar, EventParticipant
-from app.db.models.event import EventCalendar
+from app.db.models import Event, User, UserCalendar, Calendar, EventParticipant, EventCalendar
 from app.api.repos.contact_repo import ContactRepository
 from app.api.repos.calendar_repo import CalendarRepo
 from app.api.repos.event_utils import (

@@ -4,7 +4,8 @@ from typing import Optional, List
 from datetime import datetime
 
 from app.db.models.user import User
-from app.db.models.event import Event, EventCalendar
+from app.db.models.event import Event
+from app.db.models.event_calendar import EventCalendar
 from app.db.models.user_calendar import UserCalendar
 from app.db.models.calendar import Calendar
 
