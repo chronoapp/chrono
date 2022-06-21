@@ -43,7 +43,7 @@ class Calendar(Base):
         id: str,
         summary: Optional[str],
         description: Optional[str],
-        timezone: str,
+        timezone: Optional[str],
         email: Optional[str],
     ):
         self.id = id
