@@ -401,7 +401,7 @@ class EventRepository:
                 existingContactIds.add(existingContact.id)
 
             participant = EventParticipant(
-                participantVM.email, participantVM.contact_id, participantVM.response_status
+                participantVM.email, None, participantVM.contact_id, participantVM.response_status
             )
             participant.contact = existingContact
 

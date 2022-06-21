@@ -329,7 +329,7 @@ async def test_updateEvent_withParticipants(user: User, session, async_client):
 
     await session.commit()
 
-    participant = EventParticipant(contact.email, contact.id)
+    participant = EventParticipant(contact.email, None, contact.id)
     participant.event_id = event1.id
     session.add(participant)
 

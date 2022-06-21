@@ -20,11 +20,14 @@ class EventParticipant(Base):
 
     id = Column(String(255), primary_key=True, default=shortuuid.uuid)
     email_ = Column(String(255), nullable=True, index=True)
+    display_name_ = Column(String(255), nullable=True)
 
     event_id = Column(String(255), ForeignKey('event.id'), nullable=True)
-    contact_id = Column(String(255), ForeignKey('contact.id'), nullable=True)
-    contact = relationship('Contact', lazy="joined", backref="participating_events")
 
+    contact_id = Column(String(255), ForeignKey('contact.id'), nullable=True)
+    contact = relationship(
+        'Contact', lazy="joined", backref="participating_events", foreign_keys=[contact_id]
+    )
     response_status = Column(String(255), nullable=False, default='needsAction')
 
     @property
@@ -36,6 +39,8 @@ class EventParticipant(Base):
 
     @property
     def display_name(self) -> Optional[str]:
+        if self.display_name_:
+            return self.display_name_
         if self.contact:
             return self.contact.display_name
         else:
@@ -53,10 +58,12 @@ class EventParticipant(Base):
     def __init__(
         self,
         email: Optional[str],
+        displayName: Optional[str],
         contactId: Optional[str],
         responseStatus: ResponseStatus = 'needsAction',
     ):
         self.email_ = email
+        self.display_name_ = displayName
         self.contact_id = contactId
         self.response_status = responseStatus
 

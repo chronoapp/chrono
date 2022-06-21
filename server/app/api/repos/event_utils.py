@@ -176,7 +176,7 @@ def createOrUpdateEvent(
     else:
         eventDb.title = eventVM.title or eventDb.title
         eventDb.description = eventVM.description or eventDb.description
-        eventDb.start = eventVM.start or eventVM.start
+        eventDb.start = eventVM.start or eventDb.start
         eventDb.end = eventVM.end or eventDb.end
         eventDb.start_day = eventVM.start_day or eventDb.start_day
         eventDb.end_day = eventVM.end_day or eventDb.end_day
