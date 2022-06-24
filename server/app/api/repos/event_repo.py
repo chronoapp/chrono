@@ -476,6 +476,7 @@ async def createOverrideDeletedEvent(
         originalStart,
         originalStart.strftime('%Y-%m-%d') if parentEvent.all_day else None,
         parentEvent.time_zone,
+        None,
         overrideId=eventId,
         recurringEventId=parentEvent.id,
         status='deleted',

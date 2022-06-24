@@ -18,6 +18,7 @@ from sqlalchemy.orm import relationship, backref
 
 from app.db.base_class import Base
 from app.db.models.event_label import event_label_association_table
+from app.db.models.event_participant import EventParticipant
 
 
 EventStatus = Literal['deleted', 'tentative', 'active']
@@ -39,7 +40,10 @@ def isValidTimezone(timeZone: str):
 
 
 class Event(Base):
-    """Recurring events are modelled as an adjacency list."""
+    """
+    Cloned in attendee's calendar after inviting them to the event.
+    Changes to the organizer calendar are propagated to attendee copies.
+    """
 
     __tablename__ = 'event'
     id = Column(String, primary_key=True, default=shortuuid.uuid, nullable=False)
@@ -51,6 +55,7 @@ class Event(Base):
     user_id = Column(Integer, ForeignKey('user.id', ondelete='SET NULL'), nullable=True)
     user = relationship('User', backref=backref('events', lazy='dynamic'))
 
+    # TODO: Add calendar_id as a primary key
     calendars = relationship(
         'EventCalendar',
         lazy='dynamic',
@@ -81,6 +86,21 @@ class Event(Base):
         "EventParticipant",
         lazy='joined',
         cascade="all, delete-orphan",
+        foreign_keys='[EventParticipant.event_id]',
+    )
+
+    creator_id = Column(
+        String(255),
+        ForeignKey('event_participant.id', name='event_creator_fk', use_alter=True),
+        nullable=True,
+    )
+    creator = relationship(
+        'EventParticipant',
+        lazy='joined',
+        backref="created_event",
+        uselist=False,
+        foreign_keys=[creator_id],
+        primaryjoin="EventParticipant.id==Event.creator_id",
     )
 
     # Recurring Events.
@@ -127,6 +147,7 @@ class Event(Base):
         originalStart: Optional[datetime],
         originalStartDay: Optional[str],
         originalTimezone: Optional[str],
+        creator: Optional[EventParticipant],
         overrideId: Optional[str] = None,
         status: EventStatus = 'active',
         recurringEventId: Optional[str] = None,
@@ -145,6 +166,7 @@ class Event(Base):
         self.recurrences = recurrences
         self.recurring_event_id = recurringEventId
         self.status = status
+        self.creator = creator
 
         self.original_start = originalStart
         self.original_start_day = originalStartDay

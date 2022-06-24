@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, validator
 from app.api.endpoints.labels import LabelInDbVM
-from app.db.models import Event
+from app.db.models import Event, EventParticipant
 from app.db.models.event import EventStatus
 from app.db.models.event_participant import ResponseStatus
 
@@ -61,6 +61,7 @@ class EventBaseVM(BaseModel):
     recurring_event_id: Optional[str]
 
     participants: List[EventParticipantVM] = []
+    creator: Optional[EventParticipantVM]
 
     # Read only fields.
     original_start: Optional[datetime]
@@ -154,6 +155,7 @@ def createOrUpdateEvent(
     googleId: Optional[str] = None,
 ) -> Event:
     recurrences = None if eventVM.recurring_event_id else eventVM.recurrences
+    creator = EventParticipant(eventVM.creator.email, None, None) if eventVM.creator else None
 
     if not eventDb:
         return Event(
@@ -169,6 +171,7 @@ def createOrUpdateEvent(
             eventVM.original_start,
             eventVM.original_start_day,
             eventVM.original_timezone,
+            creator,
             status=eventVM.status,
             recurringEventId=eventVM.recurring_event_id,
             overrideId=overrideId,
@@ -183,6 +186,8 @@ def createOrUpdateEvent(
         eventDb.time_zone = eventVM.timezone
         eventDb.recurring_event_id = eventVM.recurring_event_id or eventDb.recurring_event_id
         eventDb.recurrences = recurrences or eventDb.recurrences
+        if not eventDb.creator:
+            eventDb.creator = creator
 
         return eventDb
 
