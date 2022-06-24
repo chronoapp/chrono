@@ -341,6 +341,7 @@ async def syncDeletedEvent(
             startDt,
             startDay,
             originalTimezone,
+            None,
             status=convertStatus(eventItem['status']),
         )
         event.id = recurringEventId
@@ -366,6 +367,7 @@ async def getOrCreateBaseRecurringEvent(
     if not baseRecurringEvent:
         baseRecurringEvent = Event(
             googleRecurringEventId,
+            None,
             None,
             None,
             None,
@@ -502,6 +504,13 @@ def googleEventToEventVM(calendarId: str, eventItem: Dict[str, Any]) -> GoogleEv
         )
         participants.append(participant)
 
+    creator = eventItem.get('creator')
+    creatorVM = (
+        EventParticipantVM(email=creator.get('email'), display_name=creator.get('displayName'))
+        if creator
+        else None
+    )
+
     eventVM = GoogleEventVM(
         g_id=eventId,
         title=eventSummary,
@@ -518,6 +527,7 @@ def googleEventToEventVM(calendarId: str, eventItem: Dict[str, Any]) -> GoogleEv
         original_start=originalStartDateTime,
         original_start_day=originalStartDay,
         participants=participants,
+        creator=creatorVM,
     )
     return eventVM
 

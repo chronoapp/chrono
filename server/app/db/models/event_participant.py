@@ -19,10 +19,10 @@ class EventParticipant(Base):
     __tablename__ = 'event_participant'
 
     id = Column(String(255), primary_key=True, default=shortuuid.uuid)
+    event_id = Column(String(255), ForeignKey('event.id'), nullable=True)
+
     email_ = Column(String(255), nullable=True, index=True)
     display_name_ = Column(String(255), nullable=True)
-
-    event_id = Column(String(255), ForeignKey('event.id'), nullable=True)
 
     contact_id = Column(String(255), ForeignKey('contact.id'), nullable=True)
     contact = relationship(
