@@ -56,6 +56,7 @@
 
 .cal-time-content-zone {
   @include cal-time-content;
+  overflow-y: hidden;
 }
 
 .cal-time-content {
