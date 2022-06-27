@@ -1,8 +1,8 @@
 """init
 
-Revision ID: d79eac5a965c
+Revision ID: 4338ced04a1d
 Revises: 
-Create Date: 2022-01-14 08:08:18.946930
+Create Date: 2022-06-26 18:57:53.691336
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'd79eac5a965c'
+revision = '4338ced04a1d'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -24,6 +24,7 @@ def upgrade():
     sa.Column('summary', sa.String(length=255), nullable=True),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('timezone', sa.String(length=255), nullable=True),
+    sa.Column('email_', sa.String(length=255), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('google_id'),
     sa.UniqueConstraint('id')
@@ -53,9 +54,10 @@ def upgrade():
     )
     op.create_index(op.f('ix_contact_email'), 'contact', ['email'], unique=False)
     op.create_table('event',
+    sa.Column('pk', sa.String(), nullable=False),
     sa.Column('id', sa.String(), nullable=False),
+    sa.Column('calendar_id', sa.String(length=255), nullable=True),
     sa.Column('g_id', sa.String(length=255), nullable=True),
-    sa.Column('user_id', sa.Integer(), nullable=True),
     sa.Column('title', sa.String(length=255), nullable=True),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('status', sa.String(length=20), server_default='active', nullable=True),
@@ -64,16 +66,22 @@ def upgrade():
     sa.Column('start_day', sa.String(length=10), nullable=True),
     sa.Column('end_day', sa.String(length=10), nullable=True),
     sa.Column('time_zone', sa.String(length=255), nullable=True),
+    sa.Column('creator_id', sa.String(length=255), nullable=True),
     sa.Column('recurrences', sa.ARRAY(sa.String()), nullable=True),
     sa.Column('recurring_event_id', sa.String(), nullable=True),
+    sa.Column('recurring_event_calendar_id', sa.String(), nullable=True),
     sa.Column('original_start', sa.DateTime(timezone=True), nullable=True),
     sa.Column('original_start_day', sa.String(length=10), nullable=True),
     sa.Column('original_timezone', sa.String(length=255), nullable=True),
-    sa.ForeignKeyConstraint(['recurring_event_id'], ['event.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='SET NULL'),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('g_id')
+    sa.ForeignKeyConstraint(['calendar_id'], ['calendar.id'], name='event_calendar_id_fk'),
+    sa.ForeignKeyConstraint(['creator_id'], ['event_participant.id'], name='event_creator_fk', use_alter=True),
+    sa.ForeignKeyConstraint(['recurring_event_id', 'recurring_event_calendar_id'], ['event.id', 'event.calendar_id'], ),
+    sa.PrimaryKeyConstraint('pk'),
+    sa.UniqueConstraint('id', 'calendar_id', name='uix_calendar_event_id')
     )
+    op.create_index(op.f('ix_event_g_id'), 'event', ['g_id'], unique=False)
+    op.create_index(op.f('ix_event_id'), 'event', ['id'], unique=False)
+    op.create_index(op.f('ix_event_recurring_event_calendar_id'), 'event', ['recurring_event_calendar_id'], unique=False)
     op.create_index(op.f('ix_event_recurring_event_id'), 'event', ['recurring_event_id'], unique=False)
     op.create_index(op.f('ix_event_title'), 'event', ['title'], unique=False)
     op.create_table('label',
@@ -104,7 +112,8 @@ def upgrade():
     sa.ForeignKeyConstraint(['google_id'], ['calendar.google_id'], ),
     sa.ForeignKeyConstraint(['id'], ['calendar.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('id')
     )
     op.create_table('user_credentials',
     sa.Column('user_id', sa.Integer(), nullable=False),
@@ -113,26 +122,21 @@ def upgrade():
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('user_id', 'provider')
     )
-    op.create_table('event_calendar',
-    sa.Column('event_id', sa.String(), nullable=True),
-    sa.Column('calendar_id', sa.String(), nullable=True),
-    sa.ForeignKeyConstraint(['calendar_id'], ['calendar.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['event_id'], ['event.id'], ondelete='CASCADE')
-    )
     op.create_table('event_label',
-    sa.Column('event_id', sa.String(), nullable=True),
+    sa.Column('event_pk', sa.String(), nullable=True),
     sa.Column('label_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['event_id'], ['event.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['event_pk'], ['event.pk'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['label_id'], ['label.id'], ondelete='CASCADE')
     )
     op.create_table('event_participant',
     sa.Column('id', sa.String(length=255), nullable=False),
+    sa.Column('event_pk', sa.String(length=255), nullable=True),
     sa.Column('email_', sa.String(length=255), nullable=True),
-    sa.Column('event_id', sa.String(length=255), nullable=True),
+    sa.Column('display_name_', sa.String(length=255), nullable=True),
     sa.Column('contact_id', sa.String(length=255), nullable=True),
     sa.Column('response_status', sa.String(length=255), nullable=False),
     sa.ForeignKeyConstraint(['contact_id'], ['contact.id'], ),
-    sa.ForeignKeyConstraint(['event_id'], ['event.id'], ),
+    sa.ForeignKeyConstraint(['event_pk'], ['event.pk'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_event_participant_email_'), 'event_participant', ['email_'], unique=False)
@@ -163,13 +167,15 @@ def downgrade():
     op.drop_index(op.f('ix_event_participant_email_'), table_name='event_participant')
     op.drop_table('event_participant')
     op.drop_table('event_label')
-    op.drop_table('event_calendar')
     op.drop_table('user_credentials')
     op.drop_table('user_calendar')
     op.drop_index(op.f('ix_label_key'), table_name='label')
     op.drop_table('label')
     op.drop_index(op.f('ix_event_title'), table_name='event')
     op.drop_index(op.f('ix_event_recurring_event_id'), table_name='event')
+    op.drop_index(op.f('ix_event_recurring_event_calendar_id'), table_name='event')
+    op.drop_index(op.f('ix_event_id'), table_name='event')
+    op.drop_index(op.f('ix_event_g_id'), table_name='event')
     op.drop_table('event')
     op.drop_index(op.f('ix_contact_email'), table_name='contact')
     op.drop_table('contact')
