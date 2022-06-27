@@ -28,8 +28,11 @@ EventStatus = Literal['deleted', 'tentative', 'active']
 TAGGED_INPUT_PATTERN = r'@\[([\w\d\.\-\_ \@]+)\]\(\[id:([\w]+)\]\[type:([\w]+)\]\)'
 
 
-def stripParticipants(title: str):
-    return re.sub(TAGGED_INPUT_PATTERN, r'\1', title)
+def stripParticipants(title: Optional[str]):
+    if title:
+        return re.sub(TAGGED_INPUT_PATTERN, r'\1', title)
+    else:
+        return None
 
 
 def isValidTimezone(timeZone: str):
