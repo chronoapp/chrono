@@ -6,7 +6,6 @@ from .user_calendar import UserCalendar, AccessRole
 
 from .calendar import Calendar
 from .webhook import Webhook
-from .event_calendar import EventCalendar
 from .event import Event
 from .event_participant import EventParticipant
 from .label import Label

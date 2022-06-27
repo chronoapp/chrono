@@ -16,7 +16,7 @@ from sqlalchemy import text, desc
 
 from app.core.logger import logger
 from app.db.sql.event_search import EVENT_SEARCH_QUERY
-from app.db.models import Event, User, UserCalendar, Calendar, EventParticipant, EventCalendar
+from app.db.models import Event, User, UserCalendar, Calendar, EventParticipant
 from app.api.repos.contact_repo import ContactRepository
 from app.api.repos.calendar_repo import CalendarRepo
 from app.api.repos.event_utils import (
@@ -42,8 +42,7 @@ def getBaseEventsStmt():
         select(Event)
         .options(selectinload(Event.participants))
         .options(selectinload(Event.labels))
-        .join(Event.calendars)
-        .join(EventCalendar.calendar)
+        .join(Event.calendar)
         .join(Calendar.user_calendars)
         .join(User)
     )
@@ -57,14 +56,6 @@ class EventRepository:
 
     def __init__(self, session: AsyncSession):
         self.session = session
-
-    async def isMember(self, calendarId: str, eventId: str):
-        existsQuery = select(exists(EventCalendar)).where(
-            EventCalendar.event_id == eventId,
-            EventCalendar.calendar_id == calendarId,
-        )
-
-        return (await self.session.execute(existsQuery)).scalar()
 
     async def getRecurringEvents(self, user: User, calendarId: str, endDate: datetime):
         stmt = (
@@ -129,8 +120,8 @@ class EventRepository:
 
         return allEvents
 
-    async def getGoogleEvent(self, googleEventId: str) -> Optional[Event]:
-        stmt = select(Event).where(Event.g_id == googleEventId)
+    async def getGoogleEvent(self, calendar: UserCalendar, googleEventId: str) -> Optional[Event]:
+        stmt = getBaseEventsStmt().where(Calendar.id == calendar.id, Event.g_id == googleEventId)
         googleEvent = (await self.session.execute(stmt)).scalar()
 
         return googleEvent
@@ -175,12 +166,8 @@ class EventRepository:
             event.original_start_day = event.start_day
             event.original_timezone = event.timezone
 
-        eventDb = createOrUpdateEvent(None, event)
-
-        # Attach event to calendar
-        ec = EventCalendar()
-        ec.event = eventDb
-        userCalendar.calendar.events.append(ec)
+        eventDb = createOrUpdateEvent(userCalendar, None, event)
+        userCalendar.calendar.events.append(eventDb)
 
         eventDb.labels = await getCombinedLabels(user, event.labels, self.session)
         await self.updateEventParticipants(user, eventDb, event.participants)
@@ -194,7 +181,7 @@ class EventRepository:
 
     async def deleteEvent(self, user: User, userCalendar: UserCalendar, eventId: str) -> Event:
         """
-        DONOTSHIP: Make it so it updates the status the calendar -> event mapping.
+        TODO: Propagate changes to all copies of the event.
         """
         if not userCalendar.canWriteEvent():
             raise RepoError('User cannot write event.')
@@ -205,10 +192,7 @@ class EventRepository:
             event.status = 'deleted'
 
             # If the parent is deleted, we can delete all child event.
-            # TODO: Foreign keys?
-            stmt = delete(Event).where(
-                and_(Event.user_id == user.id, Event.recurring_event_id == event.id)
-            )
+            stmt = delete(Event).where(Event.recurring_event_id == event.id)
             await self.session.execute(stmt)
 
             # Delete from Google
@@ -229,7 +213,9 @@ class EventRepository:
                 eventOverride = (
                     await self.session.execute(
                         select(Event).where(
-                            Event.recurring_event_id == parentEvent.id, Event.id == eventId
+                            Event.recurring_event_id == parentEvent.id,
+                            Event.recurring_event_calendar_id == userCalendar.id,
+                            Event.id == eventId,
                         )
                     )
                 ).scalar()
@@ -256,10 +242,11 @@ class EventRepository:
     async def updateEvent(
         self, user: User, userCalendar: UserCalendar, eventId: str, event: EventBaseVM
     ) -> Event:
-        curEvent = await self.getEvent(user, userCalendar, eventId)
+        """
+        TODO: Check for permissions.
+        """
 
-        if not event.recurring_event_id and not await self.isMember(userCalendar.id, eventId):
-            raise EventRepoError("Invalid calendar event.")
+        curEvent = await self.getEvent(user, userCalendar, eventId)
 
         if curEvent and not userCalendar.canWriteEvent():
             raise EventRepoError("Can not update event with this calendar.")
@@ -274,9 +261,6 @@ class EventRepository:
 
             if not parentEvent:
                 raise EventNotFoundError(f'Invalid parent event {event.recurring_event_id}.')
-
-            if not await self.isMember(userCalendar.id, parentEvent.id):
-                raise EventRepoError("Invalid calendar event.")
 
             try:
                 eventVM = getRecurringEvent(userCalendar, eventId, parentEvent)
@@ -298,13 +282,15 @@ class EventRepository:
             existingOverrideInstance = (
                 await self.session.execute(
                     select(Event).where(
-                        Event.recurring_event_id == parentEvent.id, Event.id == eventId
+                        Event.recurring_event_id == parentEvent.id,
+                        Event.recurring_event_calendar_id == parentEvent.calendar_id,
+                        Event.id == eventId,
                     )
                 )
             ).scalar()
 
             updatedEvent = createOrUpdateEvent(
-                existingOverrideInstance, event, overrideId=eventId, googleId=googleId
+                userCalendar, existingOverrideInstance, event, overrideId=eventId, googleId=googleId
             )
             self.session.add(updatedEvent)
 
@@ -317,15 +303,18 @@ class EventRepository:
             # TODO: Only delete the overrides that no longer exist.
             if curEvent.recurrences != event.recurrences:
                 stmt = delete(Event).where(
-                    and_(Event.user_id == user.id, Event.recurring_event_id == curEvent.id)
+                    and_(
+                        Event.recurring_event_id == curEvent.id,
+                        Event.recurring_event_calendar_id == curEvent.calendar_id,
+                    )
                 )
                 await self.session.execute(stmt)
 
-            updatedEvent = createOrUpdateEvent(curEvent, event)
+            updatedEvent = createOrUpdateEvent(userCalendar, curEvent, event)
 
         # Update normal event.
         else:
-            updatedEvent = createOrUpdateEvent(curEvent, event)
+            updatedEvent = createOrUpdateEvent(userCalendar, curEvent, event)
 
         updatedEvent.labels.clear()
         updatedEvent.labels = await getCombinedLabels(user, event.labels, self.session)
@@ -353,8 +342,8 @@ class EventRepository:
             raise EventRepoError('Cannot move instance of recurring event.')
 
         stmt = (
-            update(EventCalendar)
-            .where(EventCalendar.event_id == eventId, EventCalendar.calendar_id == fromCalendar.id)
+            update(Event)
+            .where(Event.id == eventId, Event.calendar_id == fromCalendar.id)
             .values(calendar_id=toCalendar.id)
         )
         await self.session.execute(stmt)
@@ -479,6 +468,7 @@ async def createOverrideDeletedEvent(
         None,
         overrideId=eventId,
         recurringEventId=parentEvent.id,
+        recurringEventCalendarId=parentEvent.calendar_id,
         status='deleted',
     )
 

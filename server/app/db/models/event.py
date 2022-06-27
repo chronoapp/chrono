@@ -7,12 +7,13 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import (
     Column,
-    Integer,
     String,
     ForeignKey,
     Text,
     DateTime,
     ARRAY,
+    UniqueConstraint,
+    ForeignKeyConstraint,
 )
 from sqlalchemy.orm import relationship, backref
 
@@ -46,22 +47,34 @@ class Event(Base):
     """
 
     __tablename__ = 'event'
-    id = Column(String, primary_key=True, default=shortuuid.uuid, nullable=False)
+    __table_args__ = (
+        UniqueConstraint('id', 'calendar_id', name='uix_calendar_event_id'),
+        ForeignKeyConstraint(
+            ['recurring_event_id', 'recurring_event_calendar_id'],
+            ['event.id', 'event.calendar_id'],
+            name='fk_recurring_event_id_calendar_id',
+        ),
+    )
+
+    """This is the Internal primary key, used so that references to this event only
+    require a single id (rather than a combination of calendar_id and id).
+    """
+    pk = Column(String, primary_key=True, default=shortuuid.uuid, nullable=False)
+
+    id = Column(String, default=shortuuid.uuid, nullable=False, index=True)
+    calendar_id = Column(
+        String(255),
+        ForeignKey('calendar.id', name='event_calendar_id_fk'),
+    )
+    calendar = relationship(
+        'Calendar',
+        backref=backref(
+            'events', lazy='dynamic', cascade='all,delete', order_by='Event.start.asc()'
+        ),
+    )
 
     # Google-specific
-    g_id = Column(String(255), unique=True)
-
-    # TODO: Remove reference to user
-    user_id = Column(Integer, ForeignKey('user.id', ondelete='SET NULL'), nullable=True)
-    user = relationship('User', backref=backref('events', lazy='dynamic'))
-
-    # TODO: Add calendar_id as a primary key
-    calendars = relationship(
-        'EventCalendar',
-        lazy='dynamic',
-        cascade="all,delete",
-        back_populates="event",
-    )
+    g_id = Column(String(255), index=True)
 
     title = Column(String(255), index=True)
     description = Column(Text())
@@ -86,9 +99,10 @@ class Event(Base):
         "EventParticipant",
         lazy='joined',
         cascade="all, delete-orphan",
-        foreign_keys='[EventParticipant.event_id]',
+        foreign_keys='[EventParticipant.event_pk]',
     )
 
+    # The calendar / user who created this Event.
     creator_id = Column(
         String(255),
         ForeignKey('event_participant.id', name='event_creator_fk', use_alter=True),
@@ -105,8 +119,8 @@ class Event(Base):
 
     # Recurring Events.
     recurrences = Column(ARRAY(String), nullable=True)
-    recurring_event_id = Column(String, ForeignKey('event.id'), nullable=True, index=True)
-    recurring_event = relationship("Event", remote_side=[id], backref='recurring_events')
+    recurring_event_id = Column(String, nullable=True, index=True)
+    recurring_event_calendar_id = Column(String, nullable=True, index=True)
 
     # Original time (For recurring events). Child event use the parent's value.
     original_start = Column(DateTime(timezone=True))
@@ -151,6 +165,7 @@ class Event(Base):
         overrideId: Optional[str] = None,
         status: EventStatus = 'active',
         recurringEventId: Optional[str] = None,
+        recurringEventCalendarId: Optional[str] = None,
     ):
         if overrideId:
             self.id = overrideId
@@ -165,6 +180,7 @@ class Event(Base):
         self.time_zone = timezone
         self.recurrences = recurrences
         self.recurring_event_id = recurringEventId
+        self.recurring_event_calendar_id = recurringEventCalendarId
         self.status = status
         self.creator = creator
 

@@ -17,7 +17,7 @@ Contains user-specific properties like color and notification settings.
 
 class UserCalendar(Base):
     __tablename__ = 'user_calendar'
-    id = Column(String(255), ForeignKey('calendar.id'), primary_key=True)
+    id = Column(String(255), ForeignKey('calendar.id'), primary_key=True, unique=True)
     calendar = relationship(
         "Calendar",
         back_populates="user_calendars",
@@ -68,6 +68,7 @@ class UserCalendar(Base):
         self.deleted = deleted
 
     def canWriteEvent(self):
+        # TODO: Include the event -> calendar relationship info.
         return self.access_role == 'writer' or self.access_role == 'owner'
 
     @property

@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, validator
 from app.api.endpoints.labels import LabelInDbVM
-from app.db.models import Event, EventParticipant
+from app.db.models import Event, EventParticipant, UserCalendar
 from app.db.models.event import EventStatus
 from app.db.models.event_participant import ResponseStatus
 
@@ -62,6 +62,7 @@ class EventBaseVM(BaseModel):
 
     participants: List[EventParticipantVM] = []
     creator: Optional[EventParticipantVM]
+    organizer: Optional[EventParticipantVM]
 
     # Read only fields.
     original_start: Optional[datetime]
@@ -149,6 +150,7 @@ def getRRule(
 
 
 def createOrUpdateEvent(
+    userCalendar: UserCalendar,
     eventDb: Optional[Event],
     eventVM: EventBaseVM,
     overrideId: Optional[str] = None,
@@ -158,7 +160,7 @@ def createOrUpdateEvent(
     creator = EventParticipant(eventVM.creator.email, None, None) if eventVM.creator else None
 
     if not eventDb:
-        return Event(
+        event = Event(
             googleId,
             eventVM.title,
             eventVM.description,
@@ -174,8 +176,12 @@ def createOrUpdateEvent(
             creator,
             status=eventVM.status,
             recurringEventId=eventVM.recurring_event_id,
+            recurringEventCalendarId=userCalendar.id,
             overrideId=overrideId,
         )
+        userCalendar.calendar.events.append(event)
+
+        return event
     else:
         eventDb.title = eventVM.title or eventDb.title
         eventDb.description = eventVM.description or eventDb.description
@@ -185,6 +191,7 @@ def createOrUpdateEvent(
         eventDb.end_day = eventVM.end_day or eventDb.end_day
         eventDb.time_zone = eventVM.timezone
         eventDb.recurring_event_id = eventVM.recurring_event_id or eventDb.recurring_event_id
+        eventDb.recurring_event_calendar_id = userCalendar.id
         eventDb.recurrences = recurrences or eventDb.recurrences
         if not eventDb.creator:
             eventDb.creator = creator
