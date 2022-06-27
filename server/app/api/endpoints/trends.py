@@ -143,9 +143,8 @@ async def getTrendsDataResult(
                     event.end at time zone :timezone_end as end,
                     label.key as label
                 FROM event
-                INNER JOIN event_calendar ON event_calendar.event_id = event.id
-                INNER JOIN user_calendar ON event_calendar.calendar_id = user_calendar.id
-                INNER JOIN event_label ON event_label.event_id = event.id
+                INNER JOIN user_calendar ON event.calendar_id = user_calendar.id
+                INNER JOIN event_label ON event_label.event_pk = event.pk
                 INNER JOIN label ON label.id = event_label.label_id
                 WHERE {labelIdsFilter}
                 AND event.status != 'deleted'
