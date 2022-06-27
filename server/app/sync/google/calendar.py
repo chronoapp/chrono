@@ -15,7 +15,7 @@ from googleapiclient.errors import HttpError
 from app.api.repos.calendar_repo import CalendarRepo
 
 from app.db.session import AsyncSession
-from app.db.models import User, Event, LabelRule, UserCalendar, Calendar, Webhook, EventCalendar
+from app.db.models import User, Event, LabelRule, UserCalendar, Calendar, Webhook
 from app.core.logger import logger
 from app.core import config
 from app.api.repos.event_utils import (
@@ -258,7 +258,7 @@ async def syncEventsToDb(
     for eventItem in eventItems:
         user = calendar.user
         googleEventId = eventItem['id']
-        existingEvent = await eventRepo.getGoogleEvent(googleEventId)
+        existingEvent = await eventRepo.getGoogleEvent(calendar, googleEventId)
 
         if eventItem['status'] == 'cancelled':
             await syncDeletedEvent(calendar, existingEvent, eventItem, eventRepo, session)
@@ -302,8 +302,11 @@ async def syncDeletedEvent(
     session: AsyncSession,
 ):
     """Sync deleted events to the DB.
+
     If the base event has not been created at this point, add a temporary event to the DB
     so that we can add a foreign key reference.
+
+    existingEvent is only None if it is a recurring event.
     """
     user = userCalendar.user
 
@@ -345,11 +348,10 @@ async def syncDeletedEvent(
             status=convertStatus(eventItem['status']),
         )
         event.id = recurringEventId
-        event.recurring_event = baseRecurringEvent
+        event.recurring_event_calendar_id = userCalendar.id
+        event.recurring_event_id = baseRecurringEvent.id
 
-        assoc = EventCalendar()
-        assoc.event = event
-        userCalendar.calendar.events.append(assoc)
+        userCalendar.calendar.events.append(event)
 
 
 async def getOrCreateBaseRecurringEvent(
@@ -362,7 +364,7 @@ async def getOrCreateBaseRecurringEvent(
     the parent has not been created yet. For the stub parent event, we only need a primary ID,
     since the rest of the info will be populated then the parent is synced.
     """
-    baseRecurringEvent = await eventRepo.getGoogleEvent(googleRecurringEventId)
+    baseRecurringEvent = await eventRepo.getGoogleEvent(userCalendar, googleRecurringEventId)
 
     if not baseRecurringEvent:
         baseRecurringEvent = Event(
@@ -381,10 +383,7 @@ async def getOrCreateBaseRecurringEvent(
             None,
             status='active',
         )
-
-        assoc = EventCalendar()
-        assoc.event = baseRecurringEvent
-        userCalendar.calendar.events.append(assoc)
+        userCalendar.calendar.events.append(baseRecurringEvent)
 
     if not baseRecurringEvent.id:
         await session.commit()
@@ -420,16 +419,8 @@ async def syncCreatedOrUpdatedGoogleEvent(
         eventVM.recurring_event_id = baseRecurringEvent.id
 
     event = createOrUpdateEvent(
-        existingEvent, eventVM, overrideId=overrideId, googleId=eventVM.g_id
+        userCalendar, existingEvent, eventVM, overrideId=overrideId, googleId=eventVM.g_id
     )
-
-    addToCalendar = not existingEvent or (
-        existingEvent and not await eventRepo.isMember(userCalendar.id, existingEvent.id)
-    )
-    if addToCalendar:
-        assoc = EventCalendar()
-        assoc.event = event
-        userCalendar.calendar.events.append(assoc)
 
     if baseRecurringEvent:
         recurringEventId = None

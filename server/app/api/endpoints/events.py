@@ -24,7 +24,6 @@ from app.api.repos.event_utils import (
     EventInDBVM,
 )
 from app.db.models import Event, User
-from app.db.models.user_calendar import UserCalendar
 
 router = APIRouter()
 

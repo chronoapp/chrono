@@ -20,7 +20,7 @@ from app.api.endpoints.authentication import getAuthToken
 from app.db.models.event_participant import EventParticipant
 
 from tests.utils import createEvent
-from app.db.models import User, Event, Contact, EventCalendar
+from app.db.models import User, Event, Contact
 from app.db.models.event import stripParticipants
 
 
@@ -311,8 +311,8 @@ async def test_createEvent_withParticipants(user: User, session, async_client):
     participants = eventJson['participants']
 
     assert len(participants) == 2
-    assert participants[0]['email'] == contact.email
-    assert participants[0]['photo_url'] == 'test-img.png'
+    assert participants[1]['email'] == contact.email
+    assert participants[1]['photo_url'] == 'test-img.png'
 
 
 @pytest.mark.asyncio
@@ -384,7 +384,7 @@ async def test_updateEvent_recurring(user: User, session, async_client):
 
     # Create an overidden event
 
-    override = createOrUpdateEvent(None, events[8])
+    override = createOrUpdateEvent(userCalendar, None, events[8])
     override.title = 'Override'
     override.id = events[8].id
 
@@ -495,13 +495,10 @@ async def test_deleteEvent_overrides(user: User, session, async_client):
     events = await getAllExpandedRecurringEventsList(
         user, userCalendar, start, start + timedelta(days=5), session
     )
-    override = createOrUpdateEvent(None, events[2])
+    override = createOrUpdateEvent(userCalendar, None, events[2])
     override.title = 'Override'
     override.id = events[2].id
-
-    ec = EventCalendar()
-    ec.event = override
-    userCalendar.calendar.events.append(ec)
+    override.calendar_id = userCalendar.id
 
     await session.commit()
 
@@ -511,10 +508,7 @@ async def test_deleteEvent_overrides(user: User, session, async_client):
     )
 
     result = await session.execute(
-        select(Event)
-        .where(Event.user_id == user.id)
-        .options(selectinload(Event.labels))
-        .options(selectinload(Event.participants))
+        select(Event).options(selectinload(Event.labels)).options(selectinload(Event.participants))
     )
     events = result.scalars().all()
 

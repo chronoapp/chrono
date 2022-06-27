@@ -6,7 +6,6 @@ from app.db.models.event_participant import EventParticipant
 
 from app.db.models.user import User
 from app.db.models.event import Event
-from app.db.models.event_calendar import EventCalendar
 from app.db.models.user_calendar import UserCalendar
 from app.db.models.calendar import Calendar
 
@@ -60,12 +59,6 @@ def createEvent(
         None,
         EventParticipant('test-user@example.com', 'Test User', None),
     )
-
-    assoc = EventCalendar()
-    assoc.event = event
-    userCalendar.calendar.events.append(assoc)
-
-    # TODO: Remove
-    event.user = userCalendar.user
+    userCalendar.calendar.events.append(event)
 
     return event
