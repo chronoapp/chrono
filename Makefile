@@ -4,7 +4,7 @@ build:
 dev:
 	docker compose -f docker-compose.dev.yml up -d
 
-down:
+stop:
 	docker compose -f docker-compose.dev.yml down
 
 logs:

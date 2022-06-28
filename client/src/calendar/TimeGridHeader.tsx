@@ -34,7 +34,7 @@ function TimeGridHeader(props: IProps) {
                 isToday && 'cal-today-bg'
               )}
             >
-              <span className="is-size-5">{dayNumber}</span>{' '}
+              <span className="is-size-6">{dayNumber}</span>{' '}
               <span className="is-size-7">{dateString}</span>
             </div>
           </span>
