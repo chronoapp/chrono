@@ -51,7 +51,7 @@ function DateHeaderSearch(props: { disableSearchMode: () => void; defaultSearchQ
   }
 
   return (
-    <Flex alignItems="center" width={{ sm: '20em', md: '25em', lg: '100%' }}>
+    <Flex alignItems="center" width={{ sm: '20em', md: '25em', lg: '30em' }}>
       <InputGroup mr="1" w="xl">
         <InputLeftElement>
           <IconButton
