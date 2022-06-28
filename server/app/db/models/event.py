@@ -6,6 +6,7 @@ from typing import Optional, List, Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import (
+    Boolean,
     Column,
     String,
     ForeignKey,
@@ -142,6 +143,11 @@ class Event(Base):
     original_start = Column(DateTime(timezone=True))
     original_start_day = Column(String(10))
     original_timezone = Column(String(255))
+
+    # Guest permissions
+    guests_can_invite_others = Column(Boolean, default=True, nullable=False)
+    guests_can_modify = Column(Boolean, default=False, nullable=False)
+    guests_can_see_other_guests = Column(Boolean, default=True, nullable=False)
 
     @property
     def title_short(self):
