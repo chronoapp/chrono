@@ -497,12 +497,17 @@ def googleEventToEventVM(calendarId: str, eventItem: Dict[str, Any]) -> GoogleEv
         )
         participants.append(participant)
 
-    creator = eventItem.get('creator')
-    creatorVM = (
-        EventParticipantVM(email=creator.get('email'), display_name=creator.get('displayName'))
-        if creator
-        else None
-    )
+    creatorVM = None
+    if creator := eventItem.get('creator'):
+        creatorVM = EventParticipantVM(
+            email=creator.get('email'), display_name=creator.get('displayName')
+        )
+
+    organizerVM = None
+    if organizer := eventItem.get('organizer'):
+        organizerVM = EventParticipantVM(
+            email=organizer.get('email'), display_name=organizer.get('displayName')
+        )
 
     eventVM = GoogleEventVM(
         g_id=eventId,
@@ -521,6 +526,7 @@ def googleEventToEventVM(calendarId: str, eventItem: Dict[str, Any]) -> GoogleEv
         original_start_day=originalStartDay,
         participants=participants,
         creator=creatorVM,
+        organizer=organizerVM,
     )
     return eventVM
 
