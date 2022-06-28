@@ -41,13 +41,24 @@ async def test_event_repo_search(user, session):
     assert all('Pear' in e.title for e in events)
 
 
+"""Tests CRUD operations for events"""
+
+
 @pytest.mark.asyncio
-async def test_event_repo_create_event(user, session):
+async def test_event_repo_CRUD(user, session):
+    """Tests a CRUD flow for events.
+
+    1) Create Event
+    2) Get Event
+    3) Update Event
+    """
     userCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     startDay = '2020-12-25'
     endDay = '2020-12-26'
     timezone = 'America/Los_Angeles'
+    creator = EventParticipantVM(email='creator@chrono.so', display_name='Event Creator')
+    organizer = EventParticipantVM(email='organizer@chrono.so', display_name='Event Organizer')
     eventVM = EventBaseVM(
         title='Event',
         description='Test event description',
@@ -58,7 +69,8 @@ async def test_event_repo_create_event(user, session):
         calendar_id=userCalendar.id,
         timezone=timezone,
         recurrences=['FREQ=WEEKLY;BYDAY=SU;INTERVAL=1;COUNT=5'],
-        creator=EventParticipantVM(email='test@example.com', display_name='Event Creator'),
+        creator=creator,
+        organizer=organizer,
     )
 
     eventRepo = EventRepository(session)
@@ -67,10 +79,21 @@ async def test_event_repo_create_event(user, session):
     session.add(event)
     await session.commit()
     assert event.title == eventVM.title
+    assert event.creator.email == creator.email
+    assert event.organizer.email == organizer.email
 
     event = await eventRepo.getEvent(user, userCalendar, event.id)
     assert event.title == eventVM.title
     assert event.calendar.id == userCalendar.id
+
+    eventVM = await eventRepo.getEventVM(user, userCalendar, event.id)
+    eventVM.organizer = EventParticipantVM(email='new-email@chrono.so')
+    eventVM.description = "new description"
+
+    event = await eventRepo.updateEvent(user, userCalendar, event.id, eventVM)
+    await session.commit()
+    assert event.organizer.email == eventVM.organizer.email
+    assert event.description == eventVM.description
 
 
 @pytest.mark.asyncio
@@ -91,6 +114,9 @@ async def test_event_repo_delete(user, session):
 
     event = await eventRepo.getEvent(user, userCalendar, e1.id)
     assert event.status == 'deleted'
+
+
+"""Tests for Recurring Events"""
 
 
 @pytest.mark.asyncio
@@ -302,6 +328,9 @@ async def test_event_repo_updateEvent_recurring(user, session):
     overrideEvent.title = 'Override 2'
     event = await eventRepo.updateEvent(user, calendar, overrideEvent.id, overrideEvent)
     assert event.title == overrideEvent.title
+
+
+"""Test Move Events"""
 
 
 @pytest.mark.asyncio
