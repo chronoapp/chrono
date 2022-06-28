@@ -1,7 +1,7 @@
 import { immerable } from 'immer'
 
 export type AccessRole = 'reader' | 'writer' | 'owner' | 'freeBusyReader'
-export type CalendarSource = 'google' | 'timecouncil'
+export type CalendarSource = 'google' | 'chrono'
 
 export interface CalendarEditable {
   summary: string

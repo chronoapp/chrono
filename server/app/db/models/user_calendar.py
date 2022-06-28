@@ -8,7 +8,7 @@ from app.db.base_class import Base
 from app.db.models.event import Event
 
 AccessRole = Literal['freeBusyReader', 'reader', 'writer', 'owner']
-CalendarSource = Literal['google', 'timecouncil']
+CalendarSource = Literal['google', 'chrono']
 
 """A calendar that is linked to the user.
 Contains user-specific properties like color and notification settings.
@@ -16,6 +16,8 @@ Contains user-specific properties like color and notification settings.
 
 
 class UserCalendar(Base):
+    """TODO: id should not be the same as the calendar id."""
+
     __tablename__ = 'user_calendar'
     id = Column(String(255), ForeignKey('calendar.id'), primary_key=True)
     calendar = relationship(
@@ -88,7 +90,7 @@ class UserCalendar(Base):
         if self.google_id:
             return 'google'
         else:
-            return 'timecouncil'
+            return 'chrono'
 
     @property
     def email(self) -> str:
