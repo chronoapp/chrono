@@ -114,10 +114,23 @@ class Event(Base):
     creator = relationship(
         'EventParticipant',
         lazy='joined',
-        backref="created_event",
         uselist=False,
         foreign_keys=[creator_id],
         primaryjoin="EventParticipant.id==Event.creator_id",
+    )
+
+    # The calendar / user who currently owns this Event.
+    organizer_id = Column(
+        String(255),
+        ForeignKey('event_participant.id', name='event_organizer_fk', use_alter=True),
+        nullable=True,
+    )
+    organizer = relationship(
+        'EventParticipant',
+        lazy='joined',
+        uselist=False,
+        foreign_keys=[organizer_id],
+        primaryjoin="EventParticipant.id==Event.organizer_id",
     )
 
     # Recurring Events.
@@ -165,6 +178,7 @@ class Event(Base):
         originalStartDay: Optional[str],
         originalTimezone: Optional[str],
         creator: Optional[EventParticipant],
+        organizer: Optional[EventParticipant],
         overrideId: Optional[str] = None,
         status: EventStatus = 'active',
         recurringEventId: Optional[str] = None,
@@ -186,6 +200,7 @@ class Event(Base):
         self.recurring_event_calendar_id = recurringEventCalendarId
         self.status = status
         self.creator = creator
+        self.organizer = organizer
 
         self.original_start = originalStart
         self.original_start_day = originalStartDay

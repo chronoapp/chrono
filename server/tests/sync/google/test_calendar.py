@@ -65,9 +65,9 @@ async def test_syncCreatedOrUpdatedGoogleEvent_single(
 
     assert event.title == eventItem.get('summary')
     assert event.g_id == eventItem.get('id')
+    assert event.creator.email == 'test-email@example.com'
 
     events = await eventRepo.getSingleEvents(user, calendar.id)
-
     assert len(events) == 1
 
 
@@ -218,7 +218,8 @@ async def test_syncEventsToDb_recurring(user, session: Session):
     assert len(events) == 2
 
     for e in events:
-        assert e.recurring_event.id == parent.id
+        assert e.recurring_event_id == parent.id
+        assert e.recurring_event_calendar_id == parent.calendar_id
 
 
 @pytest.mark.asyncio
@@ -263,11 +264,12 @@ async def test_syncEventsToDb_recurring_withParticipants(user, session):
 
 
 @pytest.mark.asyncio
-async def test_syncEventsToDb_eventInMultipleCalendars(user: User, session: Session):
-    """Event is in multiple calendars.
-    1) Add same event to multiple calendars
-    2) Delete event from guest's calendar
+async def test_syncEventsToDb_duplicateEventMultipleCalendars(user: User, session: Session):
+    """Add the same event to multiple calendar.
+    It should be duplicated and exist in each calendar.
     """
+    # Original Calendar
+    myCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     # Add another calendar
     readOnlyCalendar = UserCalendar(
@@ -284,8 +286,6 @@ async def test_syncEventsToDb_eventInMultipleCalendars(user: User, session: Sess
         'calendar-id-2', 'Another calendar', 'description', 'America/Toronto', 'test@example.com'
     )
     user.calendars.append(readOnlyCalendar)
-
-    myCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     # Create events in both calendar
     eventItem = EVENT_ITEM_RECURRING.copy()
@@ -305,7 +305,7 @@ async def test_syncEventsToDb_eventInMultipleCalendars(user: User, session: Sess
     cal2Events = result.scalars().all()
 
     assert len(cal2Events) == 1
-    assert cal1Events[0].id == cal2Events[0].id
+    assert cal1Events[0].g_id == cal2Events[0].g_id
 
 
 @pytest.mark.asyncio
