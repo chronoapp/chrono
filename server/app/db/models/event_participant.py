@@ -1,7 +1,7 @@
 from typing import Optional, Literal
 import shortuuid
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean
+from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.orm import relationship, backref
 
 from app.db.base_class import Base
@@ -68,4 +68,4 @@ class EventParticipant(Base):
         self.response_status = responseStatus
 
     def __repr__(self):
-        return f'<EventParticipant {self.id} {self.display_name} {self.response_status}>'
+        return f'<EventParticipant {self.email_} {self.display_name} {self.response_status}>'

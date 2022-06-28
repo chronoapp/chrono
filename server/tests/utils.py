@@ -58,6 +58,7 @@ def createEvent(
         None,
         None,
         EventParticipant('test-user@example.com', 'Test User', None),
+        EventParticipant('test-user-2@example.com', 'Test User 2', None),
     )
     userCalendar.calendar.events.append(event)
 

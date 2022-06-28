@@ -157,7 +157,16 @@ def createOrUpdateEvent(
     googleId: Optional[str] = None,
 ) -> Event:
     recurrences = None if eventVM.recurring_event_id else eventVM.recurrences
-    creator = EventParticipant(eventVM.creator.email, None, None) if eventVM.creator else None
+    creator = (
+        EventParticipant(eventVM.creator.email, eventVM.creator.display_name, None)
+        if eventVM.creator
+        else None
+    )
+    organizer = (
+        EventParticipant(eventVM.organizer.email, eventVM.organizer.display_name, None)
+        if eventVM.organizer
+        else None
+    )
 
     if not eventDb:
         event = Event(
@@ -174,6 +183,7 @@ def createOrUpdateEvent(
             eventVM.original_start_day,
             eventVM.original_timezone,
             creator,
+            organizer,
             status=eventVM.status,
             recurringEventId=eventVM.recurring_event_id,
             recurringEventCalendarId=userCalendar.id,
@@ -195,6 +205,7 @@ def createOrUpdateEvent(
         eventDb.recurrences = recurrences or eventDb.recurrences
         if not eventDb.creator:
             eventDb.creator = creator
+        eventDb.organizer = organizer
 
         return eventDb
 

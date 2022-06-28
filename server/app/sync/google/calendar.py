@@ -345,6 +345,7 @@ async def syncDeletedEvent(
             startDay,
             originalTimezone,
             None,
+            None,
             status=convertStatus(eventItem['status']),
         )
         event.id = recurringEventId
@@ -369,6 +370,7 @@ async def getOrCreateBaseRecurringEvent(
     if not baseRecurringEvent:
         baseRecurringEvent = Event(
             googleRecurringEventId,
+            None,
             None,
             None,
             None,

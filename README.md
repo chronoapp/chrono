@@ -1,6 +1,6 @@
-## Timecouncil
+## Chrono
 
-Timecouncil is an extensible calendar with analytics.
+Chrono is an extensible calendar with analytics.
 
 ### Develop
 
