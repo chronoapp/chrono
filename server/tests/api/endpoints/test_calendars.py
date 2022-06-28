@@ -37,7 +37,7 @@ async def test_postCalendar(user, session, async_client):
         'foregroundColor': '#ffffff',
         'description': 'this is an amazing calendar.',
         'selected': True,
-        'source': 'timecouncil',
+        'source': 'chrono',
         'primary': True,
     }
 

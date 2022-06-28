@@ -1,6 +1,6 @@
 import os
 
-PROJECT_ID = 'timecouncil'
+PROJECT_ID = 'chrono'
 API_V1_STR = "/api/v1"
 
 APP_URL: str = os.environ.get('APP_URL', 'https://localhost:3000')

@@ -36,7 +36,7 @@ export default function CalendarEditModal(props: IProps) {
     return {
       summary: props.editingCalendar?.summary || '',
       description: props.editingCalendar?.description || '',
-      source: 'timecouncil',
+      source: 'chrono',
       backgroundColor: DEFAULT_CALENDAR_BG_COLOR,
       timezone: undefined,
     }
