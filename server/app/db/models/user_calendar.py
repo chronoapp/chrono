@@ -17,7 +17,7 @@ Contains user-specific properties like color and notification settings.
 
 class UserCalendar(Base):
     __tablename__ = 'user_calendar'
-    id = Column(String(255), ForeignKey('calendar.id'), primary_key=True, unique=True)
+    id = Column(String(255), ForeignKey('calendar.id'), primary_key=True)
     calendar = relationship(
         "Calendar",
         back_populates="user_calendars",
