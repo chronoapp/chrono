@@ -15,7 +15,7 @@ Every event many-1 relationship to this calendar.
 class Calendar(Base):
     __tablename__ = 'calendar'
 
-    id = Column(String(255), primary_key=True, unique=True, default=shortuuid.uuid)
+    id = Column(String(255), primary_key=True, default=shortuuid.uuid)
 
     google_id = Column(String(255), unique=True, nullable=True)
     summary = Column(String(255))
