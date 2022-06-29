@@ -9,14 +9,15 @@ import logging
 
 from sqlalchemy import asc, and_, select, delete, or_, update
 from sqlalchemy.orm import selectinload
-from sqlalchemy.sql import exists
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text, desc
 
 from app.core.logger import logger
 from app.db.sql.event_search import EVENT_SEARCH_QUERY
-from app.db.models import Event, User, UserCalendar, Calendar, EventParticipant
+
+from app.db.models import Event, User, UserCalendar, Calendar, EventAttendee
+
 from app.api.repos.contact_repo import ContactRepository
 from app.api.repos.calendar_repo import CalendarRepo
 from app.api.repos.event_utils import (
@@ -37,15 +38,18 @@ from app.api.repos.exceptions import EventRepoError, InputError, EventNotFoundEr
 MAX_RECURRING_EVENT_COUNT = 1000
 
 
-def getBaseEventsStmt():
-    return (
-        select(Event)
-        .options(selectinload(Event.participants))
-        .options(selectinload(Event.labels))
-        .join(Event.calendar)
-        .join(Calendar.user_calendars)
-        .join(User)
-    )
+BASE_EVENT_STATEMENT = (
+    select(Event)
+    .options(selectinload(Event.participants))
+    .options(selectinload(Event.creator))
+    .options(selectinload(Event.organizer))
+    .options(selectinload(Event.labels))
+)
+
+
+def getCalendarEventsStmt():
+    """Statement to fetch events for a user calendar."""
+    return BASE_EVENT_STATEMENT.join(Event.calendar).join(Calendar.user_calendars).join(User)
 
 
 class EventRepository:
@@ -59,7 +63,7 @@ class EventRepository:
 
     async def getRecurringEvents(self, user: User, calendarId: str, endDate: datetime):
         stmt = (
-            getBaseEventsStmt()
+            getCalendarEventsStmt()
             .where(User.id == user.id)
             .filter(
                 and_(
@@ -77,7 +81,7 @@ class EventRepository:
 
     async def getSingleEvents(self, user: User, calendarId: str, showRecurring=True):
         """Gets all events for the calendar."""
-        stmt = getBaseEventsStmt().where(and_(User.id == user.id, Calendar.id == calendarId))
+        stmt = getCalendarEventsStmt().where(and_(User.id == user.id, Calendar.id == calendarId))
 
         if not showRecurring:
             stmt = stmt.filter(Event.recurring_event_id == None)
@@ -94,7 +98,7 @@ class EventRepository:
         calendar = await calendarRepo.getCalendar(user, calendarId)
 
         singleEventsStmt = (
-            getBaseEventsStmt()
+            getCalendarEventsStmt()
             .where(
                 User.id == user.id,
                 UserCalendar.id == calendarId,
@@ -121,7 +125,9 @@ class EventRepository:
         return allEvents
 
     async def getGoogleEvent(self, calendar: UserCalendar, googleEventId: str) -> Optional[Event]:
-        stmt = getBaseEventsStmt().where(Calendar.id == calendar.id, Event.g_id == googleEventId)
+        stmt = getCalendarEventsStmt().where(
+            Calendar.id == calendar.id, Event.g_id == googleEventId
+        )
         googleEvent = (await self.session.execute(stmt)).scalar()
 
         return googleEvent
@@ -132,7 +138,7 @@ class EventRepository:
         """
         curEvent: Optional[Event] = (
             await self.session.execute(
-                getBaseEventsStmt().where(
+                getCalendarEventsStmt().where(
                     User.id == user.id, Calendar.id == calendar.id, Event.id == eventId
                 )
             )
@@ -239,20 +245,23 @@ class EventRepository:
             except InputError as e:
                 raise EventNotFoundError('Event not found.')
 
+    async def verifyPermissions(
+        self, userCalendar: UserCalendar, event: Event, newEvent: EventBaseVM
+    ):
+        """TODO: Makes sure the user has the correct permissions to modify the event.
+        If the event's organizer matches the calendar, then this calendar owns the event.
+        """
+        if event and not userCalendar.canWriteEvent():
+            raise EventRepoError("Can not update event with this calendar.")
+
     async def updateEvent(
         self, user: User, userCalendar: UserCalendar, eventId: str, event: EventBaseVM
     ) -> Event:
-        """
-        TODO: Check for permissions.
-        """
-
         curEvent = await self.getEvent(user, userCalendar, eventId)
-
-        if curEvent and not userCalendar.canWriteEvent():
-            raise EventRepoError("Can not update event with this calendar.")
+        await self.verifyPermissions(userCalendar, curEvent, event)
 
         # Not found in DB.
-        elif not curEvent and not event.recurring_event_id:
+        if not curEvent and not event.recurring_event_id:
             raise EventNotFoundError(f'Event not found.')
 
         # This is an instance of a recurring event. Replace the recurring event instance with and override.
@@ -362,7 +371,7 @@ class EventRepository:
         rowIds = [r[0] for r in rows]
 
         # TODO: GET the calendar ID
-        stmt = getBaseEventsStmt().filter(Event.id.in_(rowIds)).order_by(desc(Event.end))
+        stmt = getCalendarEventsStmt().filter(Event.id.in_(rowIds)).order_by(desc(Event.end))
         result = await self.session.execute(stmt)
 
         return result.scalars().all()
@@ -389,8 +398,11 @@ class EventRepository:
             if existingContact:
                 existingContactIds.add(existingContact.id)
 
-            participant = EventParticipant(
-                participantVM.email, None, participantVM.contact_id, participantVM.response_status
+            participant = EventAttendee(
+                participantVM.email,
+                participantVM.display_name,
+                participantVM.contact_id,
+                participantVM.response_status,
             )
             participant.contact = existingContact
 
@@ -529,7 +541,7 @@ async def getAllExpandedRecurringEvents(
     TODO: Update EXDATE on write so we don't have to manually override events.
     """
 
-    baseRecurringEventsStmt = getBaseEventsStmt().where(
+    baseRecurringEventsStmt = getCalendarEventsStmt().where(
         User.id == user.id,
         Calendar.id == calendar.id,
         Event.recurrences != None,
@@ -541,11 +553,8 @@ async def getAllExpandedRecurringEvents(
     baseRecurringEvents = await session.execute(baseRecurringEventsStmt)
 
     baseEventsSubQ = baseRecurringEventsStmt.subquery()
-    overridesStmt = (
-        select(Event)
-        .options(selectinload(Event.participants))
-        .options(selectinload(Event.labels))
-        .join(baseEventsSubQ, Event.recurring_event_id == baseEventsSubQ.c.id)
+    overridesStmt = BASE_EVENT_STATEMENT.join(
+        baseEventsSubQ, Event.recurring_event_id == baseEventsSubQ.c.id
     )
 
     # Moved from outside of this time range to within.

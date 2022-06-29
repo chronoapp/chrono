@@ -2,7 +2,7 @@ from uuid import uuid4
 from typing import Optional, List
 
 from datetime import datetime
-from app.db.models.event_participant import EventParticipant
+from app.db.models.event_participant import EventCreator, EventOrganizer
 
 from app.db.models.user import User
 from app.db.models.event import Event
@@ -57,8 +57,8 @@ def createEvent(
         originalStart,
         None,
         None,
-        EventParticipant('test-user@example.com', 'Test User', None),
-        EventParticipant('test-user-2@example.com', 'Test User 2', None),
+        EventCreator('test-user@example.com', 'Test User', None),
+        EventOrganizer('test-user-2@example.com', 'Test User 2', None),
     )
     userCalendar.calendar.events.append(event)
 

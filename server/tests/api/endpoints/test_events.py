@@ -17,7 +17,7 @@ from app.api.repos.event_utils import (
     createOrUpdateEvent,
 )
 from app.api.endpoints.authentication import getAuthToken
-from app.db.models.event_participant import EventParticipant
+from app.db.models.event_participant import EventAttendee, EventParticipant
 
 from tests.utils import createEvent
 from app.db.models import User, Event, Contact
@@ -264,11 +264,12 @@ async def test_createEvent_withParticipants(user: User, session, async_client):
     """
 
     # Setup Existing Contact
+
     contact = Contact('Jon', 'Snow', 'jon@example.com', 'test-img.png', None)
     user.contacts.append(contact)
     await session.commit()
 
-    # Create new event with participants
+    # Create new event with two participants
 
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
     start = datetime.fromisoformat("2021-01-11T00:00:00+00:00")
@@ -311,8 +312,13 @@ async def test_createEvent_withParticipants(user: User, session, async_client):
     participants = eventJson['participants']
 
     assert len(participants) == 2
-    assert participants[1]['email'] == contact.email
-    assert participants[1]['photo_url'] == 'test-img.png'
+
+    p1 = next(p for p in participants if p['email'] == contact.email)
+    assert p1['photo_url'] == contact.photo_url
+    assert p1['contact_id'] == contact.id
+
+    p2 = next(p for p in participants if p['email'] == 'adam@example.com')
+    assert p2
 
 
 @pytest.mark.asyncio
@@ -329,7 +335,7 @@ async def test_updateEvent_withParticipants(user: User, session, async_client):
 
     await session.commit()
 
-    participant = EventParticipant(contact.email, None, contact.id)
+    participant = EventAttendee(contact.email, None, contact.id, 'needsAction')
     participant.event_id = event1.id
     session.add(participant)
 
@@ -515,3 +521,24 @@ async def test_deleteEvent_overrides(user: User, session, async_client):
     assert resp.status_code == 200
     assert len(events) == 1
     assert events[0].status == 'deleted'
+
+
+# @pytest.mark.asyncio
+# async def test_participants(user, session, async_client):
+
+#     contact1 = Contact('Jon', 'Snow', 'jon@example.com', None, None)
+#     contact2 = Contact('Fred', 'Mercury', 'fred@example.com', None, None)
+#     user.contacts.append(contact1)
+#     user.contacts.append(contact2)
+
+#     await session.commit()
+
+#     participant = EventParticipant(None, contact1.id)
+#     participant.contact = contact1
+
+#     await session.commit()
+
+#     print(participant.contact)
+
+#     vm = EventParticipantVM.from_orm(participant)
+#     print(vm)
