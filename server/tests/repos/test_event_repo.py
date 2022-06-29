@@ -86,7 +86,7 @@ async def test_event_repo_CRUD(user, session):
     assert event.title == eventVM.title
     assert event.calendar.id == userCalendar.id
 
-    eventVM = await eventRepo.getEventVM(user, userCalendar, event.id)
+    eventVM = EventBaseVM.from_orm(event)
     eventVM.organizer = EventParticipantVM(email='new-email@chrono.so')
     eventVM.description = "new description"
 

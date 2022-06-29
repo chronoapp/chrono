@@ -20,7 +20,7 @@ from sqlalchemy.orm import relationship, backref
 
 from app.db.base_class import Base
 from app.db.models.event_label import event_label_association_table
-from app.db.models.event_participant import EventParticipant
+from app.db.models.event_participant import EventCreator, EventOrganizer
 
 
 EventStatus = Literal['deleted', 'tentative', 'active']
@@ -100,9 +100,10 @@ class Event(Base):
     )
 
     participants = relationship(
-        "EventParticipant",
+        "EventAttendee",
         lazy='joined',
         cascade="all, delete-orphan",
+        backref=backref('event', lazy='joined'),
         foreign_keys='[EventParticipant.event_pk]',
     )
 
@@ -113,11 +114,11 @@ class Event(Base):
         nullable=True,
     )
     creator = relationship(
-        'EventParticipant',
+        'EventCreator',
         lazy='joined',
         uselist=False,
+        backref=backref('event', uselist=False, lazy='joined'),
         foreign_keys=[creator_id],
-        primaryjoin="EventParticipant.id==Event.creator_id",
     )
 
     # The calendar / user who currently owns this Event.
@@ -127,11 +128,11 @@ class Event(Base):
         nullable=True,
     )
     organizer = relationship(
-        'EventParticipant',
+        'EventOrganizer',
         lazy='joined',
         uselist=False,
+        backref=backref('event', uselist=False, lazy='joined'),
         foreign_keys=[organizer_id],
-        primaryjoin="EventParticipant.id==Event.organizer_id",
     )
 
     # Recurring Events.
@@ -183,8 +184,8 @@ class Event(Base):
         originalStart: Optional[datetime],
         originalStartDay: Optional[str],
         originalTimezone: Optional[str],
-        creator: Optional[EventParticipant],
-        organizer: Optional[EventParticipant],
+        creator: Optional[EventCreator],
+        organizer: Optional[EventOrganizer],
         overrideId: Optional[str] = None,
         status: EventStatus = 'active',
         recurringEventId: Optional[str] = None,

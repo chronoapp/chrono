@@ -1,13 +1,11 @@
 from datetime import datetime
-
 from typing import List, Dict, Optional, Literal, Any
-
 from dateutil.rrule import rrule, rruleset, rrulestr
 from zoneinfo import ZoneInfo
-
 from pydantic import BaseModel, validator
+
 from app.api.endpoints.labels import LabelInDbVM
-from app.db.models import Event, EventParticipant, UserCalendar
+from app.db.models import Event, UserCalendar, EventCreator, EventOrganizer
 from app.db.models.event import EventStatus
 from app.db.models.event_participant import ResponseStatus
 
@@ -25,6 +23,7 @@ class EventParticipantVM(BaseModel):
     response_status: Optional[ResponseStatus] = 'needsAction'
     display_name: Optional[str]
     photo_url: Optional[str]
+    is_self: Optional[bool]
 
     @validator("email")
     def validateContactAndEmail(cls, email, values: Dict[str, Any]):
@@ -157,16 +156,16 @@ def createOrUpdateEvent(
     googleId: Optional[str] = None,
 ) -> Event:
     recurrences = None if eventVM.recurring_event_id else eventVM.recurrences
-    creator = (
-        EventParticipant(eventVM.creator.email, eventVM.creator.display_name, None)
-        if eventVM.creator
-        else None
-    )
-    organizer = (
-        EventParticipant(eventVM.organizer.email, eventVM.organizer.display_name, None)
-        if eventVM.organizer
-        else None
-    )
+
+    creator = None
+    if creatorVM := eventVM.creator:
+        creator = EventCreator(creatorVM.email, creatorVM.display_name, creatorVM.contact_id)
+
+    organizer = None
+    if organizerVM := eventVM.organizer:
+        organizer = EventOrganizer(
+            organizerVM.email, organizerVM.display_name, organizerVM.contact_id
+        )
 
     if not eventDb:
         event = Event(
