@@ -1,13 +1,11 @@
 from typing import Literal, Optional
-import shortuuid
 
 from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship, backref
 
 from app.db.base_class import Base
-from app.db.models.event import Event
+from app.db.models.access_control import AccessRole
 
-AccessRole = Literal['freeBusyReader', 'reader', 'writer', 'owner']
 CalendarSource = Literal['google', 'chrono']
 
 """A calendar that is linked to the user.
@@ -40,7 +38,7 @@ class UserCalendar(Base):
     background_color = Column(String(10))
     foreground_color = Column(String(10))
     selected = Column(Boolean)
-    access_role = Column(String(50))
+    access_role = Column(String(50))  # AccessRole
     primary = Column(Boolean)
     deleted = Column(Boolean)
 
