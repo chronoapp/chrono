@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from sqlalchemy import Column, Integer, String, and_, select
 from sqlalchemy.orm import relationship, selectinload
@@ -18,7 +18,7 @@ class User(Base):
     hashed_password = Column(String(255))
 
     email = Column(String(255))
-    name = Column(String(255))
+    name = Column(String(255))  # display name
     picture_url = Column(String(255))
 
     google_oauth_state = Column(String(255), nullable=True)
@@ -38,6 +38,9 @@ class User(Base):
         self.email = email
         self.name = name
         self.picture_url = pictureUrl
+
+    def getGoogleCalendars(self) -> List[UserCalendar]:
+        return [cal for cal in self.calendars if cal.google_id != None]
 
     def getClassifierPath(self):
         return f'/var/lib/model_data/{self.username}.pkl'

@@ -9,10 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from dateutil.rrule import rrulestr
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-from app.api.repos.calendar_repo import CalendarRepo
+from app.db.models.access_control import AccessControlRule
 
 from app.db.session import AsyncSession
 from app.db.models import User, Event, LabelRule, UserCalendar, Calendar, Webhook
@@ -113,7 +111,7 @@ def mapGoogleColor(color: str) -> str:
 
 
 def syncGoogleCalendars(user: User, calendarList):
-    calendarsMap = {cal.google_id: cal for cal in user.calendars if cal.google_id is not None}
+    calendarsMap = {cal.google_id: cal for cal in user.getGoogleCalendars()}
 
     for calendarItem in calendarList:
         gCalId = calendarItem.get('id')
@@ -162,6 +160,23 @@ def syncGoogleCalendars(user: User, calendarList):
             user.calendars.append(userCalendar)
 
 
+async def syncAccessControlList(userCalendar: UserCalendar, aclResult):
+    for aclRule in aclResult.get('items'):
+        scope = aclRule.get('scope')
+        scopeType = scope.get('type')
+        scopeValue = scope.get('value')
+
+        acl = AccessControlRule(aclRule.get('id'), aclRule.get('role'), scopeType, scopeValue)
+        userCalendar.calendar.access_control_rules.append(acl)
+
+
+async def syncAccessControlListAllCalendars(user: User, service):
+    for calendar in user.getGoogleCalendars():
+        if calendar.access_role == 'owner':
+            aclResult = service.acl().list(calendarId=calendar.google_id).execute()
+            await syncAccessControlList(calendar, aclResult)
+
+
 async def syncAllEvents(userId: int, fullSync: bool = False):
     """Syncs events from google calendar."""
 
@@ -171,7 +186,9 @@ async def syncAllEvents(userId: int, fullSync: bool = False):
 
         service = getCalendarService(user)
         calendarList = service.calendarList().list().execute()
+
         syncGoogleCalendars(user, calendarList.get('items'))
+        syncAccessControlListAllCalendars(user, service)
 
         await session.commit()
 
