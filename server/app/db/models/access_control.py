@@ -50,13 +50,14 @@ class AccessControlRule(Base):
     def __init__(
         self,
         google_id: str,
-        calendar_id: str,
         role: AccessRole,
         scope_type: ScopeType,
         scope_value: str,
     ):
         self.google_id = google_id
-        self.calendar_id = calendar_id
         self.role = role
         self.scope_type = scope_type
         self.scope_value = scope_value
+
+    def __repr__(self):
+        return f'<AccessControlRule id={self.uuid} role={self.role} type={self.scope_type} value={self.scope_value}/>'
