@@ -1,4 +1,5 @@
-import pytest
+import pytest_asyncio
+
 from httpx import AsyncClient
 
 from sqlalchemy import select
@@ -19,7 +20,7 @@ SQLALCHEMY_DATABASE_URI = "postgresql+asyncpg://{0}:{1}@{2}/{3}".format(
 )
 
 
-@pytest.fixture(scope="session")
+@pytest_asyncio.fixture(scope="session")
 def engine():
     async_engine = create_async_engine(
         SQLALCHEMY_DATABASE_URI,
@@ -32,7 +33,7 @@ def engine():
     async_engine.sync_engine.dispose()
 
 
-@pytest.fixture()
+@pytest_asyncio.fixture()
 async def create(engine):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -42,13 +43,13 @@ async def create(engine):
         await conn.run_sync(Base.metadata.drop_all)
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def async_client():
     async with AsyncClient(app=app, base_url="http://localhost") as ac:
         yield ac
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def session(engine, create):
     async with AsyncSession(engine, expire_on_commit=False) as session:
 
@@ -60,18 +61,18 @@ async def session(engine, create):
         yield session
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 def eventRepo(session):
     yield EventRepository(session)
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def user(session):
     """Default user with a primary calendar."""
-    user = User('test@example.com', 'Test User', None)
+    user = User('user@chrono.so', 'Test User', None)
 
     calendar = Calendar(
-        'calendar-id', 'summary', 'description', 'America/Toronto', 'test@example.com'
+        'calendar-id', 'summary', 'description', 'America/Toronto', 'user@chrono.so'
     )
     userCalendar = UserCalendar(
         'calendar-id',
