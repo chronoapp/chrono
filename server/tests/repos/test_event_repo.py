@@ -1,6 +1,7 @@
 import pytest
 from datetime import datetime, timedelta
-from app.db.models.event_participant import EventParticipant
+from app.api.repos.exceptions import EventRepoPermissionError
+from app.db.models.event_participant import EventAttendee, EventOrganizer
 from app.db.models.user_calendar import UserCalendar
 from tests.utils import createEvent, createCalendar
 from sqlalchemy import select
@@ -57,8 +58,7 @@ async def test_event_repo_CRUD(user, session):
     startDay = '2020-12-25'
     endDay = '2020-12-26'
     timezone = 'America/Los_Angeles'
-    creator = EventParticipantVM(email='creator@chrono.so', display_name='Event Creator')
-    organizer = EventParticipantVM(email='organizer@chrono.so', display_name='Event Organizer')
+    organizer = EventParticipantVM(email='user@chrono.so', display_name='Event Organizer')
     eventVM = EventBaseVM(
         title='Event',
         description='Test event description',
@@ -69,19 +69,20 @@ async def test_event_repo_CRUD(user, session):
         calendar_id=userCalendar.id,
         timezone=timezone,
         recurrences=['FREQ=WEEKLY;BYDAY=SU;INTERVAL=1;COUNT=5'],
-        creator=creator,
         organizer=organizer,
     )
 
     eventRepo = EventRepository(session)
 
+    # 1) Create Event
     event = await eventRepo.createEvent(user, userCalendar, eventVM)
     session.add(event)
     await session.commit()
     assert event.title == eventVM.title
-    assert event.creator.email == creator.email
+    assert event.creator.email == user.email
     assert event.organizer.email == organizer.email
 
+    # 2) Get Event
     event = await eventRepo.getEvent(user, userCalendar, event.id)
     assert event.title == eventVM.title
     assert event.calendar.id == userCalendar.id
@@ -90,10 +91,154 @@ async def test_event_repo_CRUD(user, session):
     eventVM.organizer = EventParticipantVM(email='new-email@chrono.so')
     eventVM.description = "new description"
 
+    # 3) Update Event
     event = await eventRepo.updateEvent(user, userCalendar, event.id, eventVM)
     await session.commit()
     assert event.organizer.email == eventVM.organizer.email
     assert event.description == eventVM.description
+
+
+@pytest.mark.asyncio
+async def test_event_repo_edit_permissions(user, session):
+    """Tests that we can't edit an event if we don't have permission."""
+    userCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+
+    # Creates an event. The user is not the organizer.
+    # That means the event is duplicated on this calendar and not editable.
+    event = createEvent(
+        userCalendar, datetime.now(), datetime.now() + timedelta(hours=1), title='Event'
+    )
+    event.organizer = EventOrganizer('other@chrono.so', None, None)
+    await session.commit()
+
+    eventRepo = EventRepository(session)
+    eventVM = await eventRepo.getEventVM(user, userCalendar, event.id)
+
+    # Try to update the event. Should fail if modifying main event fields.
+    eventVMUpdated = eventVM.copy(update={'title': "new summary"})
+    with pytest.raises(EventRepoPermissionError):
+        await eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
+
+    eventVMUpdated = eventVM.copy(update={'description': "new description"})
+    with pytest.raises(EventRepoPermissionError):
+        await eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
+
+    eventVMUpdated = eventVM.copy(update={'start': eventVM.start + timedelta(hours=1)})
+    with pytest.raises(EventRepoPermissionError):
+        await eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
+
+    eventVMUpdated = eventVM.copy(update={'end': eventVM.end + timedelta(hours=1)})
+    with pytest.raises(EventRepoPermissionError):
+        await eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
+
+
+@pytest.mark.asyncio
+async def test_event_repo_edit_attendee_permissions_as_guest(user, session):
+    """Tests edit event attendees when the user is not the organizer."""
+    userCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+    event = createEvent(
+        userCalendar, datetime.now(), datetime.now() + timedelta(hours=1), title='Event'
+    )
+    event.participants = [
+        EventAttendee('p1@chrono.so', None, None, 'needsAction'),
+        EventAttendee('p2@chrono.so', None, None, 'needsAction'),
+        EventAttendee(user.email, None, None, 'needsAction'),
+    ]
+    event.organizer = EventOrganizer('other@chrono.so', None, None)
+    event.guests_can_invite_others = False
+    await session.commit()
+
+    eventRepo = EventRepository(session)
+    eventVM = await eventRepo.getEventVM(user, userCalendar, event.id)
+
+    # Make sure this user can update their own responseStatus.
+    newParticipants = [
+        p.copy(update={'response_status': 'accepted'}) if p.email == user.email else p
+        for p in eventVM.participants
+    ]
+    eventVMUpdated = eventVM.copy(update={'participants': newParticipants})
+    event = await eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
+    participant = next(p for p in event.participants if p.email == user.email)
+    assert participant.response_status == 'accepted'
+
+    # Make sure this user doesn't have the permissions to update the guest list.
+    newParticipants = [p.copy(update={'response_status': 'accepted'}) for p in eventVM.participants]
+    eventVMUpdated = eventVM.copy(update={'participants': newParticipants})
+    event = await eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
+    participantsMap = {p.email: p for p in event.participants}
+
+    assert participantsMap['p1@chrono.so'].response_status == 'needsAction'
+    assert participantsMap['p2@chrono.so'].response_status == 'needsAction'
+    assert participantsMap['user@chrono.so'].response_status == 'accepted'
+
+    # Make sure we can't add a new participant.
+    newParticipants.append(EventParticipantVM(email='p3@chrono.so'))
+    with pytest.raises(EventRepoPermissionError):
+        event = await eventRepo.updateEvent(
+            user, userCalendar, event.id, eventVM.copy(update={'participants': newParticipants})
+        )
+
+    # We can add a new participant if guests_can_invite_others is True.
+    event.guests_can_invite_others = True
+    session.add(event)
+    await session.commit()
+
+    event = await eventRepo.updateEvent(
+        user, userCalendar, event.id, eventVM.copy(update={'participants': newParticipants})
+    )
+    assert len(event.participants) == 4
+    participantsMap = {p.email: p for p in event.participants}
+    assert participantsMap['p3@chrono.so'].response_status == 'needsAction'
+
+    # Cannot remove participants
+    del participantsMap['p1@chrono.so']
+    removedParticipants = [p for p in participantsMap.values()]
+    event = await eventRepo.updateEvent(
+        user, userCalendar, event.id, eventVM.copy(update={'participants': removedParticipants})
+    )
+    assert len(event.participants) == 4
+
+
+@pytest.mark.asyncio
+async def test_event_repo_edit_attendee_permissions_as_organizer(user, session):
+    """Tests edit event attendees when the user is the organizer."""
+    userCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+    event = createEvent(
+        userCalendar, datetime.now(), datetime.now() + timedelta(hours=1), title='Event'
+    )
+    event.participants = [
+        EventAttendee('p1@chrono.so', None, None, 'needsAction'),
+        EventAttendee('p2@chrono.so', None, None, 'needsAction'),
+        EventAttendee(user.email, None, None, 'needsAction'),
+    ]
+    event.organizer = EventOrganizer(user.email, None, None)
+    await session.commit()
+
+    eventRepo = EventRepository(session)
+    eventVM = await eventRepo.getEventVM(user, userCalendar, event.id)
+
+    # We can add a new participant
+    newParticipants = eventVM.participants
+    newParticipants.append(EventParticipantVM(email='p3@chrono.so', response_status='tentative'))
+    eventVMUpdated = eventVM.copy(update={'participants': newParticipants})
+
+    event = await eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
+    participantsMap = {p.email: p for p in event.participants}
+    assert len(event.participants) == 4
+    assert participantsMap['p3@chrono.so'].response_status == 'tentative'
+
+    # We can remove participants
+    del participantsMap['p1@chrono.so']
+    del participantsMap['p2@chrono.so']
+
+    removedParticipants = [p for p in participantsMap.values()]
+    event = await eventRepo.updateEvent(
+        user, userCalendar, event.id, eventVM.copy(update={'participants': removedParticipants})
+    )
+    assert len(event.participants) == 2
+    participantsMap = {p.email: p for p in event.participants}
+    assert 'p1@chrono.so' not in participantsMap
+    assert 'p2@chrono.so' not in participantsMap
 
 
 @pytest.mark.asyncio

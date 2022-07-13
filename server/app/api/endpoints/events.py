@@ -100,7 +100,6 @@ async def createCalendarEvent(
 
         calendarDb = await calendarRepo.getCalendar(user, calendarId)
         eventDb = await eventRepo.createEvent(user, calendarDb, event)
-
         await session.commit()
 
         return eventDb
@@ -125,10 +124,10 @@ async def getCalendarEvent(
         calendar = await calendarRepo.getCalendar(user, calendar_id)
         event = await eventRepo.getEventVM(user, calendar, event_id)
 
-        if not event:
+        if event:
+            return event
+        else:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
-
-        return event
 
     except NotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))

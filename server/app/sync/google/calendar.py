@@ -460,9 +460,34 @@ async def syncCreatedOrUpdatedGoogleEvent(
 
         event.id = recurringEventId
 
-    await eventRepo.updateEventParticipants(userCalendar.user, event, eventVM.participants)
+    await syncEventParticipants(userCalendar, event, eventVM.participants, session)
 
     return event
+
+
+async def syncEventParticipants(
+    userCalendar: UserCalendar,
+    event: Event,
+    participants: List[EventParticipantVM],
+    session: AsyncSession,
+):
+    """Re-create event participants on google sync."""
+    from app.api.repos.contact_repo import ContactRepository
+    from app.db.models import EventAttendee
+
+    contactRepo = ContactRepository(session)
+    event.participants = []
+
+    for participantVM in participants:
+        contact = await contactRepo.findContact(userCalendar.user, participantVM)
+
+        participant = EventAttendee(
+            participantVM.email,
+            participantVM.display_name,
+            contact.id if contact else None,
+            participantVM.response_status,
+        )
+        event.participants.append(participant)
 
 
 def convertStatus(status: str):

@@ -21,6 +21,7 @@ from sqlalchemy.orm import relationship, backref
 from app.db.base_class import Base
 from app.db.models.event_label import event_label_association_table
 from app.db.models.event_participant import EventCreator, EventOrganizer
+from app.db.models.user_calendar import UserCalendar
 
 
 EventStatus = Literal['deleted', 'tentative', 'active']
@@ -215,3 +216,10 @@ class Event(Base):
 
     def __repr__(self):
         return f'<Event {self.id} {self.title} start:{self.start} end:{self.end} {self.status}/>'
+
+    def isOrganizer(self, userCalendar: UserCalendar) -> bool:
+        """Checks if the calendar is the organizer of this event."""
+        return self.organizer and (
+            self.organizer.email == userCalendar.email
+            or self.organizer.email == userCalendar.user.email
+        )

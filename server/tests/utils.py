@@ -57,8 +57,8 @@ def createEvent(
         originalStart,
         None,
         None,
-        EventCreator('test-user@example.com', 'Test User', None),
-        EventOrganizer('test-user-2@example.com', 'Test User 2', None),
+        EventCreator('test-user@chrono.so', 'Test User', None),
+        EventOrganizer(userCalendar.email, userCalendar.summary, None),
     )
     userCalendar.calendar.events.append(event)
 

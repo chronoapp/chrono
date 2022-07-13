@@ -67,8 +67,7 @@ class UserCalendar(Base):
         self.primary = primary
         self.deleted = deleted
 
-    def canWriteEvent(self):
-        # TODO: Include the event -> calendar relationship info.
+    def hasWriteAccess(self):
         return self.access_role == 'writer' or self.access_role == 'owner'
 
     @property

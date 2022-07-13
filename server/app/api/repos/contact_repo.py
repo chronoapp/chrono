@@ -1,4 +1,5 @@
 from typing import Optional, List
+from pydantic import BaseModel
 
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +14,14 @@ class ContactRepoError(Exception):
     """Base class for exceptions in this module."""
 
     pass
+
+
+class ContactVM(BaseModel):
+    first_name: Optional[str]
+    last_name: Optional[str]
+    email: str
+    photo_url: Optional[str]
+    google_id: Optional[str]
 
 
 class ContactRepository:
@@ -30,10 +39,23 @@ class ContactRepository:
 
         return result.scalars().all()
 
+    async def addContact(self, user: User, contactVM: ContactVM) -> List[Contact]:
+        contact = Contact(
+            contactVM.first_name,
+            contactVM.last_name,
+            contactVM.email,
+            contactVM.photo_url,
+            contactVM.google_id,
+        )
+        user.contacts.append(contact)
+
+        return contact
+
     async def getContacts(self, user: User, limit: int = 10) -> List[Contact]:
         result = await self.session.execute(
             select(Contact).where(Contact.user_id == user.id).limit(limit)
         )
+
         return result.scalars().all()
 
     async def findContact(self, user: User, participantVM: EventParticipantVM) -> Optional[Contact]:
