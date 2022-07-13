@@ -156,16 +156,17 @@ def createOrUpdateEvent(
     googleId: Optional[str] = None,
 ) -> Event:
     recurrences = None if eventVM.recurring_event_id else eventVM.recurrences
-
-    creator = None
     if creatorVM := eventVM.creator:
         creator = EventCreator(creatorVM.email, creatorVM.display_name, creatorVM.contact_id)
+    else:
+        creator = EventCreator(userCalendar.user.email, None, None)
 
-    organizer = None
     if organizerVM := eventVM.organizer:
         organizer = EventOrganizer(
             organizerVM.email, organizerVM.display_name, organizerVM.contact_id
         )
+    else:
+        organizer = EventOrganizer(userCalendar.email, userCalendar.summary, None)
 
     if not eventDb:
         event = Event(
