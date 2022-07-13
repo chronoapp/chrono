@@ -10,7 +10,8 @@ from app.sync.google.calendar import (
     syncCreatedOrUpdatedGoogleEvent,
 )
 from app.api.repos.event_utils import getRecurringEventId
-from app.api.repos.event_repo import EventRepository, getBaseEventsStmt
+from app.api.repos.event_repo import EventRepository, getCalendarEventsStmt
+from app.api.repos.contact_repo import ContactRepository, ContactVM
 
 EVENT_ITEM_RECURRING = {
     'kind': 'calendar#event',
@@ -75,20 +76,38 @@ async def test_syncCreatedOrUpdatedGoogleEvent_single(
 async def test_syncCreatedOrUpdatedGoogleEvent_single_with_attendees(user, session, eventRepo):
     calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
 
-    eventItem = EVENT_ITEM_RECURRING.copy()
-    del eventItem['recurrence']
-
-    # Add participants
-    eventItem['attendees'] = [
-        {'email': 'test@example.com', 'self': True, 'displayName': 'My Name'},
-        {'email': 'test2@example.com'},
-    ]
-
-    event = await syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
+    # Initial contact list. Make sure the contact is linked to the event attendee.
+    contactRepo = ContactRepository(session)
+    contact = ContactVM(email='jon@chrono.so')
+    contact = await contactRepo.addContact(user, contact)
 
     await session.commit()
 
+    # Add attendees
+    eventItem = EVENT_ITEM_RECURRING.copy()
+    del eventItem['recurrence']
+
+    eventItem['attendees'] = [
+        {'email': 'jon@chrono.so', 'self': True, 'displayName': 'Jon'},
+        {'email': 'abe@chrono.so'},
+    ]
+
+    event = await syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
+    attendeeMap = {p.email: p for p in event.participants}
+
     assert len(event.participants) == 2
+    assert attendeeMap['jon@chrono.so'].contact == contact
+
+    # Update attendees
+    eventItem['attendees'] = [
+        {'email': 'sally@chrono.so', 'self': True, 'displayName': 'Sally'},
+        {'email': 'eric@chrono.so'},
+    ]
+    event = await syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
+    attendeeMap = {p.email: p for p in event.participants}
+
+    assert len(event.participants) == 2
+    assert attendeeMap['sally@chrono.so'].display_name == 'Sally'
 
 
 @pytest.mark.asyncio
@@ -294,13 +313,13 @@ async def test_syncEventsToDb_duplicateEventMultipleCalendars(user: User, sessio
     await syncEventsToDb(readOnlyCalendar, [eventItem], session)
     await syncEventsToDb(myCalendar, [eventItem], session)
 
-    stmt = getBaseEventsStmt().where(User.id == user.id, Calendar.id == readOnlyCalendar.id)
+    stmt = getCalendarEventsStmt().where(User.id == user.id, Calendar.id == readOnlyCalendar.id)
     result = await session.execute(stmt)
     cal1Events = result.scalars().all()
 
     assert len(cal1Events) == 1
 
-    stmt = getBaseEventsStmt().where(User.id == user.id, Calendar.id == myCalendar.id)
+    stmt = getCalendarEventsStmt().where(User.id == user.id, Calendar.id == myCalendar.id)
     result = await session.execute(stmt)
     cal2Events = result.scalars().all()
 
@@ -322,7 +341,7 @@ async def test_syncEventsToDb_changedRecurringEvent(user: User, session: Session
 
     await syncEventsToDb(calendar, [parentEvent, recurringEvent], session)
 
-    stmt = getBaseEventsStmt().where(User.id == user.id, Calendar.id == calendar.id)
+    stmt = getCalendarEventsStmt().where(User.id == user.id, Calendar.id == calendar.id)
     result = await session.execute(stmt)
     calEvents = result.scalars().all()
     assert len(calEvents) == 2
@@ -339,7 +358,7 @@ async def test_syncEventsToDb_changedRecurringEvent(user: User, session: Session
 
     await syncEventsToDb(calendar, [recurringEvent2, parentEvent2], session)
 
-    stmt = getBaseEventsStmt().where(User.id == user.id, Calendar.id == calendar.id)
+    stmt = getCalendarEventsStmt().where(User.id == user.id, Calendar.id == calendar.id)
     result = await session.execute(stmt)
     calEvents = result.scalars().all()
 

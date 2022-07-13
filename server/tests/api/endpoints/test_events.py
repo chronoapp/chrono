@@ -521,24 +521,3 @@ async def test_deleteEvent_overrides(user: User, session, async_client):
     assert resp.status_code == 200
     assert len(events) == 1
     assert events[0].status == 'deleted'
-
-
-# @pytest.mark.asyncio
-# async def test_participants(user, session, async_client):
-
-#     contact1 = Contact('Jon', 'Snow', 'jon@example.com', None, None)
-#     contact2 = Contact('Fred', 'Mercury', 'fred@example.com', None, None)
-#     user.contacts.append(contact1)
-#     user.contacts.append(contact2)
-
-#     await session.commit()
-
-#     participant = EventParticipant(None, contact1.id)
-#     participant.contact = contact1
-
-#     await session.commit()
-
-#     print(participant.contact)
-
-#     vm = EventParticipantVM.from_orm(participant)
-#     print(vm)

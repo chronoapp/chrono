@@ -32,7 +32,13 @@ from app.api.repos.event_utils import (
 import app.sync.google.gcal as gcal
 
 from app.api.endpoints.labels import LabelInDbVM, Label, combineLabels
-from app.api.repos.exceptions import EventRepoError, InputError, EventNotFoundError, RepoError
+from app.api.repos.exceptions import (
+    EventRepoError,
+    InputError,
+    EventNotFoundError,
+    RepoError,
+    EventRepoPermissionError,
+)
 
 
 MAX_RECURRING_EVENT_COUNT = 1000
@@ -163,8 +169,7 @@ class EventRepository:
     async def createEvent(
         self, user: User, userCalendar: UserCalendar, event: EventBaseVM
     ) -> Event:
-        if not userCalendar.canWriteEvent():
-            raise EventRepoError("Can not update event with this calendar.")
+        await self.verifyPermissions(userCalendar, None, event)
 
         # Keeps track of the "Original" time this recurrence should have started.
         if event.recurrences or event.recurring_event_id:
@@ -173,23 +178,24 @@ class EventRepository:
             event.original_timezone = event.timezone
 
         eventDb = createOrUpdateEvent(userCalendar, None, event)
-        userCalendar.calendar.events.append(eventDb)
-
         eventDb.labels = await getCombinedLabels(user, event.labels, self.session)
-        await self.updateEventParticipants(user, eventDb, event.participants)
+        await self.session.commit()
+
+        newEvent = await self.getEvent(user, userCalendar, eventDb.id)
+        await self.updateEventParticipants(userCalendar, newEvent, event.participants)
 
         # Sync with google calendar. TODO: Add flag for sync status
         if userCalendar.source == 'google':
             resp = gcal.insertGoogleEvent(userCalendar, eventDb)
             eventDb.g_id = resp.get('id')
 
-        return eventDb
+        return newEvent
 
     async def deleteEvent(self, user: User, userCalendar: UserCalendar, eventId: str) -> Event:
         """
         TODO: Propagate changes to all copies of the event.
         """
-        if not userCalendar.canWriteEvent():
+        if not userCalendar.hasWriteAccess():
             raise RepoError('User cannot write event.')
 
         event = await self.getEvent(user, userCalendar, eventId)
@@ -246,13 +252,38 @@ class EventRepository:
                 raise EventNotFoundError('Event not found.')
 
     async def verifyPermissions(
-        self, userCalendar: UserCalendar, event: Event, newEvent: EventBaseVM
+        self, userCalendar: UserCalendar, event: Optional[Event], newEvent: EventBaseVM
     ):
-        """TODO: Makes sure the user has the correct permissions to modify the event.
-        If the event's organizer matches the calendar, then this calendar owns the event.
+        """Makes sure the user has the correct permissions to modify the event.
+        If the event's organizer matches this user, then I own the event.
+
+        The organizer of the event owns the main event properties.
+        (title, description, location, start, end, recurrence).
+
+        Raises an EventRepoPermissionError if the user does not have the correct permissions.
         """
-        if event and not userCalendar.canWriteEvent():
-            raise EventRepoError("Can not update event with this calendar.")
+
+        if not userCalendar.hasWriteAccess():
+            # Access role is read only.
+            raise EventRepoPermissionError("Can not update event with this calendar.")
+
+        # User is modifying an existing event.
+        if event:
+            isOrganizer = event.isOrganizer(userCalendar)
+            canModifyEvent = isOrganizer or event.guests_can_modify
+
+            hasModifiedMainEventFields = (
+                event.title != newEvent.title
+                or event.description != newEvent.description
+                or event.start != newEvent.start
+                or event.end != newEvent.end
+                or event.recurrences != newEvent.recurrences
+            )
+
+            if not canModifyEvent and hasModifiedMainEventFields:
+                raise EventRepoPermissionError(
+                    "Can not modify event. Only the organizer can modify these fields."
+                )
 
     async def updateEvent(
         self, user: User, userCalendar: UserCalendar, eventId: str, event: EventBaseVM
@@ -328,7 +359,7 @@ class EventRepository:
         updatedEvent.labels.clear()
         updatedEvent.labels = await getCombinedLabels(user, event.labels, self.session)
 
-        await self.updateEventParticipants(user, updatedEvent, event.participants)
+        await self.updateEventParticipants(userCalendar, updatedEvent, event.participants)
 
         if updatedEvent.g_id:
             gcal.updateGoogleEvent(userCalendar, updatedEvent)
@@ -377,16 +408,26 @@ class EventRepository:
         return result.scalars().all()
 
     async def updateEventParticipants(
-        self, user: User, event: Event, newParticipants: List[EventParticipantVM]
+        self,
+        userCalendar: UserCalendar,
+        event: Event,
+        newParticipants: List[EventParticipantVM],
     ):
-        """Create and update event participants.
-        # TODO: Check the errors first.
-        # TODO: Option to send invites to participants.
+        """Create and update event participants. Use google calendar to send invites to new participants.\
+        I can only modify the attendee that corresponds to this user, or if I'm the organizer.
+
+        TODO: Have option to send invites with Chrono.
         """
-        # Remove previous participants.
-        event.participants = []
+        # Permissions check.
+        user = userCalendar.user
+        isOrganizer = event.isOrganizer(userCalendar)
+        canModifyEvent = isOrganizer or event.guests_can_modify
+        canInviteAttendees = canModifyEvent or event.guests_can_invite_others
 
         # Add participants, matched with contacts.
+        currentAttendeesMap = {p.email: p for p in event.participants}
+        newAttendeesMap = set(p.email for p in newParticipants)
+
         contactRepo = ContactRepository(self.session)
         existingContactIds = set()  # Make sure we don't add duplicate contacts
 
@@ -398,15 +439,35 @@ class EventRepository:
             if existingContact:
                 existingContactIds.add(existingContact.id)
 
-            participant = EventAttendee(
-                participantVM.email,
-                participantVM.display_name,
-                participantVM.contact_id,
-                participantVM.response_status,
-            )
-            participant.contact = existingContact
+            if participantVM.email in currentAttendeesMap:
+                # Existing Attendee
+                participant = currentAttendeesMap[participantVM.email]
+                ownsAttendee = isOrganizer or participant.email == user.email
 
-            event.participants.append(participant)
+                if ownsAttendee:
+                    participant.response_status = participantVM.response_status
+            else:
+                # New Attendee
+                if not canInviteAttendees:
+                    raise EventRepoPermissionError(
+                        'You do not have permission to invite attendees.'
+                    )
+
+                ownsAttendee = isOrganizer or participantVM.email == user.email
+                participant = EventAttendee(
+                    participantVM.email,
+                    participantVM.display_name if ownsAttendee else None,
+                    existingContact.id if existingContact else None,
+                    participantVM.response_status if ownsAttendee else 'needsAction',
+                )
+                event.participants.append(participant)
+                participant.contact = existingContact
+
+        # Can remove events if the user is the organizer.
+        if isOrganizer:
+            for email, attendee in currentAttendeesMap.items():
+                if email not in newAttendeesMap:
+                    event.participants.remove(attendee)
 
     async def getRecurringEventWithParent(
         self, calendar: UserCalendar, eventId: str, session: AsyncSession
@@ -437,7 +498,7 @@ class EventRepository:
 async def getCombinedLabels(
     user: User, labelVMs: List[LabelInDbVM], session: AsyncSession
 ) -> List[Label]:
-    """"List of labels, with parents removed if the list includes the child"""
+    """List of labels, with parents removed if the list includes the child"""
     labels: List[Label] = []
 
     userLabels = {l.id: l for l in user.labels}

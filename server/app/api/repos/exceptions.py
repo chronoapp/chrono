@@ -16,6 +16,10 @@ class EventRepoError(RepoError):
     pass
 
 
+class EventRepoPermissionError(EventRepoError):
+    pass
+
+
 class NotFoundError(EventRepoError):
     pass
 
