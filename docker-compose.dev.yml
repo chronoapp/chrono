@@ -1,14 +1,13 @@
 version: '3'
 
 services:
-  # FastAPI / Starlette
-  api:
+  # Background worker for processing jobs
+  worker: &worker
     build: ./server
-    ports:
-      - 8888:8080
     volumes:
       - ./server:/app/
       - model_data:/var/lib/model_data/
+    command: dramatiq worker --watch .
     environment:
       - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@postgres_db:5432/${DATABASE_NAME}
       - APP_URL=${APP_URL}
@@ -18,6 +17,22 @@ services:
       - MSFT_APP_ID=${MSFT_APP_ID}
       - MSFT_APP_SECRET=${MSFT_APP_SECRET}
       - TOKEN_SECRET=${TOKEN_SECRET}
+
+  # FastAPI / Starlette
+  api:
+    <<: *worker
+    command: supervisord -n -c /etc/supervisord/supervisord.conf
+    ports:
+      - 8888:8080
+
+  # Redis for job queue.
+  redis:
+    image: redis:5.0.5-alpine
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    environment:
+      - REDIS_PORT=6379
 
   # PostgreSQL database
   postgres_db:
@@ -39,4 +54,5 @@ services:
 
 volumes:
   postgres-data:
+  redis-data:
   model_data:
