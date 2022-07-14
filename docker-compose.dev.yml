@@ -7,7 +7,7 @@ services:
     volumes:
       - ./server:/app/
       - model_data:/var/lib/model_data/
-    command: dramatiq worker --watch .
+    command: dramatiq worker app.main --processes 2 --watch .
     environment:
       - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@postgres_db:5432/${DATABASE_NAME}
       - APP_URL=${APP_URL}
