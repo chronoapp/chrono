@@ -1,5 +1,4 @@
 import pytest
-import json
 from uuid import uuid4
 from datetime import datetime, timedelta
 
@@ -13,11 +12,10 @@ from app.api.repos.event_repo import (
     getAllExpandedRecurringEventsList,
 )
 from app.api.repos.event_utils import (
-    EventParticipantVM,
     createOrUpdateEvent,
 )
 from app.api.endpoints.authentication import getAuthToken
-from app.db.models.event_participant import EventAttendee, EventParticipant
+from app.db.models.event_participant import EventAttendee
 
 from tests.utils import createEvent
 from app.db.models import User, Event, Contact
@@ -74,7 +72,7 @@ async def test_createEvent_single(user: User, session, async_client):
     resp = await async_client.post(
         f'/api/v1/calendars/{userCalendar.id}/events/',
         headers={'Authorization': getAuthToken(user)},
-        data=json.dumps(event),
+        json=event,
     )
     eventResp = resp.json()
 
@@ -113,7 +111,7 @@ async def test_createEvent_recurring_invalid(user: User, session, async_client):
     resp = await async_client.post(
         f'/api/v1/calendars/{userCalendar.id}/events/',
         headers={'Authorization': getAuthToken(user)},
-        data=json.dumps(event),
+        json=event,
     )
     assert resp.status_code == 422
 
@@ -121,7 +119,7 @@ async def test_createEvent_recurring_invalid(user: User, session, async_client):
     resp = await async_client.post(
         f'/api/v1/calendars/{userCalendar.id}/events/',
         headers={'Authorization': getAuthToken(user)},
-        data=json.dumps(event),
+        json=event,
     )
     assert resp.status_code == 422
 
@@ -147,7 +145,7 @@ async def test_createEvent_recurring(user: User, session, async_client, eventRep
     resp = await async_client.post(
         f'/api/v1/calendars/{calendar.id}/events/',
         headers={'Authorization': getAuthToken(user)},
-        data=json.dumps(event),
+        json=event,
     )
     assert resp.status_code == 200
 
@@ -182,7 +180,7 @@ async def test_createEvent_allDay(user: User, session, async_client, eventRepo: 
     resp = await async_client.post(
         f'/api/v1/calendars/{calendar.id}/events/',
         headers={'Authorization': getAuthToken(user)},
-        data=json.dumps(event),
+        json=event,
     )
     eventResp = resp.json()
 
@@ -221,7 +219,7 @@ async def test_createEvent_withLabels(user: User, session, async_client):
     resp = await async_client.post(
         f'/api/v1/calendars/{userCalendar.id}/events/',
         headers={'Authorization': getAuthToken(user)},
-        data=json.dumps(event),
+        json=event,
     )
 
     # Make sure the label is attached.
@@ -252,7 +250,7 @@ async def test_createEvent_withLabels_nonExisting(user: User, session, async_cli
     resp = await async_client.post(
         f'/api/v1/calendars/{userCalendar.id}/events/',
         headers={'Authorization': getAuthToken(user)},
-        data=json.dumps(event),
+        json=event,
     )
     assert resp.status_code == 400
 
@@ -290,7 +288,7 @@ async def test_createEvent_withParticipants(user: User, session, async_client):
     resp = await async_client.post(
         f'/api/v1/calendars/{calendar.id}/events/',
         headers={'Authorization': getAuthToken(user)},
-        data=json.dumps(event),
+        json=event,
     )
 
     assert len(resp.json().get('participants')) == 2
@@ -356,7 +354,7 @@ async def test_updateEvent_withParticipants(user: User, session, async_client):
     _ = await async_client.put(
         f'/api/v1/calendars/{calendar.id}/events/{event1.id}',
         headers={'Authorization': getAuthToken(user)},
-        data=json.dumps(eventJson),
+        json=eventJson,
     )
 
     # Make sure the event is updated in the DB.
@@ -409,7 +407,7 @@ async def test_updateEvent_recurring(user: User, session, async_client):
     resp = await async_client.put(
         f'/api/v1/calendars/{userCalendar.id}/events/{recurringEvent.id}',
         headers={'Authorization': getAuthToken(user)},
-        data=json.dumps(eventData),
+        json=eventData,
     )
 
     assert resp.status_code == 200
@@ -435,7 +433,7 @@ async def test_moveEvent_single(user, session, async_client):
     resp = await async_client.post(
         f'/api/v1/calendars/{calendar.id}/events/{event.id}/move',
         headers={'Authorization': getAuthToken(user)},
-        data=json.dumps({'calendar_id': calendar.id}),
+        json={'calendar_id': calendar.id},
     )
     assert resp.status_code == 400
 
@@ -445,7 +443,7 @@ async def test_moveEvent_single(user, session, async_client):
     resp = await async_client.post(
         f'/api/v1/calendars/{calendar.id}/events/{event.id}/move',
         headers={'Authorization': getAuthToken(user)},
-        data=json.dumps({'calendar_id': cal2.id}),
+        json={'calendar_id': cal2.id},
     )
 
     # Make sure it's not in the old calendar

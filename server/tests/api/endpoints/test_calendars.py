@@ -1,6 +1,4 @@
 import pytest
-import json
-
 from sqlalchemy import func, select
 
 from app.api.endpoints.authentication import getAuthToken
@@ -30,7 +28,6 @@ async def test_getCalendars(user, async_client):
 
 @pytest.mark.asyncio
 async def test_postCalendar(user, session, async_client):
-
     calendarData = {
         'summary': 'my calendar',
         'backgroundColor': '#cccccc',
@@ -43,8 +40,8 @@ async def test_postCalendar(user, session, async_client):
 
     resp = await async_client.post(
         f'/api/v1/calendars/',
-        headers={'Authorization': getAuthToken(user)},
-        data=json.dumps(calendarData),
+        headers={'Authorization': getAuthToken(user), 'Content-type': 'application/json'},
+        json=calendarData,
     )
 
     calendar = resp.json()

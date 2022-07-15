@@ -1,7 +1,4 @@
-import json
 import pytest
-
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.api.endpoints.labels import combineLabels
@@ -46,7 +43,7 @@ async def test_createLabel(user, async_client):
     labelData = {'title': 'label-1', 'color_hex': '#cccccc'}
     token = getAuthToken(user)
     resp = await async_client.post(
-        f'/api/v1/labels/', headers={'Authorization': token}, data=json.dumps(labelData)
+        f'/api/v1/labels/', headers={'Authorization': token}, json=labelData
     )
 
     label = resp.json()
@@ -57,7 +54,7 @@ async def test_createLabel(user, async_client):
     labelData = {'title': 'label-2', 'color_hex': '#ffffff'}
     token = getAuthToken(user)
     resp = await async_client.post(
-        f'/api/v1/labels/', headers={'Authorization': token}, data=json.dumps(labelData)
+        f'/api/v1/labels/', headers={'Authorization': token}, json=labelData
     )
 
     label = resp.json()
@@ -81,7 +78,7 @@ async def test_deleteLabel(user, session, async_client):
 
     assert resp.status_code == 200
 
-    result = await session.execute(select(Label).where(User.id == user.id))
+    result = await session.execute(select(Label).where(Label.user_id == user.id))
     labels = result.scalars().all()
 
     assert len(labels) == 2
