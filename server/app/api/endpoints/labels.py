@@ -125,7 +125,9 @@ async def deleteLabel(
     TODO: Handle delete subtree.
     TODO: Fix positions, since Sqlalchemy ORM doesn't support deletes yet.
     """
-    result = await session.execute(select(Label).where(User.id == user.id, Label.id == labelId))
+    result = await session.execute(
+        select(Label).where(Label.user_id == user.id, Label.id == labelId)
+    )
     label = result.scalar()
 
     if not label:
