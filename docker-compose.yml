@@ -1,14 +1,13 @@
 version: '3'
 
 services:
-  # FastAPI / Starlette
-  api:
+  # Background worker for processing jobs
+  worker: &worker
     build: ./server
-    ports:
-      - 8888:8080
     volumes:
       - ./server:/app/
       - model_data:/var/lib/model_data/
+    command: supervisord -n -c /etc/supervisord/supervisord-worker.conf
     environment:
       - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@postgres_db:5432/${DATABASE_NAME}
       - APP_URL=${APP_URL}
@@ -22,6 +21,22 @@ services:
       driver: loki
       options:
         loki-url: 'http://localhost:3100/loki/api/v1/push'
+
+  # FastAPI / Starlette
+  api:
+    <<: *worker
+    command: supervisord -n -c /etc/supervisord/supervisord.conf
+    ports:
+      - 8888:8080
+
+  # Redis for job queue.
+  redis:
+    image: redis:5.0.5-alpine
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    environment:
+      - REDIS_PORT=6379
 
   # PostgreSQL database
   postgres_db:
