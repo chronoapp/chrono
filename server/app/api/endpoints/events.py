@@ -35,7 +35,7 @@ from app.sync.google.tasks import (
 router = APIRouter()
 
 
-@router.get('/events/')
+@router.get('/events/', response_model=List[EventInDBVM])
 async def searchEvents(
     query: str = "",
     limit: int = 100,
@@ -43,7 +43,7 @@ async def searchEvents(
     end_date: Optional[str] = None,
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_db),
-) -> Iterable[Union[EventInDBVM, Event]]:
+):
     """
     TODO: Filter queries for recurring events
     TODO: Figure out how to gather async queries
