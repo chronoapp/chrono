@@ -223,3 +223,6 @@ class Event(Base):
             self.organizer.email == userCalendar.email
             or self.organizer.email == userCalendar.user.email
         )
+
+    def isGoogleEvent(self):
+        return self.g_id is not None

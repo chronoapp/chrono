@@ -9,6 +9,9 @@ from app.core import config
 from app.api.router import api_router
 from app.db.session import AsyncSession
 
+# Register all tasks as part of this module.
+from app.sync.google.tasks import *
+
 app = FastAPI(
     title=config.PROJECT_ID,
     openapi_url="/api/v1/openapi.json",

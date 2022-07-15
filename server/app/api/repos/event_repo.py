@@ -9,13 +9,11 @@ import logging
 
 from sqlalchemy import asc, and_, select, delete, or_, update
 from sqlalchemy.orm import selectinload
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text, desc
 
 from app.core.logger import logger
 from app.db.sql.event_search import EVENT_SEARCH_QUERY
-
 from app.db.models import Event, User, UserCalendar, Calendar, EventAttendee
 
 from app.api.repos.contact_repo import ContactRepository
@@ -28,7 +26,6 @@ from app.api.repos.event_utils import (
     getRecurringEventId,
     recurrenceToRuleSet,
 )
-
 import app.sync.google.gcal as gcal
 
 from app.api.endpoints.labels import LabelInDbVM, Label, combineLabels
@@ -62,6 +59,8 @@ class EventRepository:
     """
     Combination of a Service / Repository over events.
     Provides an abstraction over SQLAlchemy.
+
+    Should be self-contained, without dependencies to google or other services.
     """
 
     def __init__(self, session: AsyncSession):
@@ -183,11 +182,7 @@ class EventRepository:
 
         newEvent = await self.getEvent(user, userCalendar, eventDb.id)
         await self.updateEventParticipants(userCalendar, newEvent, event.participants)
-
-        # Sync with google calendar. TODO: Add flag for sync status
-        if userCalendar.source == 'google':
-            resp = gcal.insertGoogleEvent(userCalendar, eventDb)
-            eventDb.g_id = resp.get('id')
+        await self.session.commit()
 
         return newEvent
 
@@ -206,14 +201,9 @@ class EventRepository:
             # If the parent is deleted, we can delete all child event.
             stmt = delete(Event).where(Event.recurring_event_id == event.id)
             await self.session.execute(stmt)
+            await self.session.commit()
 
-            # Delete from Google
-            if event.g_id:
-                try:
-                    _ = gcal.deleteGoogleEvent(user, userCalendar, event)
-                except HttpError as e:
-                    # TODO: Error handling
-                    logger.error(e)
+            return event
 
         else:
             # Virtual recurring event instance.
@@ -240,13 +230,9 @@ class EventRepository:
                     )
                     self.session.add(eventOverride)
 
-                # Delete from Google
-                if eventOverride.g_id:
-                    try:
-                        _ = gcal.deleteGoogleEvent(user, userCalendar, eventOverride)
-                    except HttpError as e:
-                        # TODO: Error handling
-                        logger.error(e)
+                await self.session.commit()
+
+                return eventOverride
 
             except InputError as e:
                 raise EventNotFoundError('Event not found.')
@@ -286,7 +272,11 @@ class EventRepository:
                 )
 
     async def updateEvent(
-        self, user: User, userCalendar: UserCalendar, eventId: str, event: EventBaseVM
+        self,
+        user: User,
+        userCalendar: UserCalendar,
+        eventId: str,
+        event: EventBaseVM,
     ) -> Event:
         curEvent = await self.getEvent(user, userCalendar, eventId)
         await self.verifyPermissions(userCalendar, curEvent, event)
@@ -360,9 +350,7 @@ class EventRepository:
         updatedEvent.labels = await getCombinedLabels(user, event.labels, self.session)
 
         await self.updateEventParticipants(userCalendar, updatedEvent, event.participants)
-
-        if updatedEvent.g_id:
-            gcal.updateGoogleEvent(userCalendar, updatedEvent)
+        await self.session.commit()
 
         return updatedEvent
 
@@ -387,10 +375,7 @@ class EventRepository:
             .values(calendar_id=toCalendar.id)
         )
         await self.session.execute(stmt)
-
-        # Makes sure both are google calendars.
-        if event.g_id and fromCalendar.google_id and toCalendar.google_id:
-            gcal.moveGoogleEvent(user, event.g_id, fromCalendar.google_id, toCalendar.google_id)
+        await self.session.commit()
 
         return event
 

@@ -1,15 +1,16 @@
-from typing import Optional
+from typing import Any, Optional, Literal, Dict
 from zoneinfo import ZoneInfo
-
 from datetime import datetime
-from app.db.models import Event, User, UserCalendar
 
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
+from app.db.models import Event, User, UserCalendar
+
 
 """Interfaces with Google Calendar API.
 """
+SendUpdateType = Literal['all', 'externalOnly', 'none']
 
 
 def getCalendarService(user: User):
@@ -28,10 +29,18 @@ def convertToLocalTime(dateTime: datetime, timeZone: Optional[str]):
 
 
 def getEventBody(event: Event, timeZone: str):
+    organizer = {'email': event.organizer.email, 'displayName': event.organizer.display_name}
+    participants = [
+        {'email': p.email, 'displayName': p.display_name, 'responseStatus': p.response_status}
+        for p in event.participants
+    ]
+
     eventBody = {
         'summary': event.title_short,
         'description': event.description,
         'recurrence': event.recurrences,
+        'organizer': organizer,
+        'attendees': participants,
     }
 
     if event.all_day:
@@ -52,10 +61,6 @@ def getEventBody(event: Event, timeZone: str):
     return eventBody
 
 
-"""Handle writes from Timecouncil => Google
-"""
-
-
 def getGoogleEvent(userCalendar: UserCalendar, eventId: str):
     return (
         getCalendarService(userCalendar.user)
@@ -65,14 +70,20 @@ def getGoogleEvent(userCalendar: UserCalendar, eventId: str):
     )
 
 
-def insertGoogleEvent(userCalendar: UserCalendar, event: Event):
-    timeZone = userCalendar.timezone
-    eventBody = getEventBody(event, timeZone)
-
+def createGoogleEvent(
+    user: User,
+    googleCalendarId: str,
+    eventBody: Dict[str, Any],
+    sendUpdates: SendUpdateType = 'none',
+):
     return (
-        getCalendarService(userCalendar.user)
+        getCalendarService(user)
         .events()
-        .insert(calendarId=userCalendar.google_id, body=eventBody)
+        .insert(
+            calendarId=googleCalendarId,
+            body=eventBody,
+            sendUpdates=sendUpdates,
+        )
         .execute()
     )
 
@@ -87,23 +98,29 @@ def moveGoogleEvent(user: User, eventGoogleId: str, prevCalendarId: str, toCalen
     )
 
 
-def updateGoogleEvent(userCalendar: UserCalendar, event: Event):
-    timeZone = userCalendar.timezone
-    eventBody = getEventBody(event, timeZone)
+def updateGoogleEvent(
+    user: User,
+    calendarId: str,
+    eventId: str,
+    eventBody: Dict[str, Any],
+    sendUpdates: SendUpdateType = 'none',
+):
     return (
-        getCalendarService(userCalendar.user)
+        getCalendarService(user)
         .events()
-        .patch(calendarId=userCalendar.google_id, eventId=event.g_id, body=eventBody)
+        .patch(
+            calendarId=calendarId,
+            eventId=eventId,
+            body=eventBody,
+            sendUpdates=sendUpdates,
+        )
         .execute()
     )
 
 
-def deleteGoogleEvent(user: User, calendar: UserCalendar, event: Event):
+def deleteGoogleEvent(user: User, calendarId: str, eventId: str):
     return (
-        getCalendarService(user)
-        .events()
-        .delete(calendarId=calendar.google_id, eventId=event.g_id)
-        .execute()
+        getCalendarService(user).events().delete(calendarId=calendarId, eventId=eventId).execute()
     )
 
 
