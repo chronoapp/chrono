@@ -24,12 +24,19 @@ from app.api.repos.event_utils import (
     EventInDBVM,
 )
 from app.db.models import Event, User
+from app.sync.google.gcal import SendUpdateType
+
+from app.sync.google.tasks import (
+    syncEventToGoogleTask,
+    syncMoveGoogleEventCalendarTask,
+    syncDeleteEventToGoogleTask,
+)
 
 router = APIRouter()
 
 
-@router.get('/events/', response_model=List[EventInDBVM])
-async def getEvents(
+@router.get('/events/')
+async def searchEvents(
     query: str = "",
     limit: int = 100,
     start_date: Optional[str] = None,
@@ -42,11 +49,23 @@ async def getEvents(
     TODO: Figure out how to gather async queries
     TODO: Filter by dates
     """
-    eventRepo = EventRepository(session)
-    if query:
-        tsQuery = ' & '.join(query.split())
-        return await eventRepo.search(user.id, tsQuery, limit=limit)
-    else:
+    try:
+        eventRepo = EventRepository(session)
+        if query:
+            tsQuery = ' & '.join(query.split())
+            events = await eventRepo.search(user.id, tsQuery, limit=limit)
+
+            return events
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=f'Search term cannot be empty.'
+            )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=f'Invalid date format: {e}'
+        )
+
 
 class MoveCalendarRequest(BaseModel):
     calendar_id: str
@@ -98,9 +117,12 @@ async def createCalendarEvent(
         calendarRepo = CalendarRepo(session)
         eventRepo = EventRepository(session)
 
-        calendarDb = await calendarRepo.getCalendar(user, calendarId)
-        eventDb = await eventRepo.createEvent(user, calendarDb, event)
-        await session.commit()
+        userCalendar = await calendarRepo.getCalendar(user, calendarId)
+        eventDb = await eventRepo.createEvent(user, userCalendar, event)
+
+        # Sync with google calendar.
+        if userCalendar.source == 'google':
+            syncEventToGoogleTask.send(user.id, userCalendar.id, eventDb.id, 'none')
 
         return eventDb
 
@@ -147,16 +169,20 @@ async def updateCalendarEvent(
 ) -> Event:
     """Update an existing event. For recurring events, create the "override" event
     in the DB with the composite id of {baseId}_{date}.
+
+    TODO: Send Updates parameter.
     """
     try:
         eventRepo = EventRepository(session)
         calendarRepo = CalendarRepo(session)
+
         userCalendar = await calendarRepo.getCalendar(user, calendar_id)
+        updatedEvent = await eventRepo.updateEvent(user, userCalendar, event_id, event)
 
-        eventDb = await eventRepo.updateEvent(user, userCalendar, event_id, event)
-        await session.commit()
+        if userCalendar.source == 'google' and updatedEvent.isGoogleEvent():
+            syncEventToGoogleTask.send(user.id, userCalendar.id, updatedEvent.id, 'none')
 
-        return eventDb
+        return updatedEvent
 
     except InputError as e:
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e))
@@ -178,7 +204,12 @@ async def moveEventCalendar(
         eventRepo = EventRepository(session)
 
         event = await eventRepo.moveEvent(user, eventId, calendarId, calReq.calendar_id)
-        await session.commit()
+
+        # Makes sure both are google calendars.
+        if event.isGoogleEvent():
+            syncMoveGoogleEventCalendarTask.send(
+                user.id, event.g_id, calendarId, calReq.calendar_id
+            )
 
         return event
 
@@ -206,9 +237,10 @@ async def deleteCalendarEvent(
         calendarRepo = CalendarRepo(session)
 
         userCalendar = await calendarRepo.getCalendar(user, calendarId)
-        _ = await eventRepo.deleteEvent(user, userCalendar, eventId)
+        event = await eventRepo.deleteEvent(user, userCalendar, eventId)
 
-        await session.commit()
+        if event.isGoogleEvent():
+            syncDeleteEventToGoogleTask.send(user.id, userCalendar.id, event.id)
 
         return {}
 

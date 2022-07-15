@@ -193,6 +193,7 @@ def createOrUpdateEvent(
 
         return event
     else:
+        eventDb.g_id = googleId or eventDb.g_id
         eventDb.title = eventVM.title or eventDb.title
         eventDb.description = eventVM.description or eventDb.description
         eventDb.start = eventVM.start or eventDb.start
