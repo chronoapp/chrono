@@ -18,6 +18,7 @@ from .gcal import (
 from .calendar import syncCreatedOrUpdatedGoogleEvent
 from app.core.logger import logger
 
+
 """Tasks to process google event syncing in background tasks.
 """
 

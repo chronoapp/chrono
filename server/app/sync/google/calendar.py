@@ -188,7 +188,7 @@ async def syncAllEvents(userId: int, fullSync: bool = False):
         calendarList = service.calendarList().list().execute()
 
         syncGoogleCalendars(user, calendarList.get('items'))
-        syncAccessControlListAllCalendars(user, service)
+        await syncAccessControlListAllCalendars(user, service)
 
         await session.commit()
 
