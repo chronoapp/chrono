@@ -5,6 +5,7 @@ from datetime import datetime
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
+from app.sync.locking import acquireLock, releaseLock
 from app.db.models import Event, User, UserCalendar
 
 
@@ -90,12 +91,16 @@ def createGoogleEvent(
 
 def moveGoogleEvent(user: User, eventGoogleId: str, prevCalendarId: str, toCalendarId: str):
     """Moves an event to another calendar, i.e. changes an event's organizer."""
-    return (
+    lockId = acquireLock(eventGoogleId)
+    resp = (
         getCalendarService(user)
         .events()
         .move(calendarId=prevCalendarId, eventId=eventGoogleId, destination=toCalendarId)
         .execute()
     )
+    releaseLock(eventGoogleId, lockId)
+
+    return resp
 
 
 def updateGoogleEvent(
@@ -105,7 +110,8 @@ def updateGoogleEvent(
     eventBody: Dict[str, Any],
     sendUpdates: SendUpdateType = 'none',
 ):
-    return (
+    lockId = acquireLock(eventId)
+    resp = (
         getCalendarService(user)
         .events()
         .patch(
@@ -116,12 +122,19 @@ def updateGoogleEvent(
         )
         .execute()
     )
+    releaseLock(eventId, lockId)
+
+    return resp
 
 
 def deleteGoogleEvent(user: User, calendarId: str, eventId: str):
-    return (
+    lockId = acquireLock(eventId)
+    resp = (
         getCalendarService(user).events().delete(calendarId=calendarId, eventId=eventId).execute()
     )
+    releaseLock(eventId, lockId)
+
+    return resp
 
 
 def createCalendar(user: User, calendar: UserCalendar):
