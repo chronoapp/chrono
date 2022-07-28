@@ -50,7 +50,9 @@ export function EventItem(props: {
         onTouchStart={handleStartDragging}
         onClick={handleClickEvent}
       >
-        <div className="cal-event-content">{eventTitle}</div>
+        <div className="cal-event-content" style={{ whiteSpace: 'inherit', height: '1.5em' }}>
+          {eventTitle}
+        </div>
       </div>
     )
   } else {
