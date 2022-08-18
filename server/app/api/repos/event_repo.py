@@ -323,9 +323,10 @@ class EventRepository:
                 userCalendar, existingOverrideInstance, event, overrideId=eventId, googleId=googleId
             )
             self.session.add(updatedEvent)
-
             await self.session.commit()
-            await self.session.refresh(updatedEvent)
+
+            # Re-fetch the event to get the updated participants.
+            updatedEvent = await self.getEvent(user, userCalendar, updatedEvent.id)
 
         # We are overriding a parent recurring event.
         elif curEvent and curEvent.is_parent_recurring_event:
