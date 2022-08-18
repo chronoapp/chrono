@@ -98,7 +98,7 @@ def moveGoogleEvent(user: User, eventGoogleId: str, prevCalendarId: str, toCalen
         .move(calendarId=prevCalendarId, eventId=eventGoogleId, destination=toCalendarId)
         .execute()
     )
-    releaseLock(eventGoogleId, lockId)
+    lockId and releaseLock(eventGoogleId, lockId)
 
     return resp
 
@@ -122,7 +122,7 @@ def updateGoogleEvent(
         )
         .execute()
     )
-    releaseLock(eventId, lockId)
+    lockId and releaseLock(eventId, lockId)
 
     return resp
 
@@ -132,7 +132,7 @@ def deleteGoogleEvent(user: User, calendarId: str, eventId: str):
     resp = (
         getCalendarService(user).events().delete(calendarId=calendarId, eventId=eventId).execute()
     )
-    releaseLock(eventId, lockId)
+    lockId and releaseLock(eventId, lockId)
 
     return resp
 

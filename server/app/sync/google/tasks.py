@@ -77,7 +77,7 @@ def syncDeleteEventToGoogleTask(userId: int, userCalendarId: str, eventId: str):
 
             user = await userRepo.getUser(userId)
             userCalendar = await calRepo.getCalendar(user, userCalendarId)
-            event = await eventRepo.getEvent(user, userCalendar, eventId)
+            event = await eventRepo.getEventVM(user, userCalendar, eventId)
 
             if event.g_id:
                 try:

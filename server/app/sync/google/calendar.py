@@ -89,7 +89,7 @@ NEW_COLORS = [
 
 
 class GoogleEventVM(EventBaseVM):
-    g_id: str
+    g_id: Optional[str]
     recurring_event_g_id: Optional[str]
 
 

@@ -95,6 +95,10 @@ class EventInDBVM(EventBaseVM):
     id: str
 
 
+class GoogleEventInDBVM(EventInDBVM):
+    g_id: Optional[str]
+
+
 MAX_RECURRING_EVENT_COUNT = 1000
 
 UpdateOption = Literal['SINGLE', 'ALL', 'FOLLOWING']
@@ -211,10 +215,15 @@ def createOrUpdateEvent(
         return eventDb
 
 
-def getRecurringEventId(baseEventId: str, startDate: datetime, isAllDay: bool) -> str:
+def getRecurringEventId(
+    baseEventId: Optional[str], startDate: datetime, isAllDay: bool
+) -> Optional[str]:
     """Returns a composite ID for the recurring event, based on the original
     event ID and the start date.
     """
+    if not baseEventId:
+        return None
+
     dtStr = startDate.astimezone(ZoneInfo('UTC')).strftime(
         "%Y%m%d" if isAllDay else "%Y%m%dT%H%M%SZ"
     )
