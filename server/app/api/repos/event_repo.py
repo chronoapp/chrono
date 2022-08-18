@@ -21,12 +21,12 @@ from app.api.repos.calendar_repo import CalendarRepo
 from app.api.repos.event_utils import (
     EventBaseVM,
     EventInDBVM,
+    GoogleEventInDBVM,
     EventParticipantVM,
     createOrUpdateEvent,
     getRecurringEventId,
     recurrenceToRuleSet,
 )
-import app.sync.google.gcal as gcal
 
 from app.api.endpoints.labels import LabelInDbVM, Label, combineLabels
 from app.api.repos.exceptions import (
@@ -153,12 +153,12 @@ class EventRepository:
 
     async def getEventVM(
         self, user: User, calendar: UserCalendar, eventId: str
-    ) -> Optional[EventInDBVM]:
+    ) -> Optional[GoogleEventInDBVM]:
         """Gets the event view model, which includes instances of recurring events."""
         eventInDB = await self.getEvent(user, calendar, eventId)
 
         if eventInDB:
-            return EventInDBVM.from_orm(eventInDB)
+            return GoogleEventInDBVM.from_orm(eventInDB)
         else:
             # Check if it's a virtual event within a recurrence.
             event, _ = await self.getRecurringEventWithParent(calendar, eventId, self.session)
@@ -456,7 +456,7 @@ class EventRepository:
 
     async def getRecurringEventWithParent(
         self, calendar: UserCalendar, eventId: str, session: AsyncSession
-    ) -> Tuple[EventInDBVM, Event]:
+    ) -> Tuple[GoogleEventInDBVM, Event]:
         """Returns the parent from the virtual eventId.
         Returns tuple of (parent event, datetime).
 
@@ -650,7 +650,7 @@ def getExpandedRecurringEvents(
     eventOverridesMap: Dict[str, Event],
     startDate: datetime,
     endDate: datetime,
-) -> Generator[EventInDBVM, None, None]:
+) -> Generator[GoogleEventInDBVM, None, None]:
     """Precondition: Make sure calendar is joined with the baseRecurringEvent
 
     For now, assumes that the ruleset composes only of one rrule, and exdates so that
@@ -658,7 +658,7 @@ def getExpandedRecurringEvents(
     """
     duration = baseRecurringEvent.end - baseRecurringEvent.start
     isAllDay = baseRecurringEvent.all_day
-    baseEventVM = EventInDBVM.from_orm(baseRecurringEvent)
+    baseEventVM = GoogleEventInDBVM.from_orm(baseRecurringEvent)
     timezone = baseRecurringEvent.time_zone or userCalendar.timezone or user.timezone
 
     if not baseEventVM.recurrences:
@@ -699,7 +699,7 @@ def getExpandedRecurringEvents(
                     if eventOverride.status != 'deleted':
                         eventOverride.recurrences = baseRecurringEvent.recurrences
 
-                        eventVM = EventInDBVM.from_orm(eventOverride)
+                        eventVM = GoogleEventInDBVM.from_orm(eventOverride)
                         eventVM.calendar_id = userCalendar.id  # TODO: Remove this
 
                         yield eventVM
@@ -707,6 +707,7 @@ def getExpandedRecurringEvents(
                     eventVM = baseEventVM.copy(
                         update={
                             'id': eventId,
+                            'g_id': getRecurringEventId(baseEventVM.g_id, start, isAllDay),
                             'calendar_id': userCalendar.id,
                             'start': start,
                             'end': end,
