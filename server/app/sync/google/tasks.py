@@ -5,7 +5,6 @@ from worker import dramatiq
 from app.api.repos.event_repo import EventRepository
 from app.api.repos.user_repo import UserRepository
 from app.api.repos.calendar_repo import CalendarRepo
-from app.sync.google.calendar import syncCalendar
 from app.db.session import AsyncSession
 
 from .gcal import (
@@ -16,7 +15,7 @@ from .gcal import (
     createGoogleEvent,
     deleteGoogleEvent,
 )
-from .calendar import syncCreatedOrUpdatedGoogleEvent
+from .calendar import syncCreatedOrUpdatedGoogleEvent, syncCalendar
 from app.core.logger import logger
 
 

@@ -19,7 +19,7 @@ class Webhook(Base):
     expiration = Column(DateTime(timezone=True), nullable=False)
 
     def __repr__(self):
-        return f'<Webhook {self.id} {self.calendar_id}>'
+        return f'<Webhook {self.id=} {self.calendar_id=} {self.expiration=}>'
 
     def __init__(self, id: str, resourceId: str, resourceUri: str, expirationTimestampMs: int):
         self.id = id
