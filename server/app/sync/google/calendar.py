@@ -24,7 +24,7 @@ from app.api.repos.event_utils import (
 )
 from app.api.repos.event_repo import EventRepository
 
-from app.sync.google.gcal import getCalendarService
+from app.sync.google.gcal import getCalendarService, addEventsWebhook
 
 """
 Adapter to sync to and from google calendar.
@@ -210,7 +210,8 @@ async def syncCalendar(
     nextPageToken = None
 
     while True:
-        if calendar.sync_token and not fullSync:
+        isIncrementalSync = calendar.sync_token and not fullSync
+        if isIncrementalSync:
             try:
                 eventsResult = (
                     service.events()
@@ -248,6 +249,7 @@ async def syncCalendar(
         nextPageToken = eventsResult.get('nextPageToken')
         nextSyncToken = eventsResult.get('nextSyncToken')
 
+        logger.info(f'Sync {len(events)} events for {calendar.summary}')
         await syncEventsToDb(calendar, events, session)
 
         if not nextPageToken:
@@ -573,38 +575,34 @@ def googleEventToEventVM(calendarId: str, eventItem: Dict[str, Any]) -> GoogleEv
     return eventVM
 
 
-async def createWebhook(calendar: UserCalendar, session) -> None:
-    """Create a webhook for the calendar to watche for event updates."""
+async def createWebhook(calendar: UserCalendar, session) -> Optional[Webhook]:
+    """Create a webhook for the calendar to watche for event updates.
+    Only creates one webhook per calendar.
+    """
     if not config.API_URL:
         logger.debug(f'No API URL specified.')
-        return
-
-    # TODO: Fix lazy select
-    # Only one webhook per calendar
+        return None
 
     stmt = select(Webhook).where(Webhook.calendar_id == calendar.id)
     webhook = (await session.execute(stmt)).scalar()
 
     if webhook:
         logger.debug(f'Webhook exists.')
-        return
+        return webhook
 
-    if calendar.access_role != 'owner':
-        return
+    try:
+        resp = addEventsWebhook(calendar)
+        webhook = Webhook(resp.get('id'), resp.get('resourceId'), resp.get('resourceUri'))
+        webhook.calendar = calendar
+        session.add(webhook)
+        logger.info(f'Created webhook for calendar {calendar.summary}')
+        await session.commit()
 
-    uniqueId = uuid4().hex
-    baseApiUrl = config.API_URL + config.API_V1_STR
-    webhookUrl = f'{baseApiUrl}/webhooks/google_events'
+        return webhook
 
-    body = {'id': uniqueId, 'address': webhookUrl, 'type': 'web_hook'}
-    resp = (
-        getCalendarService(calendar.user)
-        .events()
-        .watch(calendarId=calendar.google_id, body=body)
-        .execute()
-    )
-    webhook = Webhook(resp.get('id'), resp.get('resourceId'), resp.get('resourceUri'))
-    webhook.calendar = calendar
+    except HttpError as e:
+        logger.error(e.reason)
+        return None
 
 
 def cancelWebhook(user: User, webhook: Webhook, session: AsyncSession):

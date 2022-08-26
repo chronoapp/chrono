@@ -1,10 +1,12 @@
 from typing import Any, Optional, Literal, Dict
+from uuid import uuid4
 from zoneinfo import ZoneInfo
 from datetime import datetime
 
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
+from app.core import config
 from app.sync.locking import acquireLock, releaseLock
 from app.db.models import Event, User, UserCalendar
 
@@ -159,3 +161,25 @@ def updateCalendar(user: User, calendar: UserCalendar):
         .patch(calendarId=calendar.google_id, body=body)
         .execute()
     )
+
+
+def addEventsWebhook(calendar: UserCalendar):
+    """Subscribes to an event notification channel. The subscription lasts for 30 days."""
+    webhookUrl = f'{config.API_URL}{config.API_V1_STR}/webhooks/google_events'
+    uniqueId = uuid4().hex
+
+    body = {'id': uniqueId, 'address': webhookUrl, 'type': 'web_hook', 'params': {'ttl': 2592000}}
+    return (
+        getCalendarService(calendar.user)
+        .events()
+        .watch(calendarId=calendar.google_id, body=body)
+        .execute()
+    )
+
+
+def removeEventsWebhook(user: User, channelId: str, resourceId: str):
+    body = {
+        'id': channelId,
+        'resourceId': resourceId,
+    }
+    return getCalendarService(user).channels().stop(body=body).execute()
