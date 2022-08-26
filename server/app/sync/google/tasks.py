@@ -5,6 +5,7 @@ from worker import dramatiq
 from app.api.repos.event_repo import EventRepository
 from app.api.repos.user_repo import UserRepository
 from app.api.repos.calendar_repo import CalendarRepo
+from app.sync.google.calendar import syncCalendar
 from app.db.session import AsyncSession
 
 from .gcal import (
@@ -111,3 +112,19 @@ def syncMoveGoogleEventCalendarTask(
             logger.info(f'Moved event {googleEventId}')
 
     asyncio.run(syncMoveGoogleEventCalendar())
+
+
+@dramatiq.actor(max_retries=1)
+def syncCalendarTask(userId: int, calendarId: str, fullSync: bool):
+    async def syncCal():
+        async with AsyncSession() as session:
+            userRepo = UserRepository(session)
+            calRepo = CalendarRepo(session)
+
+            user = await userRepo.getUser(userId)
+            calendar = await calRepo.getCalendar(user, calendarId)
+
+            logger.info(f'Sync Calendar {calendar.google_id}')
+            await syncCalendar(calendar, session, fullSync)
+
+    asyncio.run(syncCal())

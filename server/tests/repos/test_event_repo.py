@@ -169,7 +169,7 @@ async def test_event_repo_edit_attendee_permissions_as_guest(user, session):
 
     assert participantsMap['p1@chrono.so'].response_status == 'needsAction'
     assert participantsMap['p2@chrono.so'].response_status == 'needsAction'
-    assert participantsMap['user@chrono.so'].response_status == 'accepted'
+    assert participantsMap[user.email].response_status == 'accepted'
 
     # Make sure we can't add a new participant.
     newParticipants.append(EventParticipantVM(email='p3@chrono.so'))
@@ -178,7 +178,7 @@ async def test_event_repo_edit_attendee_permissions_as_guest(user, session):
             user, userCalendar, event.id, eventVM.copy(update={'participants': newParticipants})
         )
 
-    # We can add a new participant if guests_can_invite_others is True.
+    # Make sure we can add a new participant if guests_can_invite_others is True.
     event.guests_can_invite_others = True
     session.add(event)
     await session.commit()
