@@ -1,5 +1,5 @@
-from uuid import uuid4
 import shortuuid
+from uuid import uuid4
 from typing import Optional, Dict, Tuple, List, Any
 
 from sqlalchemy import select
@@ -16,6 +16,7 @@ from app.db.session import AsyncSession
 from app.db.models import User, Event, LabelRule, UserCalendar, Calendar, Webhook
 from app.core.logger import logger
 from app.core import config
+from app.api.repos.user_repo import UserRepository
 from app.api.repos.event_utils import (
     EventBaseVM,
     EventParticipantVM,
@@ -575,6 +576,12 @@ def googleEventToEventVM(calendarId: str, eventItem: Dict[str, Any]) -> GoogleEv
     return eventVM
 
 
+"""Webhook management"""
+
+EVENTS_WEBHOOK_TTL_DAYS = 30
+EVENTS_WEBHOOK_TTL_SECONDS = timedelta(days=EVENTS_WEBHOOK_TTL_DAYS).total_seconds()
+
+
 async def createWebhook(calendar: UserCalendar, session) -> Optional[Webhook]:
     """Create a webhook for the calendar to watche for event updates.
     Only creates one webhook per calendar.
@@ -591,7 +598,7 @@ async def createWebhook(calendar: UserCalendar, session) -> Optional[Webhook]:
         return webhook
 
     try:
-        resp = addEventsWebhook(calendar)
+        resp = addEventsWebhook(calendar, EVENTS_WEBHOOK_TTL_SECONDS)
         expiration = resp.get('expiration')
         webhook = Webhook(
             resp.get('id'), resp.get('resourceId'), resp.get('resourceUri'), int(expiration)
