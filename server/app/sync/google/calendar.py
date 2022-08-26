@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from dateutil.rrule import rrulestr
 from googleapiclient.errors import HttpError
@@ -196,6 +196,7 @@ async def syncAllEvents(userId: int, fullSync: bool = False):
             if calendar.google_id != None:
                 print(f'Sync {calendar}')
                 await syncCalendar(calendar, session, fullSync=fullSync)
+                await createWebhook(calendar, session)
 
         await session.commit()
 
@@ -204,7 +205,6 @@ async def syncCalendar(
     calendar: UserCalendar, session: AsyncSession, fullSync: bool = False
 ) -> None:
     service = getCalendarService(calendar.user)
-    await createWebhook(calendar, session)
 
     end = (datetime.utcnow() + timedelta(days=30)).isoformat() + 'Z'
     nextPageToken = None
@@ -580,22 +580,24 @@ async def createWebhook(calendar: UserCalendar, session) -> Optional[Webhook]:
     Only creates one webhook per calendar.
     """
     if not config.API_URL:
-        logger.debug(f'No API URL specified.')
+        logger.error(f'No API URL specified.')
         return None
 
     stmt = select(Webhook).where(Webhook.calendar_id == calendar.id)
     webhook = (await session.execute(stmt)).scalar()
 
     if webhook:
-        logger.debug(f'Webhook exists.')
+        logger.info(f'Webhook exists.')
         return webhook
 
     try:
         resp = addEventsWebhook(calendar)
-        webhook = Webhook(resp.get('id'), resp.get('resourceId'), resp.get('resourceUri'))
+        expiration = resp.get('expiration')
+        webhook = Webhook(
+            resp.get('id'), resp.get('resourceId'), resp.get('resourceUri'), int(expiration)
+        )
         webhook.calendar = calendar
         session.add(webhook)
-        logger.info(f'Created webhook for calendar {calendar.summary}')
         await session.commit()
 
         return webhook
@@ -605,12 +607,24 @@ async def createWebhook(calendar: UserCalendar, session) -> Optional[Webhook]:
         return None
 
 
-def cancelWebhook(user: User, webhook: Webhook, session: AsyncSession):
+async def cancelWebhook(user: User, webhook: Webhook, session: AsyncSession):
     body = {'resourceId': webhook.resource_id, 'id': webhook.id}
 
     try:
-        resp = getCalendarService(user).channels().stop(body=body).execute()
+        _resp = getCalendarService(user).channels().stop(body=body).execute()
     except HttpError as e:
-        logger.error(e)
+        logger.error(e.reason)
 
-    session.delete(webhook)
+    await session.delete(webhook)
+
+
+async def refreshWebhooks(session: AsyncSession):
+    """Refreshes all webhooks that are about to expire."""
+    stmt = select(Webhook).options(selectinload(Webhook.calendar).selectinload(UserCalendar.user))
+    webhooks = (await session.execute(stmt)).scalars()
+
+    for webhook in webhooks:
+        isExpiring = webhook.expiration - timedelta(days=3) < datetime.now(timezone.utc)
+        if isExpiring:
+            await cancelWebhook(webhook.calendar.user, webhook, session)
+            await createWebhook(webhook.calendar, session)
