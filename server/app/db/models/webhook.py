@@ -1,4 +1,5 @@
-from sqlalchemy import Column, String, ForeignKey
+from datetime import datetime
+from sqlalchemy import Column, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
@@ -15,11 +16,13 @@ class Webhook(Base):
 
     resource_id = Column(String())
     resource_uri = Column(String())
+    expiration = Column(DateTime(timezone=True), nullable=False)
 
     def __repr__(self):
         return f'<Webhook {self.id} {self.calendar_id}>'
 
-    def __init__(self, id: str, resourceId: str, resourceUri: str):
+    def __init__(self, id: str, resourceId: str, resourceUri: str, expirationTimestampMs: int):
         self.id = id
         self.resource_id = resourceId
         self.resource_uri = resourceUri
+        self.expiration = datetime.fromtimestamp(expirationTimestampMs / 1000)
