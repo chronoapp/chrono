@@ -208,9 +208,12 @@ def createOrUpdateEvent(
         eventDb.recurring_event_id = eventVM.recurring_event_id or eventDb.recurring_event_id
         eventDb.recurring_event_calendar_id = userCalendar.id
         eventDb.recurrences = recurrences or eventDb.recurrences
+
         if not eventDb.creator:
             eventDb.creator = creator
         eventDb.organizer = organizer
+
+        eventDb.status = eventVM.status
 
         return eventDb
 
