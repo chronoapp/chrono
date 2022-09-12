@@ -54,12 +54,12 @@ async def searchEvents(
         start = (
             datetime.fromisoformat(start_date)
             if start_date
-            else datetime.now() - timedelta(days=180)
+            else datetime.now() - timedelta(days=365)
         )
-        end = datetime.fromisoformat(end_date) if end_date else datetime.now() + timedelta(days=180)
+        end = datetime.fromisoformat(end_date) if end_date else datetime.now() + timedelta(days=365)
 
         if query:
-            tsQuery = ' & '.join(query.split())
+            tsQuery = ' | '.join(query.split())
             events = await eventRepo.search(user, tsQuery, start, end, limit=limit)
 
             return events
