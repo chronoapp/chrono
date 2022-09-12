@@ -1,7 +1,6 @@
 import heapq
 from typing import List, Optional, Iterable, Tuple, Generator, AsyncGenerator, Dict
 from datetime import datetime
-from googleapiclient.errors import HttpError
 from zoneinfo import ZoneInfo
 from itertools import islice
 from datetime import timedelta
@@ -10,10 +9,12 @@ import logging
 from sqlalchemy import asc, and_, select, delete, or_, update
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text, desc
+from sqlalchemy import text, asc
+from sqlalchemy.sql.selectable import Select
 
 from app.core.logger import logger
 from app.db.sql.event_search import EVENT_SEARCH_QUERY
+from app.db.sql.event_search_recurring import RECURRING_EVENT_SEARCH_QUERY
 from app.db.models import Event, User, UserCalendar, Calendar, EventAttendee
 
 from app.api.repos.contact_repo import ContactRepository
@@ -198,7 +199,7 @@ class EventRepository:
         if event:
             event.status = 'deleted'
 
-            # If the parent is deleted, we can delete all child event.
+            # Delete the parent of a recurring event => also delete all child events.
             stmt = delete(Event).where(Event.recurring_event_id == event.id)
             await self.session.execute(stmt)
             await self.session.commit()
@@ -380,18 +381,38 @@ class EventRepository:
 
         return event
 
-    async def search(self, userId: int, searchQuery: str, limit: int = 250) -> List[Event]:
-        """TODO: Handle searches for instances of recurring events."""
+    async def search(
+        self, user: User, searchQuery: str, start: datetime, end: datetime, limit: int = 250
+    ) -> Iterable[EventInDBVM]:
+        # 1) Single Events
         rows = await self.session.execute(
-            text(EVENT_SEARCH_QUERY), {'userId': userId, 'query': searchQuery, 'limit': limit}
+            text(EVENT_SEARCH_QUERY),
+            {'userId': user.id, 'query': searchQuery, 'limit': limit},
         )
         rowIds = [r[0] for r in rows]
+        stmt = getCalendarEventsStmt().filter(Event.id.in_(rowIds)).order_by(asc(Event.end))
+        singleEvents = (await self.session.execute(stmt)).scalars().all()
+        recurringEventInstanceIds = set([e.id for e in singleEvents if e.recurring_event_id])
 
-        # TODO: GET the calendar ID
-        stmt = getCalendarEventsStmt().filter(Event.id.in_(rowIds)).order_by(desc(Event.end))
-        result = await self.session.execute(stmt)
+        # 2) Recurring events + deduplicate from (1)
+        rows = await self.session.execute(
+            text(RECURRING_EVENT_SEARCH_QUERY),
+            {'userId': user.id, 'query': searchQuery, 'limit': limit},
+        )
+        rowIds = [r[0] for r in rows]
+        stmt = getCalendarEventsStmt().where(Event.id.in_(rowIds))
+        recurringEvents = [
+            i
+            async for i in getAllExpandedRecurringEvents(
+                user, stmt, start, end, searchQuery, self.session
+            )
+            if i.id not in recurringEventInstanceIds
+        ]
 
-        return result.scalars().all()
+        # 3) Merge the two
+        allEvents = heapq.merge(recurringEvents, singleEvents, key=lambda event: event.start)
+
+        return allEvents
 
     async def updateEventParticipants(
         self,
@@ -554,7 +575,7 @@ def getRecurringEvent(calendar: UserCalendar, eventId: str, parentEvent: Event) 
     try:
         dt = datetime.strptime(datePart, "%Y%m%dT%H%M%SZ")
 
-        for e in getExpandedRecurringEvents(calendar.user, calendar, parentEvent, {}, dt, dt):
+        for e in getExpandedRecurringEvents(calendar.user, parentEvent, {}, dt, dt):
             if e.id == eventId:
                 return e
 
@@ -567,27 +588,7 @@ def getRecurringEvent(calendar: UserCalendar, eventId: str, parentEvent: Event) 
 async def getAllExpandedRecurringEventsList(
     user: User, calendar: UserCalendar, startDate: datetime, endDate: datetime, session
 ) -> List[EventInDBVM]:
-    expandedEvents = [
-        i async for i in getAllExpandedRecurringEvents(user, calendar, startDate, endDate, session)
-    ]
-
-    return sorted(
-        expandedEvents,
-        key=lambda event: event.start,
-    )
-
-
-async def getAllExpandedRecurringEvents(
-    user: User, calendar: UserCalendar, startDate: datetime, endDate: datetime, session
-) -> AsyncGenerator[EventInDBVM, None]:
-    """Expands the rule in the event to get all events between the start and end.
-    TODO: This expansion is a huge perf bottleneck..
-    - Date expansions are CPU bound so we could rewrite the date rrules expansion in a rust binding.
-    - Don't need to expand ALL baseRecurringEvents, just ones in between the range.
-    - => cache the end dates properties to recurring events on insert / update.
-
-    TODO: Update EXDATE on write so we don't have to manually override events.
-    """
+    """Expands all recurring events for the calendar."""
 
     baseRecurringEventsStmt = getCalendarEventsStmt().where(
         User.id == user.id,
@@ -598,6 +599,39 @@ async def getAllExpandedRecurringEvents(
         Event.start <= endDate,
     )
 
+    expandedEvents = [
+        i
+        async for i in getAllExpandedRecurringEvents(
+            user, baseRecurringEventsStmt, startDate, endDate, None, session
+        )
+    ]
+
+    return sorted(
+        expandedEvents,
+        key=lambda event: event.start,
+    )
+
+
+async def getAllExpandedRecurringEvents(
+    user: User,
+    baseRecurringEventsStmt: Select,
+    startDate: datetime,
+    endDate: datetime,
+    query: Optional[str],
+    session,
+) -> AsyncGenerator[EventInDBVM, None]:
+    """Expands the rule in the event to get all events between the start and end.
+
+    Since we don't do this direct from SQL, we take in a query to filter out instances of
+    recurring events which a modified title.
+
+    TODO: This expansion is a huge perf bottleneck..
+    - Date expansions are CPU bound so we could rewrite the date rrules expansion in a rust binding.
+    - Don't need to expand ALL baseRecurringEvents, just ones in between the range.
+    - => cache the end dates properties to recurring events on insert / update.
+
+    TODO: Update EXDATE on write so we don't have to manually override events.
+    """
     baseRecurringEvents = await session.execute(baseRecurringEventsStmt)
 
     baseEventsSubQ = baseRecurringEventsStmt.subquery()
@@ -640,18 +674,18 @@ async def getAllExpandedRecurringEvents(
 
     for baseRecurringEvent in baseRecurringEvents.scalars():
         for e in getExpandedRecurringEvents(
-            user, calendar, baseRecurringEvent, eventOverridesMap, startDate, endDate
+            user, baseRecurringEvent, eventOverridesMap, startDate, endDate, query
         ):
             yield e
 
 
 def getExpandedRecurringEvents(
     user: User,
-    userCalendar: UserCalendar,
     baseRecurringEvent: Event,
     eventOverridesMap: Dict[str, Event],
     startDate: datetime,
     endDate: datetime,
+    query: Optional[str] = None,
 ) -> Generator[GoogleEventInDBVM, None, None]:
     """Precondition: Make sure calendar is joined with the baseRecurringEvent
 
@@ -661,6 +695,7 @@ def getExpandedRecurringEvents(
     duration = baseRecurringEvent.end - baseRecurringEvent.start
     isAllDay = baseRecurringEvent.all_day
     baseEventVM = GoogleEventInDBVM.from_orm(baseRecurringEvent)
+    userCalendar = baseRecurringEvent.calendar
     timezone = baseRecurringEvent.time_zone or userCalendar.timezone or user.timezone
 
     if not baseEventVM.recurrences:
@@ -698,7 +733,9 @@ def getExpandedRecurringEvents(
 
                 if eventId in eventOverridesMap:
                     eventOverride = eventOverridesMap[eventId]
-                    if eventOverride.status != 'deleted':
+                    if eventOverride.status != 'deleted' and eventMatchesQuery(
+                        eventOverride, query
+                    ):
                         eventOverride.recurrences = baseRecurringEvent.recurrences
 
                         eventVM = GoogleEventInDBVM.from_orm(eventOverride)
@@ -723,3 +760,13 @@ def getExpandedRecurringEvents(
                     )
 
                     yield eventVM
+
+
+def eventMatchesQuery(event: Event, query: Optional[str]):
+    """Python version of full text search for expanded recurring events.
+    This needs to match the full text query in event_search.py.
+    """
+    if not query:
+        return True
+
+    return query in event.title

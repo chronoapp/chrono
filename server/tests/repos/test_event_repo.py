@@ -36,10 +36,67 @@ async def test_event_repo_search(user, session):
     await session.commit()
 
     eventRepo = EventRepository(session)
-    events = await eventRepo.search(user.id, "Pear")
+    events = list(
+        await eventRepo.search(user, "Pear", start - timedelta(days=30), start + timedelta(days=30))
+    )
 
     assert len(events) == 2
     assert all('Pear' in e.title for e in events)
+
+
+@pytest.mark.asyncio
+async def test_event_repo_search_recurring(user, session):
+    """Assure we can search instances of a recurring event."""
+    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+    start = datetime.fromisoformat('2020-01-01T12:00:00-05:00')
+    end = start + timedelta(hours=1)
+
+    # 1) Create an individual event with the search term "Pear"
+    createEvent(calendar, start - timedelta(days=1), end, title='Blueberry Pear')
+
+    # 2) Create a new recurring event 2020-01-01 to 2020-01-05 with the search term.
+    start = datetime.fromisoformat('2020-01-01T12:00:00')
+    recurringEvent = createEvent(
+        calendar, start, start + timedelta(hours=1), title="Recurring Pear"
+    )
+    recurringEvent.recurrences = ['RRULE:FREQ=DAILY;UNTIL=20200105T120000Z']
+
+    # Override one of the events so that it DOES NOT have the search term anymore.
+    # A search for "Pear" should not return the overriden result.
+    events = await getAllExpandedRecurringEventsList(
+        user, calendar, start, start + timedelta(days=10), session
+    )
+
+    event = createOrUpdateEvent(calendar, None, events[1])
+    event.title = 'Recurring Override with Pear'
+    event.id = events[1].id
+
+    event = createOrUpdateEvent(calendar, None, events[2])
+    event.title = 'Recurring Override'
+    event.id = events[2].id
+
+    # Create another recurring event (not searched)
+    recurringEvent = createEvent(
+        calendar, start, start + timedelta(hours=1), title="Another Recurring"
+    )
+    recurringEvent.recurrences = ['RRULE:FREQ=DAILY;UNTIL=20200105T120000Z']
+
+    await session.commit()
+
+    # Search "Pear". Makes sure we get results from both:
+    # 1) The individual event
+    # 2) The recurring events, except the overriden event
+    eventRepo = EventRepository(session)
+    events = list(
+        await eventRepo.search(user, "Pear", start - timedelta(days=30), start + timedelta(days=30))
+    )
+
+    assert len(events) == 5
+    assert events[0].title == 'Blueberry Pear'
+    assert events[1].title == 'Recurring Pear'
+    assert events[2].title == 'Recurring Override with Pear'
+    assert events[3].title == 'Recurring Pear'
+    assert events[4].title == 'Recurring Pear'
 
 
 """Tests CRUD operations for events"""

@@ -51,9 +51,16 @@ async def searchEvents(
     """
     try:
         eventRepo = EventRepository(session)
+        start = (
+            datetime.fromisoformat(start_date)
+            if start_date
+            else datetime.now() - timedelta(days=180)
+        )
+        end = datetime.fromisoformat(end_date) if end_date else datetime.now() + timedelta(days=180)
+
         if query:
             tsQuery = ' & '.join(query.split())
-            events = await eventRepo.search(user.id, tsQuery, limit=limit)
+            events = await eventRepo.search(user, tsQuery, start, end, limit=limit)
 
             return events
         else:

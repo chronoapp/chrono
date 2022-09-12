@@ -154,9 +154,7 @@ async def test_createEvent_recurring(user: User, session, async_client, eventRep
 
     assert eventDb.recurrences == recurrences
 
-    events = list(
-        getExpandedRecurringEvents(user, calendar, eventDb, {}, start, start + timedelta(days=5))
-    )
+    events = list(getExpandedRecurringEvents(user, eventDb, {}, start, start + timedelta(days=5)))
     assert len(events) == 3
 
 
