@@ -384,10 +384,11 @@ class EventRepository:
     async def search(
         self, user: User, searchQuery: str, start: datetime, end: datetime, limit: int = 250
     ) -> Iterable[EventInDBVM]:
+        """TODO: Limit number of events. Pagination?"""
         # 1) Single Events
         rows = await self.session.execute(
             text(EVENT_SEARCH_QUERY),
-            {'userId': user.id, 'query': searchQuery, 'limit': limit},
+            {'userId': user.id, 'query': searchQuery, 'start': start, 'end': end},
         )
         rowIds = [r[0] for r in rows]
         stmt = getCalendarEventsStmt().filter(Event.id.in_(rowIds)).order_by(asc(Event.end))
@@ -397,7 +398,7 @@ class EventRepository:
         # 2) Recurring events + deduplicate from (1)
         rows = await self.session.execute(
             text(RECURRING_EVENT_SEARCH_QUERY),
-            {'userId': user.id, 'query': searchQuery, 'limit': limit},
+            {'userId': user.id, 'query': searchQuery},
         )
         rowIds = [r[0] for r in rows]
         stmt = getCalendarEventsStmt().where(Event.id.in_(rowIds))
@@ -769,4 +770,7 @@ def eventMatchesQuery(event: Event, query: Optional[str]):
     if not query:
         return True
 
-    return query in event.title
+    needles = [token.strip().lower() for token in query.split('|')]
+    haystack = event.title.lower()
+
+    return any(needle in haystack for needle in needles)

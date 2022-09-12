@@ -13,6 +13,7 @@ from app.api.repos.event_repo import (
     getRecurringEvent,
     InputError,
     getAllExpandedRecurringEventsList,
+    eventMatchesQuery,
     EventRepoError,
     EventNotFoundError,
 )
@@ -612,3 +613,19 @@ async def test_event_repo_moveEvent_recurring(user, session):
 
     event = await eventRepo.getEventVM(user, userCalendar2, eventInstanceId)
     assert event.id == eventInstanceId
+
+
+@pytest.mark.asyncio
+async def test_event_repo_eventMatchesQuery(user, session):
+    """TODO: Test that the OR filters match results given from a full text Postgres search."""
+    userCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+    start = datetime.fromisoformat('2020-01-01T12:00:00-05:00')
+    end = start + timedelta(hours=1)
+    event = createEvent(
+        userCalendar,
+        start,
+        end,
+        title='First Second',
+    )
+    assert eventMatchesQuery(event, "First")
+    assert eventMatchesQuery(event, "Foo | second")
