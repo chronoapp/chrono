@@ -36,7 +36,7 @@ function EditLabelModal() {
 
   function ColorLabel(color: LabelColor) {
     return (
-      <Flex>
+      <Flex alignItems={'center'}>
         <Box
           mr="1"
           className="event-label event-label--hoverable"
