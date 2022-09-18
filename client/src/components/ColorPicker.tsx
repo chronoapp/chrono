@@ -27,7 +27,7 @@ function ColorPicker(props: IProps) {
           })}
         </Flex>
         <Flex mt="1">
-          {colors.slice(6, colors.length).map((color) => {
+          {colors.slice(colors.length / 2, colors.length).map((color) => {
             return (
               <Box key={color} pl="1">
                 <div

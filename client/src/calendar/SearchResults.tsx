@@ -12,9 +12,10 @@ import { format, timeRangeFormat } from '@/util/localizer'
 import { LabelTag } from '@/components/LabelTag'
 import Event from '@/models/Event'
 import { EventService } from './event-edit/useEventService'
+import * as API from '@/util/Api'
 
 interface IProps {
-  search: string
+  searchQuery: string
   events: Event[]
   eventService: EventService
 }
@@ -102,8 +103,21 @@ function EventItem(props: { event: Event; eventService: EventService }) {
 }
 
 export default function SearchResults(props: IProps) {
-  const eventActionContext = React.useContext<EventActionContextType>(EventActionContext)
-  if (eventActionContext.eventState.loading) {
+  const [events, setEvents] = React.useState<Event[]>([])
+  const [loading, setLoading] = React.useState<boolean>(false)
+
+  React.useEffect(() => {
+    searchEvents()
+  }, [props.searchQuery])
+
+  async function searchEvents() {
+    setLoading(true)
+    const events = await API.searchEvents(API.getAuthToken(), props.searchQuery)
+    setEvents(events)
+    setLoading(false)
+  }
+
+  if (loading) {
     return (
       <Center w="100%" h="5em" overflow="auto">
         <Text color="gray.500">Searching..</Text>
@@ -111,7 +125,7 @@ export default function SearchResults(props: IProps) {
     )
   }
 
-  const sortedEvents = props.events.sort((a, b) => -sortEvents(a, b))
+  const sortedEvents = events.sort((a, b) => -sortEvents(a, b))
   if (sortedEvents.length === 0) {
     return (
       <Center w="100%" h="5em" overflow="auto">
@@ -122,7 +136,7 @@ export default function SearchResults(props: IProps) {
     return (
       <Box w="100%" height="calc(100vh - 3.25rem)" overflow="auto">
         {sortedEvents.map((event, idx, arr) => (
-          <EventItem key={idx} event={event} />
+          <EventItem key={idx} event={event} eventService={props.eventService} />
         ))}
       </Box>
     )

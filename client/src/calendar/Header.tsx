@@ -112,7 +112,6 @@ function DropdownMenu(props: { display: Display; selectDisplay: (d: Display) => 
   return (
     <Menu>
       <MenuButton
-        variant={'outline'}
         color="gray.600"
         borderRadius="xs"
         size="sm"
@@ -268,7 +267,6 @@ export default function Header(props: { search: string }) {
     return (
       <Flex alignItems="center">
         <Button
-          variant={'outline'}
           color="gray.600"
           size="sm"
           fontWeight="normal"
