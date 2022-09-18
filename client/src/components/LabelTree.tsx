@@ -180,7 +180,7 @@ function LabelTree(props: IProps) {
                   <LabelTagColor colorHex={label.color_hex} />
                 </MenuButton>
                 {isOpen && (
-                  <MenuList>
+                  <MenuList minW="0" w={'10em'}>
                     <ColorPicker
                       onSelectLabelColor={(color) => {
                         const updatedLabel = { ...label, color_hex: color }
