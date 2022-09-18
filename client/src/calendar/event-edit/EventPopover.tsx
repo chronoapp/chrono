@@ -323,7 +323,7 @@ function EventPopover(props: IProps) {
           </span>
         </div>
 
-        <div className="cal-event-modal is-flex is-flex-direction-column">
+        <div className="cal-event-modal is-flex is-flex-direction-column mb-3">
           <div className="has-text-grey-darker is-size-5">{props.event.title_short}</div>
 
           {props.event.labels && (
@@ -358,14 +358,14 @@ function EventPopover(props: IProps) {
             <FiCalendar className="mr-2 is-flex-shrink-0" />
             <span>{calendar.summary}</span>
           </div>
-
-          {calendar.isWritable() && (
-            <div className="mt-4 is-flex">
-              {renderEditEventButton()}
-              {renderDeleteEventButton()}
-            </div>
-          )}
         </div>
+
+        {calendar.isWritable() && (
+          <div className="ml-4 mb-3 is-flex">
+            {renderEditEventButton()}
+            {renderDeleteEventButton()}
+          </div>
+        )}
       </div>
     )
   }
@@ -592,7 +592,7 @@ function EventPopover(props: IProps) {
             />
           </div>
 
-          <Flex mt="4" justifyContent="space-between" alignItems="center">
+          <Flex mt="4" mb="2" justifyContent="space-between" alignItems="center">
             <Flex>
               <Button
                 size="sm"
