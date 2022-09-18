@@ -52,18 +52,19 @@ export const EventActionContext = createContext<EventActionContextType>(undefine
  */
 
 type EventDict = Record<string, Event>
+type EditingEvent = {
+  id: string
+  originalCalendarId: string | undefined
+  editMode: EditMode
+  selectTailSegment: boolean
+  event: Event
+  editRecurringAction: EditRecurringAction
+}
 
 export interface EventState {
   loading: boolean
   eventsByCalendar: Record<string, EventDict>
-  editingEvent: {
-    id: string
-    originalCalendarId: string | undefined
-    editMode: EditMode
-    selectTailSegment: boolean
-    event: Event
-    editRecurringAction: EditRecurringAction
-  } | null
+  editingEvent: EditingEvent | null
 }
 
 type ActionType =

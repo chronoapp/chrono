@@ -40,20 +40,10 @@ function Calendar() {
 
   useEffect(() => {
     loadCurrentViewEvents()
-  }, [
-    eventsContext.display,
-    eventsContext.selectedDate,
-    searchQuery,
-    calendarContext.calendarsById,
-    update,
-  ])
+  }, [eventsContext.display, eventsContext.selectedDate, calendarContext.calendarsById, update])
 
   async function loadCurrentViewEvents() {
-    if (searchQuery) {
-      eventsContext.eventDispatch({ type: 'RESET' })
-      const events = await API.searchEvents(API.getAuthToken(), searchQuery)
-      // TODO: Fix Search
-    } else if (eventsContext.display == 'Day') {
+    if (eventsContext.display == 'Day') {
       const start = dates.startOf(eventsContext.selectedDate, 'day')
       const end = dates.endOf(eventsContext.selectedDate, 'day')
 
@@ -129,7 +119,7 @@ function Calendar() {
     const events = getAllVisibleEvents()
 
     if (searchQuery) {
-      return <SearchResults events={events} search={searchQuery} eventService={eventService} />
+      return <SearchResults events={events} searchQuery={searchQuery} eventService={eventService} />
     } else if (eventsContext.display == 'Day') {
       return (
         <TimeGrid
