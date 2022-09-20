@@ -125,4 +125,23 @@ export default class Event {
   static isParentRecurringEvent(event: Partial<Event>): boolean {
     return !!event.recurrences && !event.recurring_event_id
   }
+
+  /**
+   * From the perspective of this calendar, what is the response status
+   * of the event?
+   */
+  static getResponseStatus(event: Event, calendar: Calendar): ResponseStatus {
+    const email = calendar.email
+
+    const participant = event.participants.find((p) => p.email === email)
+    if (participant) {
+      return participant.response_status!!
+    }
+
+    if (!email || event.organizer?.email == email) {
+      return 'accepted'
+    }
+
+    return 'needsAction'
+  }
 }

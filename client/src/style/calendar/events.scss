@@ -23,6 +23,16 @@
   &:focus {
     outline: 5px auto $event-outline;
   }
+
+  &.tentative {
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 8px,
+      rgba(0,0,0,.2) 8px,
+      rgba(0,0,0,.2) 10px
+    );
+  }
 }
 
 .cal-event-label {
