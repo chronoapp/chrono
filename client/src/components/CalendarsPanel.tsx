@@ -263,11 +263,7 @@ export default function CalendarsPanel() {
       </Text>
 
       {keyArr.length > 0 && (
-        <Accordion
-          defaultIndex={keyArr.map((c, idx) => idx)}
-          allowMultiple={true}
-          allowToggle={true}
-        >
+        <Accordion defaultIndex={keyArr.map((c, idx) => idx)} allowMultiple={true}>
           {keyArr.map((calendarSource) => {
             const calendars = groupedCalendars.get(calendarSource)
             if (!calendars) {
@@ -279,7 +275,6 @@ export default function CalendarsPanel() {
             return (
               <AccordionItem key={calendarSource} border="0" mt="1">
                 <AccordionButton
-                  size="sm"
                   height="8"
                   pt="2"
                   pb="2"
