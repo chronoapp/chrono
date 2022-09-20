@@ -25,7 +25,8 @@ export default class Calendar implements CalendarEditable {
       json.primary,
       json.accessRole,
       json.source,
-      json.timezone
+      json.timezone,
+      json.email
     )
   }
 
@@ -39,7 +40,8 @@ export default class Calendar implements CalendarEditable {
     readonly primary: boolean,
     readonly accessRole: AccessRole,
     readonly source: CalendarSource,
-    readonly timezone: string
+    readonly timezone: string,
+    readonly email: string
   ) {}
 
   public isWritable(): boolean {

@@ -70,6 +70,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
       props.event.all_day,
       props.event.start_day,
       props.event.end_day,
+      props.event.organizer,
       props.event.recurrences ? props.event.recurrences.join('\n') : null
     )
   )
@@ -509,8 +510,15 @@ export default function EventEditFull(props: { event: Event; eventService: Event
             <SelectCalendar
               defaultCalendarId={eventFields.calendarId}
               calendarsById={calendarContext.calendarsById}
-              onChange={(value) => {
-                const updatedFields = { ...eventFields, calendarId: value }
+              onChange={(calendar) => {
+                const updatedFields = {
+                  ...eventFields,
+                  organizer: EventParticipant.fromCreatorOrOrganizer(
+                    calendar.email,
+                    calendar.summary
+                  ),
+                  calendarId: calendar.id,
+                }
                 setEventFields(updatedFields)
 
                 const updatedEvent = {

@@ -4,7 +4,8 @@ import makeId from '@/lib/js-lib/makeId'
 import { Label } from './Label'
 import { hexToHSL } from '../calendar/utils/Colors'
 import { localFullDate, fullDayFormat } from '../util/localizer'
-import EventParticipant from './EventParticipant'
+import EventParticipant, { ResponseStatus } from './EventParticipant'
+import Calendar from './Calendar'
 
 export const EMPTY_TITLE = '(No title)'
 
@@ -35,6 +36,8 @@ export default class Event {
     readonly original_start: Date | null,
     readonly original_start_day: string | null,
     readonly original_timezone: string | null,
+    readonly creator: Partial<EventParticipant> | null,
+    readonly organizer: Partial<EventParticipant> | null,
     readonly participants: Partial<EventParticipant>[],
 
     // For UI only.
@@ -64,6 +67,8 @@ export default class Event {
           : new Date(eventJson.original_start)),
       eventJson.original_start_day,
       eventJson.original_timezone,
+      EventParticipant.fromJson(eventJson.creator),
+      EventParticipant.fromJson(eventJson.organizer),
       eventJson.participants.map((participantJson) => EventParticipant.fromJson(participantJson)),
       calendarId,
       'SYNCED'
@@ -84,7 +89,7 @@ export default class Event {
     return event.end < today ? 'hsl(0, 0%, 45%)' : event.foregroundColor
   }
 
-  static newDefaultEvent(calendarId: string, startDate: Date, endDate: Date, allDay: boolean) {
+  static newDefaultEvent(calendar: Calendar, startDate: Date, endDate: Date, allDay: boolean) {
     const tempId = makeId()
 
     return new Event(
@@ -105,8 +110,10 @@ export default class Event {
       null,
       null,
       null,
+      EventParticipant.fromCreatorOrOrganizer(calendar.email, calendar.summary) /*creator*/,
+      EventParticipant.fromCreatorOrOrganizer(calendar.email, calendar.summary) /*organizer*/,
       [],
-      calendarId,
+      calendar.id,
       'NOT_SYNCED'
     )
   }

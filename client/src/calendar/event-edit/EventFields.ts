@@ -1,5 +1,6 @@
 import { Label } from '@/models/Label'
 import Event from '@/models/Event'
+import EventParticipant from '@/models/EventParticipant'
 
 const TitleRegex = /@\[([\wd.-_ @]+)\]\(\[id:\w+\]\[type:\w+\]\)/
 
@@ -21,6 +22,7 @@ export default class EventFields {
     readonly allDay: boolean,
     readonly startDay: string | null,
     readonly endDay: string | null,
+    readonly organizer: Partial<EventParticipant> | null,
     readonly recurrences: string | null
   ) {}
 
@@ -36,6 +38,7 @@ export default class EventFields {
       end_day: eventFields.endDay,
       labels: eventFields.labels,
       calendar_id: eventFields.calendarId,
+      organizer: eventFields.organizer,
       recurrences: eventFields.recurrences ? [eventFields.recurrences] : null,
     }
   }

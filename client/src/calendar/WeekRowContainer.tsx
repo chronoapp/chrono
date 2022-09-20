@@ -134,7 +134,7 @@ class WeekRowContainer extends React.Component<IProps, IState> {
       const calendar = this.props.getPrimaryCalendar()
       this.context?.eventDispatch({
         type: 'INIT_NEW_EVENT_AT_DATE',
-        payload: { calendarId: calendar.id, date: startDate, allDay: true },
+        payload: { calendar: calendar, date: startDate, allDay: true },
       })
     }
   }

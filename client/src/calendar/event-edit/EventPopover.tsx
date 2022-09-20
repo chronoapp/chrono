@@ -27,6 +27,7 @@ import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 
 import Event from '@/models/Event'
 import Calendar from '@/models/Calendar'
+import EventParticipant from '@/models/EventParticipant'
 import { Label } from '@/models/Label'
 import { EditRecurringAction, EventActionContext } from '../EventActionContext'
 import { CalendarsContext } from '@/contexts/CalendarsContext'
@@ -64,6 +65,7 @@ function EventPopover(props: IProps) {
       props.event.all_day,
       props.event.start_day,
       props.event.end_day,
+      props.event.organizer,
       props.event.recurrences ? props.event.recurrences.join('\n') : null
     )
   )
@@ -561,14 +563,27 @@ function EventPopover(props: IProps) {
             <SelectCalendar
               defaultCalendarId={eventFields.calendarId}
               calendarsById={calendarContext.calendarsById}
-              onChange={(calendarId) => {
+              onChange={(calendar) => {
                 // Forces a color change without an API request.
                 // TODO: Discard changes on close.
-                setEventFields({ ...eventFields, calendarId: calendarId })
-                const event = { ...props.event, calendar_id: calendarId }
+                const updatedFields = {
+                  ...eventFields,
+                  organizer: EventParticipant.fromCreatorOrOrganizer(
+                    calendar.email,
+                    calendar.summary
+                  ),
+                  calendarId: calendar.id,
+                }
+                setEventFields(updatedFields)
+
+                const updatedEvent = {
+                  ...props.event,
+                  ...EventFields.getMutableEventFields(updatedFields),
+                }
+
                 eventActions.eventDispatch({
                   type: 'UPDATE_EDIT_EVENT',
-                  payload: event,
+                  payload: updatedEvent,
                 })
               }}
             />
