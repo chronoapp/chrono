@@ -27,15 +27,16 @@ function stringifyPercent(v: number | string) {
 function TimeGridEvent(props: IProps) {
   const eventActionContext = useContext(EventActionContext)
   const calendarsContext = useContext(CalendarsContext)
+
   // Tiny gap to separate events.
   const eventHeight = props.style.height - 0.15
 
   const event = props.event
   const calendar = calendarsContext.getDefaultCalendar(event.calendar_id)
+  const responseStatus = Event.getResponseStatus(event, calendar)
 
   function handleResize(e, direction: Direction) {
     if (e.button === 0 && calendar.isWritable()) {
-      e.stopPropagation()
       eventActionContext?.onBeginAction(props.event, 'RESIZE', null, direction)
     }
   }
@@ -176,36 +177,64 @@ function TimeGridEvent(props: IProps) {
 
   const isEditing = eventActionContext?.eventState.editingEvent?.id === event.id
   const calendarColor = calendarsContext.getCalendarColor(event.calendar_id)
+  const backgroundColor = Event.getBackgroundColor(event, calendarColor, props.now)
+
+  // This is in a separate section so that the drag mouse down event does not conflict with
+  // the resize event.
+  const eventContents = (
+    <div
+      onClick={handleClickEvent}
+      onMouseDown={handleStartDragging}
+      onTouchStart={handleStartDragging}
+      className="cal-event-content-wrapper"
+    >
+      {inner}
+    </div>
+  )
+
+  const backgroundColorComputed = ['needsAction', 'declined'].includes(responseStatus)
+    ? 'white'
+    : backgroundColor
+
+  const border = ['needsAction', 'declined'].includes(responseStatus)
+    ? `1px dashed ${backgroundColor}`
+    : props.style.border
+
+  const color = ['needsAction', 'declined'].includes(responseStatus)
+    ? backgroundColor
+    : Event.getForegroundColor(event, props.now)
+
+  const textDecoration = responseStatus === 'declined' ? 'line-through' : undefined
 
   return (
     <div
       ref={props.innerRef}
       className={clsx(
         'cal-event',
+        responseStatus === 'tentative' && 'tentative',
         isInteracting && 'cal-dnd-interacting',
         (isEditing || props.isPreview) && 'cal-has-shadow'
       )}
       style={{
-        backgroundColor: Event.getBackgroundColor(event, calendarColor, props.now),
         top: stringifyPercent(props.style.top),
         left: stringifyPercent(props.style.xOffset),
         width: stringifyPercent(props.style.width),
         height: stringifyPercent(eventHeight),
-        border: props.style.border,
-        color: Event.getForegroundColor(event, props.now),
         zIndex: isEditing ? 5 : 0,
         cursor: props.isPreview ? 'move' : 'pointer',
+        padding: 'unset',
+        backgroundColor: backgroundColorComputed,
+        border: border,
+        color: color,
+        textDecoration: textDecoration,
       }}
-      onMouseDown={handleStartDragging}
-      onTouchStart={handleStartDragging}
       draggable={true}
       onDragStart={(evt: React.DragEvent) => {
         const dateOfClick = getDateOfClick(evt)
         eventActionContext?.onBeginAction(props.event, 'MOVE', dateOfClick)
       }}
-      onClick={handleClickEvent}
     >
-      {inner}
+      {eventContents}
       {renderAnchor('DOWN', dnd?.action == 'RESIZE' && props.isPreview)}
     </div>
   )
