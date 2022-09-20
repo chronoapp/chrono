@@ -5,6 +5,7 @@ import { normalizeArr } from '../lib/normalizer'
 
 import * as dates from '../util/dates'
 import Event, { SyncStatus } from '../models/Event'
+import Calendar from '@/models/Calendar'
 
 export type Action = 'MOVE' | 'RESIZE'
 export type Direction = 'UP' | 'DOWN'
@@ -70,9 +71,11 @@ export interface EventState {
 type ActionType =
   | { type: 'RESET' }
   | { type: 'INIT_EVENTS'; payload: { eventsByCalendar: Record<string, Event[]> } }
-  | { type: 'INIT_EDIT_NEW_EVENT'; payload: Event }
   | { type: 'INIT_EDIT_EVENT'; payload: { event: Event; selectTailSegment?: boolean } }
-  | { type: 'INIT_NEW_EVENT_AT_DATE'; payload: { calendarId: string; date: Date; allDay: boolean } }
+  | {
+      type: 'INIT_NEW_EVENT_AT_DATE'
+      payload: { calendar: Calendar; date: Date; endDate?: Date; allDay: boolean }
+    }
   | { type: 'CREATE_EVENT'; payload: Event }
   | {
       type: 'MOVE_EVENT_CALENDAR'
@@ -119,22 +122,6 @@ function eventReducer(state: EventState, action: ActionType) {
       }
 
     /**
-     * Start editing a new event.
-     */
-    case 'INIT_EDIT_NEW_EVENT':
-      return {
-        ...state,
-        editingEvent: {
-          id: action.payload.id,
-          originalCalendarId: undefined,
-          editMode: 'EDIT' as EditMode,
-          event: action.payload,
-          selectTailSegment: false,
-          editRecurringAction: 'SINGLE' as EditRecurringAction,
-        },
-      }
-
-    /**
      * Starts editing an existing event.
      */
     case 'INIT_EDIT_EVENT':
@@ -152,12 +139,16 @@ function eventReducer(state: EventState, action: ActionType) {
       }
 
     /**
-     * Create new event from start date, for a default duration of 1h.
+     * Create new event from start date.
+     * If the end date is not given, the default duration is 1h.
      */
     case 'INIT_NEW_EVENT_AT_DATE':
-      const endDate = dates.add(action.payload.date, 1, action.payload.allDay ? 'day' : 'hours')
+      const endDate =
+        action.payload.endDate ||
+        dates.add(action.payload.date, 1, action.payload.allDay ? 'day' : 'hours')
+
       const event = Event.newDefaultEvent(
-        action.payload.calendarId,
+        action.payload.calendar,
         action.payload.date,
         endDate,
         action.payload.allDay
@@ -167,7 +158,7 @@ function eventReducer(state: EventState, action: ActionType) {
         ...state,
         editingEvent: {
           id: event.id,
-          originalCalendarId: action.payload.calendarId,
+          originalCalendarId: action.payload.calendar.id,
           editMode: 'EDIT' as EditMode,
           event,
           selectTailSegment: false,

@@ -299,16 +299,11 @@ class DayColumn extends React.Component<IProps, IState> {
           if (this.state.selectRange) {
             console.log('Handle Select Event')
             const { startDate, endDate } = this.state.selectRange
-            const event = Event.newDefaultEvent(
-              this.props.getPrimaryCalendar().id,
-              startDate,
-              endDate,
-              false
-            )
 
+            const calendar = this.props.getPrimaryCalendar()
             this.context?.eventDispatch({
-              type: 'INIT_EDIT_NEW_EVENT',
-              payload: event,
+              type: 'INIT_NEW_EVENT_AT_DATE',
+              payload: { calendar: calendar, date: startDate, endDate: endDate, allDay: false },
             })
           }
         }
@@ -334,7 +329,7 @@ class DayColumn extends React.Component<IProps, IState> {
         this.context?.eventDispatch({
           type: 'INIT_NEW_EVENT_AT_DATE',
           payload: {
-            calendarId: this.props.getPrimaryCalendar().id,
+            calendar: this.props.getPrimaryCalendar(),
             date: startDate,
             allDay: false,
           },

@@ -56,7 +56,7 @@ function NewEventButton() {
         eventsContext.eventDispatch({
           type: 'INIT_NEW_EVENT_AT_DATE',
           payload: {
-            calendarId: getPrimaryCalendar().id,
+            calendar: getPrimaryCalendar(),
             date: roundNext15Min(new Date()),
             allDay: false,
           },
@@ -119,7 +119,6 @@ function Settings(props: { refreshCalendar: () => void }) {
 /**
  * Top Level Layout for the navigation and body.
  */
-// export default class Layout extends React.Component<Props, {}> {
 function Layout(props: Props) {
   const toast = useToast({ duration: 2000, position: 'top' })
   const router = useRouter()
