@@ -9,6 +9,7 @@ interface LabelTagColorProps {
   colorHex: string
   lighten: boolean
   onClick?: () => void
+  small: boolean
   title?: string
   style?
 }
@@ -25,13 +26,14 @@ export function LabelTagColor(props: LabelTagColorProps) {
       onClick={props.onClick}
       title={props.title}
       style={style}
-      className={clsx('event-label')}
+      className={clsx('event-label', props.small && 'small')}
     />
   )
 }
 
 LabelTagColor.defaultProps = {
   lighten: false,
+  small: false,
 }
 
 interface LabelTagProps {
@@ -50,28 +52,29 @@ export function LabelTag(props: LabelTagProps) {
 }
 
 LabelTag.defaultProps = {
-  variant: 'outline',
+  variant: 'icon',
 }
 
 export function LabelTagWithIcon(props: LabelTagProps) {
   return (
     <Flex
-      bg="gray.100"
       color="gray.600"
       alignItems="center"
-      borderRadius="sm"
+      borderRadius="md"
+      borderColor="gray.200"
+      borderWidth="1px"
       pl="2"
       pr="2"
       mr="2"
       className={clsx(props.onClickDelete && 'pr-0', props.classNames && props.classNames)}
     >
-      <LabelTagColor colorHex={props.label.color_hex} />
+      <LabelTagColor colorHex={props.label.color_hex} small={true} />
       <Text fontSize="sm" pl="1">
         {props.label.title}
       </Text>
 
       {props.onClickDelete && (
-        <Tag size={'md'} borderRadius="sm" pl="0">
+        <Tag size={'md'} borderRadius="sm" pl="0" bgColor="white" mr="0.5">
           <TagCloseButton onClick={(e) => props.onClickDelete && props.onClickDelete(e)} />
         </Tag>
       )}

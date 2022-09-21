@@ -12,6 +12,7 @@ $fade-in-transition: all 0.2s cubic-bezier(0.2, 0, 0.2, 1);
 
 // Calendar Colors
 
+$cal-grey-bg: rgb(244,245,248);
 $cal-primary: $primary;
 
 $out-of-range-color: lighten(#333, 40%) !default;
