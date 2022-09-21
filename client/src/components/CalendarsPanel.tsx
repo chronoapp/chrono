@@ -258,10 +258,6 @@ export default function CalendarsPanel() {
         }}
       />
 
-      <Text align="left" fontWeight="medium" mt="3">
-        Calendars
-      </Text>
-
       {keyArr.length > 0 && (
         <Accordion defaultIndex={keyArr.map((c, idx) => idx)} allowMultiple={true}>
           {keyArr.map((calendarSource) => {
@@ -274,42 +270,36 @@ export default function CalendarsPanel() {
 
             return (
               <AccordionItem key={calendarSource} border="0" mt="1">
-                <AccordionButton
-                  height="8"
-                  pt="2"
-                  pb="2"
-                  pl="1"
-                  display="flex"
-                  justifyContent="space-between"
-                >
+                <AccordionButton height="8" p="1" display="flex" justifyContent="space-between">
                   <Flex alignItems="center">
                     {renderImageForSource(calendarSource)}
-                    <Text fontSize="sm" pl="1">
+                    <Text fontSize="sm" pl="2" color="gray.800" fontWeight="md">
                       {groupName}
                     </Text>
                   </Flex>
-                  <AccordionIcon />
+                  <AccordionIcon color="gray.600" />
                 </AccordionButton>
 
                 <AccordionPanel pt="0" pb="0" pr="0">
                   {renderCalendarList(calendars)}
+
+                  <Button
+                    fontSize={'sm'}
+                    color="gray.600"
+                    fontWeight="normal"
+                    variant="link"
+                    onClick={() => setEditModalActive(true)}
+                    float="left"
+                    m="2"
+                  >
+                    <FiPlus /> add calendar
+                  </Button>
                 </AccordionPanel>
               </AccordionItem>
             )
           })}
         </Accordion>
       )}
-
-      <Button
-        color="gray.600"
-        fontWeight="normal"
-        variant="link"
-        onClick={() => setEditModalActive(true)}
-        justifyContent="left"
-        m="2"
-      >
-        <FiPlus /> add calendar
-      </Button>
     </>
   )
 }

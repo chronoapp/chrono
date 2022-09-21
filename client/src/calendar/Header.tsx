@@ -351,7 +351,6 @@ export default function Header(props: { search: string }) {
             mr="2"
             ml="1"
             aria-label="search"
-            variant="ghost"
             h="8"
             icon={<FiSearch />}
             onClick={() => setIsSearchMode(true)}
