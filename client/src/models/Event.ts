@@ -78,7 +78,7 @@ export default class Event {
   static getBackgroundColor(event: Event, defaultColor: string, today: Date) {
     if (event.end < today) {
       const { h, s } = hexToHSL(defaultColor)
-      const hsl = `hsl(${h}, ${s}%, 85%)`
+      const hsl = `hsl(${h}, ${s}%, 90%)`
       return hsl
     } else {
       return defaultColor
