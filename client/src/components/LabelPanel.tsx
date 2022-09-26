@@ -1,4 +1,6 @@
 import React, { useContext, useEffect } from 'react'
+import { useRecoilState, useSetRecoilState } from 'recoil'
+
 import {
   Accordion,
   AccordionIcon,
@@ -12,29 +14,30 @@ import {
 import { Icon } from '@chakra-ui/react'
 import { FiPlus } from 'react-icons/fi'
 import { FaTag } from 'react-icons/fa'
+import { normalizeArr } from '@/lib/normalizer'
 
 import { getAuthToken, getLabels } from '@/util/Api'
-import { LabelContext, LabelContextType } from '@/contexts/LabelsContext'
 import LabelEditModal from './LabelEditModal'
 import LabelTree from './LabelTree'
+import { labelsState } from '@/state/LabelsState'
 
 /**
  * Panel with a list of labels.
  */
 function LabelPanel() {
-  const { labelState, dispatch } = useContext<LabelContextType>(LabelContext)
+  const [labelState, setLabelState] = useRecoilState(labelsState)
 
   useEffect(() => {
     async function loadLabels() {
-      dispatch({
-        type: 'START',
+      setLabelState((labelState) => {
+        return { ...labelState, loading: true }
       })
+
       const authToken = getAuthToken()
       const labels = await getLabels(authToken)
 
-      dispatch({
-        type: 'INIT',
-        payload: labels,
+      setLabelState((labelState) => {
+        return { ...labelState, loading: false, labelsById: normalizeArr(labels, 'id') }
       })
     }
 
@@ -42,18 +45,20 @@ function LabelPanel() {
   }, [])
 
   function onClickAddProject() {
-    dispatch({
-      type: 'UPDATE_EDIT_LABEL',
-      payload: {
-        ...labelState.editingLabel,
-        active: true,
-      },
+    setLabelState((labelState) => {
+      return {
+        ...labelState,
+        editingLabel: {
+          ...labelState.editingLabel,
+          active: true,
+        },
+      }
     })
   }
 
   return (
     <>
-      {labelState.editingLabel.active && <LabelEditModal />}
+      {labelState.editingLabel?.active && <LabelEditModal />}
 
       <Accordion allowToggle={true}>
         <AccordionItem border="0" mt="1">

@@ -6,10 +6,11 @@ import { Bar } from 'react-chartjs-2'
 import * as dates from '@/util/dates'
 import { getTrends, getAuthToken } from '@/util/Api'
 import { Label, TimePeriod } from '@/models/Label'
-import { LabelContext } from '@/contexts/LabelsContext'
 
 import ViewSelector, { TrendView } from './ViewSelector'
 import TagDropdown from './TagDropdown'
+import { useRecoilValue } from 'recoil'
+import { labelsState } from '@/state/LabelsState'
 
 interface IProps {
   authToken: string
@@ -24,7 +25,7 @@ interface IProps {
 function TrendChart(props: IProps) {
   const [trends, setTrends] = React.useState<any>({})
   const [selectedTimePeriod, setSelectedTimePeriod] = React.useState<TimePeriod>('WEEK')
-  const labelsContext = React.useContext(LabelContext)
+  const labelState = useRecoilValue(labelsState)
 
   React.useEffect(() => {
     updateTrendsData()
@@ -167,8 +168,6 @@ function TrendChart(props: IProps) {
       </Center>
     )
   }
-
-  const { labelState } = labelsContext
 
   if (!labelState.loading && Object.keys(labelState.labelsById).length == 0) {
     return renderEmpty()

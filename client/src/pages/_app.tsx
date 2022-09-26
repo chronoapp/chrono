@@ -2,10 +2,9 @@ import React from 'react'
 import App from 'next/app'
 import Router from 'next/router'
 import NProgress from 'nprogress'
+import { RecoilRoot } from 'recoil'
 
 import { ChakraProvider, extendTheme } from '@chakra-ui/react'
-
-import { LabelsContextProvider } from '@/contexts/LabelsContext'
 import { CalendarsContextProvider } from '@/contexts/CalendarsContext'
 import { EventActionProvider } from '@/calendar/EventActionContext'
 
@@ -54,11 +53,11 @@ class MyApp extends App {
     return (
       <ChakraProvider theme={theme}>
         <EventActionProvider>
-          <LabelsContextProvider>
-            <CalendarsContextProvider>
+          <CalendarsContextProvider>
+            <RecoilRoot>
               <Component {...pageProps} />
-            </CalendarsContextProvider>
-          </LabelsContextProvider>
+            </RecoilRoot>
+          </CalendarsContextProvider>
         </EventActionProvider>
       </ChakraProvider>
     )
