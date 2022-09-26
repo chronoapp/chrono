@@ -1,4 +1,6 @@
 import React from 'react'
+import { useSetRecoilState } from 'recoil'
+
 import {
   Box,
   Flex,
@@ -16,7 +18,6 @@ import { FiSettings, FiLogOut } from 'react-icons/fi'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 
-import { getAuthToken, signOut, syncCalendar } from '@/util/Api'
 import { roundNext15Min } from '@/util/localizer'
 import { GlobalEvent } from '@/util/global'
 
@@ -29,6 +30,8 @@ import { EventActionContext } from '@/contexts/EventActionContext'
 import { CalendarsContext, CalendarsContextType } from '@/contexts/CalendarsContext'
 
 import Header from '@/calendar/Header'
+import * as API from '@/util/Api'
+import { userState } from '@/state/UserState'
 
 interface Props {
   title: string
@@ -108,7 +111,7 @@ function Settings(props: { refreshCalendar: () => void }) {
           Settings
         </MenuItem>
         <MenuDivider m="0" />
-        <MenuItem icon={<FiLogOut />} onClick={signOut}>
+        <MenuItem icon={<FiLogOut />} onClick={API.signOut}>
           Sign Out
         </MenuItem>
       </MenuList>
@@ -123,13 +126,24 @@ function Layout(props: Props) {
   const toast = useToast({ duration: 2000, position: 'top' })
   const router = useRouter()
   const searchQuery = (router.query.search as string) || ''
+  const setUser = useSetRecoilState(userState)
+
+  React.useEffect(() => {
+    async function fetchUser() {
+      const authToken = API.getAuthToken()
+      const userInfo = await API.getUser(authToken)
+      setUser(userInfo)
+    }
+
+    fetchUser()
+  }, [])
 
   async function refreshCalendar() {
     const toastId = toast({
       render: (props) => <Toast title={'Updating calendar..'} showSpinner={false} {...props} />,
     })
 
-    await syncCalendar(getAuthToken())
+    await API.syncCalendar(API.getAuthToken())
 
     document.dispatchEvent(new Event(GlobalEvent.refreshCalendar))
 
