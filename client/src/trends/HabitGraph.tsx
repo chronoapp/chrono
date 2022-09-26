@@ -1,17 +1,18 @@
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useState, useEffect } from 'react'
 import chunk from '@/lib/js-lib/chunk'
 import { Flex, Box, Text, IconButton } from '@chakra-ui/react'
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 
 import { Label } from '@/models/Label'
 import { startOfWeek, format, getWeekRange } from '@/util/localizer'
-import { LabelContext } from '@/contexts/LabelsContext'
 
 import { hexToHSL } from '@/calendar/utils/Colors'
 import * as dates from '@/util/dates'
 import { getTrends, getAuthToken } from '@/util/Api'
 import ViewSelector, { TrendView } from './ViewSelector'
 import TagDropdown from './TagDropdown'
+import { useRecoilValue } from 'recoil'
+import { labelsState } from '@/state/LabelsState'
 
 interface IProps {
   setSelectedView: (v: TrendView) => void
@@ -20,11 +21,12 @@ interface IProps {
 }
 
 function HabitGraph(props: IProps) {
+  const labelState = useRecoilValue(labelsState)
+
   const [trendMap, setTrendMap] = useState<Map<string, number>>(undefined!)
   const [maxDuration, setMaxDuration] = useState(0)
-
   const curDate = new Date()
-  const labelsContext = useContext(LabelContext)
+
   const [viewDate, setViewDate] = useState(curDate)
   const month = dates.visibleDays(viewDate, startOfWeek(), true)
   const weeks = chunk(month, 7)
@@ -131,7 +133,7 @@ function HabitGraph(props: IProps) {
           <TagDropdown
             selectedLabel={props.selectedLabel}
             onSelectLabel={(label) => props.setSelectedLabel(label)}
-            labelsById={labelsContext.labelState.labelsById}
+            labelsById={labelState.labelsById}
           />
 
           <IconButton

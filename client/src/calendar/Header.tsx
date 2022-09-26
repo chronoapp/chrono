@@ -15,6 +15,7 @@ import {
   InputLeftElement,
   InputRightElement,
 } from '@chakra-ui/react'
+import { useRecoilValue } from 'recoil'
 import { useRouter } from 'next/router'
 
 import {
@@ -26,7 +27,6 @@ import {
   FiArrowLeft,
 } from 'react-icons/fi'
 import { EventActionContext, Display } from './EventActionContext'
-import { LabelContext } from '@/contexts/LabelsContext'
 import { format } from '@/util/localizer'
 import { GlobalEvent } from '@/util/global'
 import * as dates from '@/util/dates'
@@ -34,6 +34,7 @@ import * as dates from '@/util/dates'
 import Week from './Week'
 import Month from './Month'
 import WorkWeek from './WorkWeek'
+import { labelsState } from '@/state/LabelsState'
 
 function DateHeaderSearch(props: { disableSearchMode: () => void; defaultSearchQuery: string }) {
   const router = useRouter()
@@ -168,7 +169,7 @@ function DropdownMenu(props: { display: Display; selectDisplay: (d: Display) => 
  */
 export default function Header(props: { search: string }) {
   const eventsContext = React.useContext(EventActionContext)
-  const labelsContext = React.useContext(LabelContext)
+  const labels = useRecoilValue(labelsState)
 
   const [isSearchMode, setIsSearchMode] = React.useState<boolean>(!!props.search)
   const router = useRouter()
@@ -189,15 +190,10 @@ export default function Header(props: { search: string }) {
     return () => {
       document.removeEventListener('keydown', handleKeyboardShortcuts)
     }
-  }, [
-    eventsContext.eventState.editingEvent,
-    labelsContext.labelState.editingLabel,
-    props.search,
-    isSearchMode,
-  ])
+  }, [eventsContext.eventState.editingEvent, labels.editingLabel, props.search, isSearchMode])
 
   function isEditing() {
-    return !!eventsContext.eventState.editingEvent || labelsContext.labelState.editingLabel.active
+    return !!eventsContext.eventState.editingEvent || labels.editingLabel.active
   }
 
   function handleKeyboardShortcuts(e: KeyboardEvent) {

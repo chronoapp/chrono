@@ -1,4 +1,6 @@
 import React, { useContext, useState } from 'react'
+import { useRecoilValue } from 'recoil'
+
 import {
   Button,
   Box,
@@ -36,7 +38,6 @@ import { Label } from '@/models/Label'
 import { format, fullDayFormat } from '@/util/localizer'
 import ContentEditable from '@/lib/ContentEditable'
 import { LabelTag } from '@/components/LabelTag'
-import { LabelContext, LabelContextType } from '@/contexts/LabelsContext'
 import { addNewLabels } from '@/calendar/utils/LabelUtils'
 import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 import EventParticipant from '@/models/EventParticipant'
@@ -49,6 +50,7 @@ import TimeSelectFullDay from './TimeSelectFullDay'
 import { EventService } from './useEventService'
 import EventFields from './EventFields'
 import ParticipantList from './ParticipantList'
+import { labelsState } from '@/state/LabelsState'
 
 /**
  * Full view for event editing.
@@ -56,7 +58,7 @@ import ParticipantList from './ParticipantList'
 export default function EventEditFull(props: { event: Event; eventService: EventService }) {
   const eventActions = useContext(EventActionContext)
   const calendarContext = useContext(CalendarsContext)
-  const { labelState } = useContext<LabelContextType>(LabelContext)
+  const labelState = useRecoilValue(labelsState)
 
   // Event data and overrides
   const [eventFields, setEventFields] = useState(

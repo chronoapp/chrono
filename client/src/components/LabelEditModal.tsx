@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import {
   Button,
   Text,
@@ -24,11 +24,12 @@ import { FiChevronDown } from 'react-icons/fi'
 import Toast from '@/components/Toast'
 import { getAuthToken, putLabel, createLabel } from '@/util/Api'
 import { getSortedLabelColors, LabelColor } from '@/models/LabelColors'
-import { LabelContext, LabelContextType, LabelModalState } from '@/contexts/LabelsContext'
+import { useRecoilState } from 'recoil'
+import { labelsState, LabelModalState } from '@/state/LabelsState'
 
 function EditLabelModal() {
   const toast = useToast({ duration: 2000, position: 'top' })
-  const { labelState, dispatch } = useContext<LabelContextType>(LabelContext)
+  const [labelState, setLabelState] = useRecoilState(labelsState)
 
   const allColors = getSortedLabelColors()
   const newLabelModal = labelState.editingLabel
@@ -49,11 +50,14 @@ function EditLabelModal() {
 
   function onClickSaveLabel(newLabelModal: LabelModalState, selectedColor: LabelColor) {
     const updateLabel = (label) => {
-      dispatch({
-        type: 'UPDATE_EDIT_LABEL',
-        payload: { ...newLabelModal, active: false, labelTitle: '' },
+      setLabelState((prevState) => {
+        const newLabels = { ...prevState.labelsById, [label.id]: label }
+        return {
+          ...prevState,
+          labelsById: newLabels,
+          editingLabel: { ...newLabelModal, active: false, labelTitle: '' },
+        }
       })
-      dispatch({ type: 'UPDATE', payload: label })
 
       toast({
         render: (props) => (
@@ -77,15 +81,17 @@ function EditLabelModal() {
   }
 
   function onCloseModal() {
-    dispatch({
-      type: 'UPDATE_EDIT_LABEL',
-      payload: {
-        ...newLabelModal,
-        active: false,
-        labelTitle: '',
-        labelId: undefined,
-        labelColor: undefined,
-      },
+    setLabelState((prevState) => {
+      return {
+        ...prevState,
+        editingLabel: {
+          ...newLabelModal,
+          active: false,
+          labelTitle: '',
+          labelId: undefined,
+          labelColor: undefined,
+        },
+      }
     })
   }
 
@@ -103,9 +109,14 @@ function EditLabelModal() {
               placeholder=""
               value={newLabelModal.labelTitle}
               onChange={(e) => {
-                dispatch({
-                  type: 'UPDATE_EDIT_LABEL',
-                  payload: { ...newLabelModal, labelTitle: e.target.value },
+                setLabelState((prevState) => {
+                  return {
+                    ...prevState,
+                    editingLabel: {
+                      ...newLabelModal,
+                      labelTitle: e.target.value,
+                    },
+                  }
                 })
               }}
             />
@@ -126,12 +137,14 @@ function EditLabelModal() {
                       fontSize={'sm'}
                       fontWeight="normal"
                       onClick={() => {
-                        dispatch({
-                          type: 'UPDATE_EDIT_LABEL',
-                          payload: {
-                            ...newLabelModal,
-                            labelColor: color,
-                          },
+                        setLabelState((prevState) => {
+                          return {
+                            ...prevState,
+                            editingLabel: {
+                              ...newLabelModal,
+                              labelColor: color,
+                            },
+                          }
                         })
                       }}
                     >

@@ -1,4 +1,6 @@
 import React, { useContext, useState, useEffect, createRef } from 'react'
+import { useRecoilValue } from 'recoil'
+
 import {
   Box,
   Flex,
@@ -31,7 +33,6 @@ import EventParticipant from '@/models/EventParticipant'
 import { Label } from '@/models/Label'
 import { EditRecurringAction, EventActionContext } from '../EventActionContext'
 import { CalendarsContext } from '@/contexts/CalendarsContext'
-import { LabelContext, LabelContextType } from '@/contexts/LabelsContext'
 import { LabelTag } from '@/components/LabelTag'
 import LabelTree from '@/components/LabelTree'
 import * as API from '@/util/Api'
@@ -43,6 +44,7 @@ import ContentEditable from '@/lib/ContentEditable'
 import TaggableInput from './TaggableInput'
 import { EventService } from './useEventService'
 import EventFields from './EventFields'
+import { labelsState } from '@/state/LabelsState'
 
 interface IProps {
   event: Event
@@ -52,7 +54,7 @@ interface IProps {
 function EventPopover(props: IProps) {
   const eventActions = useContext(EventActionContext)
   const calendarContext = useContext(CalendarsContext)
-  const { labelState } = useContext<LabelContextType>(LabelContext)
+  const labelState = useRecoilValue(labelsState)
 
   const [eventFields, setEventFields] = useState(
     new EventFields(

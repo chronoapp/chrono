@@ -1,4 +1,7 @@
-import React, { useContext, useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import { useRecoilState } from 'recoil'
+import produce from 'immer'
+
 import {
   Text,
   Flex,
@@ -18,12 +21,12 @@ import Hoverable from '@/lib/Hoverable'
 
 import { LABEL_COLORS } from '@/models/LabelColors'
 import Toast from '@/components/Toast'
-import { LabelContext, LabelContextType } from '@/contexts/LabelsContext'
 import { Label } from '@/models/Label'
 import ColorPicker from './ColorPicker'
 import { LabelTagColor } from './LabelTag'
 
 import { getAuthToken, putLabel, putLabels, deleteLabel } from '../util/Api'
+import { labelsState } from '@/state/LabelsState'
 
 interface IProps {
   allowEdit: boolean
@@ -50,9 +53,9 @@ function usePrevious(value) {
 }
 
 function LabelTree(props: IProps) {
+  const [labelState, setLabelState] = useRecoilState(labelsState)
   const toast = useToast({ duration: 2000, position: 'top' })
 
-  const { labelState, dispatch } = useContext<LabelContextType>(LabelContext)
   const [expandedKeys, setExpandedKeys] = useState([])
   const [autoExpandParent, setAutoExpandParent] = useState(false)
 
@@ -151,7 +154,16 @@ function LabelTree(props: IProps) {
       }
     }
 
-    dispatch({ type: 'UPDATE_MULTI', payload: tagUpdates })
+    setLabelState((labelState) => {
+      return {
+        ...labelState,
+        labelsById: {
+          ...labelState.labelsById,
+          ...tagUpdates,
+        },
+      }
+    })
+
     putLabels(Object.values(tagUpdates), getAuthToken())
   }
 
@@ -161,12 +173,14 @@ function LabelTree(props: IProps) {
   }
 
   async function updateLabel(label: Label) {
-    const authToken = getAuthToken()
-    const updatedLabel = await putLabel(label, authToken)
-    dispatch({
-      type: 'UPDATE',
-      payload: updatedLabel,
+    setLabelState((labelsState) => {
+      return {
+        ...labelsState,
+        labelsById: { ...labelsState.labelsById, [label.id]: label },
+      }
     })
+    const authToken = getAuthToken()
+    const _updatedLabel = await putLabel(label, authToken)
   }
 
   function LabelView(label: Label, allowEdit: boolean) {
@@ -206,7 +220,12 @@ function LabelTree(props: IProps) {
   }
 
   function onDeleteLabel(item: TreeItem) {
-    dispatch({ type: 'DELETE', payload: item.key })
+    setLabelState((prevState) => {
+      return produce(prevState, (draft) => {
+        delete draft.labelsById[item.key]
+      })
+    })
+
     deleteLabel(item.key, getAuthToken()).then((r) => {
       toast({
         render: (props) => (
@@ -218,15 +237,17 @@ function LabelTree(props: IProps) {
 
   function onClickEditLabel(item: TreeItem) {
     const labelColor = LABEL_COLORS.find((color) => color.hex == item.label.color_hex)
-    dispatch({
-      type: 'UPDATE_EDIT_LABEL',
-      payload: {
-        ...labelState.editingLabel,
-        active: true,
-        labelId: item.key,
-        labelTitle: item.title,
-        labelColor: labelColor,
-      },
+
+    setLabelState((labelsState) => {
+      return {
+        ...labelsState,
+        editingLabel: {
+          active: true,
+          labelId: item.key,
+          labelTitle: item.title,
+          labelColor: labelColor,
+        },
+      }
     })
   }
 

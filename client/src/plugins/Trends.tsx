@@ -1,9 +1,11 @@
-import React, { useState, useContext } from 'react'
+import React, { useState } from 'react'
+import { useRecoilValue } from 'recoil'
+
 import dynamic from 'next/dynamic'
 
-import { LabelContext, LabelContextType } from '@/contexts/LabelsContext'
 import { TrendView } from '@/trends/ViewSelector'
 import { Label } from '@/models/Label'
+import { labelsState } from '@/state/LabelsState'
 
 const TrendChart = dynamic(() => import('@/trends/TrendChart'), { ssr: false })
 const HabitGraph = dynamic(() => import('@/trends/HabitGraph'), { ssr: false })
@@ -14,7 +16,8 @@ interface IProps {
 
 function Trends(props: IProps) {
   const [selectedView, setSelectedView] = useState<TrendView>('CHART')
-  const { labelState } = useContext<LabelContextType>(LabelContext)
+  const labelState = useRecoilValue(labelsState)
+
   const [selectedLabel, setSelectedLabel] = useState<Label | undefined>(getDefaultLabel())
 
   function getDefaultLabel() {
@@ -44,7 +47,7 @@ function Trends(props: IProps) {
       />
     )
   } else {
-    throw Error("Invalid View")
+    throw Error('Invalid View')
   }
 }
 
