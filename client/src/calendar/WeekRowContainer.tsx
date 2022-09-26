@@ -27,7 +27,7 @@ interface IProps {
   wrapperClassname: string
   ignoreNewEventYBoundCheck: boolean
   eventService: EventService
-  getPrimaryCalendar: () => Calendar
+  primaryCalendar: Calendar
 }
 
 interface IState {
@@ -131,7 +131,7 @@ class WeekRowContainer extends React.Component<IProps, IState> {
         getSlotAtX(bounds, x, false, this.props.dayMetrics.slots)
       )
 
-      const calendar = this.props.getPrimaryCalendar()
+      const calendar = this.props.primaryCalendar
       this.context?.eventDispatch({
         type: 'INIT_NEW_EVENT_AT_DATE',
         payload: { calendar: calendar, date: startDate, allDay: true },

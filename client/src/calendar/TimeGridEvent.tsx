@@ -6,7 +6,9 @@ import Event from '../models/Event'
 import { timeFormatShort } from '../util/localizer'
 
 import { Direction, EventActionContext } from '@/contexts/EventActionContext'
-import { CalendarsContext } from '@/contexts/CalendarsContext'
+import { useRecoilValue } from 'recoil'
+import { calendarWithDefault } from '@/state/CalendarState'
+
 import { LabelTagColor } from '../components/LabelTag'
 
 interface IProps {
@@ -26,13 +28,12 @@ function stringifyPercent(v: number | string) {
 
 function TimeGridEvent(props: IProps) {
   const eventActionContext = useContext(EventActionContext)
-  const calendarsContext = useContext(CalendarsContext)
 
   // Tiny gap to separate events.
   const eventHeight = props.style.height - 0.15
 
   const event = props.event
-  const calendar = calendarsContext.getDefaultCalendar(event.calendar_id)
+  const calendar = useRecoilValue(calendarWithDefault(event.calendar_id))
   const responseStatus = Event.getResponseStatus(event, calendar)
 
   function handleResize(e, direction: Direction) {
@@ -176,8 +177,7 @@ function TimeGridEvent(props: IProps) {
   const isInteracting = dnd && dnd.interacting && dnd.event.id === event.id && !props.isPreview
 
   const isEditing = eventActionContext?.eventState.editingEvent?.id === event.id
-  const calendarColor = calendarsContext.getCalendarColor(event.calendar_id)
-  const backgroundColor = Event.getBackgroundColor(event, calendarColor, props.now)
+  const backgroundColor = Event.getBackgroundColor(event, calendar.backgroundColor, props.now)
 
   // This is in a separate section so that the drag mouse down event does not conflict with
   // the resize event.

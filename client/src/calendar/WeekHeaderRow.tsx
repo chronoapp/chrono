@@ -1,4 +1,6 @@
 import React from 'react'
+import { useRecoilValue } from 'recoil'
+
 import clsx from 'clsx'
 import DateSlotMetrics from './utils/DateSlotMetrics'
 
@@ -7,7 +9,7 @@ import Event from '../models/Event'
 
 import WeekRowContainer from './WeekRowContainer'
 import { EventService } from './event-edit/useEventService'
-import { CalendarsContext, CalendarsContextType } from '@/contexts/CalendarsContext'
+import { primaryCalendarSelector } from '@/state/CalendarState'
 
 interface IProps {
   range: Date[]
@@ -24,7 +26,7 @@ const CELL_WRAPPER_CLS = 'cal-allday-cell'
  */
 function WeekHeaderRow(props: IProps) {
   const dayMetrics = new DateSlotMetrics(props.range, props.events, 8, 1)
-  const { getPrimaryCalendar } = React.useContext<CalendarsContextType>(CalendarsContext)
+  const primaryCalendar = useRecoilValue(primaryCalendarSelector)
 
   function renderBackgroundCells() {
     return (
@@ -41,7 +43,7 @@ function WeekHeaderRow(props: IProps) {
       {renderBackgroundCells()}
       <div className="cal-row-content">
         <WeekRowContainer
-          getPrimaryCalendar={getPrimaryCalendar}
+          primaryCalendar={primaryCalendar!}
           dayMetrics={dayMetrics}
           rowClassname={CELL_WRAPPER_CLS}
           wrapperClassname={'cal-time-header-content'}

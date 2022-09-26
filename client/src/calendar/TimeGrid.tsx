@@ -27,7 +27,7 @@ interface IProps {
   events: Event[]
   now: Date
   eventService: EventService
-  getPrimaryCalendar: () => Calendar
+  primaryCalendar: Calendar
 }
 
 interface IState {
@@ -168,7 +168,7 @@ class TimeGrid extends React.Component<IProps, IState> {
           isCurrentDay={dates.eq(date, this.props.now, 'day')}
           now={this.props.now}
           eventService={this.props.eventService}
-          getPrimaryCalendar={this.props.getPrimaryCalendar}
+          primaryCalendar={this.props.primaryCalendar}
         />
       )
     })

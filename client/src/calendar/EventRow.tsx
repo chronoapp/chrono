@@ -8,9 +8,10 @@ import { timeFormatShort } from '../util/localizer'
 import EventPopover from './event-edit/EventPopover'
 
 import Event from '../models/Event'
-import { CalendarsContext } from '@/contexts/CalendarsContext'
 import { EventActionContext } from '@/contexts/EventActionContext'
 import { EventService } from './event-edit/useEventService'
+import { useRecoilValue } from 'recoil'
+import { calendarWithDefault } from '@/state/CalendarState'
 
 export function EventItem(props: {
   event: Event
@@ -18,14 +19,14 @@ export function EventItem(props: {
   now: Date
   eventService: EventService
 }) {
-  const calendarsContext = React.useContext(CalendarsContext)
-  const eventActionContext = React.useContext(EventActionContext)
   const { event } = props
-  const calendar = calendarsContext.getDefaultCalendar(event.calendar_id)
+  const calendar = useRecoilValue(calendarWithDefault(event.calendar_id))
+
+  const eventActionContext = React.useContext(EventActionContext)
   const eventTitle = Event.getDefaultTitle(event.title_short)
 
   function handleStartDragging(e) {
-    if (e.button === 0 && calendar.isWritable()) {
+    if (e.button === 0 && calendar?.isWritable()) {
       eventActionContext.onBeginAction(event, 'MOVE', null)
     }
   }
@@ -38,12 +39,11 @@ export function EventItem(props: {
 
   let eventDisplay
   if (event.all_day) {
-    let color: string = calendarsContext.getCalendarColor(event.calendar_id)
     eventDisplay = (
       <div
         className={clsx('cal-event', props.isPreview && 'cal-event-preview-full')}
         style={{
-          backgroundColor: Event.getBackgroundColor(event, color, props.now),
+          backgroundColor: Event.getBackgroundColor(event, calendar.backgroundColor, props.now),
           color: Event.getForegroundColor(event, props.now),
         }}
         onMouseDown={handleStartDragging}

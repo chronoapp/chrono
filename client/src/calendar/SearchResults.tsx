@@ -1,4 +1,6 @@
 import React from 'react'
+import { useRecoilValue } from 'recoil'
+
 import { Flex, Box, Text, Center, Tooltip } from '@chakra-ui/react'
 import { Portal, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from '@chakra-ui/react'
 import { FiRepeat } from 'react-icons/fi'
@@ -7,12 +9,12 @@ import { EventActionContext, EventActionContextType } from '@/contexts/EventActi
 import EventPopover from '@/calendar/event-edit/EventPopover'
 import { sortEvents } from '@/calendar/utils/eventLevels'
 
-import { CalendarsContext, CalendarsContextType } from '@/contexts/CalendarsContext'
 import { format, timeRangeFormat } from '@/util/localizer'
 import { LabelTag } from '@/components/LabelTag'
 import Event from '@/models/Event'
 import { EventService } from './event-edit/useEventService'
 import * as API from '@/util/Api'
+import { calendarWithDefault } from '@/state/CalendarState'
 
 interface IProps {
   searchQuery: string
@@ -21,12 +23,9 @@ interface IProps {
 }
 
 function EventItem(props: { event: Event; eventService: EventService }) {
-  const calendarContext = React.useContext<CalendarsContextType>(CalendarsContext)
   const eventActionContext = React.useContext<EventActionContextType>(EventActionContext)
-
+  const calendar = useRecoilValue(calendarWithDefault(props.event.calendar_id))
   const dateDisplay = format(props.event.start, 'D MMM YYYY, ddd')
-  const color = calendarContext.getCalendarColor(props.event.calendar_id)
-  const calendar = calendarContext.getDefaultCalendar(props.event.calendar_id)
 
   const editingEvent = eventActionContext.eventState.editingEvent
   const isEditing = editingEvent?.id === props.event.id && editingEvent?.editMode !== 'FULL_EDIT'
@@ -61,7 +60,14 @@ function EventItem(props: { event: Event; eventService: EventService }) {
         <Flex direction={'column'}>
           <Flex alignItems={'center'}>
             <Tooltip label={calendar.summary}>
-              <Box pl="1" bgColor={color} w="1em" h="1em" borderRadius={'5'} flexShrink={0}></Box>
+              <Box
+                pl="1"
+                bgColor={calendar.backgroundColor}
+                w="1em"
+                h="1em"
+                borderRadius={'5'}
+                flexShrink={0}
+              ></Box>
             </Tooltip>
             <Text pl="2" fontSize="sm" textAlign={'left'}>
               {props.event.title_short}

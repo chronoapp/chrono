@@ -11,7 +11,7 @@ interface IProps {
   events: Event[]
   date: Date
   eventService: EventService
-  getPrimaryCalendar: () => Calendar
+  primaryCalendar: Calendar
 }
 
 function WorkWeek(props: IProps) {
@@ -24,7 +24,7 @@ function WorkWeek(props: IProps) {
       events={props.events}
       range={range}
       eventService={props.eventService}
-      getPrimaryCalendar={props.getPrimaryCalendar}
+      primaryCalendar={props.primaryCalendar}
     />
   )
 }

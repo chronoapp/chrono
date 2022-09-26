@@ -44,7 +44,7 @@ function LabelPanel() {
     loadLabels()
   }, [])
 
-  function onClickAddProject() {
+  function addNewLabel() {
     setLabelState((labelState) => {
       return {
         ...labelState,
@@ -60,7 +60,7 @@ function LabelPanel() {
     <>
       {labelState.editingLabel?.active && <LabelEditModal />}
 
-      <Accordion allowToggle={true}>
+      <Accordion allowToggle={true} defaultIndex={0}>
         <AccordionItem border="0" mt="1">
           <AccordionButton
             height="8"
@@ -86,7 +86,7 @@ function LabelPanel() {
               color="gray.600"
               fontWeight="normal"
               variant="link"
-              onClick={onClickAddProject}
+              onClick={addNewLabel}
               float="left"
               m="2"
               ml="5"
