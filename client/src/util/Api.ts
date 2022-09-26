@@ -7,6 +7,7 @@ import { Label, TimePeriod } from '@/models/Label'
 import { LabelRule } from '@/models/LabelRule'
 import Calendar, { CalendarSource } from '@/models/Calendar'
 import Contact from '@/models/Contact'
+import User from '@/models/User'
 
 const API_URL = '/api/v1'
 
@@ -111,6 +112,15 @@ export async function authenticate(code: string, state: string) {
       code,
       state,
     }),
+  }).then(handleErrors)
+}
+
+// ================== User Info ==================
+
+export async function getUser(authToken: string): Promise<User> {
+  return fetch(`${API_URL}/user/`, {
+    method: 'GET',
+    headers: getHeaders(authToken),
   }).then(handleErrors)
 }
 
