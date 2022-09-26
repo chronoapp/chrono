@@ -2,20 +2,23 @@ import React, { useEffect, useContext } from 'react'
 import produce from 'immer'
 import { useRouter } from 'next/router'
 
-import TimeGrid from './TimeGrid'
-import Week from './Week'
-import Month from './Month'
-import WorkWeek from './WorkWeek'
-import EventEditFull from './event-edit/EventEditFull'
 import useEventService, { EventService } from './event-edit/useEventService'
-import { EventActionContext } from './EventActionContext'
+
+import { EventActionContext } from '@/contexts/EventActionContext'
 import { CalendarsContext, CalendarsContextType } from '@/contexts/CalendarsContext'
 import SearchResults from '@/calendar/SearchResults'
 
 import { GlobalEvent } from '@/util/global'
 import { startOfWeek } from '@/util/localizer'
+import useKeyPress from '@/lib/hooks/useKeyPress'
 import * as dates from '@/util/dates'
 import * as API from '@/util/Api'
+
+import TimeGrid from './TimeGrid'
+import Week from './Week'
+import Month from './Month'
+import WorkWeek from './WorkWeek'
+import EventEditFull from './event-edit/EventEditFull'
 
 function Calendar() {
   const firstOfWeek = startOfWeek()

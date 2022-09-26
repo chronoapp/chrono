@@ -31,7 +31,7 @@ import Event from '@/models/Event'
 import Calendar from '@/models/Calendar'
 import EventParticipant from '@/models/EventParticipant'
 import { Label } from '@/models/Label'
-import { EditRecurringAction, EventActionContext } from '../EventActionContext'
+import { EditRecurringAction, EventActionContext } from '@/contexts/EventActionContext'
 import { CalendarsContext } from '@/contexts/CalendarsContext'
 import { LabelTag } from '@/components/LabelTag'
 import LabelTree from '@/components/LabelTree'
@@ -78,6 +78,10 @@ function EventPopover(props: IProps) {
 
   const isExistingEvent = props.event.syncStatus !== 'NOT_SYNCED'
   const contentEditableRef = createRef<HTMLInputElement>()
+
+  console.log('-----')
+  console.log(props.event)
+  console.log(props.event.organizer)
 
   useEffect(() => {
     document.addEventListener('keydown', keyboardEvents)

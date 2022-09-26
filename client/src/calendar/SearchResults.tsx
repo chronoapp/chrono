@@ -3,7 +3,7 @@ import { Flex, Box, Text, Center, Tooltip } from '@chakra-ui/react'
 import { Portal, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from '@chakra-ui/react'
 import { FiRepeat } from 'react-icons/fi'
 
-import { EventActionContext, EventActionContextType } from '@/calendar/EventActionContext'
+import { EventActionContext, EventActionContextType } from '@/contexts/EventActionContext'
 import EventPopover from '@/calendar/event-edit/EventPopover'
 import { sortEvents } from '@/calendar/utils/eventLevels'
 

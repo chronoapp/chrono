@@ -25,7 +25,7 @@ import LabelPanel from './LabelPanel'
 import CalendarsPanel from './CalendarsPanel'
 import Plugins from './Plugins'
 import Toast from '@/components/Toast'
-import { EventActionContext } from '@/calendar/EventActionContext'
+import { EventActionContext } from '@/contexts/EventActionContext'
 import { CalendarsContext, CalendarsContextType } from '@/contexts/CalendarsContext'
 
 import Header from '@/calendar/Header'

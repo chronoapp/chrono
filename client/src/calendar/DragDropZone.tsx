@@ -2,7 +2,7 @@ import React from 'react'
 import { Box } from '@chakra-ui/react'
 
 import { getBoundsForNode } from '@/util/Selection'
-import { EventActionContext } from './EventActionContext'
+import { EventActionContext } from '@/contexts/EventActionContext'
 import { EventService } from './event-edit/useEventService'
 
 import * as dates from '@/util/dates'

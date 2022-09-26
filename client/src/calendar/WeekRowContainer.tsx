@@ -6,7 +6,7 @@ import DateSlotMetrics from './utils/DateSlotMetrics'
 import EventRow from './EventRow'
 import { EventSegment, eventSegments } from './utils/eventLevels'
 
-import { EventActionContext } from './EventActionContext'
+import { EventActionContext } from '@/contexts/EventActionContext'
 import {
   Selection,
   SelectRect,

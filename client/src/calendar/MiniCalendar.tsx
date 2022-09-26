@@ -8,7 +8,7 @@ import { FiChevronDown, FiChevronUp } from 'react-icons/fi'
 import * as dates from '../util/dates'
 import { startOfWeek, getWeekRange } from '../util/localizer'
 import { format } from '../util/localizer'
-import { EventActionContext, EventActionContextType } from './EventActionContext'
+import { EventActionContext, EventActionContextType } from '@/contexts/EventActionContext'
 
 type AnimateDirection = 'NONE' | 'FROM_BOTTOM' | 'FROM_TOP'
 

@@ -9,7 +9,7 @@ import Toast from '@/components/Toast'
 import * as dates from '@/util/dates'
 
 import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
-import { EventActionContext, EditRecurringAction } from '../EventActionContext'
+import { EventActionContext, EditRecurringAction } from '@/contexts/EventActionContext'
 import useTaskQueue from '@/lib/hooks/useTaskQueue'
 
 export type EventService = {
