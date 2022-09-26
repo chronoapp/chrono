@@ -14,6 +14,7 @@ from .gcal import (
     getEventBody,
     createGoogleEvent,
     deleteGoogleEvent,
+    updateCalendar,
 )
 from .calendar import syncCreatedOrUpdatedGoogleEvent, syncCalendar
 from app.core.logger import logger
@@ -127,3 +128,21 @@ def syncCalendarTask(userId: int, calendarId: str, fullSync: bool):
             await syncCalendar(calendar, session, fullSync)
 
     asyncio.run(syncCal())
+
+
+@dramatiq.actor(max_retries=1)
+def updateCalendarTask(userId: int, calendarId: str):
+    """Update google calendar details like summary, selected, color"""
+
+    async def updateCal():
+        async with AsyncSession() as session:
+            userRepo = UserRepository(session)
+            calRepo = CalendarRepo(session)
+
+            user = await userRepo.getUser(userId)
+            calendar = await calRepo.getCalendar(user, calendarId)
+
+            logger.info(f'Update Calendar {calendar.google_id}')
+            updateCalendar(user, calendar)
+
+    asyncio.run(updateCal())
