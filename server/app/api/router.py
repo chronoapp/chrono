@@ -11,6 +11,7 @@ from app.api.endpoints import (
     calendars,
     webhooks,
     contacts,
+    user,
 )
 
 api_router = APIRouter()
@@ -24,3 +25,4 @@ api_router.include_router(sync.router)
 api_router.include_router(calendars.router)
 api_router.include_router(webhooks.router)
 api_router.include_router(contacts.router)
+api_router.include_router(user.router)

@@ -69,7 +69,7 @@ def getSubtreeLabelIds(user: User, labelId: int) -> List[int]:
         labelIds.append(label.id)
 
         if label.id in childIdsMap:
-            if (childIds := childIdsMap[label.id]) :
+            if childIds := childIdsMap[label.id]:
                 for childId in childIds:
                     queue.append(labelMap[childId])
 

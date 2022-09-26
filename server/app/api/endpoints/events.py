@@ -114,6 +114,8 @@ async def createCalendarEvent(
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_db),
 ) -> Event:
+    # TODO: Add the default organizer.
+
     try:
         if event.recurring_event_id:
             raise HTTPException(
