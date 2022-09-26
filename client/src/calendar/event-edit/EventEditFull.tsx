@@ -30,7 +30,6 @@ import makeId from '@/lib/js-lib/makeId'
 import * as dates from '@/util/dates'
 import * as API from '@/util/Api'
 import { EventActionContext, EditRecurringAction } from '@/contexts/EventActionContext'
-import { CalendarsContext } from '@/contexts/CalendarsContext'
 import Event from '@/models/Event'
 import Contact from '@/models/Contact'
 import { Label } from '@/models/Label'
@@ -51,14 +50,15 @@ import { EventService } from './useEventService'
 import EventFields from './EventFields'
 import ParticipantList from './ParticipantList'
 import { labelsState } from '@/state/LabelsState'
+import { calendarsState } from '@/state/CalendarState'
 
 /**
  * Full view for event editing.
  */
 export default function EventEditFull(props: { event: Event; eventService: EventService }) {
   const eventActions = useContext(EventActionContext)
-  const calendarContext = useContext(CalendarsContext)
   const labelState = useRecoilValue(labelsState)
+  const calendarsById = useRecoilValue(calendarsState).calendarsById
 
   // Event data and overrides
   const [eventFields, setEventFields] = useState(
@@ -511,7 +511,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
             </Box>
             <SelectCalendar
               defaultCalendarId={eventFields.calendarId}
-              calendarsById={calendarContext.calendarsById}
+              calendarsById={calendarsById}
               onChange={(calendar) => {
                 const updatedFields = {
                   ...eventFields,

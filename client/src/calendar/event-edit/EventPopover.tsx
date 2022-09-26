@@ -32,7 +32,6 @@ import Calendar from '@/models/Calendar'
 import EventParticipant from '@/models/EventParticipant'
 import { Label } from '@/models/Label'
 import { EditRecurringAction, EventActionContext } from '@/contexts/EventActionContext'
-import { CalendarsContext } from '@/contexts/CalendarsContext'
 import { LabelTag } from '@/components/LabelTag'
 import LabelTree from '@/components/LabelTree'
 import * as API from '@/util/Api'
@@ -45,6 +44,7 @@ import TaggableInput from './TaggableInput'
 import { EventService } from './useEventService'
 import EventFields from './EventFields'
 import { labelsState } from '@/state/LabelsState'
+import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
 
 interface IProps {
   event: Event
@@ -53,8 +53,9 @@ interface IProps {
 
 function EventPopover(props: IProps) {
   const eventActions = useContext(EventActionContext)
-  const calendarContext = useContext(CalendarsContext)
   const labelState = useRecoilValue(labelsState)
+  const calendarsById = useRecoilValue(calendarsState).calendarsById
+  const primaryCalendar = useRecoilValue(primaryCalendarSelector)
 
   const [eventFields, setEventFields] = useState(
     new EventFields(
@@ -78,10 +79,6 @@ function EventPopover(props: IProps) {
 
   const isExistingEvent = props.event.syncStatus !== 'NOT_SYNCED'
   const contentEditableRef = createRef<HTMLInputElement>()
-
-  console.log('-----')
-  console.log(props.event)
-  console.log(props.event.organizer)
 
   useEffect(() => {
     document.addEventListener('keydown', keyboardEvents)
@@ -262,11 +259,11 @@ function EventPopover(props: IProps) {
   }
 
   function getSelectedCalendar(calendarId: string): Calendar {
-    const calendar = calendarContext.calendarsById[calendarId]
+    const calendar = calendarsById[calendarId]
     if (calendar) {
       return calendar
     } else {
-      return calendarContext.getPrimaryCalendar()
+      return primaryCalendar!
     }
   }
 
@@ -568,7 +565,7 @@ function EventPopover(props: IProps) {
             </Box>
             <SelectCalendar
               defaultCalendarId={eventFields.calendarId}
-              calendarsById={calendarContext.calendarsById}
+              calendarsById={calendarsById}
               onChange={(calendar) => {
                 // Forces a color change without an API request.
                 // TODO: Discard changes on close.

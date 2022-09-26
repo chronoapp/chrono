@@ -21,7 +21,7 @@ interface IProps {
   loading: boolean
   showDatesOfWeek: boolean
   eventService: EventService
-  getPrimaryCalendar: () => Calendar
+  primaryCalendar: Calendar
 }
 
 const MIN_ROWS = 1
@@ -73,7 +73,7 @@ function WeekRow(props: IProps) {
           wrapperClassname="cal-month-view"
           ignoreNewEventYBoundCheck={false}
           eventService={props.eventService}
-          getPrimaryCalendar={props.getPrimaryCalendar}
+          primaryCalendar={props.primaryCalendar}
         >
           {!props.loading && (
             <>

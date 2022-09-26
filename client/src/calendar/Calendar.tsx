@@ -5,7 +5,6 @@ import { useRouter } from 'next/router'
 import useEventService, { EventService } from './event-edit/useEventService'
 
 import { EventActionContext } from '@/contexts/EventActionContext'
-import { CalendarsContext, CalendarsContextType } from '@/contexts/CalendarsContext'
 import SearchResults from '@/calendar/SearchResults'
 
 import { GlobalEvent } from '@/util/global'
@@ -19,6 +18,8 @@ import Week from './Week'
 import Month from './Month'
 import WorkWeek from './WorkWeek'
 import EventEditFull from './event-edit/EventEditFull'
+import { useRecoilValue } from 'recoil'
+import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
 
 function Calendar() {
   const firstOfWeek = startOfWeek()
@@ -26,12 +27,16 @@ function Calendar() {
   const eventService: EventService = useEventService()
 
   // TODO: Store startDate and endDate to prevent unnecessary refreshes.
-  const calendarContext = useContext<CalendarsContextType>(CalendarsContext)
+
+  const calendars = useRecoilValue(calendarsState)
+  const primaryCalendar = useRecoilValue(primaryCalendarSelector)
   const eventsContext = useContext(EventActionContext)
 
   const router = useRouter()
   const searchQuery = (router.query.search as string) || ''
   const [update, setUpdater] = React.useState(0)
+
+  useKeyPress(['ArrowLeft', 'ArrowRight'], onKeyPress)
 
   useEffect(() => {
     document.addEventListener(GlobalEvent.refreshCalendar, () => setUpdater(update + 1))
@@ -43,7 +48,7 @@ function Calendar() {
 
   useEffect(() => {
     loadCurrentViewEvents()
-  }, [eventsContext.display, eventsContext.selectedDate, calendarContext.calendarsById, update])
+  }, [eventsContext.display, eventsContext.selectedDate, calendars.calendarsById, update])
 
   async function loadCurrentViewEvents() {
     if (eventsContext.display == 'Day') {
@@ -74,7 +79,7 @@ function Calendar() {
       authToken,
       start,
       end,
-      Object.values(calendarContext.calendarsById)
+      Object.values(calendars.calendarsById)
     )
 
     eventsContext.eventDispatch({
@@ -85,11 +90,9 @@ function Calendar() {
 
   function getAllVisibleEvents() {
     const { editingEvent, eventsByCalendar } = eventsContext.eventState
-    const selectedCalendarIds = Object.values(calendarContext.calendarsById)
+    const selectedCalendarIds = Object.values(calendars.calendarsById)
       .filter((cal) => cal.selected)
       .map((cal) => cal.id)
-
-    const defaultCalendar = calendarContext.getPrimaryCalendar()
 
     let eventWithEditing = Object.fromEntries(
       selectedCalendarIds.map((calId) => {
@@ -99,7 +102,7 @@ function Calendar() {
 
     if (editingEvent) {
       eventWithEditing = produce(eventWithEditing, (draft) => {
-        const calendarId = editingEvent.event.calendar_id || defaultCalendar.id
+        const calendarId = editingEvent.event.calendar_id || primaryCalendar!.id
 
         if (draft.hasOwnProperty(calendarId)) {
           if (editingEvent.originalCalendarId) {
@@ -119,6 +122,9 @@ function Calendar() {
 
   function renderCalendar() {
     const { loading } = eventsContext.eventState
+    if (!primaryCalendar) {
+      return
+    }
     const events = getAllVisibleEvents()
 
     if (searchQuery) {
@@ -130,7 +136,7 @@ function Calendar() {
           now={eventsContext.selectedDate}
           events={events}
           range={[eventsContext.selectedDate]}
-          getPrimaryCalendar={calendarContext.getPrimaryCalendar}
+          primaryCalendar={primaryCalendar}
         />
       )
     } else if (eventsContext.display == 'Week') {
@@ -139,7 +145,7 @@ function Calendar() {
           date={eventsContext.selectedDate}
           events={events}
           eventService={eventService}
-          getPrimaryCalendar={calendarContext.getPrimaryCalendar}
+          primaryCalendar={primaryCalendar}
         />
       )
     } else if (eventsContext.display == 'WorkWeek') {
@@ -148,7 +154,7 @@ function Calendar() {
           date={eventsContext.selectedDate}
           events={events}
           eventService={eventService}
-          getPrimaryCalendar={calendarContext.getPrimaryCalendar}
+          primaryCalendar={primaryCalendar}
         />
       )
     } else if (eventsContext.display == 'Month') {
@@ -159,7 +165,7 @@ function Calendar() {
           date={eventsContext.selectedDate}
           events={events}
           eventService={eventService}
-          getPrimaryCalendar={calendarContext.getPrimaryCalendar}
+          primaryCalendar={primaryCalendar}
         />
       )
     }

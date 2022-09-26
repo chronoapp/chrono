@@ -15,7 +15,7 @@ interface IProps {
   date: Date
   today: Date
   eventService: EventService
-  getPrimaryCalendar: () => Calendar
+  primaryCalendar: Calendar
 }
 
 function Month(props: IProps) {
@@ -36,7 +36,7 @@ function Month(props: IProps) {
         events={eventsForWeek}
         showDatesOfWeek={weekIdx == 0}
         eventService={props.eventService}
-        getPrimaryCalendar={props.getPrimaryCalendar}
+        primaryCalendar={props.primaryCalendar}
       />
     )
   }

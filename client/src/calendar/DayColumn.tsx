@@ -28,7 +28,7 @@ interface IProps {
   isCurrentDay: boolean
   now: Date
   eventService: EventService
-  getPrimaryCalendar: () => Calendar
+  primaryCalendar: Calendar
 }
 
 interface IState {
@@ -300,7 +300,7 @@ class DayColumn extends React.Component<IProps, IState> {
             console.log('Handle Select Event')
             const { startDate, endDate } = this.state.selectRange
 
-            const calendar = this.props.getPrimaryCalendar()
+            const calendar = this.props.primaryCalendar
             this.context?.eventDispatch({
               type: 'INIT_NEW_EVENT_AT_DATE',
               payload: { calendar: calendar, date: startDate, endDate: endDate, allDay: false },
@@ -329,7 +329,7 @@ class DayColumn extends React.Component<IProps, IState> {
         this.context?.eventDispatch({
           type: 'INIT_NEW_EVENT_AT_DATE',
           payload: {
-            calendar: this.props.getPrimaryCalendar(),
+            calendar: this.props.primaryCalendar,
             date: startDate,
             allDay: false,
           },

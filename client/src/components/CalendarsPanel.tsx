@@ -1,4 +1,7 @@
 import React from 'react'
+import produce from 'immer'
+import { useRecoilState } from 'recoil'
+
 import { FiPlus, FiMoreHorizontal, FiTrash, FiEdit } from 'react-icons/fi'
 import {
   Text,
@@ -21,15 +24,15 @@ import {
   AccordionPanel,
   AccordionIcon,
 } from '@chakra-ui/react'
+
 import Hoverable from '@/lib/Hoverable'
 import groupBy from '@/lib/js-lib/groupBy'
+import { normalizeArr } from '@/lib/normalizer'
 
-import { CalendarsContext, CalendarsContextType } from '@/contexts/CalendarsContext'
 import * as API from '@/util/Api'
+import { calendarsState } from '@/state/CalendarState'
 import Calendar, { AccessRole, CalendarSource } from '@/models/Calendar'
 import CalendarEditModal from './CalendarEditModal'
-
-import produce from 'immer'
 
 function renderImageForSource(source: CalendarSource) {
   if (source === 'google') {
@@ -79,8 +82,7 @@ function ConfirmDeleteCalendarAlert(props: {
  * TODO: Update selected calendars to server.
  */
 export default function CalendarsPanel() {
-  const { calendarsById, loadCalendars, updateCalendarSelect, setCalendar, deleteCalendar } =
-    React.useContext<CalendarsContextType>(CalendarsContext)
+  const [calendars, setCalendars] = useRecoilState(calendarsState)
 
   const confirmDeleteCancelRef = React.useRef<HTMLButtonElement>(null)
   const [confirmDeleteCalendarId, setConfirmDeleteCalendarId] = React.useState<undefined | string>(
@@ -90,21 +92,43 @@ export default function CalendarsPanel() {
   const [editModalActive, setEditModalActive] = React.useState(false)
   const [editingCalendarId, setEditingCalendarId] = React.useState<undefined | string>(undefined)
 
+  const initCalendars = (calendars: Calendar[]) => {
+    setCalendars({ loading: false, calendarsById: normalizeArr(calendars, 'id') })
+  }
+
+  const updateCalendar = (calendar: Calendar) => {
+    setCalendars((prevState) => {
+      return {
+        ...prevState,
+        calendarsById: produce(prevState.calendarsById, (draftCalendarsById) => {
+          draftCalendarsById[calendar.id] = calendar
+        }),
+      }
+    })
+  }
+
+  const deleteCalendar = (calendarId: string) => {
+    setCalendars((prevState) => {
+      const newCalendars = { ...prevState.calendarsById }
+      delete newCalendars[calendarId]
+      return { ...prevState, calendarsById: newCalendars }
+    })
+  }
+
   React.useEffect(() => {
     async function init() {
       const authToken = API.getAuthToken()
       const calendars = await API.getCalendars(authToken)
-      loadCalendars(calendars)
+      initCalendars(calendars)
     }
     init()
   }, [])
 
   function onSelectCalendar(calendar: Calendar, selected: boolean) {
-    updateCalendarSelect(calendar.id, selected)
-
     const updated = produce(calendar, (draft) => {
       draft.selected = selected
     })
+    updateCalendar(updated)
 
     API.putCalendar(updated, API.getAuthToken())
   }
@@ -217,7 +241,7 @@ export default function CalendarsPanel() {
     )
   }
 
-  const groupedCalendars = groupBy(Object.values(calendarsById), (cal) => cal.source)
+  const groupedCalendars = groupBy(Object.values(calendars.calendarsById), (cal) => cal.source)
   const keyArr = Array.from(groupedCalendars.keys())
 
   return (
@@ -232,16 +256,20 @@ export default function CalendarsPanel() {
       <CalendarEditModal
         isActive={editModalActive}
         editingCalendar={
-          editingCalendarId !== undefined ? calendarsById[editingCalendarId] : undefined
+          editingCalendarId !== undefined ? calendars.calendarsById[editingCalendarId] : undefined
         }
         onCancel={() => setEditModalActive(false)}
         onSave={async (fields) => {
           // TODO: Handle errors, add alerts
 
           if (editingCalendarId) {
-            const updatedCalendar = { ...calendarsById[editingCalendarId], ...fields }
+            const updatedCalendar = {
+              ...calendars.calendarsById[editingCalendarId],
+              ...fields,
+            } as Calendar
+
             const calendar = await API.putCalendar(updatedCalendar, API.getAuthToken())
-            setCalendar(calendar)
+            updateCalendar(updatedCalendar)
           } else {
             const calendar = await API.createCalendar(
               API.getAuthToken(),
@@ -251,7 +279,7 @@ export default function CalendarsPanel() {
               fields.description,
               fields.timezone
             )
-            setCalendar(calendar)
+            updateCalendar(calendar)
           }
 
           setEditModalActive(false)

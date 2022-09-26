@@ -1,5 +1,5 @@
 import React from 'react'
-import { useSetRecoilState } from 'recoil'
+import { useRecoilValue, useSetRecoilState } from 'recoil'
 
 import {
   Box,
@@ -27,11 +27,11 @@ import CalendarsPanel from './CalendarsPanel'
 import Plugins from './Plugins'
 import Toast from '@/components/Toast'
 import { EventActionContext } from '@/contexts/EventActionContext'
-import { CalendarsContext, CalendarsContextType } from '@/contexts/CalendarsContext'
 
 import Header from '@/calendar/Header'
 import * as API from '@/util/Api'
 import { userState } from '@/state/UserState'
+import { primaryCalendarSelector } from '@/state/CalendarState'
 
 interface Props {
   title: string
@@ -42,7 +42,7 @@ interface Props {
 
 function NewEventButton() {
   const eventsContext = React.useContext(EventActionContext)
-  const { getPrimaryCalendar } = React.useContext<CalendarsContextType>(CalendarsContext)
+  const primaryCalendar = useRecoilValue(primaryCalendarSelector)
 
   return (
     <Button
@@ -59,7 +59,7 @@ function NewEventButton() {
         eventsContext.eventDispatch({
           type: 'INIT_NEW_EVENT_AT_DATE',
           payload: {
-            calendar: getPrimaryCalendar(),
+            calendar: primaryCalendar!,
             date: roundNext15Min(new Date()),
             allDay: false,
           },
