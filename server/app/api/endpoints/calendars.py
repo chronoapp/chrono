@@ -15,6 +15,7 @@ from app.api.repos.calendar_repo import (
     CalendarVM,
     CalendarNotFoundError,
 )
+from app.sync.google.tasks import updateCalendarTask
 from app.sync.google import gcal
 
 router = APIRouter()
@@ -77,9 +78,10 @@ async def putCalendar(
 
     try:
         userCalendar = await calendarRepo.updateCalendar(user, calendarId, calendar)
+        await session.commit()
 
         if userCalendar.source == 'google':
-            gcal.updateCalendar(user, userCalendar)
+            updateCalendarTask.send(user.id, userCalendar.id)
 
         await session.commit()
         return userCalendar
