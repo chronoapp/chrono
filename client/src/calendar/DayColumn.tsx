@@ -14,7 +14,7 @@ import TimeGridEvent from './TimeGridEvent'
 import EventPopover from './event-edit/EventPopover'
 
 import ResizeEventContainer from './ResizeEventContainer'
-import { EventActionContext } from './EventActionContext'
+import { EventActionContext } from '@/contexts/EventActionContext'
 import { EventService } from '@/calendar/event-edit/useEventService'
 import Calendar from '@/models/Calendar'
 

@@ -26,7 +26,7 @@ import {
   FiX,
   FiArrowLeft,
 } from 'react-icons/fi'
-import { EventActionContext, Display } from './EventActionContext'
+import { EventActionContext, Display } from '../contexts/EventActionContext'
 import { format } from '@/util/localizer'
 import { GlobalEvent } from '@/util/global'
 import * as dates from '@/util/dates'

@@ -10,10 +10,10 @@ import {
   PopoverHeader,
 } from '@chakra-ui/react'
 
+import { EventActionContext } from '@/contexts/EventActionContext'
 import { format } from '../util/localizer'
 import { eventLevels, EventSegment } from './utils/eventLevels'
 import { renderSpan, EventItem } from './EventRow'
-import { EventActionContext } from './EventActionContext'
 import { EventService } from './event-edit/useEventService'
 
 interface IProps {

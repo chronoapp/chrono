@@ -9,7 +9,7 @@ import EventPopover from './event-edit/EventPopover'
 
 import Event from '../models/Event'
 import { CalendarsContext } from '@/contexts/CalendarsContext'
-import { EventActionContext } from './EventActionContext'
+import { EventActionContext } from '@/contexts/EventActionContext'
 import { EventService } from './event-edit/useEventService'
 
 export function EventItem(props: {

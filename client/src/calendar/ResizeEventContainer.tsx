@@ -4,7 +4,7 @@ import { Selection, Rect, EventData, getBoundsForNode, SelectRect } from '../uti
 import TimeGridEvent from './TimeGridEvent'
 import * as dates from '../util/dates'
 import { timeRangeFormat } from '../util/localizer'
-import { EventActionContext, DragDropAction } from './EventActionContext'
+import { EventActionContext, DragDropAction } from '@/contexts/EventActionContext'
 import Event from '../models/Event'
 import SlotMetrics from './utils/SlotMetrics'
 import { GlobalEvent } from '../util/global'

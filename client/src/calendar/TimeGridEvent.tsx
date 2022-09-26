@@ -5,7 +5,7 @@ import clsx from 'clsx'
 import Event from '../models/Event'
 import { timeFormatShort } from '../util/localizer'
 
-import { Direction, EventActionContext } from './EventActionContext'
+import { Direction, EventActionContext } from '@/contexts/EventActionContext'
 import { CalendarsContext } from '@/contexts/CalendarsContext'
 import { LabelTagColor } from '../components/LabelTag'
 

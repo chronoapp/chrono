@@ -6,7 +6,7 @@ import { RecoilRoot } from 'recoil'
 
 import { ChakraProvider, extendTheme } from '@chakra-ui/react'
 import { CalendarsContextProvider } from '@/contexts/CalendarsContext'
-import { EventActionProvider } from '@/calendar/EventActionContext'
+import { EventActionProvider } from '@/contexts/EventActionContext'
 
 Router.events.on('routeChangeStart', () => NProgress.start())
 Router.events.on('routeChangeComplete', () => NProgress.done())
