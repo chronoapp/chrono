@@ -1,5 +1,5 @@
-import React, { useContext, useState } from 'react'
-import { useRecoilValue } from 'recoil'
+import React, { useState } from 'react'
+import { useRecoilValue, useSetRecoilState } from 'recoil'
 
 import {
   Button,
@@ -29,7 +29,6 @@ import { FiCalendar, FiAlignLeft, FiClock, FiChevronDown } from 'react-icons/fi'
 import makeId from '@/lib/js-lib/makeId'
 import * as dates from '@/util/dates'
 import * as API from '@/util/Api'
-import { EventActionContext, EditRecurringAction } from '@/contexts/EventActionContext'
 import Event from '@/models/Event'
 import Contact from '@/models/Contact'
 import { Label } from '@/models/Label'
@@ -51,14 +50,18 @@ import EventFields from './EventFields'
 import ParticipantList from './ParticipantList'
 import { labelsState } from '@/state/LabelsState'
 import { calendarsState } from '@/state/CalendarState'
+import useEventActions from '@/state/useEventActions'
+import { displayState, editingEventState, EditRecurringAction } from '@/state/EventsState'
 
 /**
  * Full view for event editing.
  */
 export default function EventEditFull(props: { event: Event; eventService: EventService }) {
-  const eventActions = useContext(EventActionContext)
+  const eventActions = useEventActions()
+  const editingEvent = useRecoilValue(editingEventState)
   const labelState = useRecoilValue(labelsState)
   const calendarsById = useRecoilValue(calendarsState).calendarsById
+  const setDisplay = useSetRecoilState(displayState)
 
   // Event data and overrides
   const [eventFields, setEventFields] = useState(
@@ -85,7 +88,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
     : 1
 
   // Derived Properties
-  const recurringAction = eventActions.eventState.editingEvent?.editRecurringAction
+  const recurringAction = editingEvent?.editRecurringAction
   const isUnsavedEvent = props.event.syncStatus === 'NOT_SYNCED'
   const isExistingRecurringEvent = !isUnsavedEvent && props.event.recurrences != null
 
@@ -219,30 +222,14 @@ export default function EventEditFull(props: { event: Event; eventService: Event
         <MenuList mt="-2">
           <MenuItem
             fontSize="sm"
-            onClick={() =>
-              eventActions.eventDispatch({
-                type: 'UPDATE_EDIT_MODE',
-                payload: {
-                  editMode: 'FULL_EDIT',
-                  editRecurringAction: 'SINGLE' as EditRecurringAction,
-                },
-              })
-            }
+            onClick={() => eventActions.updateEditMode('FULL_EDIT', 'SINGLE')}
           >
             This event
           </MenuItem>
           <MenuDivider m="0" />
           <MenuItem
             fontSize="sm"
-            onClick={() =>
-              eventActions.eventDispatch({
-                type: 'UPDATE_EDIT_MODE',
-                payload: {
-                  editMode: 'FULL_EDIT',
-                  editRecurringAction: 'THIS_AND_FOLLOWING' as EditRecurringAction,
-                },
-              })
-            }
+            onClick={() => eventActions.updateEditMode('FULL_EDIT', 'THIS_AND_FOLLOWING')}
           >
             This and following events
           </MenuItem>
@@ -250,13 +237,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
           <MenuItem
             fontSize="sm"
             onClick={() => {
-              eventActions.eventDispatch({
-                type: 'UPDATE_EDIT_MODE',
-                payload: {
-                  editMode: 'FULL_EDIT',
-                  editRecurringAction: 'ALL' as EditRecurringAction,
-                },
-              })
+              eventActions.updateEditMode('FULL_EDIT', 'ALL')
             }}
           >
             All events
@@ -267,13 +248,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
   }
 
   return (
-    <Modal
-      size="3xl"
-      isOpen={true}
-      onClose={() => {
-        eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
-      }}
-    >
+    <Modal size="3xl" isOpen={true} onClose={eventActions.cancelSelect}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Edit Event {renderRecurringEventSelectionMenu()}</ModalHeader>
@@ -299,10 +274,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                 setEventFields({ ...eventFields, title, labels: updatedLabels })
               }}
               onBlur={() => {
-                eventActions.eventDispatch({
-                  type: 'UPDATE_EDIT_EVENT',
-                  payload: getEventData(),
-                })
+                eventActions.updateEditingEvent(getEventData())
               }}
               onUpdateContacts={(contacts: Contact[]) => {
                 const newParticipants = contacts
@@ -371,11 +343,10 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                   ...EventFields.getMutableEventFields(updatedFields),
                 }
 
-                eventActions.setSelectedDate(start)
-                eventActions.eventDispatch({
-                  type: 'UPDATE_EDIT_EVENT',
-                  payload: updatedEvent,
+                setDisplay((prev) => {
+                  return { ...prev, selectedDate: start }
                 })
+                eventActions.updateEditingEvent(updatedEvent)
               }}
               style={{ flex: 1 }}
             />
@@ -406,10 +377,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                     ...props.event,
                     ...EventFields.getMutableEventFields(updatedFields),
                   }
-                  eventActions.eventDispatch({
-                    type: 'UPDATE_EDIT_EVENT',
-                    payload: updatedEvent,
-                  })
+                  eventActions.updateEditingEvent(updatedEvent)
                 }}
                 onSelectEndDate={(date) => {
                   const updatedFields = { ...eventFields, end: date }
@@ -419,10 +387,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                     ...props.event,
                     ...EventFields.getMutableEventFields(updatedFields),
                   }
-                  eventActions.eventDispatch({
-                    type: 'UPDATE_EDIT_EVENT',
-                    payload: updatedEvent,
-                  })
+                  eventActions.updateEditingEvent(updatedEvent)
                 }}
               />
             )}
@@ -465,10 +430,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                   ...props.event,
                   ...EventFields.getMutableEventFields(newEventFields),
                 }
-                eventActions.eventDispatch({
-                  type: 'UPDATE_EDIT_EVENT',
-                  payload: updatedEvent,
-                })
+                eventActions.updateEditingEvent(updatedEvent)
               }}
             >
               All day
@@ -527,10 +489,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                   ...props.event,
                   ...EventFields.getMutableEventFields(updatedFields),
                 }
-                eventActions.eventDispatch({
-                  type: 'UPDATE_EDIT_EVENT',
-                  payload: updatedEvent,
-                })
+                eventActions.updateEditingEvent(updatedEvent)
               }}
             />
           </Flex>
@@ -548,11 +507,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
         </ModalBody>
 
         <ModalFooter>
-          <Button
-            variant={'ghost'}
-            mr={3}
-            onClick={() => eventActions.eventDispatch({ type: 'CANCEL_SELECT' })}
-          >
+          <Button variant={'ghost'} mr={3} onClick={eventActions.cancelSelect}>
             Cancel
           </Button>
 

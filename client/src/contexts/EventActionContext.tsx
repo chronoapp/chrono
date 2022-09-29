@@ -1,15 +1,14 @@
 import { createContext, useReducer, useState } from 'react'
 import { produce } from 'immer'
 
-import { normalizeArr } from '../lib/normalizer'
+import { normalizeArr } from '@/lib/normalizer'
 
-import * as dates from '../util/dates'
-import Event, { SyncStatus } from '../models/Event'
+import * as dates from '@/util/dates'
+import Event, { SyncStatus } from '@/models/Event'
 import Calendar from '@/models/Calendar'
 
 export type Action = 'MOVE' | 'RESIZE'
 export type Direction = 'UP' | 'DOWN'
-
 export type Display = 'Day' | 'Week' | 'WorkWeek' | 'Month'
 
 export type EditRecurringAction = 'SINGLE' | 'THIS_AND_FOLLOWING' | 'ALL'

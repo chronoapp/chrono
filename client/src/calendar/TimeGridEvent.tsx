@@ -1,13 +1,14 @@
 import React, { useContext } from 'react'
-import * as dates from '../util/dates'
-
 import clsx from 'clsx'
-import Event from '../models/Event'
-import { timeFormatShort } from '../util/localizer'
 
-import { Direction, EventActionContext } from '@/contexts/EventActionContext'
 import { useRecoilValue } from 'recoil'
 import { calendarWithDefault } from '@/state/CalendarState'
+import { dragDropActionState, editingEventState, Direction } from '@/state/EventsState'
+import useEventActions from '@/state/useEventActions'
+
+import Event from '../models/Event'
+import { timeFormatShort } from '../util/localizer'
+import * as dates from '../util/dates'
 
 import { LabelTagColor } from '../components/LabelTag'
 
@@ -27,7 +28,9 @@ function stringifyPercent(v: number | string) {
 }
 
 function TimeGridEvent(props: IProps) {
-  const eventActionContext = useContext(EventActionContext)
+  const eventActions = useEventActions()
+  const editingEvent = useRecoilValue(editingEventState)
+  const dnd = useRecoilValue(dragDropActionState)
 
   // Tiny gap to separate events.
   const eventHeight = props.style.height - 0.15
@@ -38,32 +41,28 @@ function TimeGridEvent(props: IProps) {
 
   function handleResize(e, direction: Direction) {
     if (e.button === 0 && calendar.isWritable()) {
-      eventActionContext?.onBeginAction(props.event, 'RESIZE', null, direction)
+      eventActions.onBeginAction(props.event, 'RESIZE', null, direction)
     }
   }
 
   function handleStartDragging(e) {
     if (e.button === 0 && calendar.isWritable()) {
-      eventActionContext?.onBeginAction(props.event, 'MOVE', null)
+      eventActions.onBeginAction(props.event, 'MOVE', null)
     }
   }
 
   function handleClickEvent(e) {
     const isSelected =
-      props.event.id === eventActionContext.eventState.editingEvent?.id &&
-      props.event.calendar_id === eventActionContext.eventState.editingEvent?.event.calendar_id
+      props.event.id === editingEvent?.id &&
+      props.event.calendar_id === editingEvent?.event.calendar_id
 
-    const changedSelection =
-      eventActionContext.eventState.editingEvent?.selectTailSegment !== props.isTailSegment
+    const changedSelection = editingEvent?.selectTailSegment !== props.isTailSegment
 
     // Stop the dragging event.
-    eventActionContext?.onInteractionEnd()
+    eventActions.onInteractionEnd()
 
     if (!isSelected || changedSelection) {
-      eventActionContext?.eventDispatch({
-        type: 'INIT_EDIT_EVENT',
-        payload: { event: props.event, selectTailSegment: props.isTailSegment },
-      })
+      eventActions.initEditEvent(props.event, props.isTailSegment)
     }
   }
 
@@ -173,10 +172,9 @@ function TimeGridEvent(props: IProps) {
     ]
   }
 
-  const dnd = eventActionContext?.dragAndDropAction
   const isInteracting = dnd && dnd.interacting && dnd.event.id === event.id && !props.isPreview
 
-  const isEditing = eventActionContext?.eventState.editingEvent?.id === event.id
+  const isEditing = editingEvent?.id === event.id
   const backgroundColor = Event.getBackgroundColor(event, calendar.backgroundColor, props.now)
 
   // This is in a separate section so that the drag mouse down event does not conflict with
@@ -231,7 +229,7 @@ function TimeGridEvent(props: IProps) {
       draggable={true}
       onDragStart={(evt: React.DragEvent) => {
         const dateOfClick = getDateOfClick(evt)
-        eventActionContext?.onBeginAction(props.event, 'MOVE', dateOfClick)
+        eventActions.onBeginAction(props.event, 'MOVE', dateOfClick)
       }}
     >
       {eventContents}

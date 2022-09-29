@@ -1,14 +1,14 @@
-import React, { useContext, useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useRecoilState } from 'recoil'
 import { Box, Flex, Text } from '@chakra-ui/react'
-
+import { FiChevronDown, FiChevronUp } from 'react-icons/fi'
 import clsx from 'clsx'
 import chunk from '@/lib/js-lib/chunk'
-import { FiChevronDown, FiChevronUp } from 'react-icons/fi'
 
+import { displayState } from '@/state/EventsState'
 import * as dates from '../util/dates'
 import { startOfWeek, getWeekRange } from '../util/localizer'
 import { format } from '../util/localizer'
-import { EventActionContext, EventActionContextType } from '@/contexts/EventActionContext'
 
 type AnimateDirection = 'NONE' | 'FROM_BOTTOM' | 'FROM_TOP'
 
@@ -16,19 +16,19 @@ type AnimateDirection = 'NONE' | 'FROM_BOTTOM' | 'FROM_TOP'
  * Mini calendar for date selection.
  */
 export default function MiniCalendar() {
-  const eventsContext = useContext<EventActionContextType>(EventActionContext)
-  const today = new Date()
+  const [display, setDisplay] = useRecoilState(displayState)
 
   // Current view date (represents a month) of the calendar.
-  const [viewDate, setViewDate] = useState<Date>(eventsContext.selectedDate)
+  const [viewDate, setViewDate] = useState<Date>(display.selectedDate)
 
   const month = dates.visibleDays(viewDate, startOfWeek(), true)
   const weeks = chunk(month, 7)
   const [animateDirection, setAnimateDirection] = useState<AnimateDirection>('NONE')
+  const today = new Date()
 
   useEffect(() => {
-    setViewDate(eventsContext.selectedDate)
-  }, [eventsContext.selectedDate])
+    setViewDate(display.selectedDate)
+  }, [display.selectedDate])
 
   function renderHeader() {
     const range = getWeekRange(viewDate)
@@ -46,12 +46,16 @@ export default function MiniCalendar() {
           const label = format(day, 'D')
           const isToday = dates.eq(day, today, 'day')
           const isOffRange = dates.month(viewDate) !== dates.month(day)
-          const isSelected = dates.eq(day, eventsContext.selectedDate, 'day')
+          const isSelected = dates.eq(day, display.selectedDate, 'day')
 
           return (
             <div
               key={idx}
-              onClick={() => eventsContext.setSelectedDate(day)}
+              onClick={() =>
+                setDisplay((prev) => {
+                  return { ...prev, selectedDate: day }
+                })
+              }
               className={clsx(
                 'cal-mini-month-day',
                 !isToday && isOffRange && 'has-text-grey',

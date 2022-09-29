@@ -1,5 +1,5 @@
-import React, { useContext, useState, useEffect, createRef } from 'react'
-import { useRecoilValue } from 'recoil'
+import React, { useState, useEffect, createRef } from 'react'
+import { useRecoilValue, useSetRecoilState } from 'recoil'
 
 import {
   Box,
@@ -31,7 +31,6 @@ import Event from '@/models/Event'
 import Calendar from '@/models/Calendar'
 import EventParticipant from '@/models/EventParticipant'
 import { Label } from '@/models/Label'
-import { EditRecurringAction, EventActionContext } from '@/contexts/EventActionContext'
 import { LabelTag } from '@/components/LabelTag'
 import LabelTree from '@/components/LabelTree'
 import * as API from '@/util/Api'
@@ -45,6 +44,8 @@ import { EventService } from './useEventService'
 import EventFields from './EventFields'
 import { labelsState } from '@/state/LabelsState'
 import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
+import useEventActions from '@/state/useEventActions'
+import { displayState, editingEventState } from '@/state/EventsState'
 
 interface IProps {
   event: Event
@@ -52,7 +53,10 @@ interface IProps {
 }
 
 function EventPopover(props: IProps) {
-  const eventActions = useContext(EventActionContext)
+  const eventActions = useEventActions()
+  const editingEvent = useRecoilValue(editingEventState)
+  const setDisplay = useSetRecoilState(displayState)
+
   const labelState = useRecoilValue(labelsState)
   const calendarsById = useRecoilValue(calendarsState).calendarsById
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
@@ -87,7 +91,7 @@ function EventPopover(props: IProps) {
     }
   }, [eventFields])
 
-  const isReadOnly = eventActions.eventState.editingEvent?.editMode == 'READ'
+  const isReadOnly = editingEvent?.editMode == 'READ'
   return <Box boxShadow="2xl">{isReadOnly ? renderReadOnlyView() : renderEditView()}</Box>
 
   function keyboardEvents(e: KeyboardEvent) {
@@ -126,30 +130,14 @@ function EventPopover(props: IProps) {
           <MenuList mt="-2">
             <MenuItem
               fontSize="sm"
-              onClick={() =>
-                eventActions.eventDispatch({
-                  type: 'UPDATE_EDIT_MODE',
-                  payload: {
-                    editMode: 'FULL_EDIT',
-                    editRecurringAction: 'SINGLE' as EditRecurringAction,
-                  },
-                })
-              }
+              onClick={() => eventActions.updateEditMode('FULL_EDIT', 'SINGLE')}
             >
               This event
             </MenuItem>
             <MenuDivider m="0" />
             <MenuItem
               fontSize="sm"
-              onClick={() =>
-                eventActions.eventDispatch({
-                  type: 'UPDATE_EDIT_MODE',
-                  payload: {
-                    editMode: 'FULL_EDIT',
-                    editRecurringAction: 'THIS_AND_FOLLOWING' as EditRecurringAction,
-                  },
-                })
-              }
+              onClick={() => eventActions.updateEditMode('FULL_EDIT', 'THIS_AND_FOLLOWING')}
             >
               This and following events
             </MenuItem>
@@ -157,13 +145,7 @@ function EventPopover(props: IProps) {
             <MenuItem
               fontSize="sm"
               onClick={() => {
-                eventActions.eventDispatch({
-                  type: 'UPDATE_EDIT_MODE',
-                  payload: {
-                    editMode: 'FULL_EDIT',
-                    editRecurringAction: 'ALL' as EditRecurringAction,
-                  },
-                })
+                eventActions.updateEditMode('FULL_EDIT', 'ALL')
               }}
             >
               All events
@@ -179,13 +161,7 @@ function EventPopover(props: IProps) {
           fontWeight="normal"
           colorScheme="primary"
           onClick={() => {
-            eventActions.eventDispatch({
-              type: 'UPDATE_EDIT_MODE',
-              payload: {
-                editMode: 'FULL_EDIT',
-                editRecurringAction: 'SINGLE' as EditRecurringAction,
-              },
-            })
+            eventActions.updateEditMode('FULL_EDIT', 'SINGLE')
           }}
         >
           Edit
@@ -293,7 +269,6 @@ function EventPopover(props: IProps) {
               <LabelTree
                 allowEdit={false}
                 onSelect={(label) => {
-                  // const updatedLabels = [...eventFields.labels, label]
                   const updatedLabels = produce(eventFields.labels, (draft) => {
                     if (!draft.find((l) => l.id == label.id)) {
                       draft.push(label)
@@ -321,7 +296,7 @@ function EventPopover(props: IProps) {
             className="mr-2 is-flex is-align-items-center"
             style={{ height: '100%' }}
             onClick={(e) => {
-              eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
+              eventActions.cancelSelect()
             }}
           >
             <MdClose style={{ cursor: 'pointer' }} className="has-text-grey" />
@@ -385,7 +360,7 @@ function EventPopover(props: IProps) {
             className="mr-2 is-flex is-align-items-center"
             style={{ height: '100%' }}
             onClick={(e) => {
-              eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
+              eventActions.cancelSelect()
             }}
           >
             <MdClose style={{ cursor: 'pointer' }} className="has-text-grey" />
@@ -399,10 +374,7 @@ function EventPopover(props: IProps) {
             portalCls={'.cal-event-modal-container'}
             isHeading={false}
             onBlur={() => {
-              eventActions.eventDispatch({
-                type: 'UPDATE_EDIT_EVENT',
-                payload: getUpdatedEvent(props.event, eventFields),
-              })
+              eventActions.updateEditingEvent(getUpdatedEvent(props.event, eventFields))
             }}
             handleChange={(title, labelIds: number[]) => {
               const updatedLabels = addNewLabels(
@@ -462,11 +434,10 @@ function EventPopover(props: IProps) {
                   : { ...eventFields, start, end }
 
                 setEventFields(updatedFields)
-                eventActions.setSelectedDate(start)
-                eventActions.eventDispatch({
-                  type: 'UPDATE_EDIT_EVENT',
-                  payload: getUpdatedEvent(props.event, updatedFields),
+                setDisplay((prevState) => {
+                  return { ...prevState, selectedDate: start }
                 })
+                eventActions.updateEditingEvent(getUpdatedEvent(props.event, updatedFields))
               }}
             />
           </Flex>
@@ -485,11 +456,7 @@ function EventPopover(props: IProps) {
                     endDay: fullDayFormat(endDate),
                   }
                   setEventFields(updatedEventFields)
-
-                  eventActions.eventDispatch({
-                    type: 'UPDATE_EDIT_EVENT',
-                    payload: getUpdatedEvent(props.event, updatedEventFields),
-                  })
+                  eventActions.updateEditingEvent(getUpdatedEvent(props.event, updatedEventFields))
                 }}
               />
             )}
@@ -499,17 +466,12 @@ function EventPopover(props: IProps) {
                 end={eventFields.end}
                 onSelectStartDate={(date) => {
                   setEventFields({ ...eventFields, start: date })
-                  eventActions.eventDispatch({
-                    type: 'UPDATE_EDIT_EVENT',
-                    payload: { ...props.event, start: date },
-                  })
+
+                  eventActions.updateEditingEvent({ ...props.event, start: date })
                 }}
                 onSelectEndDate={(date) => {
                   setEventFields({ ...eventFields, end: date })
-                  eventActions.eventDispatch({
-                    type: 'UPDATE_EDIT_EVENT',
-                    payload: { ...props.event, end: date },
-                  })
+                  eventActions.updateEditingEvent({ ...props.event, end: date })
                 }}
               />
             )}
@@ -549,10 +511,7 @@ function EventPopover(props: IProps) {
                 }
 
                 setEventFields(updatedFields)
-                eventActions.eventDispatch({
-                  type: 'UPDATE_EDIT_EVENT',
-                  payload: getUpdatedEvent(props.event, updatedFields),
-                })
+                eventActions.updateEditingEvent(getUpdatedEvent(props.event, updatedFields))
               }}
             >
               All Day
@@ -584,10 +543,7 @@ function EventPopover(props: IProps) {
                   ...EventFields.getMutableEventFields(updatedFields),
                 }
 
-                eventActions.eventDispatch({
-                  type: 'UPDATE_EDIT_EVENT',
-                  payload: updatedEvent,
-                })
+                eventActions.updateEditingEvent(updatedEvent)
               }}
             />
           </div>
@@ -632,7 +588,7 @@ function EventPopover(props: IProps) {
                   size="sm"
                   borderRadius="sm"
                   fontWeight="normal"
-                  onClick={() => eventActions.eventDispatch({ type: 'CANCEL_SELECT' })}
+                  onClick={eventActions.cancelSelect}
                 >
                   Discard
                 </Button>
@@ -646,17 +602,8 @@ function EventPopover(props: IProps) {
               fontWeight="normal"
               variant="ghost"
               onClick={() => {
-                eventActions.eventDispatch({
-                  type: 'UPDATE_EDIT_EVENT',
-                  payload: getUpdatedEvent(props.event, eventFields),
-                })
-                eventActions.eventDispatch({
-                  type: 'UPDATE_EDIT_MODE',
-                  payload: {
-                    editMode: 'FULL_EDIT',
-                    editRecurringAction: 'SINGLE' as EditRecurringAction,
-                  },
-                })
+                eventActions.updateEditingEvent(getUpdatedEvent(props.event, eventFields))
+                eventActions.updateEditMode('FULL_EDIT', 'SINGLE')
               }}
             >
               More Options

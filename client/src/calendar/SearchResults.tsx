@@ -5,7 +5,10 @@ import { Flex, Box, Text, Center, Tooltip } from '@chakra-ui/react'
 import { Portal, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from '@chakra-ui/react'
 import { FiRepeat } from 'react-icons/fi'
 
-import { EventActionContext, EventActionContextType } from '@/contexts/EventActionContext'
+import { calendarWithDefault } from '@/state/CalendarState'
+import useEventActions from '@/state/useEventActions'
+import { editingEventState } from '@/state/EventsState'
+
 import EventPopover from '@/calendar/event-edit/EventPopover'
 import { sortEvents } from '@/calendar/utils/eventLevels'
 
@@ -14,7 +17,6 @@ import { LabelTag } from '@/components/LabelTag'
 import Event from '@/models/Event'
 import { EventService } from './event-edit/useEventService'
 import * as API from '@/util/Api'
-import { calendarWithDefault } from '@/state/CalendarState'
 
 interface IProps {
   searchQuery: string
@@ -23,18 +25,16 @@ interface IProps {
 }
 
 function EventItem(props: { event: Event; eventService: EventService }) {
-  const eventActionContext = React.useContext<EventActionContextType>(EventActionContext)
+  const eventActions = useEventActions()
   const calendar = useRecoilValue(calendarWithDefault(props.event.calendar_id))
+  const editingEvent = useRecoilValue(editingEventState)
+
   const dateDisplay = format(props.event.start, 'D MMM YYYY, ddd')
 
-  const editingEvent = eventActionContext.eventState.editingEvent
   const isEditing = editingEvent?.id === props.event.id && editingEvent?.editMode !== 'FULL_EDIT'
 
   function onSelectEvent() {
-    eventActionContext?.eventDispatch({
-      type: 'INIT_EDIT_EVENT',
-      payload: { event: props.event },
-    })
+    eventActions.initEditEvent(props.event)
   }
 
   function renderEvent() {

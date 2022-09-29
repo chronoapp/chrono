@@ -26,12 +26,12 @@ import LabelPanel from './LabelPanel'
 import CalendarsPanel from './CalendarsPanel'
 import Plugins from './Plugins'
 import Toast from '@/components/Toast'
-import { EventActionContext } from '@/contexts/EventActionContext'
 
 import Header from '@/calendar/Header'
 import * as API from '@/util/Api'
 import { userState } from '@/state/UserState'
 import { primaryCalendarSelector } from '@/state/CalendarState'
+import useEventActions from '@/state/useEventActions'
 
 interface Props {
   title: string
@@ -41,8 +41,8 @@ interface Props {
 }
 
 function NewEventButton() {
-  const eventsContext = React.useContext(EventActionContext)
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
+  const eventActions = useEventActions()
 
   return (
     <Button
@@ -56,14 +56,7 @@ function NewEventButton() {
       onClick={() => {
         // TODO: Create the event on the current view if current day is not in view.
         document.dispatchEvent(new Event(GlobalEvent.scrollToEvent))
-        eventsContext.eventDispatch({
-          type: 'INIT_NEW_EVENT_AT_DATE',
-          payload: {
-            calendar: primaryCalendar!,
-            date: roundNext15Min(new Date()),
-            allDay: false,
-          },
-        })
+        eventActions.initNewEventAtDate(primaryCalendar!, false, roundNext15Min(new Date()))
       }}
     >
       Create Event

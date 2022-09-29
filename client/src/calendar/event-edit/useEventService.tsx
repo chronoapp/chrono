@@ -1,4 +1,7 @@
 import React from 'react'
+import { produce } from 'immer'
+import { useRecoilState } from 'recoil'
+
 import { FiCheck, FiTrash } from 'react-icons/fi'
 import { useToast } from '@chakra-ui/react'
 import { GlobalEvent } from '@/util/global'
@@ -9,16 +12,10 @@ import Toast from '@/components/Toast'
 import * as dates from '@/util/dates'
 
 import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
-import { EventActionContext, EditRecurringAction } from '@/contexts/EventActionContext'
-import useTaskQueue from '@/lib/hooks/useTaskQueue'
+import { eventsState, EditRecurringAction, editingEventState } from '@/state/EventsState'
+import useEventActions from '@/state/useEventActions'
 
-export type EventService = {
-  updateEventLocal: (event: Event, showToast?: boolean) => void
-  saveEvent: (event: Event, showToast?: boolean) => void
-  deleteEvent: (calendarId: string, eventId: string, deleteMethod?: EditRecurringAction) => void
-  deleteAllRecurringEvents: (calendarId: string, eventId: string) => void
-  deleteThisAndFollowingEvents: (event: Event) => void
-}
+import useTaskQueue from '@/lib/hooks/useTaskQueue'
 
 /**
  * Hook to provides CRUD Action that deal with the event server API.
@@ -35,8 +32,11 @@ export type EventService = {
  * from (1), and use it to update the event.
  *
  */
-export default function useEventService(): EventService {
-  const eventActions = React.useContext(EventActionContext)
+export default function useEventService() {
+  const [events, setEvents] = useRecoilState(eventsState)
+  const [editingEvent, setEditingEvent] = useRecoilState(editingEventState)
+  const eventActions = useEventActions()
+
   const toast = useToast({ duration: 2000, position: 'top' })
   const currentToastId = React.useRef<string | number | undefined>()
 
@@ -59,25 +59,16 @@ export default function useEventService(): EventService {
     // TODO: Add a filter for updates and deletes to the client store
     // so we don't need a full refresh and prevent flickering.
     if (Event.isParentRecurringEvent(event)) {
-      eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
-      eventActions.eventDispatch({
-        type: 'DELETE_EVENT',
-        payload: { calendarId: calendarId, eventId: event.id, deleteMethod: 'ALL' },
-      })
+      eventActions.cancelSelect()
+      eventActions.deleteEvent(calendarId, event.id, 'ALL')
     }
 
     // Update the the editing event copy.
-    console.log(`Editing ${event.id} ${eventActions.eventState.editingEvent?.id}`)
-    if (event.id === eventActions.eventState.editingEvent?.id) {
-      eventActions.eventDispatch({
-        type: 'UPDATE_EDIT_EVENT',
-        payload: event,
-      })
+    console.log(`Editing ${event.id} ${editingEvent?.id}`)
+    if (event.id === editingEvent?.id) {
+      eventActions.updateEditingEvent(event)
     } else {
-      eventActions.eventDispatch({
-        type: 'UPDATE_EVENT',
-        payload: { calendarId, event: event, replaceEventId: event.id },
-      })
+      eventActions.updateEvent(calendarId, event.id, event)
     }
   }
 
@@ -92,36 +83,27 @@ export default function useEventService(): EventService {
    */
   function saveEvent(event: Event, showToast: boolean = true) {
     const calendarId = event.calendar_id
-    const { editingEvent } = eventActions.eventState
 
-    eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
+    setEditingEvent(null)
 
     if (event.syncStatus === 'NOT_SYNCED') {
-      eventActions.eventDispatch({
-        type: 'CREATE_EVENT',
-        payload: { ...event, syncStatus: 'SYNC_IN_PROGRESS' },
+      setEvents((prevState) => {
+        return {
+          ...prevState,
+          eventsByCalendar: produce(prevState.eventsByCalendar, (draft) => {
+            draft[calendarId][event.id] = event
+          }),
+        }
       })
       queueCreateEvent(calendarId, event, showToast)
     } else {
       if (editingEvent?.originalCalendarId && editingEvent.originalCalendarId !== calendarId) {
         console.log(`Moved calendars from ${editingEvent.originalCalendarId} to ${calendarId}`)
-        eventActions.eventDispatch({
-          type: 'MOVE_EVENT_CALENDAR',
-          payload: {
-            prevCalendarId: editingEvent.originalCalendarId,
-            newCalendarId: calendarId,
-            eventId: event.id,
-          },
-        })
-
+        eventActions.moveEventCalendarAction(event.id, editingEvent.originalCalendarId, calendarId)
         queueMoveEvent(event.id, editingEvent.originalCalendarId, calendarId)
       }
 
-      eventActions.eventDispatch({
-        type: 'UPDATE_EVENT',
-        payload: { calendarId, event: event, replaceEventId: event.id },
-      })
-
+      eventActions.updateEvent(calendarId, event.id, event)
       queueUpdateEvent(calendarId, event, showToast)
     }
   }
@@ -131,20 +113,14 @@ export default function useEventService(): EventService {
     eventId: string,
     deleteMethod: EditRecurringAction = 'SINGLE'
   ) {
-    eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
-    eventActions.eventDispatch({
-      type: 'DELETE_EVENT',
-      payload: { calendarId, eventId, deleteMethod },
-    })
+    setEditingEvent(null)
+    eventActions.deleteEvent(calendarId, eventId, deleteMethod)
     queueDeleteEvent(calendarId, eventId)
   }
 
   function deleteAllRecurringEvents(calendarId: string, eventId: string) {
-    eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
-    eventActions.eventDispatch({
-      type: 'DELETE_EVENT',
-      payload: { calendarId, eventId, deleteMethod: 'ALL' },
-    })
+    setEditingEvent(null)
+    eventActions.deleteEvent(calendarId, eventId, 'ALL')
     queueDeleteEvent(calendarId, eventId)
   }
 
@@ -163,11 +139,9 @@ export default function useEventService(): EventService {
     const updatedParentEvent = { ...parentEvent, recurrences: [rules.start.toString()] }
 
     // Optimistic UI Update.
-    eventActions.eventDispatch({ type: 'CANCEL_SELECT' })
+    eventActions.cancelSelect()
 
-    const eventsToDelete = Object.values(
-      eventActions.eventState.eventsByCalendar[calendarId]
-    ).filter((e) => {
+    const eventsToDelete = Object.values(events.eventsByCalendar[calendarId]).filter((e) => {
       return (
         e.recurring_event_id == parentEvent.id &&
         e.original_start &&
@@ -177,13 +151,7 @@ export default function useEventService(): EventService {
     })
 
     for (const deleteEvent of eventsToDelete) {
-      eventActions.eventDispatch({
-        type: 'DELETE_EVENT',
-        payload: {
-          calendarId: calendarId,
-          eventId: deleteEvent.id,
-        },
-      })
+      eventActions.deleteEvent(calendarId, deleteEvent.id, 'SINGLE')
     }
 
     queueUpdateEvent(calendarId, updatedParentEvent, true)
@@ -212,10 +180,7 @@ export default function useEventService(): EventService {
           if (event.recurrences) {
             document.dispatchEvent(new CustomEvent(GlobalEvent.refreshCalendar))
           } else {
-            eventActions.eventDispatch({
-              type: 'UPDATE_EVENT_ID',
-              payload: { calendarId, prevEventId: tempEventId, newEventId: event.id },
-            })
+            eventActions.replaceEventId(calendarId, tempEventId, event.id)
           }
 
           // Maintain a map between IDs we've created client side with the
@@ -353,3 +318,5 @@ export default function useEventService(): EventService {
     deleteAllRecurringEvents,
   }
 }
+
+export type EventService = ReturnType<typeof useEventService>

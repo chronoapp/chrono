@@ -38,7 +38,8 @@
     "sass": "^1.54.9",
     "styled-components": "^5.2.1",
     "tinycolor2": "^1.4.1",
-    "universal-cookie": "^3.0.7"
+    "universal-cookie": "^3.0.7",
+    "utility-types": "^3.10.0"
   },
   "devDependencies": {
     "@types/jest": "^26.0.15",

@@ -1,12 +1,12 @@
 import React from 'react'
+import { withEventActions, InjectedEventActionsProps } from '@/state/withEventActions'
 
-import * as dates from '../util/dates'
-import Event from '../models/Event'
+import * as dates from '@/util/dates'
+import Event from '@/models/Event'
 import DateSlotMetrics from './utils/DateSlotMetrics'
-import EventRow from './EventRow'
 import { EventSegment, eventSegments } from './utils/eventLevels'
+import EventRow from './EventRow'
 
-import { EventActionContext } from '@/contexts/EventActionContext'
 import {
   Selection,
   SelectRect,
@@ -37,12 +37,9 @@ interface IState {
 /**
  * Drag and drop container for the week row.
  */
-class WeekRowContainer extends React.Component<IProps, IState> {
+class WeekRowContainer extends React.Component<IProps & InjectedEventActionsProps, IState> {
   private _selection?: Selection
   private _newEventSelection?: Selection
-
-  context!: React.ContextType<typeof EventActionContext>
-  static contextType = EventActionContext
   private rowBodyRef: React.RefObject<HTMLDivElement>
 
   constructor(props) {
@@ -100,7 +97,7 @@ class WeekRowContainer extends React.Component<IProps, IState> {
   }
 
   private handleMove(point: SelectRect, bounds: Rect) {
-    const event = this.context.dragAndDropAction?.event
+    const event = this.props.dragAndDropAction?.event
     if (!event) {
       this.reset()
       return
@@ -131,11 +128,7 @@ class WeekRowContainer extends React.Component<IProps, IState> {
         getSlotAtX(bounds, x, false, this.props.dayMetrics.slots)
       )
 
-      const calendar = this.props.primaryCalendar
-      this.context?.eventDispatch({
-        type: 'INIT_NEW_EVENT_AT_DATE',
-        payload: { calendar: calendar, date: startDate, allDay: true },
-      })
+      this.props.eventActions.initNewEventAtDate(this.props.primaryCalendar, true, startDate)
     }
   }
 
@@ -162,7 +155,7 @@ class WeekRowContainer extends React.Component<IProps, IState> {
       const selection = (this._selection = new Selection(container))
 
       selection.on('beforeSelect', (_point: EventData) => {
-        if (!this.context.dragAndDropAction) {
+        if (!this.props.dragAndDropAction) {
           return false
         }
       })
@@ -170,7 +163,7 @@ class WeekRowContainer extends React.Component<IProps, IState> {
       selection.on('selecting', (point: SelectRect) => {
         const bounds = getBoundsForNode(rowContainer)
 
-        if (this.context.dragAndDropAction?.action === 'MOVE') {
+        if (this.props.dragAndDropAction?.action === 'MOVE') {
           this.handleMove(point, bounds)
         }
       })
@@ -182,7 +175,7 @@ class WeekRowContainer extends React.Component<IProps, IState> {
         }
 
         const { event } = this.state.segment
-        this.context.onInteractionEnd(event)
+        this.props.eventActions.onInteractionEnd(event)
 
         // Don't save if it hasn't been created yet.
         if (event.syncStatus === 'NOT_SYNCED') {
@@ -194,16 +187,16 @@ class WeekRowContainer extends React.Component<IProps, IState> {
         this.reset()
       })
 
-      selection.on('selectStart', () => this.context.onInteractionStart())
+      selection.on('selectStart', () => this.props.eventActions.onInteractionStart())
 
       selection.on('click', (clickEvent: EventData) => {
-        this.context.onInteractionEnd(null)
+        this.props.eventActions.onInteractionEnd()
       })
 
       selection.on('reset', () => {
         this.reset()
-        this.context.onInteractionEnd()
-        this.context?.eventDispatch({ type: 'CANCEL_SELECT' })
+        this.props.eventActions.onInteractionEnd()
+        this.props.eventActions.cancelSelect()
       })
     }
   }
@@ -214,7 +207,7 @@ class WeekRowContainer extends React.Component<IProps, IState> {
 
       selection.on('beforeSelect', (point: EventData) => {
         // Handled by drag & drop selection.
-        if (this.context.dragAndDropAction) {
+        if (this.props.dragAndDropAction) {
           return false
         }
 
@@ -228,8 +221,8 @@ class WeekRowContainer extends React.Component<IProps, IState> {
 
         // Unselect popover on click.
         if (pointInBox(bounds, clickEvent.x, clickEvent.y)) {
-          if (this.context.eventState.editingEvent) {
-            this.context?.eventDispatch({ type: 'CANCEL_SELECT' })
+          if (this.props.editingEvent) {
+            this.props.eventActions.cancelSelect()
             return
           }
         }
@@ -258,4 +251,4 @@ class WeekRowContainer extends React.Component<IProps, IState> {
   }
 }
 
-export default WeekRowContainer
+export default withEventActions(WeekRowContainer)
