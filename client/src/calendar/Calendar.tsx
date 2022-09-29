@@ -38,6 +38,18 @@ function Calendar() {
 
   useKeyPress(['ArrowLeft', 'ArrowRight'], onKeyPress)
 
+  function onKeyPress(e) {
+    e.preventDefault()
+
+    if (e.key === 'ArrowLeft') {
+      const prevWeek = dates.subtract(eventsContext.selectedDate, 1, 'week')
+      eventsContext.setSelectedDate(prevWeek)
+    } else if (e.key === 'ArrowRight') {
+      const nextWeek = dates.add(eventsContext.selectedDate, 1, 'week')
+      eventsContext.setSelectedDate(nextWeek)
+    }
+  }
+
   useEffect(() => {
     document.addEventListener(GlobalEvent.refreshCalendar, () => setUpdater(update + 1))
 
