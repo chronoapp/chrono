@@ -1,6 +1,11 @@
 import React from 'react'
+import { useRecoilValue } from 'recoil'
 import clsx from 'clsx'
 import { Portal, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from '@chakra-ui/react'
+
+import { calendarWithDefault } from '@/state/CalendarState'
+import useEventActions from '@/state/useEventActions'
+import { dragDropActionState, editingEventState } from '@/state/EventsState'
 
 import { EventSegment } from './utils/eventLevels'
 import DateSlotMetrics from './utils/DateSlotMetrics'
@@ -8,10 +13,7 @@ import { timeFormatShort } from '../util/localizer'
 import EventPopover from './event-edit/EventPopover'
 
 import Event from '../models/Event'
-import { EventActionContext } from '@/contexts/EventActionContext'
 import { EventService } from './event-edit/useEventService'
-import { useRecoilValue } from 'recoil'
-import { calendarWithDefault } from '@/state/CalendarState'
 
 export function EventItem(props: {
   event: Event
@@ -21,19 +23,21 @@ export function EventItem(props: {
 }) {
   const { event } = props
   const calendar = useRecoilValue(calendarWithDefault(event.calendar_id))
+  const eventActions = useEventActions()
+  const editingEvent = useRecoilValue(editingEventState)
+  const dndAction = useRecoilValue(dragDropActionState)
 
-  const eventActionContext = React.useContext(EventActionContext)
   const eventTitle = Event.getDefaultTitle(event.title_short)
 
   function handleStartDragging(e) {
     if (e.button === 0 && calendar?.isWritable()) {
-      eventActionContext.onBeginAction(event, 'MOVE', null)
+      eventActions.onBeginAction(event, 'MOVE', null)
     }
   }
 
   function handleClickEvent(e) {
-    if (props.event.id !== eventActionContext.eventState.editingEvent?.id) {
-      eventActionContext.eventDispatch({ type: 'INIT_EDIT_EVENT', payload: { event: event } })
+    if (props.event.id !== editingEvent?.id) {
+      eventActions.initEditEvent(event)
     }
   }
 
@@ -73,9 +77,7 @@ export function EventItem(props: {
     )
   }
 
-  const dnd = eventActionContext.dragAndDropAction
-  const isDragging = dnd && dnd.interacting && dnd.event.id === event.id
-  const editingEvent = eventActionContext.eventState.editingEvent
+  const isDragging = dndAction && dndAction.interacting && dndAction.event.id === event.id
   const isEditing = editingEvent?.id === event.id && editingEvent?.editMode !== 'FULL_EDIT'
 
   if (isEditing && !isDragging) {

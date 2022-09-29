@@ -5,7 +5,6 @@ import NProgress from 'nprogress'
 import { RecoilRoot } from 'recoil'
 
 import { ChakraProvider, extendTheme } from '@chakra-ui/react'
-import { EventActionProvider } from '@/contexts/EventActionContext'
 
 Router.events.on('routeChangeStart', () => NProgress.start())
 Router.events.on('routeChangeComplete', () => NProgress.done())
@@ -51,11 +50,9 @@ class MyApp extends App {
 
     return (
       <ChakraProvider theme={theme}>
-        <EventActionProvider>
-          <RecoilRoot>
-            <Component {...pageProps} />
-          </RecoilRoot>
-        </EventActionProvider>
+        <RecoilRoot>
+          <Component {...pageProps} />
+        </RecoilRoot>
       </ChakraProvider>
     )
   }

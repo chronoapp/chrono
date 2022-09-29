@@ -1,13 +1,16 @@
 import React from 'react'
+
+import { DragDropAction } from '@/state/EventsState'
+import { withEventActions, InjectedEventActionsProps } from '@/state/withEventActions'
+import Event from '@/models/Event'
+
+import * as dates from '../util/dates'
+import { timeRangeFormat } from '../util/localizer'
+import SlotMetrics from './utils/SlotMetrics'
+import { GlobalEvent } from '../util/global'
 import { Selection, Rect, EventData, getBoundsForNode, SelectRect } from '../util/Selection'
 
 import TimeGridEvent from './TimeGridEvent'
-import * as dates from '../util/dates'
-import { timeRangeFormat } from '../util/localizer'
-import { EventActionContext, DragDropAction } from '@/contexts/EventActionContext'
-import Event from '../models/Event'
-import SlotMetrics from './utils/SlotMetrics'
-import { GlobalEvent } from '../util/global'
 
 const GRID_WRAPPER_SELECTOR = '.cal-time-view'
 
@@ -30,12 +33,9 @@ function pointInColumn(bounds: Rect, x: number, y: number): boolean {
 /**
  * Handles Resizing of existing events.
  */
-class ResizeEventContainer extends React.Component<IProps, IState> {
+class ResizeEventContainer extends React.Component<IProps & InjectedEventActionsProps, IState> {
   private containerRef
   private selection?: Selection
-
-  context!: React.ContextType<typeof EventActionContext>
-  static contextType = EventActionContext
 
   constructor(props) {
     super(props)
@@ -81,7 +81,7 @@ class ResizeEventContainer extends React.Component<IProps, IState> {
   }
 
   private handleResize(point: SelectRect, bounds: Rect) {
-    const { event, direction } = this.context.dragAndDropAction!
+    const { event, direction } = this.props.dragAndDropAction!
     const { slotMetrics } = this.props
 
     const currentSlot = slotMetrics.closestSlotFromPoint(point.y, bounds, true)
@@ -133,7 +133,7 @@ class ResizeEventContainer extends React.Component<IProps, IState> {
       const selection = (this.selection = new Selection(node.closest(GRID_WRAPPER_SELECTOR)))
 
       selection.on('beforeSelect', (point: EventData) => {
-        const dragAndDropAction: DragDropAction = this.context.dragAndDropAction!
+        const dragAndDropAction: DragDropAction = this.props.dragAndDropAction!
 
         if (dragAndDropAction?.action === 'RESIZE') {
           return pointInColumn(getBoundsForNode(node), point.x, point.y)
@@ -145,11 +145,11 @@ class ResizeEventContainer extends React.Component<IProps, IState> {
       })
 
       selection.on('selectStart', () => {
-        this.context.onInteractionStart()
+        this.props.eventActions.onInteractionStart()
       })
 
       selection.on('selecting', (point: SelectRect) => {
-        const { dragAndDropAction } = this.context
+        const dragAndDropAction = this.props.dragAndDropAction
 
         // Don't drag full day events to the grid.
         if (dragAndDropAction?.event.all_day) {
@@ -170,7 +170,7 @@ class ResizeEventContainer extends React.Component<IProps, IState> {
 
         this.reset()
         this.props.onEventUpdated(event)
-        this.context.onInteractionEnd(event)
+        this.props.eventActions.onInteractionEnd(event)
 
         if (event.start < this.props.slotMetrics.start && event.syncStatus === 'NOT_SYNCED') {
           document.dispatchEvent(
@@ -180,12 +180,12 @@ class ResizeEventContainer extends React.Component<IProps, IState> {
       })
 
       selection.on('click', () => {
-        this.context.onInteractionEnd()
+        this.props.eventActions.onInteractionEnd()
       })
 
       selection.on('reset', () => {
         this.reset()
-        this.context.onInteractionEnd()
+        this.props.eventActions.onInteractionEnd()
       })
     }
   }
@@ -216,4 +216,4 @@ class ResizeEventContainer extends React.Component<IProps, IState> {
   }
 }
 
-export default ResizeEventContainer
+export default withEventActions(ResizeEventContainer)

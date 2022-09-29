@@ -10,11 +10,11 @@ import {
   PopoverHeader,
 } from '@chakra-ui/react'
 
-import { EventActionContext } from '@/contexts/EventActionContext'
 import { format } from '../util/localizer'
 import { eventLevels, EventSegment } from './utils/eventLevels'
 import { renderSpan, EventItem } from './EventRow'
 import { EventService } from './event-edit/useEventService'
+import useEventActions from '@/state/useEventActions'
 
 interface IProps {
   segments: EventSegment[]
@@ -63,7 +63,7 @@ function InnerPopoverContent(props: {
 }
 
 export default function EventEndingRow(props: IProps) {
-  const eventActionContext = React.useContext(EventActionContext)
+  const eventActions = useEventActions()
 
   function canRenderSlotEvent(slot: number, span: number) {
     return range(slot, span).every((s) => {
@@ -84,7 +84,7 @@ export default function EventEndingRow(props: IProps) {
             fontSize="xs"
             className="cal-event-row"
             onClick={(e) => {
-              eventActionContext.eventDispatch({ type: 'CANCEL_SELECT' })
+              eventActions.cancelSelect()
             }}
           >
             {count} more

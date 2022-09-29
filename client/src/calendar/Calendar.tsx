@@ -1,10 +1,8 @@
-import React, { useEffect, useContext } from 'react'
-import produce from 'immer'
+import React, { useEffect } from 'react'
+import { useRecoilState, useRecoilValue } from 'recoil'
 import { useRouter } from 'next/router'
 
 import useEventService, { EventService } from './event-edit/useEventService'
-
-import { EventActionContext } from '@/contexts/EventActionContext'
 import SearchResults from '@/calendar/SearchResults'
 
 import { GlobalEvent } from '@/util/global'
@@ -18,19 +16,32 @@ import Week from './Week'
 import Month from './Month'
 import WorkWeek from './WorkWeek'
 import EventEditFull from './event-edit/EventEditFull'
-import { useRecoilValue } from 'recoil'
-import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
 
+import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
+import {
+  eventsState,
+  displayState,
+  editingEventState,
+  allVisibleEventsSelector,
+} from '@/state/EventsState'
+import useEventActions from '@/state/useEventActions'
+
+/**
+ * TODO: Store startDate and endDate to prevent unnecessary refreshes.
+ */
 function Calendar() {
   const firstOfWeek = startOfWeek()
   const today = new Date()
   const eventService: EventService = useEventService()
-
-  // TODO: Store startDate and endDate to prevent unnecessary refreshes.
+  const eventInteraction = useEventActions()
 
   const calendars = useRecoilValue(calendarsState)
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
-  const eventsContext = useContext(EventActionContext)
+
+  const events = useRecoilValue(eventsState)
+  const [display, setDisplay] = useRecoilState(displayState)
+  const editingEvent = useRecoilValue(editingEventState)
+  const allVisibleEvents = useRecoilValue(allVisibleEventsSelector)
 
   const router = useRouter()
   const searchQuery = (router.query.search as string) || ''
@@ -42,11 +53,11 @@ function Calendar() {
     e.preventDefault()
 
     if (e.key === 'ArrowLeft') {
-      const prevWeek = dates.subtract(eventsContext.selectedDate, 1, 'week')
-      eventsContext.setSelectedDate(prevWeek)
+      const prevWeek = dates.subtract(display.selectedDate, 1, 'week')
+      setDisplay((state) => ({ ...state, selectedDate: prevWeek }))
     } else if (e.key === 'ArrowRight') {
-      const nextWeek = dates.add(eventsContext.selectedDate, 1, 'week')
-      eventsContext.setSelectedDate(nextWeek)
+      const nextWeek = dates.add(display.selectedDate, 1, 'week')
+      setDisplay((state) => ({ ...state, selectedDate: nextWeek }))
     }
   }
 
@@ -60,23 +71,23 @@ function Calendar() {
 
   useEffect(() => {
     loadCurrentViewEvents()
-  }, [eventsContext.display, eventsContext.selectedDate, calendars.calendarsById, update])
+  }, [display, calendars.calendarsById, update])
 
   async function loadCurrentViewEvents() {
-    if (eventsContext.display == 'Day') {
-      const start = dates.startOf(eventsContext.selectedDate, 'day')
-      const end = dates.endOf(eventsContext.selectedDate, 'day')
+    if (display.view == 'Day') {
+      const start = dates.startOf(display.selectedDate, 'day')
+      const end = dates.endOf(display.selectedDate, 'day')
 
       loadEvents(start, end)
-    } else if (eventsContext.display == 'Week' || eventsContext.display == 'WorkWeek') {
-      const lastWeek = dates.subtract(eventsContext.selectedDate, 1, 'week')
-      const nextWeek = dates.add(eventsContext.selectedDate, 1, 'week')
+    } else if (display.view == 'Week' || display.view == 'WorkWeek') {
+      const lastWeek = dates.subtract(display.selectedDate, 1, 'week')
+      const nextWeek = dates.add(display.selectedDate, 1, 'week')
 
       const start = dates.startOf(lastWeek, 'week', firstOfWeek)
       const end = dates.endOf(nextWeek, 'week', firstOfWeek)
       loadEvents(start, end)
-    } else if (eventsContext.display == 'Month') {
-      const month = dates.visibleDays(eventsContext.selectedDate, firstOfWeek)
+    } else if (display.view == 'Month') {
+      const month = dates.visibleDays(display.selectedDate, firstOfWeek)
       const start = month[0]
       const end = month[month.length - 1]
       loadEvents(start, end)
@@ -94,88 +105,57 @@ function Calendar() {
       Object.values(calendars.calendarsById)
     )
 
-    eventsContext.eventDispatch({
-      type: 'INIT_EVENTS',
-      payload: { eventsByCalendar },
-    })
-  }
-
-  function getAllVisibleEvents() {
-    const { editingEvent, eventsByCalendar } = eventsContext.eventState
-    const selectedCalendarIds = Object.values(calendars.calendarsById)
-      .filter((cal) => cal.selected)
-      .map((cal) => cal.id)
-
-    let eventWithEditing = Object.fromEntries(
-      selectedCalendarIds.map((calId) => {
-        return [calId, eventsByCalendar[calId] || {}]
-      })
-    )
-
-    if (editingEvent) {
-      eventWithEditing = produce(eventWithEditing, (draft) => {
-        const calendarId = editingEvent.event.calendar_id || primaryCalendar!.id
-
-        if (draft.hasOwnProperty(calendarId)) {
-          if (editingEvent.originalCalendarId) {
-            delete draft[editingEvent.originalCalendarId][editingEvent.id]
-          }
-
-          draft[calendarId][editingEvent.id] = editingEvent.event
-        }
-        return draft
-      })
-    }
-
-    return Object.values(eventWithEditing).flatMap((eventMap) => {
-      return Object.values(eventMap)
-    })
+    eventInteraction.initEvents(eventsByCalendar)
   }
 
   function renderCalendar() {
-    const { loading } = eventsContext.eventState
     if (!primaryCalendar) {
       return
     }
-    const events = getAllVisibleEvents()
 
     if (searchQuery) {
-      return <SearchResults events={events} searchQuery={searchQuery} eventService={eventService} />
-    } else if (eventsContext.display == 'Day') {
+      return (
+        <SearchResults
+          events={allVisibleEvents}
+          searchQuery={searchQuery}
+          eventService={eventService}
+        />
+      )
+    } else if (display.view == 'Day') {
       return (
         <TimeGrid
           eventService={eventService}
-          now={eventsContext.selectedDate}
-          events={events}
-          range={[eventsContext.selectedDate]}
+          now={display.selectedDate}
+          events={allVisibleEvents}
+          range={[display.selectedDate]}
           primaryCalendar={primaryCalendar}
         />
       )
-    } else if (eventsContext.display == 'Week') {
+    } else if (display.view == 'Week') {
       return (
         <Week
-          date={eventsContext.selectedDate}
-          events={events}
+          date={display.selectedDate}
+          events={allVisibleEvents}
           eventService={eventService}
           primaryCalendar={primaryCalendar}
         />
       )
-    } else if (eventsContext.display == 'WorkWeek') {
+    } else if (display.view == 'WorkWeek') {
       return (
         <WorkWeek
-          date={eventsContext.selectedDate}
-          events={events}
+          date={display.selectedDate}
+          events={allVisibleEvents}
           eventService={eventService}
           primaryCalendar={primaryCalendar}
         />
       )
-    } else if (eventsContext.display == 'Month') {
+    } else if (display.view == 'Month') {
       return (
         <Month
           today={today}
-          loading={loading}
-          date={eventsContext.selectedDate}
-          events={events}
+          loading={events.loading}
+          date={display.selectedDate}
+          events={allVisibleEvents}
           eventService={eventService}
           primaryCalendar={primaryCalendar}
         />
@@ -184,11 +164,10 @@ function Calendar() {
   }
 
   function renderFullEditMode() {
-    const { eventState } = eventsContext
-    if (eventState.editingEvent) {
-      const fullEditMode = eventState.editingEvent?.editMode == 'FULL_EDIT'
+    if (editingEvent) {
+      const fullEditMode = editingEvent?.editMode == 'FULL_EDIT'
       if (fullEditMode) {
-        const event = eventState.editingEvent.event
+        const event = editingEvent.event
         return event && <EventEditFull eventService={eventService} event={event} />
       }
     }

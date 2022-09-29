@@ -1,22 +1,21 @@
 import React from 'react'
 import clsx from 'clsx'
 import { Portal, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from '@chakra-ui/react'
+import { withEventActions, InjectedEventActionsProps } from '@/state/withEventActions'
 
 import { timeRangeFormat, timeFormatShort } from '@/util/localizer'
 import * as dates from '@/util/dates'
 import { Selection, SelectRect, EventData, getBoundsForNode, isEvent } from '@/util/Selection'
 import Event, { EMPTY_TITLE } from '@/models/Event'
+import Calendar from '@/models/Calendar'
 
 import SlotMetrics from './utils/SlotMetrics'
 import getStyledEvents from './utils/DayEventLayout'
 import TimeSlotGroup from './TimeSlotGroup'
 import TimeGridEvent from './TimeGridEvent'
 import EventPopover from './event-edit/EventPopover'
-
 import ResizeEventContainer from './ResizeEventContainer'
-import { EventActionContext } from '@/contexts/EventActionContext'
 import { EventService } from '@/calendar/event-edit/useEventService'
-import Calendar from '@/models/Calendar'
 
 interface IProps {
   date: Date
@@ -52,7 +51,7 @@ class SelectRange {
  * 1) Renders the day column
  * 2) Handles click & drag to create a new event.
  */
-class DayColumn extends React.Component<IProps, IState> {
+class DayColumn extends React.Component<IProps & InjectedEventActionsProps, IState> {
   private dayRef
   private initialSlot
   private selection?: Selection
@@ -62,10 +61,7 @@ class DayColumn extends React.Component<IProps, IState> {
   private intervalTriggered: boolean = false
   private hasJustCancelledEventCreate: boolean = false
 
-  static contextType = EventActionContext
-  context!: React.ContextType<typeof EventActionContext>
-
-  constructor(props: IProps) {
+  constructor(props: IProps & InjectedEventActionsProps) {
     super(props)
     this.slotMetrics = new SlotMetrics(props.min, props.max, props.step, props.timeslots)
     this.dayRef = React.createRef()
@@ -149,8 +145,8 @@ class DayColumn extends React.Component<IProps, IState> {
 
     const styledEvents = getStyledEvents(events, step, slotMetrics)
 
-    const dnd = this.context?.dragAndDropAction
-    const editingEvent = this.context?.eventState.editingEvent
+    const dnd = this.props.dragAndDropAction
+    const editingEvent = this.props.editingEvent
 
     return styledEvents.map(({ event, style }, idx) => {
       const label = timeRangeFormat(event.start, event.end)
@@ -279,13 +275,13 @@ class DayColumn extends React.Component<IProps, IState> {
       selection.on('selecting', this.handleSelectProgress)
 
       selection.on('beforeSelect', (point: EventData) => {
-        if (this.context?.dragAndDropAction) {
+        if (this.props.dragAndDropAction) {
           // Already handled by DragDropEventContainer.
           return false
         }
 
-        if (this.context?.eventState.editingEvent?.id) {
-          this.context?.eventDispatch({ type: 'CANCEL_SELECT' })
+        if (this.props.editingEvent?.id) {
+          this.props.eventActions.cancelSelect()
           this.hasJustCancelledEventCreate = true
         }
 
@@ -301,10 +297,7 @@ class DayColumn extends React.Component<IProps, IState> {
             const { startDate, endDate } = this.state.selectRange
 
             const calendar = this.props.primaryCalendar
-            this.context?.eventDispatch({
-              type: 'INIT_NEW_EVENT_AT_DATE',
-              payload: { calendar: calendar, date: startDate, endDate: endDate, allDay: false },
-            })
+            this.props.eventActions.initNewEventAtDate(calendar, false, startDate, endDate)
           }
         }
       })
@@ -326,20 +319,12 @@ class DayColumn extends React.Component<IProps, IState> {
           clickEvent.y,
           getBoundsForNode(current)
         )
-        this.context?.eventDispatch({
-          type: 'INIT_NEW_EVENT_AT_DATE',
-          payload: {
-            calendar: this.props.primaryCalendar,
-            date: startDate,
-            allDay: false,
-          },
-        })
-
+        this.props.eventActions.initNewEventAtDate(this.props.primaryCalendar, false, startDate)
         this.setState({ selecting: false })
       })
 
       selection.on('reset', () => {
-        this.context?.eventDispatch({ type: 'CANCEL_SELECT' })
+        this.props.eventActions.cancelSelect()
         this.setState({ selecting: false })
       })
     }
@@ -425,4 +410,4 @@ class DayColumn extends React.Component<IProps, IState> {
   }
 }
 
-export default DayColumn
+export default withEventActions(DayColumn)

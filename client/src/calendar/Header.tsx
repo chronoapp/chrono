@@ -15,7 +15,7 @@ import {
   InputLeftElement,
   InputRightElement,
 } from '@chakra-ui/react'
-import { useRecoilValue } from 'recoil'
+import { useRecoilState, useRecoilValue } from 'recoil'
 import { useRouter } from 'next/router'
 
 import {
@@ -26,7 +26,6 @@ import {
   FiX,
   FiArrowLeft,
 } from 'react-icons/fi'
-import { EventActionContext, Display } from '../contexts/EventActionContext'
 import { format } from '@/util/localizer'
 import { GlobalEvent } from '@/util/global'
 import * as dates from '@/util/dates'
@@ -35,6 +34,8 @@ import Week from './Week'
 import Month from './Month'
 import WorkWeek from './WorkWeek'
 import { labelsState } from '@/state/LabelsState'
+import useEventActions from '@/state/useEventActions'
+import { displayState, editingEventState, DisplayView } from '@/state/EventsState'
 
 function DateHeaderSearch(props: { disableSearchMode: () => void; defaultSearchQuery: string }) {
   const router = useRouter()
@@ -98,8 +99,8 @@ function DateHeaderSearch(props: { disableSearchMode: () => void; defaultSearchQ
   )
 }
 
-function DropdownMenu(props: { display: Display; selectDisplay: (d: Display) => void }) {
-  function titleForDisplay(display: Display) {
+function DropdownMenu(props: { display: DisplayView; selectDisplay: (d: DisplayView) => void }) {
+  function titleForDisplay(display: DisplayView) {
     switch (display) {
       case 'WorkWeek': {
         return 'Work week'
@@ -168,15 +169,16 @@ function DropdownMenu(props: { display: Display; selectDisplay: (d: Display) => 
  * Calendar header for date selection.
  */
 export default function Header(props: { search: string }) {
-  const eventsContext = React.useContext(EventActionContext)
+  const eventActions = useEventActions()
+  const [display, setDisplay] = useRecoilState(displayState)
+  const editingEvent = useRecoilValue(editingEventState)
   const labels = useRecoilValue(labelsState)
 
   const [isSearchMode, setIsSearchMode] = React.useState<boolean>(!!props.search)
   const router = useRouter()
 
   const today = new Date()
-  const display = eventsContext.display
-  const title = getViewTitle(display)
+  const title = getViewTitle(display.view)
 
   React.useEffect(() => {
     if (!props.search && isSearchMode) {
@@ -190,10 +192,10 @@ export default function Header(props: { search: string }) {
     return () => {
       document.removeEventListener('keydown', handleKeyboardShortcuts)
     }
-  }, [eventsContext.eventState.editingEvent, labels.editingLabel, props.search, isSearchMode])
+  }, [editingEvent, labels.editingLabel, props.search, isSearchMode])
 
   function isEditing() {
-    return !!eventsContext.eventState.editingEvent || labels.editingLabel.active
+    return !!editingEvent || labels.editingLabel.active
   }
 
   function handleKeyboardShortcuts(e: KeyboardEvent) {
@@ -201,8 +203,8 @@ export default function Header(props: { search: string }) {
       if (e.key === 'Escape') {
         e.preventDefault()
 
-        if (eventsContext.eventState.editingEvent) {
-          eventsContext.eventDispatch({ type: 'CANCEL_SELECT' })
+        if (editingEvent) {
+          eventActions.cancelSelect()
         } else {
           setIsSearchMode(false)
           router.push(`/`, undefined, { shallow: true })
@@ -211,8 +213,8 @@ export default function Header(props: { search: string }) {
     } else {
       if (e.key === 'Escape') {
         e.preventDefault()
-        eventsContext.eventDispatch({ type: 'CANCEL_SELECT' })
-        eventsContext.onInteractionEnd()
+        eventActions.cancelSelect()
+        eventActions.onInteractionEnd()
       }
 
       if (!isEditing()) {
@@ -235,25 +237,25 @@ export default function Header(props: { search: string }) {
     }
   }
 
-  function getViewTitle(display: Display) {
-    if (display == 'Day') {
-      return format(eventsContext.selectedDate, 'LL')
-    } else if (display == 'Week') {
-      return Week.getTitle(eventsContext.selectedDate)
-    } else if (display == 'WorkWeek') {
-      return WorkWeek.getTitle(eventsContext.selectedDate)
-    } else if (display == 'Month') {
-      return Month.getTitle(eventsContext.selectedDate)
+  function getViewTitle(displayView: DisplayView) {
+    if (displayView == 'Day') {
+      return format(display.selectedDate, 'LL')
+    } else if (displayView == 'Week') {
+      return Week.getTitle(display.selectedDate)
+    } else if (displayView == 'WorkWeek') {
+      return WorkWeek.getTitle(display.selectedDate)
+    } else if (displayView == 'Month') {
+      return Month.getTitle(display.selectedDate)
     }
   }
 
-  function selectDisplay(display: Display) {
-    if (display === 'Month') {
+  function selectDisplay(view: DisplayView) {
+    if (view === 'Month') {
       // HACK: Prevents flicker when switching months
-      eventsContext.eventDispatch({ type: 'INIT_EVENTS', payload: { eventsByCalendar: {} } })
+      eventActions.initEvents({})
     }
 
-    eventsContext.setDisplay(display)
+    setDisplay((display) => ({ ...display, view: view }))
   }
 
   /**
@@ -268,10 +270,10 @@ export default function Header(props: { search: string }) {
           fontWeight="normal"
           borderRadius="xs"
           onClick={() => {
-            if (dates.eq(eventsContext.selectedDate, today, 'day')) {
+            if (dates.eq(display.selectedDate, today, 'day')) {
               document.dispatchEvent(new Event(GlobalEvent.scrollToEvent))
             } else {
-              eventsContext.setSelectedDate(today)
+              setDisplay((display) => ({ ...display, selectedDate: today }))
             }
           }}
         >
@@ -285,17 +287,23 @@ export default function Header(props: { search: string }) {
           icon={<FiChevronLeft />}
           size="sm"
           onClick={() => {
-            if (display == 'Day') {
-              eventsContext.setSelectedDate(dates.subtract(eventsContext.selectedDate, 1, 'day'))
-            } else if (display == 'Week' || display == 'WorkWeek') {
-              eventsContext.setSelectedDate(dates.subtract(eventsContext.selectedDate, 7, 'day'))
-            } else if (display == 'Month') {
+            if (display.view == 'Day') {
+              setDisplay((display) => ({
+                ...display,
+                selectedDate: dates.subtract(display.selectedDate, 1, 'day'),
+              }))
+            } else if (display.view == 'Week' || display.view == 'WorkWeek') {
+              setDisplay((display) => ({
+                ...display,
+                selectedDate: dates.subtract(display.selectedDate, 7, 'day'),
+              }))
+            } else if (display.view == 'Month') {
               // HACK: Prevents flicker when switching months
-              eventsContext.eventDispatch({
-                type: 'INIT_EVENTS',
-                payload: { eventsByCalendar: {} },
-              })
-              eventsContext.setSelectedDate(dates.subtract(eventsContext.selectedDate, 1, 'month'))
+              eventActions.initEvents({})
+              setDisplay((display) => ({
+                ...display,
+                selectedDate: dates.subtract(display.selectedDate, 1, 'month'),
+              }))
             }
           }}
         />
@@ -306,16 +314,22 @@ export default function Header(props: { search: string }) {
           size="sm"
           icon={<FiChevronRight />}
           onClick={() => {
-            if (display == 'Day') {
-              eventsContext.setSelectedDate(dates.add(eventsContext.selectedDate, 1, 'day'))
-            } else if (display == 'Week' || display == 'WorkWeek') {
-              eventsContext.setSelectedDate(dates.add(eventsContext.selectedDate, 7, 'day'))
-            } else if (display == 'Month') {
-              eventsContext.eventDispatch({
-                type: 'INIT_EVENTS',
-                payload: { eventsByCalendar: {} },
-              })
-              eventsContext.setSelectedDate(dates.add(eventsContext.selectedDate, 1, 'month'))
+            if (display.view == 'Day') {
+              setDisplay((display) => ({
+                ...display,
+                selectedDate: dates.add(display.selectedDate, 1, 'day'),
+              }))
+            } else if (display.view == 'Week' || display.view == 'WorkWeek') {
+              setDisplay((display) => ({
+                ...display,
+                selectedDate: dates.add(display.selectedDate, 7, 'day'),
+              }))
+            } else if (display.view == 'Month') {
+              eventActions.initEvents({})
+              setDisplay((display) => ({
+                ...display,
+                selectedDate: dates.add(display.selectedDate, 1, 'month'),
+              }))
             }
           }}
         />
@@ -352,7 +366,7 @@ export default function Header(props: { search: string }) {
             onClick={() => setIsSearchMode(true)}
           />
         )}
-        <DropdownMenu display={display} selectDisplay={selectDisplay} />
+        <DropdownMenu display={display.view} selectDisplay={selectDisplay} />
       </Flex>
     </Flex>
   )
