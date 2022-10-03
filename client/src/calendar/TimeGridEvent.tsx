@@ -1,4 +1,5 @@
-import React, { useContext } from 'react'
+import React from 'react'
+import { useToast } from '@chakra-ui/react'
 import clsx from 'clsx'
 
 import { useRecoilValue } from 'recoil'
@@ -6,6 +7,7 @@ import { calendarWithDefault } from '@/state/CalendarState'
 import { dragDropActionState, editingEventState, Direction } from '@/state/EventsState'
 import useEventActions from '@/state/useEventActions'
 
+import { ToastTag } from '@/components/Toast'
 import Event from '../models/Event'
 import { timeFormatShort } from '../util/localizer'
 import * as dates from '../util/dates'
@@ -31,6 +33,7 @@ function TimeGridEvent(props: IProps) {
   const eventActions = useEventActions()
   const editingEvent = useRecoilValue(editingEventState)
   const dnd = useRecoilValue(dragDropActionState)
+  const toast = useToast({ duration: 2000, position: 'bottom' })
 
   // Tiny gap to separate events.
   const eventHeight = props.style.height - 0.15
@@ -38,15 +41,16 @@ function TimeGridEvent(props: IProps) {
   const event = props.event
   const calendar = useRecoilValue(calendarWithDefault(event.calendar_id))
   const responseStatus = Event.getResponseStatus(event, calendar)
+  const canEditEvent = calendar.canEditEvent(props.event)
 
   function handleResize(e, direction: Direction) {
-    if (e.button === 0 && calendar.isWritable()) {
+    if (e.button === 0 && canEditEvent) {
       eventActions.onBeginAction(props.event, 'RESIZE', null, direction)
     }
   }
 
   function handleStartDragging(e) {
-    if (e.button === 0 && calendar.isWritable()) {
+    if (e.button === 0 && canEditEvent) {
       eventActions.onBeginAction(props.event, 'MOVE', null)
     }
   }
@@ -228,12 +232,21 @@ function TimeGridEvent(props: IProps) {
       }}
       draggable={true}
       onDragStart={(evt: React.DragEvent) => {
-        const dateOfClick = getDateOfClick(evt)
-        eventActions.onBeginAction(props.event, 'MOVE', dateOfClick)
+        if (canEditEvent) {
+          const dateOfClick = getDateOfClick(evt)
+          eventActions.onBeginAction(props.event, 'MOVE', dateOfClick)
+        } else {
+          evt.preventDefault()
+          toast({
+            render: (props) => (
+              <ToastTag title={'Cannot rechedule event.'} showSpinner={false} {...props} />
+            ),
+          })
+        }
       }}
     >
       {eventContents}
-      {renderAnchor('DOWN', dnd?.action == 'RESIZE' && props.isPreview)}
+      {canEditEvent && renderAnchor('DOWN', dnd?.action == 'RESIZE' && props.isPreview)}
     </div>
   )
 }

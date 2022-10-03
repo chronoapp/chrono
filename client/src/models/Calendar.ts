@@ -1,4 +1,5 @@
 import { immerable } from 'immer'
+import Event from '@/models/Event'
 
 export type AccessRole = 'reader' | 'writer' | 'owner' | 'freeBusyReader'
 export type CalendarSource = 'google' | 'chrono'
@@ -46,5 +47,17 @@ export default class Calendar implements CalendarEditable {
 
   public isWritable(): boolean {
     return this.accessRole == 'writer' || this.accessRole == 'owner'
+  }
+
+  public canEditEvent(event: Event) {
+    if (!this.isWritable()) {
+      return false
+    }
+
+    if (event.organizer?.email == this.email) {
+      return true
+    }
+
+    return false
   }
 }

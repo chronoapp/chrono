@@ -147,8 +147,8 @@ class Event(Base):
     original_timezone = Column(String(255))
 
     # Guest permissions
-    guests_can_invite_others = Column(Boolean, default=True, nullable=False)
     guests_can_modify = Column(Boolean, default=False, nullable=False)
+    guests_can_invite_others = Column(Boolean, default=True, nullable=False)
     guests_can_see_other_guests = Column(Boolean, default=True, nullable=False)
 
     @property

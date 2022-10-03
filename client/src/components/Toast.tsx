@@ -10,7 +10,10 @@ interface IProps extends RenderProps {
   Icon?: any
 }
 
-export default function Toast(props: IProps) {
+/**
+ * Small toast that uses tags.
+ */
+export function ToastTag(props: IProps) {
   return (
     <Tag
       size={'lg'}
