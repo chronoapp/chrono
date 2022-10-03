@@ -366,6 +366,9 @@ async def syncDeletedEvent(
             originalTimezone,
             None,
             None,
+            None,
+            None,
+            None,
             status=convertStatus(eventItem['status']),
         )
         event.id = recurringEventId
@@ -390,6 +393,9 @@ async def getOrCreateBaseRecurringEvent(
     if not baseRecurringEvent:
         baseRecurringEvent = Event(
             googleRecurringEventId,
+            None,
+            None,
+            None,
             None,
             None,
             None,
@@ -518,6 +524,9 @@ def googleEventToEventVM(calendarId: str, eventItem: Dict[str, Any]) -> GoogleEv
     eventSummary = eventItem.get('summary')
     eventDescription = eventItem.get('description')
     timeZone = eventItem['start'].get('timeZone')
+    guestsCanModify = eventItem.get('guestsCanModify', False)
+    guestsCanInviteOthers = eventItem.get('guestsCanInviteOthers', True)
+    guestsCanSeeOtherGuests = eventItem.get('guestsCanSeeOtherGuests', True)
 
     originalStartTime = eventItem.get('originalStartTime')
     originalStartDateTime = None
@@ -572,6 +581,9 @@ def googleEventToEventVM(calendarId: str, eventItem: Dict[str, Any]) -> GoogleEv
         participants=participants,
         creator=creatorVM,
         organizer=organizerVM,
+        guests_can_modify=guestsCanModify,
+        guests_can_invite_others=guestsCanInviteOthers,
+        guests_can_see_other_guests=guestsCanSeeOtherGuests,
     )
     return eventVM
 

@@ -187,6 +187,9 @@ class Event(Base):
         originalTimezone: Optional[str],
         creator: Optional[EventCreator],
         organizer: Optional[EventOrganizer],
+        guestsCanModify: Optional[bool],
+        guestsCanInviteOthers: Optional[bool],
+        guestsCanSeeOtherGuests: Optional[bool],
         overrideId: Optional[str] = None,
         status: EventStatus = 'active',
         recurringEventId: Optional[str] = None,
@@ -209,6 +212,21 @@ class Event(Base):
         self.status = status
         self.creator = creator
         self.organizer = organizer
+
+        if guestsCanModify is not None:
+            self.guests_can_modify = guestsCanModify
+        else:
+            self.guests_can_modify = False
+
+        if guestsCanInviteOthers is not None:
+            self.guests_can_invite_others = guestsCanInviteOthers
+        else:
+            self.guests_can_invite_others = True
+
+        if guestsCanSeeOtherGuests is not None:
+            self.guests_can_see_other_guests = guestsCanSeeOtherGuests
+        else:
+            self.guests_can_see_other_guests = True
 
         self.original_start = originalStart
         self.original_start_day = originalStartDay
