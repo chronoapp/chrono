@@ -2,13 +2,11 @@ import React from 'react'
 import { produce } from 'immer'
 import { useRecoilState } from 'recoil'
 
-import { FiCheck, FiTrash } from 'react-icons/fi'
 import { useToast } from '@chakra-ui/react'
 import { GlobalEvent } from '@/util/global'
 
 import * as API from '@/util/Api'
 import Event from '@/models/Event'
-import Toast from '@/components/Toast'
 import * as dates from '@/util/dates'
 
 import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
@@ -37,9 +35,7 @@ export default function useEventService() {
   const [editingEvent, setEditingEvent] = useRecoilState(editingEventState)
   const eventActions = useEventActions()
 
-  const toast = useToast({ duration: 2000, position: 'top' })
-  const currentToastId = React.useRef<string | number | undefined>()
-
+  const toast = useToast({ duration: 2000, position: 'top-right' })
   const createdEventIdsRef = React.useRef<Record<string, string>>({})
   const taskQueue = useTaskQueue({ shouldProcess: true })
 
@@ -48,7 +44,7 @@ export default function useEventService() {
    * Use instead of saveEvent when the event hasn't been synced to server yet.
    *
    */
-  function updateEventLocal(event: Event, showToast: boolean = true) {
+  function updateEventLocal(event: Event) {
     if (!event.id) {
       throw new Error('updateEvent: event does not have id')
     }
@@ -104,7 +100,7 @@ export default function useEventService() {
       }
 
       eventActions.updateEvent(calendarId, event.id, event)
-      queueUpdateEvent(calendarId, event, showToast)
+      queueUpdateEvent(calendarId, event, false)
     }
   }
 
@@ -164,12 +160,6 @@ export default function useEventService() {
     const token = API.getAuthToken()
     const tempEventId = event.id
 
-    if (showToast) {
-      currentToastId.current = toast({
-        render: (props) => <Toast title={'Saving Event..'} showSpinner={true} {...props} />,
-      })
-    }
-
     const createEventTask = () => {
       console.log(`RUN createEventTask id=${event.id} ${event.title}...`)
 
@@ -190,14 +180,12 @@ export default function useEventService() {
             [tempEventId]: event.id,
           }
 
-          if (currentToastId.current) {
-            toast.close(currentToastId.current)
-          }
           if (showToast) {
-            currentToastId.current = toast({
-              render: (props) => (
-                <Toast title={'Event Created.'} showSpinner={false} {...props} Icon={FiCheck} />
-              ),
+            toast({
+              title: 'Event created.',
+              variant: 'subtle',
+              status: 'success',
+              isClosable: true,
             })
           }
         })
@@ -221,12 +209,6 @@ export default function useEventService() {
   function queueUpdateEvent(calendarId: string, event: Partial<Event>, showToast: boolean) {
     const token = API.getAuthToken()
 
-    if (showToast) {
-      currentToastId.current = toast({
-        render: (props) => <Toast title={'Saving Event..'} showSpinner={true} {...props} />,
-      })
-    }
-
     const updateEventTask = () => {
       console.log(`RUN updateEventTask ${event.title}..`)
       let serverEventId = getLatestEventId(event.id)
@@ -243,14 +225,12 @@ export default function useEventService() {
           document.dispatchEvent(new CustomEvent(GlobalEvent.refreshCalendar))
         }
 
-        if (currentToastId.current) {
-          toast.close(currentToastId.current)
-        }
         if (showToast) {
-          currentToastId.current = toast({
-            render: (props) => (
-              <Toast title={'Event Updated.'} showSpinner={false} {...props} Icon={FiCheck} />
-            ),
+          toast({
+            title: 'Event updated.',
+            variant: 'subtle',
+            status: 'success',
+            isClosable: true,
           })
         }
       })
@@ -278,17 +258,13 @@ export default function useEventService() {
    * Removes an event from the calendar.
    */
   function queueDeleteEvent(calendarId: string, eventId: string) {
-    const toastId = toast({
-      render: (props) => <Toast title={'Deleting Event..'} showSpinner={true} {...props} />,
-    })
-
     const deleteEventTask = () =>
       API.deleteEvent(API.getAuthToken(), calendarId, eventId).then(() => {
-        toastId && toast.close(toastId)
         toast({
-          render: (props) => (
-            <Toast title={'Event Deleted.'} showSpinner={false} {...props} Icon={FiTrash} />
-          ),
+          title: 'Event deleted.',
+          variant: 'subtle',
+          status: 'success',
+          isClosable: true,
         })
       })
 
