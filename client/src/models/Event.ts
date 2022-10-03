@@ -39,6 +39,9 @@ export default class Event {
     readonly creator: Partial<EventParticipant> | null,
     readonly organizer: Partial<EventParticipant> | null,
     readonly participants: Partial<EventParticipant>[],
+    readonly guests_can_modify: boolean,
+    readonly guests_can_invite_others: boolean,
+    readonly guests_can_see_other_guests: boolean,
 
     // For UI only.
     readonly calendar_id: string,
@@ -70,6 +73,10 @@ export default class Event {
       EventParticipant.fromJson(eventJson.creator),
       EventParticipant.fromJson(eventJson.organizer),
       eventJson.participants.map((participantJson) => EventParticipant.fromJson(participantJson)),
+      eventJson.guests_can_modify,
+      eventJson.guests_can_invite_others,
+      eventJson.guests_can_see_other_guests,
+
       calendarId,
       'SYNCED'
     )
@@ -113,6 +120,9 @@ export default class Event {
       EventParticipant.fromCreatorOrOrganizer(calendar.email, calendar.summary) /*creator*/,
       EventParticipant.fromCreatorOrOrganizer(calendar.email, calendar.summary) /*organizer*/,
       [],
+      false,
+      true,
+      true,
       calendar.id,
       'NOT_SYNCED'
     )

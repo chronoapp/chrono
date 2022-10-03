@@ -42,7 +42,7 @@ class UserCalendar(Base):
     primary = Column(Boolean)
     deleted = Column(Boolean)
 
-    webhook = relationship("Webhook", uselist=False, back_populates="calendar")
+    webhook = relationship("Webhook", uselist=False, back_populates="calendar", lazy='joined')
 
     def __repr__(self):
         return f'<UserCalendar id={self.id} summary={self.summary}/>'
@@ -72,7 +72,7 @@ class UserCalendar(Base):
 
     @property
     def summary(self) -> str:
-        return self.calendar.summary
+        return self.summary_override if self.summary_override else self.calendar.summary
 
     @property
     def timezone(self) -> str:

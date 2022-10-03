@@ -63,6 +63,10 @@ class EventBaseVM(BaseModel):
     creator: Optional[EventParticipantVM]
     organizer: Optional[EventParticipantVM]
 
+    guests_can_modify: bool = False
+    guests_can_invite_others: bool = True
+    guests_can_see_other_guests: bool = True
+
     # Read only fields.
     original_start: Optional[datetime]
     original_start_day: Optional[str]
@@ -188,6 +192,9 @@ def createOrUpdateEvent(
             eventVM.original_timezone,
             creator,
             organizer,
+            eventVM.guests_can_modify,
+            eventVM.guests_can_invite_others,
+            eventVM.guests_can_see_other_guests,
             status=eventVM.status,
             recurringEventId=eventVM.recurring_event_id,
             recurringEventCalendarId=userCalendar.id,
@@ -208,6 +215,9 @@ def createOrUpdateEvent(
         eventDb.recurring_event_id = eventVM.recurring_event_id or eventDb.recurring_event_id
         eventDb.recurring_event_calendar_id = userCalendar.id
         eventDb.recurrences = recurrences or eventDb.recurrences
+        eventDb.guests_can_modify = eventVM.guests_can_modify
+        eventDb.guests_can_invite_others = eventVM.guests_can_invite_others
+        eventDb.guests_can_see_other_guests = eventVM.guests_can_see_other_guests
 
         if not eventDb.creator:
             eventDb.creator = creator
