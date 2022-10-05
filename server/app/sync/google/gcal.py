@@ -36,6 +36,7 @@ def getEventBody(event: Event, timeZone: str):
     participants = [
         {'email': p.email, 'displayName': p.display_name, 'responseStatus': p.response_status}
         for p in event.participants
+        if p.email
     ]
 
     eventBody = {
@@ -44,6 +45,9 @@ def getEventBody(event: Event, timeZone: str):
         'recurrence': event.recurrences,
         'organizer': organizer,
         'attendees': participants,
+        "guestsCanModify": event.guests_can_modify,
+        "guestsCanInviteOthers": event.guests_can_invite_others,
+        "guestsCanSeeOtherGuests": event.guests_can_see_other_guests,
     }
 
     if event.all_day:
