@@ -83,7 +83,9 @@ def syncDeleteEventToGoogleTask(userId: int, userCalendarId: str, eventId: str):
             if event.g_id:
                 try:
                     _resp = deleteGoogleEvent(user, userCalendar.google_id, event.g_id)
-                    logger.info(f'Deleted event from Google: {event.id} {event.g_id}')
+                    logger.info(
+                        f'Deleted event from Google: {event.title} {event.id=} {event.g_id=}'
+                    )
                 except googleapiclient.errors.HttpError as e:
                     logger.warning(e)
 
