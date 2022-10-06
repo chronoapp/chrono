@@ -12,8 +12,19 @@ import {
   MenuList,
   MenuItem,
   MenuDivider,
+  Text,
 } from '@chakra-ui/react'
-import { FiCalendar, FiClock, FiAlignLeft, FiTrash, FiChevronDown, FiPlus } from 'react-icons/fi'
+
+import {
+  FiCalendar,
+  FiClock,
+  FiAlignLeft,
+  FiTrash,
+  FiChevronDown,
+  FiPlus,
+  FiMail,
+} from 'react-icons/fi'
+
 import { RRule } from 'rrule'
 
 import produce from 'immer'
@@ -35,6 +46,11 @@ import { LabelTag } from '@/components/LabelTag'
 import LabelTree from '@/components/LabelTree'
 import * as API from '@/util/Api'
 
+import { labelsState } from '@/state/LabelsState'
+import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
+import useEventActions from '@/state/useEventActions'
+import { displayState, editingEventState } from '@/state/EventsState'
+
 import TimeSelect from './TimeSelect'
 import TimeSelectFullDay from './TimeSelectFullDay'
 import SelectCalendar from './SelectCalendar'
@@ -42,11 +58,7 @@ import ContentEditable from '@/lib/ContentEditable'
 import TaggableInput from './TaggableInput'
 import { EventService } from './useEventService'
 import EventFields from './EventFields'
-import { labelsState } from '@/state/LabelsState'
-import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
-import useEventActions from '@/state/useEventActions'
-import { displayState, editingEventState } from '@/state/EventsState'
-
+import ParticipantList from './ParticipantList'
 interface IProps {
   event: Event
   eventService: EventService
@@ -79,6 +91,7 @@ function EventPopover(props: IProps) {
       props.event.guests_can_see_other_guests
     )
   )
+  const [participants, setParticipants] = useState<EventParticipant[]>(props.event.participants)
 
   const defaultDays = eventFields.allDay
     ? Math.max(dates.diff(eventFields.end, eventFields.start, 'day'), 1)
@@ -293,7 +306,7 @@ function EventPopover(props: IProps) {
     const calendar = getSelectedCalendar(eventFields.calendarId)
 
     return (
-      <div>
+      <Box>
         <div className="cal-event-modal-header">
           <span
             className="mr-2 is-flex is-align-items-center"
@@ -317,30 +330,47 @@ function EventPopover(props: IProps) {
             </div>
           )}
 
-          <div className="mt-2 is-flex is-align-items-center">
+          <Flex mt="2" alignItems={'center'}>
             <FiClock className="mr-2 is-flex-shrink-0" />
             <span>
               {format(eventFields.start, 'YYYY-MM-DD')} {format(eventFields.start, 'hh:mm')} -{' '}
               {format(eventFields.end, 'hh:mm')}
               {format(eventFields.end, 'A')}
             </span>
-          </div>
+          </Flex>
 
           {props.event.description && (
-            <div className="mt-2 is-flex is-align-items-flex-start">
+            <Flex mt="2" alignItems={'flex-start'}>
               <FiAlignLeft className="mr-2 is-flex-shrink-0" />
               <Box
                 maxW="100%"
                 pr="4"
                 dangerouslySetInnerHTML={{ __html: linkifyHtml(props.event.description) }}
               ></Box>
-            </div>
+            </Flex>
           )}
 
-          <div className="mt-2 is-flex is-align-items-center">
+          <Flex mt="2" alignItems={'center'}>
             <FiCalendar className="mr-2 is-flex-shrink-0" />
-            <span>{calendar.summary}</span>
-          </div>
+            <Text>{calendar.summary}</Text>
+          </Flex>
+
+          {participants.length > 0 && (
+            <Flex justifyContent="left" mt="2">
+              <Flex mt="1">
+                <FiMail />
+              </Flex>
+              <Box ml="2" w="100%">
+                <ParticipantList
+                  readonly={true}
+                  participants={participants}
+                  onUpdateParticipants={(participants) => {
+                    setParticipants(participants)
+                  }}
+                />
+              </Box>
+            </Flex>
+          )}
         </div>
 
         {calendar.isWritable() && (
@@ -349,7 +379,7 @@ function EventPopover(props: IProps) {
             {renderDeleteEventButton()}
           </div>
         )}
-      </div>
+      </Box>
     )
   }
 
