@@ -55,7 +55,6 @@ import useEventActions from '@/state/useEventActions'
 import { displayState, editingEventState, EditRecurringAction } from '@/state/EventsState'
 
 import ParticipantList from './ParticipantList'
-import ParticipantInput from './ParticipantInput'
 
 /**
  * Full view for event editing.
@@ -303,7 +302,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
           </Flex>
 
           <Flex alignItems="center" flexWrap="wrap">
-            <span className="mr-2" style={{ width: '1.25em' }} />
+            <Box w="1.25em" mr="2" />
             {eventFields.labels.map((label) => (
               <div key={label.id} className="mt-2">
                 <LabelTag
@@ -320,7 +319,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
             ))}
           </Flex>
 
-          <Flex alignItems="center" mt="2" justifyContent="left">
+          <Flex alignItems="center" mt="3" justifyContent="left">
             <FiClock className="mr-2" size={'1.2em'} />
             <Input
               size="sm"
@@ -458,64 +457,14 @@ export default function EventEditFull(props: { event: Event; eventService: Event
             />
           )}
 
-          <Flex alignItems="center" mt="2">
-            <Box mr="2">
-              <FiCalendar size={'1.25em'} />
-            </Box>
-            <SelectCalendar
-              defaultCalendarId={eventFields.calendarId}
-              calendarsById={calendarsById}
-              onChange={(calendar) => {
-                const updatedFields = {
-                  ...eventFields,
-                  organizer: EventParticipant.fromCreatorOrOrganizer(
-                    calendar.email,
-                    calendar.summary
-                  ),
-                  calendarId: calendar.id,
-                }
-                setEventFields(updatedFields)
-
-                const updatedEvent = {
-                  ...props.event,
-                  ...EventFields.getMutableEventFields(updatedFields),
-                }
-                eventActions.updateEditingEvent(updatedEvent)
-              }}
-            />
-          </Flex>
-
-          <Flex alignItems="top" mt="2">
-            <FiAlignLeft className="mr-2" size={'1.25em'} />
-
-            <ContentEditable
-              className="cal-event-edit-description"
-              html={eventFields.description || ''}
-              onChange={(e) => setEventFields({ ...eventFields, description: e.target.value })}
-              style={{ minHeight: '4em' }}
-            />
-          </Flex>
-
-          <Flex mt="4">
+          <Flex mt="3">
             <Box>
-              <Flex alignItems="center" justifyContent="left">
-                <FiMail className="mr-2" size={'1.25em'} />
-                <ParticipantInput
-                  onSelect={(participant) => {
-                    setParticipants(
-                      produce(participants, (draft) => {
-                        const exists = draft.find((p) => p.equals(participant))
-                        if (!exists) {
-                          draft.push(participant)
-                        }
-                      })
-                    )
-                  }}
-                />
-              </Flex>
-
-              <Flex ml="5" alignItems="center" mt="2" justifyContent="left">
+              <Flex justifyContent="left">
+                <Box mt="1" mr="2">
+                  <FiMail size={'1.25em'} />
+                </Box>
                 <ParticipantList
+                  readonly={false}
                   participants={participants}
                   onUpdateParticipants={(participants) => {
                     setParticipants(participants)
@@ -525,7 +474,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
             </Box>
 
             {participants.length > 0 && (
-              <Flex ml="5" direction={'column'}>
+              <Flex ml="6" direction={'column'}>
                 <Text mb="1" fontSize={'sm'}>
                   Guests can
                 </Text>
@@ -575,6 +524,44 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                 </Checkbox>
               </Flex>
             )}
+          </Flex>
+
+          <Flex alignItems="center" mt="3">
+            <Box mr="2">
+              <FiCalendar size={'1.25em'} />
+            </Box>
+            <SelectCalendar
+              defaultCalendarId={eventFields.calendarId}
+              calendarsById={calendarsById}
+              onChange={(calendar) => {
+                const updatedFields = {
+                  ...eventFields,
+                  organizer: EventParticipant.fromCreatorOrOrganizer(
+                    calendar.email,
+                    calendar.summary
+                  ),
+                  calendarId: calendar.id,
+                }
+                setEventFields(updatedFields)
+
+                const updatedEvent = {
+                  ...props.event,
+                  ...EventFields.getMutableEventFields(updatedFields),
+                }
+                eventActions.updateEditingEvent(updatedEvent)
+              }}
+            />
+          </Flex>
+
+          <Flex alignItems="top" mt="3">
+            <FiAlignLeft className="mr-2" size={'1.25em'} />
+
+            <ContentEditable
+              className="cal-event-edit-description"
+              html={eventFields.description || ''}
+              onChange={(e) => setEventFields({ ...eventFields, description: e.target.value })}
+              style={{ minHeight: '4em' }}
+            />
           </Flex>
         </ModalBody>
 
