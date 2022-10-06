@@ -2,31 +2,39 @@ import React from 'react'
 import produce from 'immer'
 
 import { FiX } from 'react-icons/fi'
-import { Flex, Avatar, Text, IconButton } from '@chakra-ui/react'
+import { Flex, Text, IconButton } from '@chakra-ui/react'
 
+import Participant from './Participant'
 import EventParticipant from '@/models/EventParticipant'
 
 interface IProps {
-  participants: Partial<EventParticipant>[]
-  onUpdateParticipants: (participants: Partial<EventParticipant>[]) => void
+  participants: EventParticipant[]
+  onUpdateParticipants: (participants: EventParticipant[]) => void
+}
+
+export function getParticipantDiff(before: EventParticipant[], after: EventParticipant[]) {
+  const added = after.filter((afterParticipant) => {
+    return !before.some((beforeParticipant) => {
+      return beforeParticipant.equals(afterParticipant)
+    })
+  })
+
+  const removed = before.filter((beforeParticipant) => {
+    return !after.some((afterParticipant) => {
+      return afterParticipant.equals(beforeParticipant)
+    })
+  })
+
+  return { added, removed }
 }
 
 export default function ParticipantList(props: IProps) {
   return (
-    <Flex spacing={2} direction="column">
+    <Flex direction="column" ml="2" w="100%" maxHeight={'md'} overflow="scroll">
       {props.participants.map((participant, idx) => (
-        <Flex key={idx} mb="2" justifyContent="space-between" align="center" w="20em">
-          <Flex direction="row" align="center">
-            {participant.photo_url && (
-              <Avatar size={'xs'} src={participant.photo_url} mr={2} mt={1} mb={1} boxSize="24px" />
-            )}
-            <Flex direction="column">
-              <Text fontSize="xs">{participant.display_name}</Text>
-              <Text mt="-1" fontSize="xs" textColor="GrayText">
-                {participant.email || 'no email'}
-              </Text>
-            </Flex>
-          </Flex>
+        <Flex key={idx} mb="2" justifyContent="space-between" align="center" w="100%">
+          <Participant participant={participant} />
+
           <Flex align="center">
             <Flex ml="2">
               <Text fontSize="xs" textColor="GrayText">
@@ -42,7 +50,9 @@ export default function ParticipantList(props: IProps) {
               variant="link"
               onClick={() => {
                 const updatedParticipants = produce(props.participants, (draft) => {
-                  return draft.filter((p) => p.id !== participant.id)
+                  return draft.filter((p) => {
+                    return !participant.equals(p)
+                  })
                 })
                 props.onUpdateParticipants(updatedParticipants)
               }}

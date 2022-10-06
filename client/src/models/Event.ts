@@ -38,7 +38,7 @@ export default class Event {
     readonly original_timezone: string | null,
     readonly creator: Partial<EventParticipant> | null,
     readonly organizer: Partial<EventParticipant> | null,
-    readonly participants: Partial<EventParticipant>[],
+    readonly participants: EventParticipant[],
     readonly guests_can_modify: boolean,
     readonly guests_can_invite_others: boolean,
     readonly guests_can_see_other_guests: boolean,

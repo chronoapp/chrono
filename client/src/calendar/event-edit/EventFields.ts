@@ -23,7 +23,10 @@ export default class EventFields {
     readonly startDay: string | null,
     readonly endDay: string | null,
     readonly organizer: Partial<EventParticipant> | null,
-    readonly recurrences: string | null
+    readonly recurrences: string | null,
+    readonly guestsCanModify: boolean,
+    readonly guestsCanInviteOthers: boolean,
+    readonly guestsCanSeeOtherGuests: boolean
   ) {}
 
   static getMutableEventFields(eventFields: EventFields): Partial<Event> {
@@ -40,6 +43,9 @@ export default class EventFields {
       calendar_id: eventFields.calendarId,
       organizer: eventFields.organizer,
       recurrences: eventFields.recurrences ? [eventFields.recurrences] : null,
+      guests_can_modify: eventFields.guestsCanModify,
+      guests_can_invite_others: eventFields.guestsCanInviteOthers,
+      guests_can_see_other_guests: eventFields.guestsCanSeeOtherGuests,
     }
   }
 }

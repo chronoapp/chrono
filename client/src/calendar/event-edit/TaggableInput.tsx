@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import clsx from 'clsx'
-import { Image } from '@chakra-ui/react'
+import { Avatar, Flex, Text } from '@chakra-ui/react'
 import { MentionsInput, Mention } from 'react-mentions'
 
 import * as API from '@/util/Api'
@@ -29,6 +29,7 @@ interface TagDisplay {
 }
 
 interface ContactTagDisplay extends TagDisplay {
+  email: string
   photoUrl: string
 }
 
@@ -105,6 +106,7 @@ function TaggableInput(props: IProps) {
     const contactsDisplay = contacts.map((contact) => ({
       id: compositeId(contact.id, 'Contact'),
       display: contact.displayName,
+      email: contact.email,
       photoUrl: contact.photoUrl,
     }))
 
@@ -132,10 +134,25 @@ function TaggableInput(props: IProps) {
 
   function renderContactSuggestion(entry: ContactTagDisplay, _search, highlightedDisplay) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <Image borderRadius="full" boxSize="24px" src={entry.photoUrl} />
-        <span className="ml-1">{highlightedDisplay}</span>
-      </div>
+      <Flex alignItems={'center'}>
+        <Avatar borderRadius="full" size="xs" boxSize="24px" src={entry.photoUrl} />
+        <Flex direction="column">
+          {entry.email === entry.display ? (
+            <Text fontSize="sm" ml="1">
+              {highlightedDisplay}
+            </Text>
+          ) : (
+            <>
+              <Text fontSize="sm" ml="1">
+                {highlightedDisplay}
+              </Text>
+              <Text fontSize="xs" ml="1" maxW="15em" noOfLines={1}>
+                {entry.email}
+              </Text>
+            </>
+          )}
+        </Flex>
+      </Flex>
     )
   }
 

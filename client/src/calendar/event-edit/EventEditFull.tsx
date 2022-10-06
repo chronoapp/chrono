@@ -3,6 +3,7 @@ import { useRecoilValue, useSetRecoilState } from 'recoil'
 
 import {
   Button,
+  Text,
   Box,
   Modal,
   ModalOverlay,
@@ -47,11 +48,14 @@ import TimeSelect from './TimeSelect'
 import TimeSelectFullDay from './TimeSelectFullDay'
 import { EventService } from './useEventService'
 import EventFields from './EventFields'
-import ParticipantList from './ParticipantList'
+
 import { labelsState } from '@/state/LabelsState'
 import { calendarsState } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
 import { displayState, editingEventState, EditRecurringAction } from '@/state/EventsState'
+
+import ParticipantList from './ParticipantList'
+import ParticipantInput from './ParticipantInput'
 
 /**
  * Full view for event editing.
@@ -76,12 +80,13 @@ export default function EventEditFull(props: { event: Event; eventService: Event
       props.event.start_day,
       props.event.end_day,
       props.event.organizer,
-      props.event.recurrences ? props.event.recurrences.join('\n') : null
+      props.event.recurrences ? props.event.recurrences.join('\n') : null,
+      props.event.guests_can_modify,
+      props.event.guests_can_invite_others,
+      props.event.guests_can_see_other_guests
     )
   )
-  const [participants, setParticipants] = useState<Partial<EventParticipant>[]>(
-    props.event.participants
-  )
+  const [participants, setParticipants] = useState<EventParticipant[]>(props.event.participants)
 
   const defaultDays = eventFields.allDay
     ? Math.max(dates.diff(eventFields.start, eventFields.end, 'day'), 1)
@@ -96,7 +101,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
     return {
       ...props.event,
       ...EventFields.getMutableEventFields(eventFields),
-      participants: participants.map((p) => EventParticipant.getMutableFields(p)),
+      participants: participants,
     }
   }
 
@@ -251,10 +256,10 @@ export default function EventEditFull(props: { event: Event; eventService: Event
     <Modal size="3xl" isOpen={true} onClose={eventActions.cancelSelect}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Edit Event {renderRecurringEventSelectionMenu()}</ModalHeader>
+        <ModalHeader pb="2">Edit Event {renderRecurringEventSelectionMenu()}</ModalHeader>
         <ModalCloseButton />
 
-        <ModalBody>
+        <ModalBody maxHeight="3xl">
           <Flex alignItems="center">
             <span className="mr-2" style={{ width: '1.25em' }} />
             <TaggableInput
@@ -453,20 +458,6 @@ export default function EventEditFull(props: { event: Event; eventService: Event
             />
           )}
 
-          <Flex alignItems="center" mt="2" justifyContent="left">
-            <FiMail className="mr-2" size={'1.25em'} />
-            <Input variant="outline" placeholder="Add Participant" size="sm" />
-          </Flex>
-
-          <Flex alignItems="center" ml="7" mt="2" justifyContent="left">
-            <ParticipantList
-              participants={participants}
-              onUpdateParticipants={(participants) => {
-                setParticipants(participants)
-              }}
-            />
-          </Flex>
-
           <Flex alignItems="center" mt="2">
             <Box mr="2">
               <FiCalendar size={'1.25em'} />
@@ -503,6 +494,87 @@ export default function EventEditFull(props: { event: Event; eventService: Event
               onChange={(e) => setEventFields({ ...eventFields, description: e.target.value })}
               style={{ minHeight: '4em' }}
             />
+          </Flex>
+
+          <Flex mt="4">
+            <Box>
+              <Flex alignItems="center" justifyContent="left">
+                <FiMail className="mr-2" size={'1.25em'} />
+                <ParticipantInput
+                  onSelect={(participant) => {
+                    setParticipants(
+                      produce(participants, (draft) => {
+                        const exists = draft.find((p) => p.equals(participant))
+                        if (!exists) {
+                          draft.push(participant)
+                        }
+                      })
+                    )
+                  }}
+                />
+              </Flex>
+
+              <Flex ml="5" alignItems="center" mt="2" justifyContent="left">
+                <ParticipantList
+                  participants={participants}
+                  onUpdateParticipants={(participants) => {
+                    setParticipants(participants)
+                  }}
+                />
+              </Flex>
+            </Box>
+
+            {participants.length > 0 && (
+              <Flex ml="5" direction={'column'}>
+                <Text mb="1" fontSize={'sm'}>
+                  Guests can
+                </Text>
+                <Checkbox
+                  lineHeight={1.75}
+                  size="sm"
+                  isChecked={eventFields.guestsCanModify}
+                  onChange={(e) => {
+                    const guestsCanModify = e.target.checked
+                    if (guestsCanModify) {
+                      setEventFields({
+                        ...eventFields,
+                        guestsCanModify,
+                        guestsCanInviteOthers: true,
+                        guestsCanSeeOtherGuests: true,
+                      })
+                    } else {
+                      setEventFields({ ...eventFields, guestsCanModify })
+                    }
+                  }}
+                >
+                  Modify event
+                </Checkbox>
+                <Checkbox
+                  lineHeight={1.75}
+                  size="sm"
+                  disabled={eventFields.guestsCanModify}
+                  isChecked={eventFields.guestsCanInviteOthers}
+                  onChange={(e) => {
+                    const guestsCanInviteOthers = e.target.checked
+                    setEventFields({ ...eventFields, guestsCanInviteOthers })
+                  }}
+                >
+                  Invite guests
+                </Checkbox>
+                <Checkbox
+                  lineHeight={1.75}
+                  size="sm"
+                  disabled={eventFields.guestsCanModify}
+                  isChecked={eventFields.guestsCanSeeOtherGuests}
+                  onChange={(e) => {
+                    const guestsCanSeeOtherGuests = e.target.checked
+                    setEventFields({ ...eventFields, guestsCanSeeOtherGuests })
+                  }}
+                >
+                  See guest list
+                </Checkbox>
+              </Flex>
+            )}
           </Flex>
         </ModalBody>
 
