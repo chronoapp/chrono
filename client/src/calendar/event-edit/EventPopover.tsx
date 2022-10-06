@@ -73,7 +73,10 @@ function EventPopover(props: IProps) {
       props.event.start_day,
       props.event.end_day,
       props.event.organizer,
-      props.event.recurrences ? props.event.recurrences.join('\n') : null
+      props.event.recurrences ? props.event.recurrences.join('\n') : null,
+      props.event.guests_can_modify,
+      props.event.guests_can_invite_others,
+      props.event.guests_can_see_other_guests
     )
   )
 
