@@ -11,6 +11,7 @@ import Participant from './Participant'
 
 interface IProps {
   onSelect: (value: EventParticipant) => void
+  maxRecommendations: number
 }
 
 function ParticipantInput(props: IProps) {
@@ -22,7 +23,12 @@ function ParticipantInput(props: IProps) {
   const debounceFetchContacts = useCallback(
     debounce(async (newValue) => {
       if (newValue) {
-        const contacts = await API.getContacts(API.getAuthToken(), newValue)
+        const contacts = await API.getContacts(
+          API.getAuthToken(),
+          newValue,
+          props.maxRecommendations
+        )
+        console.log(props.maxRecommendations)
         setContacts(contacts.map((c) => EventParticipant.fromContact(c)))
       }
     }, 300),
@@ -72,7 +78,7 @@ function ParticipantInput(props: IProps) {
   }
 
   return (
-    <FormControl w="sm" {...getComboboxProps()} isInvalid={hasError}>
+    <FormControl width="100%" {...getComboboxProps()} isInvalid={hasError} zIndex="5">
       <Box onKeyDown={handleEnter}>
         <Tooltip label={error} isOpen={hasError}>
           <Input
@@ -113,6 +119,10 @@ function ParticipantInput(props: IProps) {
       </Flex>
     </FormControl>
   )
+}
+
+ParticipantInput.defaultProps = {
+  maxRecommendations: 10,
 }
 
 export default ParticipantInput

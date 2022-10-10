@@ -13,6 +13,7 @@ interface IProps {
   readonly: boolean
   participants: EventParticipant[]
   onUpdateParticipants: (participants: EventParticipant[]) => void
+  maxRecommendations: number
 }
 
 export function getParticipantDiff(before: EventParticipant[], after: EventParticipant[]) {
@@ -77,6 +78,7 @@ export default function ParticipantList(props: IProps) {
     } else {
       return (
         <ParticipantInput
+          maxRecommendations={props.maxRecommendations}
           onSelect={(participant) => {
             props.onUpdateParticipants(
               produce(props.participants, (draft) => {
@@ -146,4 +148,8 @@ export default function ParticipantList(props: IProps) {
       </Flex>
     </Flex>
   )
+}
+
+ParticipantList.defaultProps = {
+  maxRecommendations: 10,
 }
