@@ -10,7 +10,8 @@ export default class EventParticipant {
     readonly response_status?: ResponseStatus,
     readonly display_name?: string | null,
     readonly photo_url?: string | null,
-    readonly is_self?: boolean | null
+    readonly is_self?: boolean | null,
+    readonly is_optional?: boolean | null
   ) {}
 
   static fromJson(json: any): EventParticipant {
@@ -21,7 +22,8 @@ export default class EventParticipant {
       json.response_status,
       json.display_name,
       json.photo_url,
-      json.is_self
+      json.is_self,
+      json.is_optional
     )
   }
 
@@ -33,16 +35,17 @@ export default class EventParticipant {
       'needsAction',
       contact.displayName,
       contact.photoUrl,
-      null
+      null,
+      false
     )
   }
 
   static fromEmail(email: string) {
-    return new EventParticipant(undefined, email, undefined, 'needsAction', null, null, null)
+    return new EventParticipant(undefined, email, undefined, 'needsAction', null, null, null, false)
   }
 
   static fromCreatorOrOrganizer(email: string, displayName: string) {
-    return new EventParticipant(undefined, email, undefined, undefined, displayName)
+    return new EventParticipant(undefined, email, undefined, undefined, displayName, null, false)
   }
 
   static getMutableFields(participant: Partial<EventParticipant>) {
