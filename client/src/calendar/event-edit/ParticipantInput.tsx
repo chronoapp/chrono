@@ -28,7 +28,6 @@ function ParticipantInput(props: IProps) {
           newValue,
           props.maxRecommendations
         )
-        console.log(props.maxRecommendations)
         setContacts(contacts.map((c) => EventParticipant.fromContact(c)))
       }
     }, 300),

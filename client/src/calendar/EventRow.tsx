@@ -10,7 +10,7 @@ import { dragDropActionState, editingEventState } from '@/state/EventsState'
 import { EventSegment } from './utils/eventLevels'
 import DateSlotMetrics from './utils/DateSlotMetrics'
 import { timeFormatShort } from '../util/localizer'
-import EventPopover from './event-edit/EventPopover'
+import EventPopover from './event-edit/EventEditPopover'
 
 import Event from '../models/Event'
 import { EventService } from './event-edit/useEventService'
