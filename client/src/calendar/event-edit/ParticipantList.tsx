@@ -118,7 +118,21 @@ export default function ParticipantList(props: IProps) {
                 {!props.readonly && isMouseInside && (
                   <Flex align="center">
                     <Flex ml="2">
-                      <Button variant={'link'} size="xs">
+                      <Button
+                        variant={'link'}
+                        size="xs"
+                        onClick={() => {
+                          const updatedParticipants = produce(props.participants, (draft) => {
+                            return draft.map((p) => {
+                              if (p.equals(participant)) {
+                                p.is_optional = !p.is_optional
+                              }
+                              return p
+                            })
+                          })
+                          props.onUpdateParticipants(updatedParticipants)
+                        }}
+                      >
                         mark optional
                       </Button>
                     </Flex>
