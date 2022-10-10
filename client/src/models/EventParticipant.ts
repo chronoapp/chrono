@@ -46,7 +46,7 @@ export default class EventParticipant {
   }
 
   static fromCreatorOrOrganizer(email: string, displayName: string) {
-    return new EventParticipant(makeId(), email, undefined, undefined, displayName, null, false)
+    return new EventParticipant(makeId(), email, undefined, 'accepted', displayName, null, false)
   }
 
   static getMutableFields(participant: Partial<EventParticipant>) {

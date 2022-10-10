@@ -3,14 +3,18 @@ import produce from 'immer'
 
 import { FiX } from 'react-icons/fi'
 import { Button, Flex, Text, IconButton } from '@chakra-ui/react'
-
 import Hoverable from '@/lib/Hoverable'
+
+import EventParticipant from '@/models/EventParticipant'
+import Calendar from '@/models/Calendar'
+
+import { mergeParticipants } from './EventEditUtils'
 import Participant from './Participant'
 import ParticipantInput from './ParticipantInput'
-import EventParticipant from '@/models/EventParticipant'
 
 interface IProps {
   readonly: boolean
+  calendar: Calendar
   participants: EventParticipant[]
   onUpdateParticipants: (participants: EventParticipant[]) => void
   maxRecommendations: number
@@ -80,14 +84,10 @@ export default function ParticipantList(props: IProps) {
         <ParticipantInput
           maxRecommendations={props.maxRecommendations}
           onSelect={(participant) => {
-            props.onUpdateParticipants(
-              produce(props.participants, (draft) => {
-                const exists = draft.find((p) => p.equals(participant))
-                if (!exists) {
-                  draft.push(participant)
-                }
-              })
-            )
+            const updatedParticipants = mergeParticipants(props.calendar, props.participants, [
+              participant,
+            ])
+            props.onUpdateParticipants(updatedParticipants)
           }}
         />
       )

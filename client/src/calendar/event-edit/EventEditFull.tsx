@@ -27,12 +27,17 @@ import moment from 'moment'
 import { FiMail } from 'react-icons/fi'
 import { FiCalendar, FiAlignLeft, FiClock, FiChevronDown } from 'react-icons/fi'
 
-import makeId from '@/lib/js-lib/makeId'
 import * as dates from '@/util/dates'
 import * as API from '@/util/Api'
 import Event from '@/models/Event'
 import Contact from '@/models/Contact'
+import Calendar from '@/models/Calendar'
 import { Label } from '@/models/Label'
+
+import { labelsState } from '@/state/LabelsState'
+import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
+import useEventActions from '@/state/useEventActions'
+import { displayState, editingEventState, EditRecurringAction } from '@/state/EventsState'
 
 import { format, fullDayFormat } from '@/util/localizer'
 import ContentEditable from '@/lib/ContentEditable'
@@ -40,7 +45,7 @@ import { LabelTag } from '@/components/LabelTag'
 import { addNewLabels } from '@/calendar/utils/LabelUtils'
 import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 import EventParticipant from '@/models/EventParticipant'
-
+import { mergeParticipants } from './EventEditUtils'
 import SelectCalendar from './SelectCalendar'
 import RecurringEventEditor from './RecurringEventEditor'
 import TaggableInput from './TaggableInput'
@@ -48,12 +53,6 @@ import TimeSelect from './TimeSelect'
 import TimeSelectFullDay from './TimeSelectFullDay'
 import { EventService } from './useEventService'
 import EventFields from './EventFields'
-
-import { labelsState } from '@/state/LabelsState'
-import { calendarsState } from '@/state/CalendarState'
-import useEventActions from '@/state/useEventActions'
-import { displayState, editingEventState, EditRecurringAction } from '@/state/EventsState'
-
 import ParticipantList from './ParticipantList'
 
 /**
@@ -65,6 +64,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
   const labelState = useRecoilValue(labelsState)
   const calendarsById = useRecoilValue(calendarsState).calendarsById
   const setDisplay = useSetRecoilState(displayState)
+  const primaryCalendar = useRecoilValue(primaryCalendarSelector)
 
   // Event data and overrides
   const [eventFields, setEventFields] = useState(
@@ -101,6 +101,15 @@ export default function EventEditFull(props: { event: Event; eventService: Event
       ...props.event,
       ...EventFields.getMutableEventFields(eventFields),
       participants: participants,
+    }
+  }
+
+  function getSelectedCalendar(calendarId: string): Calendar {
+    const calendar = calendarsById[calendarId]
+    if (calendar) {
+      return calendar
+    } else {
+      return primaryCalendar!
     }
   }
 
@@ -273,11 +282,11 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                 eventActions.updateEditingEvent(getEventData())
               }}
               onUpdateContacts={(contacts: Contact[]) => {
-                const newParticipants = contacts
-                  .map((c) => EventParticipant.fromContact(c))
-                  .filter((newParticipant) => !participants.find((p) => p.equals(newParticipant)))
-
-                const updatedParticipants = [...participants, ...newParticipants]
+                const updatedParticipants = mergeParticipants(
+                  getSelectedCalendar(eventFields.calendarId),
+                  participants,
+                  contacts.map((c) => EventParticipant.fromContact(c))
+                )
                 setParticipants(updatedParticipants)
               }}
             />
@@ -446,11 +455,12 @@ export default function EventEditFull(props: { event: Event; eventService: Event
               </Box>
               <Box w="28em">
                 <ParticipantList
+                  calendar={getSelectedCalendar(eventFields.calendarId)}
                   readonly={false}
                   participants={participants}
-                  onUpdateParticipants={(participants) => {
-                    setParticipants(participants)
-                  }}
+                  onUpdateParticipants={(updatedParticipants) =>
+                    setParticipants(updatedParticipants)
+                  }
                 />
               </Box>
             </Flex>

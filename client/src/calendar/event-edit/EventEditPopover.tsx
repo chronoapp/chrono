@@ -53,6 +53,7 @@ import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
 import { displayState, editingEventState } from '@/state/EventsState'
 
+import { mergeParticipants } from './EventEditUtils'
 import TimeSelect from './TimeSelect'
 import TimeSelectFullDay from './TimeSelectFullDay'
 import SelectCalendar from './SelectCalendar'
@@ -366,10 +367,11 @@ function EventPopover(props: IProps) {
               <Box ml="2" w="100%">
                 <ParticipantList
                   readonly={true}
+                  calendar={getSelectedCalendar(eventFields.calendarId)}
                   participants={participants}
-                  onUpdateParticipants={(participants) => {
-                    setParticipants(participants)
-                  }}
+                  onUpdateParticipants={(updatedParticipants) =>
+                    setParticipants(updatedParticipants)
+                  }
                 />
               </Box>
             </Flex>
@@ -421,11 +423,11 @@ function EventPopover(props: IProps) {
               setEventFields({ ...eventFields, title, labels: updatedLabels })
             }}
             onUpdateContacts={(contacts: Contact[]) => {
-              const newParticipants = contacts
-                .map((c) => EventParticipant.fromContact(c))
-                .filter((newParticipant) => !participants.find((p) => p.equals(newParticipant)))
-
-              const updatedParticipants = [...participants, ...newParticipants]
+              const updatedParticipants = mergeParticipants(
+                getSelectedCalendar(eventFields.calendarId),
+                participants,
+                contacts.map((c) => EventParticipant.fromContact(c))
+              )
               setParticipants(updatedParticipants)
             }}
           />
@@ -596,10 +598,9 @@ function EventPopover(props: IProps) {
             <Box ml="2.5" w="100%">
               <ParticipantList
                 readonly={false}
+                calendar={getSelectedCalendar(eventFields.calendarId)}
                 participants={participants}
-                onUpdateParticipants={(participants) => {
-                  setParticipants(participants)
-                }}
+                onUpdateParticipants={(updatedParticipants) => setParticipants(updatedParticipants)}
                 maxRecommendations={2}
               />
             </Box>
