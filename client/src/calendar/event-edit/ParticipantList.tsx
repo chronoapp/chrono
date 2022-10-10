@@ -83,7 +83,6 @@ export default function ParticipantList(props: IProps) {
             props.onUpdateParticipants(
               produce(props.participants, (draft) => {
                 const exists = draft.find((p) => p.equals(participant))
-                console.log('exists', exists)
                 if (!exists) {
                   draft.push(participant)
                 }

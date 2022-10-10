@@ -13,7 +13,7 @@ import SlotMetrics from './utils/SlotMetrics'
 import getStyledEvents from './utils/DayEventLayout'
 import TimeSlotGroup from './TimeSlotGroup'
 import TimeGridEvent from './TimeGridEvent'
-import EventPopover from './event-edit/EventPopover'
+import EventPopover from './event-edit/EventEditPopover'
 import ResizeEventContainer from './ResizeEventContainer'
 import { EventService } from '@/calendar/event-edit/useEventService'
 

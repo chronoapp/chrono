@@ -9,7 +9,7 @@ import { calendarWithDefault } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
 import { editingEventState } from '@/state/EventsState'
 
-import EventPopover from '@/calendar/event-edit/EventPopover'
+import EventPopover from '@/calendar/event-edit/EventEditPopover'
 import { sortEvents } from '@/calendar/utils/eventLevels'
 
 import { format, timeRangeFormat } from '@/util/localizer'
