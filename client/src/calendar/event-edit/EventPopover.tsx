@@ -42,6 +42,8 @@ import Event from '@/models/Event'
 import Calendar from '@/models/Calendar'
 import EventParticipant from '@/models/EventParticipant'
 import { Label } from '@/models/Label'
+import Contact from '@/models/Contact'
+
 import { LabelTag } from '@/components/LabelTag'
 import LabelTree from '@/components/LabelTree'
 import * as API from '@/util/Api'
@@ -122,6 +124,7 @@ function EventPopover(props: IProps) {
     const event = {
       ...e,
       ...EventFields.getMutableEventFields(fields),
+      participants: participants,
     }
 
     return event
@@ -417,8 +420,13 @@ function EventPopover(props: IProps) {
               )
               setEventFields({ ...eventFields, title, labels: updatedLabels })
             }}
-            onUpdateContacts={(contacts) => {
-              console.log('TODO: onUpdateContacts')
+            onUpdateContacts={(contacts: Contact[]) => {
+              const newParticipants = contacts
+                .map((c) => EventParticipant.fromContact(c))
+                .filter((newParticipant) => !participants.find((p) => p.equals(newParticipant)))
+
+              const updatedParticipants = [...participants, ...newParticipants]
+              setParticipants(updatedParticipants)
             }}
           />
 
@@ -551,7 +559,7 @@ function EventPopover(props: IProps) {
             </Checkbox>
           </Flex>
 
-          <div className="mt-2 is-flex is-align-items-center">
+          <Flex mt="2" alignItems={'center'}>
             <Box mr="2">
               <FiCalendar size={'1.2em'} />
             </Box>
@@ -579,9 +587,25 @@ function EventPopover(props: IProps) {
                 eventActions.updateEditingEvent(updatedEvent)
               }}
             />
-          </div>
+          </Flex>
 
-          <div className="mt-2 is-flex is-align-items-top">
+          <Flex mt="2">
+            <Flex mt="1">
+              <FiMail />
+            </Flex>
+            <Box ml="2.5" w="100%">
+              <ParticipantList
+                readonly={false}
+                participants={participants}
+                onUpdateParticipants={(participants) => {
+                  setParticipants(participants)
+                }}
+                maxRecommendations={2}
+              />
+            </Box>
+          </Flex>
+
+          <Flex mt="2" alignItems={'top'}>
             <FiAlignLeft className="mr-2" size={'1.2em'} />
             <ContentEditable
               innerRef={contentEditableRef}
@@ -597,7 +621,7 @@ function EventPopover(props: IProps) {
               }}
               style={{ minHeight: '3em' }}
             />
-          </div>
+          </Flex>
 
           <Flex mt="4" mb="2" justifyContent="space-between" alignItems="center">
             <Flex>

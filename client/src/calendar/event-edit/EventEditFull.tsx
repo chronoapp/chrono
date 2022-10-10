@@ -194,14 +194,6 @@ export default function EventEditFull(props: { event: Event; eventService: Event
     }
   }
 
-  function isExistingParticipant(contact: Contact) {
-    return (
-      participants.filter(
-        (p) => (p.email && contact.email === p.email) || contact.id == p.contact_id
-      ).length > 0
-    )
-  }
-
   function renderRecurringEventSelectionMenu() {
     if (!isExistingRecurringEvent || !recurringAction) {
       return
@@ -282,18 +274,8 @@ export default function EventEditFull(props: { event: Event; eventService: Event
               }}
               onUpdateContacts={(contacts: Contact[]) => {
                 const newParticipants = contacts
-                  .filter((c) => !isExistingParticipant(c))
-                  .map(
-                    (c) =>
-                      new EventParticipant(
-                        makeId(),
-                        c.email,
-                        c.id,
-                        'needsAction',
-                        c.displayName,
-                        c.photoUrl
-                      )
-                  )
+                  .map((c) => EventParticipant.fromContact(c))
+                  .filter((newParticipant) => !participants.find((p) => p.equals(newParticipant)))
 
                 const updatedParticipants = [...participants, ...newParticipants]
                 setParticipants(updatedParticipants)
@@ -458,11 +440,11 @@ export default function EventEditFull(props: { event: Event; eventService: Event
           )}
 
           <Flex mt="3">
-            <Box>
-              <Flex justifyContent="left">
-                <Box mt="1" mr="2">
-                  <FiMail size={'1.25em'} />
-                </Box>
+            <Flex justifyContent="left">
+              <Box mt="1" mr="2">
+                <FiMail size={'1.25em'} />
+              </Box>
+              <Box w="28em">
                 <ParticipantList
                   readonly={false}
                   participants={participants}
@@ -470,8 +452,8 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                     setParticipants(participants)
                   }}
                 />
-              </Flex>
-            </Box>
+              </Box>
+            </Flex>
 
             {participants.length > 0 && (
               <Flex ml="6" direction={'column'}>
