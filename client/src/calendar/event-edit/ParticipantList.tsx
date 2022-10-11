@@ -125,12 +125,11 @@ export default function ParticipantList(props: IProps) {
                         size="xs"
                         onClick={() => {
                           const updatedParticipants = produce(props.participants, (draft) => {
-                            return draft.map((p) => {
+                            for (let p of draft) {
                               if (p.equals(participant)) {
                                 p.is_optional = !p.is_optional
                               }
-                              return p
-                            })
+                            }
                           })
                           props.onUpdateParticipants(updatedParticipants)
                         }}

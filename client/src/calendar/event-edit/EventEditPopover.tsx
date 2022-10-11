@@ -312,15 +312,9 @@ function EventPopover(props: IProps) {
     return (
       <Box>
         <Box className="cal-event-modal-header">
-          <span
-            className="mr-2 is-flex is-align-items-center"
-            style={{ height: '100%' }}
-            onClick={(e) => {
-              eventActions.cancelSelect()
-            }}
-          >
+          <Flex mr="2" alignItems={'center'} height="100%" onClick={eventActions.cancelSelect}>
             <MdClose style={{ cursor: 'pointer' }} className="has-text-grey" />
-          </span>
+          </Flex>
         </Box>
 
         <Flex direction={'column'} mb="3" className="cal-event-modal">
