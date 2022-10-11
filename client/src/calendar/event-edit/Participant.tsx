@@ -4,12 +4,9 @@ import { RiQuestionFill } from 'react-icons/ri'
 import { FiXCircle } from 'react-icons/fi'
 
 import EventParticipant from '@/models/EventParticipant'
+import Calendar from '@/models/Calendar'
 
-interface IProps {
-  participant: EventParticipant
-}
-
-function ParticipantAvatar(props: IProps) {
+function ParticipantAvatar(props: { participant: EventParticipant }) {
   return (
     <Flex align="center" position={'relative'}>
       <Avatar
@@ -40,17 +37,28 @@ function ParticipantAvatar(props: IProps) {
   )
 }
 
-export default function Participant(props: IProps) {
+export default function Participant(props: { calendar?: Calendar; participant: EventParticipant }) {
+  const secondaryText: string[] = []
+  if (props.participant.email === props.calendar?.email) {
+    secondaryText.push('Organizer')
+  }
+
+  if (props.participant.is_optional) {
+    secondaryText.push('Optional')
+  }
+
+  const isOptionalText = secondaryText.length > 0 && (
+    <Text mt="-1" fontSize="xs" textColor="GrayText">
+      {secondaryText.join(', ')}
+    </Text>
+  )
+
   function renderDisplayName() {
     if (props.participant.display_name === props.participant.email) {
       return (
         <>
           <Text fontSize="sm">{props.participant.display_name}</Text>
-          {props.participant.is_optional && (
-            <Text mt="-1" fontSize="xs" textColor="GrayText">
-              Optional
-            </Text>
-          )}
+          {isOptionalText}
         </>
       )
     }
@@ -59,11 +67,7 @@ export default function Participant(props: IProps) {
       return (
         <>
           <Text fontSize="sm">{props.participant.email}</Text>
-          {props.participant.is_optional && (
-            <Text mt="-1" fontSize="xs" textColor="GrayText">
-              Optional
-            </Text>
-          )}
+          {isOptionalText}
         </>
       )
     }
@@ -76,11 +80,7 @@ export default function Participant(props: IProps) {
         <Text mt="-1" fontSize="xs" textColor="GrayText" maxW="15em" noOfLines={1}>
           {props.participant.email || 'no email'}
         </Text>
-        {props.participant.is_optional && (
-          <Text mt="-1" fontSize="xs" textColor="GrayText">
-            Optional
-          </Text>
-        )}
+        {isOptionalText}
       </>
     )
   }
