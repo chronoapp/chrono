@@ -40,30 +40,32 @@ function getResponseStatusCounts(participants: EventParticipant[]) {
   let yesCount = 0
   let noCount = 0
   let maybeCount = 0
+  let awaitingCount = 0
 
   for (const p of participants) {
     if (p.response_status === 'accepted') {
       yesCount++
-    }
-    if (p.response_status === 'declined') {
+    } else if (p.response_status === 'declined') {
       noCount++
-    }
-    if (p.response_status === 'tentative') {
+    } else if (p.response_status === 'tentative') {
       maybeCount++
+    } else {
+      awaitingCount++
     }
   }
 
-  return { yesCount, noCount, maybeCount }
+  return { yesCount, noCount, maybeCount, awaitingCount }
 }
 
 function getResponseStatusText(participants: EventParticipant[]) {
-  const { yesCount, noCount, maybeCount } = getResponseStatusCounts(participants)
+  const { yesCount, noCount, maybeCount, awaitingCount } = getResponseStatusCounts(participants)
 
   const responseText = yesCount > 0 && `${yesCount} yes`
   const noText = noCount > 0 && `${noCount} no`
   const maybeText = maybeCount > 0 && `${maybeCount} maybe`
+  const awaitingText = awaitingCount > 0 && `${awaitingCount} awaiting`
 
-  return [responseText, noText, maybeText].filter((t) => t).join(', ')
+  return [responseText, noText, maybeText, awaitingText].filter((t) => t).join(', ')
 }
 
 export default function ParticipantList(props: IProps) {
@@ -113,7 +115,7 @@ export default function ParticipantList(props: IProps) {
                 bgColor={isMouseInside && 'gray.100'}
                 borderRadius="md"
               >
-                <Participant participant={participant} />
+                <Participant calendar={props.calendar} participant={participant} />
 
                 {!props.readonly && isMouseInside && (
                   <Flex align="center">

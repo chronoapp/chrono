@@ -311,7 +311,7 @@ function EventPopover(props: IProps) {
 
     return (
       <Box>
-        <div className="cal-event-modal-header">
+        <Box className="cal-event-modal-header">
           <span
             className="mr-2 is-flex is-align-items-center"
             style={{ height: '100%' }}
@@ -321,17 +321,17 @@ function EventPopover(props: IProps) {
           >
             <MdClose style={{ cursor: 'pointer' }} className="has-text-grey" />
           </span>
-        </div>
+        </Box>
 
-        <div className="cal-event-modal is-flex is-flex-direction-column mb-3">
+        <Flex direction={'column'} mb="3" className="cal-event-modal">
           <div className="has-text-grey-darker is-size-5">{props.event.title_short}</div>
 
           {props.event.labels && (
-            <div style={{ display: 'flex' }}>
+            <Flex>
               {props.event.labels.map((label) => (
                 <LabelTag key={label.id} label={label} />
               ))}
-            </div>
+            </Flex>
           )}
 
           <Flex mt="2" alignItems={'center'}>
@@ -342,17 +342,6 @@ function EventPopover(props: IProps) {
               {format(eventFields.end, 'A')}
             </span>
           </Flex>
-
-          {props.event.description && (
-            <Flex mt="2" alignItems={'flex-start'}>
-              <FiAlignLeft className="mr-2 is-flex-shrink-0" />
-              <Box
-                maxW="100%"
-                pr="4"
-                dangerouslySetInnerHTML={{ __html: linkifyHtml(props.event.description) }}
-              ></Box>
-            </Flex>
-          )}
 
           <Flex mt="2" alignItems={'center'}>
             <FiCalendar className="mr-2 is-flex-shrink-0" />
@@ -376,13 +365,24 @@ function EventPopover(props: IProps) {
               </Box>
             </Flex>
           )}
-        </div>
+
+          {props.event.description && (
+            <Flex mt="2" alignItems={'flex-start'}>
+              <FiAlignLeft className="mr-2 is-flex-shrink-0" />
+              <Box
+                maxW="100%"
+                pr="4"
+                dangerouslySetInnerHTML={{ __html: linkifyHtml(props.event.description) }}
+              ></Box>
+            </Flex>
+          )}
+        </Flex>
 
         {calendar.isWritable() && (
-          <div className="ml-4 mb-3 is-flex">
+          <Flex ml="4" mb="3">
             {renderEditEventButton()}
             {renderDeleteEventButton()}
-          </div>
+          </Flex>
         )}
       </Box>
     )
