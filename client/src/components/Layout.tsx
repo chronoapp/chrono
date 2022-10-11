@@ -25,7 +25,7 @@ import MiniCalendar from '@/calendar/MiniCalendar'
 import LabelPanel from './LabelPanel'
 import CalendarsPanel from './CalendarsPanel'
 import Plugins from './Plugins'
-import Toast from '@/components/Toast'
+import { ToastTag } from '@/components/Toast'
 
 import Header from '@/calendar/Header'
 import * as API from '@/util/Api'
@@ -133,7 +133,7 @@ function Layout(props: Props) {
 
   async function refreshCalendar() {
     const toastId = toast({
-      render: (props) => <Toast title={'Updating calendar..'} showSpinner={false} {...props} />,
+      render: (props) => <ToastTag title={'Updating calendar..'} showSpinner={false} {...props} />,
     })
 
     await API.syncCalendar(API.getAuthToken())
@@ -142,7 +142,7 @@ function Layout(props: Props) {
 
     toastId && toast.close(toastId)
     toast({
-      render: (props) => <Toast title={'Calendar updated.'} showSpinner={false} {...props} />,
+      render: (props) => <ToastTag title={'Calendar updated.'} showSpinner={false} {...props} />,
     })
   }
 
