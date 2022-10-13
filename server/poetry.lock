@@ -464,7 +464,7 @@ python-versions = ">=3.7"
 name = "mypy"
 version = "0.982"
 description = "Optional static typing for Python"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 
@@ -482,7 +482,7 @@ reports = ["lxml"]
 name = "mypy-extensions"
 version = "0.4.3"
 description = "Experimental type system extensions for programs checked with the mypy typechecker."
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 
@@ -823,8 +823,6 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,>=2.7"
 
 [package.dependencies]
 greenlet = {version = "!=0.4.17", markers = "python_version >= \"3\" and (platform_machine == \"aarch64\" or platform_machine == \"ppc64le\" or platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"win32\" or platform_machine == \"WIN32\")"}
-mypy = {version = ">=0.910", optional = true, markers = "python_version >= \"3\" and extra == \"mypy\""}
-sqlalchemy2-stubs = {version = "*", optional = true, markers = "extra == \"mypy\""}
 
 [package.extras]
 aiomysql = ["greenlet (!=0.4.17)", "aiomysql"]
@@ -848,17 +846,6 @@ pymysql = ["pymysql (<1)", "pymysql"]
 sqlcipher = ["sqlcipher3-binary"]
 
 [[package]]
-name = "sqlalchemy2-stubs"
-version = "0.0.2a29"
-description = "Typing Stubs for SQLAlchemy 1.4"
-category = "main"
-optional = false
-python-versions = ">=3.6"
-
-[package.dependencies]
-typing-extensions = ">=3.7.4"
-
-[[package]]
 name = "starlette"
 version = "0.19.1"
 description = "The little ASGI library that shines."
@@ -876,7 +863,7 @@ full = ["itsdangerous", "jinja2", "python-multipart", "pyyaml", "requests"]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 
@@ -884,6 +871,14 @@ python-versions = ">=3.7"
 name = "types-protobuf"
 version = "3.20.4"
 description = "Typing stubs for protobuf"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "types-python-dateutil"
+version = "2.8.19"
+description = "Typing stubs for python-dateutil"
 category = "dev"
 optional = false
 python-versions = "*"
@@ -1023,7 +1018,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "a8e7e9f741e21059fc877d7a9152f8459210847dfe7118add872a7348e7f80a8"
+content-hash = "e9c9cce7b0fc8720f265518bca3c0c145d717d465e5e8220d1324c41e06e3b99"
 
 [metadata.files]
 alembic = [
@@ -1785,10 +1780,6 @@ sqlalchemy = [
     {file = "SQLAlchemy-1.4.41-cp39-cp39-win_amd64.whl", hash = "sha256:f5fa526d027d804b1f85cdda1eb091f70bde6fb7d87892f6dd5a48925bc88898"},
     {file = "SQLAlchemy-1.4.41.tar.gz", hash = "sha256:0292f70d1797e3c54e862e6f30ae474014648bc9c723e14a2fda730adb0a9791"},
 ]
-sqlalchemy2-stubs = [
-    {file = "sqlalchemy2-stubs-0.0.2a29.tar.gz", hash = "sha256:1bbc6aebd76db7c0351a9f45cc1c4e8ac335ba150094c2af091e8b87b9118419"},
-    {file = "sqlalchemy2_stubs-0.0.2a29-py3-none-any.whl", hash = "sha256:ece266cdabf3797b13ddddba27561b67ae7dedc038942bf66e045e978a5e3a66"},
-]
 starlette = [
     {file = "starlette-0.19.1-py3-none-any.whl", hash = "sha256:5a60c5c2d051f3a8eb546136aa0c9399773a689595e099e0877704d5888279bf"},
     {file = "starlette-0.19.1.tar.gz", hash = "sha256:c6d21096774ecb9639acad41b86b7706e52ba3bf1dc13ea4ed9ad593d47e24c7"},
@@ -1800,6 +1791,10 @@ tomli = [
 types-protobuf = [
     {file = "types-protobuf-3.20.4.tar.gz", hash = "sha256:0dad3a5009895c985a56e2837f61902bad9594151265ac0ee907bb16d0b01eb7"},
     {file = "types_protobuf-3.20.4-py3-none-any.whl", hash = "sha256:5082437afe64ce3b31c8db109eae86e02fda11e4d5f9ac59cb8578a8a138aa70"},
+]
+types-python-dateutil = [
+    {file = "types-python-dateutil-2.8.19.tar.gz", hash = "sha256:bfd3eb39c7253aea4ba23b10f69b017d30b013662bb4be4ab48b20bbd763f309"},
+    {file = "types_python_dateutil-2.8.19-py3-none-any.whl", hash = "sha256:6284df1e4783d8fc6e587f0317a81333856b872a6669a282f8a325342bce7fa8"},
 ]
 types-requests = [
     {file = "types-requests-2.28.11.2.tar.gz", hash = "sha256:fdcd7bd148139fb8eef72cf4a41ac7273872cad9e6ada14b11ff5dfdeee60ed3"},

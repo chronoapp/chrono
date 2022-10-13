@@ -29,8 +29,9 @@ class ContactRepository:
         self.session = session
 
     async def searchContacts(self, user: User, query: str, limit: int = 10) -> List[Contact]:
+        tsQuery = ' | '.join(query.split())
         rows = await self.session.execute(
-            text(CONTACT_SEARCH_QUERY), {'userId': user.id, 'query': query, 'limit': limit}
+            text(CONTACT_SEARCH_QUERY), {'userId': user.id, 'query': tsQuery, 'limit': limit}
         )
         rowIds = [r[0] for r in rows]
 

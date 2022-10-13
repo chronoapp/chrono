@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Dict, Optional, Literal, Any
+from typing import List, Dict, Optional, Literal, Any, Union
 from dateutil.rrule import rrule, rruleset, rrulestr
 from zoneinfo import ZoneInfo
 from pydantic import BaseModel, validator
@@ -26,7 +26,7 @@ class EventParticipantVM(BaseModel):
     is_self: Optional[bool]
 
     @validator("email")
-    def validateContactAndEmail(cls, email, values: Dict[str, Any]):
+    def validateContactAndEmail(cls, email: Optional[str], values: Dict[str, Any]) -> Optional[str]:
         if email is None and values.get("contact_id") is None:
             raise ValueError("Either email or contact_id is required.")
 
@@ -73,7 +73,9 @@ class EventBaseVM(BaseModel):
     original_timezone: Optional[str]
 
     @validator('recurrences')
-    def isValidRecurrence(cls, recurrences: Optional[List[str]], values: Dict[str, Any]):
+    def isValidRecurrence(
+        cls, recurrences: Optional[List[str]], values: Dict[str, Any]
+    ) -> Optional[List[str]]:
         """Makes sure the start and end dates aren't included in the recurrence, since they
         the event itself has these fields.
         """
@@ -110,7 +112,7 @@ UpdateOption = Literal['SINGLE', 'ALL', 'FOLLOWING']
 
 def recurrenceToRuleSet(
     recurrence: str, timezone: str, start: datetime, startDay: Optional[str]
-) -> rruleset:
+) -> Union[rruleset, rrule]:
     """Gets the rrule objects from recurrence string array
     Converts to the local datetime in the timezone.
     """

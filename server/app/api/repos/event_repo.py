@@ -51,7 +51,7 @@ BASE_EVENT_STATEMENT = (
 )
 
 
-def getCalendarEventsStmt():
+def getCalendarEventsStmt() -> Select:
     """Statement to fetch events for a user calendar."""
     return BASE_EVENT_STATEMENT.join(Event.calendar).join(Calendar.user_calendars).join(User)
 
@@ -67,7 +67,9 @@ class EventRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def getRecurringEvents(self, user: User, calendarId: str, endDate: datetime):
+    async def getRecurringEvents(
+        self, user: User, calendarId: str, endDate: datetime
+    ) -> list[Event]:
         stmt = (
             getCalendarEventsStmt()
             .where(User.id == user.id)
@@ -85,7 +87,9 @@ class EventRepository:
 
         return result.scalars().all()
 
-    async def getSingleEvents(self, user: User, calendarId: str, showRecurring=True):
+    async def getSingleEvents(
+        self, user: User, calendarId: str, showRecurring: bool = True
+    ) -> list[Event]:
         """Gets all events for the calendar."""
         stmt = getCalendarEventsStmt().where(and_(User.id == user.id, Calendar.id == calendarId))
 
@@ -240,7 +244,7 @@ class EventRepository:
 
     async def verifyPermissions(
         self, userCalendar: UserCalendar, event: Optional[Event], newEvent: EventBaseVM
-    ):
+    ) -> None:
         """Makes sure the user has the correct permissions to modify the event.
         If the event's organizer matches this user, then I own the event.
 
@@ -356,7 +360,9 @@ class EventRepository:
 
         return updatedEvent
 
-    async def moveEvent(self, user: User, eventId: str, fromCalendarId: str, toCalendarId: str):
+    async def moveEvent(
+        self, user: User, eventId: str, fromCalendarId: str, toCalendarId: str
+    ) -> Event:
         calendarRepo = CalendarRepo(self.session)
 
         fromCalendar: Calendar = await calendarRepo.getCalendar(user, fromCalendarId)
@@ -420,7 +426,7 @@ class EventRepository:
         userCalendar: UserCalendar,
         event: Event,
         newParticipants: List[EventParticipantVM],
-    ):
+    ) -> None:
         """Create and update event participants.
         I can only modify the attendee that corresponds to this user, or if I'm the organizer.
 
@@ -590,7 +596,11 @@ def getRecurringEvent(calendar: UserCalendar, eventId: str, parentEvent: Event) 
 
 
 async def getAllExpandedRecurringEventsList(
-    user: User, calendar: UserCalendar, startDate: datetime, endDate: datetime, session
+    user: User,
+    calendar: UserCalendar,
+    startDate: datetime,
+    endDate: datetime,
+    session: AsyncSession,
 ) -> List[EventInDBVM]:
     """Expands all recurring events for the calendar."""
 
@@ -622,7 +632,7 @@ async def getAllExpandedRecurringEvents(
     startDate: datetime,
     endDate: datetime,
     query: Optional[str],
-    session,
+    session: AsyncSession,
 ) -> AsyncGenerator[EventInDBVM, None]:
     """Expands the rule in the event to get all events between the start and end.
 
@@ -766,7 +776,7 @@ def getExpandedRecurringEvents(
                     yield eventVM
 
 
-def eventMatchesQuery(event: Event, query: Optional[str]):
+def eventMatchesQuery(event: Event, query: Optional[str]) -> bool:
     """Python version of full text search for expanded recurring events.
     This needs to match the full text query in event_search.py.
     """
