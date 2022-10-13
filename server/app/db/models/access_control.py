@@ -59,5 +59,5 @@ class AccessControlRule(Base):
         self.scope_type = scope_type
         self.scope_value = scope_value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<AccessControlRule id={self.uuid} role={self.role} type={self.scope_type} value={self.scope_value}/>'

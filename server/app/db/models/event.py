@@ -30,14 +30,14 @@ EventStatus = Literal['deleted', 'tentative', 'active']
 TAGGED_INPUT_PATTERN = r'@\[([\w\d\.\-\_ \@]+)\]\(\[id:([\w]+)\]\[type:([\w]+)\]\)'
 
 
-def stripParticipants(title: Optional[str]):
+def stripParticipants(title: Optional[str]) -> Optional[str]:
     if title:
         return re.sub(TAGGED_INPUT_PATTERN, r'\1', title)
     else:
         return None
 
 
-def isValidTimezone(timeZone: str):
+def isValidTimezone(timeZone: str) -> bool:
     try:
         ZoneInfo(timeZone)
         return True
@@ -152,11 +152,11 @@ class Event(Base):
     guests_can_see_other_guests = Column(Boolean, default=True, nullable=False)
 
     @property
-    def title_short(self):
+    def title_short(self) -> Optional[str]:
         return stripParticipants(self.title)
 
     @property
-    def all_day(self):
+    def all_day(self) -> bool:
         return self.start_day is not None and self.end_day is not None
 
     @property
@@ -232,7 +232,7 @@ class Event(Base):
         self.original_start_day = originalStartDay
         self.original_timezone = originalTimezone
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<Event {self.id} {self.title} start:{self.start} end:{self.end} {self.status}/>'
 
     def isOrganizer(self, userCalendar: UserCalendar) -> bool:
@@ -242,5 +242,5 @@ class Event(Base):
             or self.organizer.email == userCalendar.user.email
         )
 
-    def isGoogleEvent(self):
+    def isGoogleEvent(self) -> bool:
         return self.g_id is not None

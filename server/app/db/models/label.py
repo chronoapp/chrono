@@ -37,5 +37,5 @@ class Label(Base):
         self.color_hex = color_hex
         self.position = 0
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<Label {self.id} {self.parent_id=} {self.title=} {self.position=}/>'

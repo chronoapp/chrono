@@ -26,7 +26,7 @@ class Calendar(Base):
     user_calendars = relationship("UserCalendar", foreign_keys='[UserCalendar.id]')
 
     @property
-    def email(self):
+    def email(self) -> Optional[str]:
         if self.google_id:
             return self.google_id
         else:
@@ -46,5 +46,5 @@ class Calendar(Base):
         self.timezone = timezone
         self.email_ = email
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<Calendar id={self.id} summary={self.summary}/>'

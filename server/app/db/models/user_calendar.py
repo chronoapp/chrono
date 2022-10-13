@@ -44,7 +44,7 @@ class UserCalendar(Base):
 
     webhook = relationship("Webhook", uselist=False, back_populates="calendar", lazy='joined')
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<UserCalendar id={self.id} summary={self.summary}/>'
 
     def __init__(
@@ -67,7 +67,7 @@ class UserCalendar(Base):
         self.primary = primary
         self.deleted = deleted
 
-    def hasWriteAccess(self):
+    def hasWriteAccess(self) -> bool:
         return self.access_role == 'writer' or self.access_role == 'owner'
 
     @property

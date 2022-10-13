@@ -22,7 +22,7 @@ class Contact(Base):
     photo_url = Column(String(255), nullable=True)
 
     @property
-    def display_name(self):
+    def display_name(self) -> Optional[str]:
         if self.first_name and self.last_name:
             return f'{self.first_name} {self.last_name}'
         elif self.first_name:
@@ -46,5 +46,5 @@ class Contact(Base):
         self.photo_url = photo_url
         self.google_id = google_id
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<Contact {self.id} {self.display_name}>'

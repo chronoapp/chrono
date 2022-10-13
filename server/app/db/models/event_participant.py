@@ -79,7 +79,7 @@ class EventParticipant(Base):
         self.contact_id = contactId
         self.response_status = responseStatus
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<EventParticipant {self.email_} {self.display_name} {self.response_status}>'
 
 
@@ -101,7 +101,7 @@ class EventAttendee(EventParticipant):
             responseStatus=responseStatus,
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<EventAttendee {self.email_} {self.display_name} {self.response_status}>'
 
 
@@ -117,7 +117,7 @@ class EventCreator(EventParticipant):
             responseStatus=None,
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<EventCreator {self.email_} {self.display_name}>'
 
 
@@ -133,5 +133,5 @@ class EventOrganizer(EventParticipant):
             responseStatus=None,
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<EventOrganizer {self.email_} {self.display_name}>'

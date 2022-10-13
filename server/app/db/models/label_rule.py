@@ -24,5 +24,5 @@ class LabelRule(Base):
     def __init__(self, text: str):
         self.text = text
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<LabelRule {self.text} {self.label.title}>'
