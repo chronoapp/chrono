@@ -22,6 +22,6 @@ class UserCredential(Base):
 
     token_data = Column(JSONB, nullable=False)
 
-    def __init__(self, tokenData, provider: ProviderType) -> None:
+    def __init__(self, tokenData: dict, provider: ProviderType) -> None:
         self.token_data = tokenData
         self.provider = provider.value

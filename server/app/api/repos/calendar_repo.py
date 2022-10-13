@@ -26,7 +26,7 @@ class CalendarBaseVM(BaseModel):
     email: Optional[str]
 
     @validator('timezone')
-    def validateTimezone(cls, timezone: Optional[str]):
+    def validateTimezone(cls, timezone: Optional[str]) -> Optional[str]:
         if timezone:
             if not isValidTimezone(timezone):
                 raise ValueError(f'Invalid timezone {timezone}')
@@ -97,7 +97,7 @@ class CalendarRepo:
 
     async def updateCalendar(
         self, user: User, calendarId: str, userCalendar: CalendarVM
-    ) -> UserCalendar:
+    ) -> Optional[UserCalendar]:
         calendarDb = await self.getCalendar(user, calendarId)
 
         if calendarDb:
@@ -112,7 +112,7 @@ class CalendarRepo:
 
         return calendarDb
 
-    async def deleteCalendar(self, user: User, calendarId: str):
+    async def deleteCalendar(self, user: User, calendarId: str) -> None:
         calendarDb = await self.getCalendar(user, calendarId)
 
         await self.session.execute(delete(UserCalendar).where(UserCalendar.id == calendarDb.id))
