@@ -234,7 +234,7 @@ def verifyPassword(plainPass: str, hashedPass: str) -> bool:
     return pwdContext.verify(plainPass, hashedPass)
 
 
-def getPasswordHash(plainPass: str):
+def getPasswordHash(plainPass: str) -> str:
     return pwdContext.hash(plainPass)
 
 
