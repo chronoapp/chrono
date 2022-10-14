@@ -21,7 +21,7 @@ class LabelVM(BaseModel):
     position: Optional[int]
 
     @validator('title')
-    def titleIsNonEmpty(cls, title: str):
+    def titleIsNonEmpty(cls, title: str) -> str:
         if not title:
             raise ValueError('Title not specified.')
 
