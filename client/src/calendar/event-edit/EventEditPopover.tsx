@@ -387,19 +387,20 @@ function EventPopover(props: IProps) {
 
     return (
       <>
-        <div className="cal-event-modal-header">
-          <div
-            className="mr-2 is-flex is-align-items-center"
-            style={{ height: '100%' }}
-            onClick={(e) => {
-              eventActions.cancelSelect()
-            }}
-          >
-            <MdClose style={{ cursor: 'pointer' }} className="has-text-grey" />
-          </div>
-        </div>
+        <Box className="cal-event-modal-header" mt="1">
+          <IconButton
+            variant="ghost"
+            ml="2"
+            mr="2"
+            size="sm"
+            aria-label="close modal"
+            color="gray.600"
+            icon={<MdClose />}
+            onClick={eventActions.cancelSelect}
+          ></IconButton>
+        </Box>
 
-        <div className="cal-event-modal is-flex is-flex-direction-column">
+        <Flex className="cal-event-modal" direction={'column'} mt="1">
           <TaggableInput
             labels={labels}
             title={eventFields.title}
