@@ -344,10 +344,10 @@ function EventPopover(props: IProps) {
 
           {participants.length > 0 && (
             <Flex justifyContent="left" mt="2">
-              <Flex mt="1">
+              <Flex mt="2" mr="2">
                 <FiMail />
               </Flex>
-              <Box ml="2" w="100%">
+              <Box w="100%">
                 <ParticipantList
                   readonly={true}
                   calendar={getSelectedCalendar(eventFields.calendarId)}
