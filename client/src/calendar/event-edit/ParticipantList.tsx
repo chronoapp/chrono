@@ -2,7 +2,18 @@ import React from 'react'
 import produce from 'immer'
 
 import { FiX } from 'react-icons/fi'
-import { Button, Flex, Text, IconButton } from '@chakra-ui/react'
+import {
+  Accordion,
+  AccordionIcon,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  Button,
+  Flex,
+  Text,
+  IconButton,
+} from '@chakra-ui/react'
+
 import Hoverable from '@/lib/Hoverable'
 
 import EventParticipant from '@/models/EventParticipant'
@@ -19,6 +30,8 @@ interface IProps {
   onUpdateParticipants: (participants: EventParticipant[]) => void
   maxRecommendations: number
 }
+
+const MAX_PARTICIPANTS = 10
 
 export function getParticipantDiff(before: EventParticipant[], after: EventParticipant[]) {
   const added = after.filter((afterParticipant) => {
@@ -68,19 +81,23 @@ function getResponseStatusText(participants: EventParticipant[]) {
   return [responseText, noText, maybeText, awaitingText].filter((t) => t).join(', ')
 }
 
+export function ParticipantsHeader(props: { participants: EventParticipant[] }) {
+  return (
+    <Flex direction={'column'} alignItems="flex-start">
+      <Text pl="0" justifyContent={'left'} alignContent={'center'} fontSize={'sm'}>
+        {`${props.participants.length} guest${props.participants.length > 1 && 's'}`}
+      </Text>
+      <Text fontSize={'xs'} ml="0.25" mt="0.25">
+        {getResponseStatusText(props.participants)}
+      </Text>
+    </Flex>
+  )
+}
+
 export default function ParticipantList(props: IProps) {
   function renderHeading() {
     if (props.readonly) {
-      return (
-        <Flex direction={'column'} ml="0.5">
-          <Text alignContent={'center'} fontSize={'sm'}>
-            {props.participants.length} guest{props.participants.length > 1 && 's'}
-          </Text>
-          <Text fontSize={'xs'} ml="0.25">
-            {getResponseStatusText(props.participants)}
-          </Text>
-        </Flex>
-      )
+      return <ParticipantsHeader participants={props.participants} />
     } else {
       return (
         <ParticipantInput
@@ -96,10 +113,8 @@ export default function ParticipantList(props: IProps) {
     }
   }
 
-  return (
-    <Flex alignItems="left" justifyContent={'left'} direction="column">
-      {renderHeading()}
-
+  function renderParticipantsList() {
+    return (
       <Flex alignItems="center" direction="column" maxHeight={'md'} overflow="auto" pt="1">
         {props.participants.map((participant, idx) => (
           <Hoverable key={idx}>
@@ -160,8 +175,46 @@ export default function ParticipantList(props: IProps) {
           </Hoverable>
         ))}
       </Flex>
-    </Flex>
-  )
+    )
+  }
+
+  if (props.readonly && props.participants.length >= MAX_PARTICIPANTS) {
+    return (
+      <Flex alignItems="left" justifyContent={'left'} direction="column">
+        <Accordion
+          allowToggle={true}
+          defaultChecked={false}
+          onChange={(expandedIdx) => {
+            // TODO: Make sure the popover is positioned properly
+            // by forcing a scroll.
+          }}
+        >
+          <AccordionItem border="0" mt="1">
+            <AccordionButton
+              p="1"
+              w={'100%'}
+              borderRadius={'md'}
+              display="flex"
+              justifyContent="space-between"
+              alignItems={'center'}
+            >
+              <ParticipantsHeader participants={props.participants} />
+              <AccordionIcon color="gray.600" />
+            </AccordionButton>
+
+            <AccordionPanel p="0">{renderParticipantsList()}</AccordionPanel>
+          </AccordionItem>
+        </Accordion>
+      </Flex>
+    )
+  } else {
+    return (
+      <Flex alignItems="left" justifyContent={'left'} direction="column">
+        {renderHeading()}
+        {renderParticipantsList()}
+      </Flex>
+    )
+  }
 }
 
 ParticipantList.defaultProps = {
