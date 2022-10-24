@@ -70,9 +70,11 @@ export default function useEventService() {
    * @param event Event to Create / Update
    * @returns a promise of the updated event.
    */
-  function saveEvent(event: Event, showToast: boolean = true) {
+  function saveEvent(event: Event, showToast: boolean = true, resetEditingEvent: boolean = true) {
     const calendarId = event.calendar_id
-    setEditingEvent(null)
+    if (resetEditingEvent) {
+      setEditingEvent(null)
+    }
 
     if (event.syncStatus === 'NOT_SYNCED') {
       setEvents((prevState) => {
