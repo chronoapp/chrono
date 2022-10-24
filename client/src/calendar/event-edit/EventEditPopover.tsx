@@ -10,22 +10,13 @@ import {
   Menu,
   MenuButton,
   MenuList,
-  MenuItem,
-  MenuDivider,
   Text,
+  Divider,
+  useToast,
+  IconButton,
 } from '@chakra-ui/react'
 
-import {
-  FiCalendar,
-  FiClock,
-  FiAlignLeft,
-  FiTrash,
-  FiChevronDown,
-  FiPlus,
-  FiMail,
-} from 'react-icons/fi'
-
-import { RRule } from 'rrule'
+import { FiCalendar, FiClock, FiAlignLeft, FiTrash, FiPlus, FiMail } from 'react-icons/fi'
 
 import produce from 'immer'
 import moment from 'moment'
@@ -36,7 +27,6 @@ import { MdClose } from 'react-icons/md'
 
 import { format, fullDayFormat } from '@/util/localizer'
 import { addNewLabels } from '@/calendar/utils/LabelUtils'
-import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 
 import Event from '@/models/Event'
 import Calendar from '@/models/Calendar'
@@ -46,12 +36,12 @@ import Contact from '@/models/Contact'
 
 import { LabelTag } from '@/components/LabelTag'
 import LabelTree from '@/components/LabelTree'
-import * as API from '@/util/Api'
 
 import { labelsState } from '@/state/LabelsState'
 import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
 import { displayState, editingEventState } from '@/state/EventsState'
+import { userState } from '@/state/UserState'
 
 import { mergeParticipants } from './EventEditUtils'
 import TimeSelect from './TimeSelect'
@@ -62,6 +52,8 @@ import TaggableInput from './TaggableInput'
 import { EventService } from './useEventService'
 import EventFields from './EventFields'
 import ParticipantList from './ParticipantList'
+import EventResponseToggle from './EventResponseToggle'
+
 interface IProps {
   event: Event
   eventService: EventService
@@ -75,6 +67,7 @@ function EventPopover(props: IProps) {
   const labelState = useRecoilValue(labelsState)
   const calendarsById = useRecoilValue(calendarsState).calendarsById
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
+  const toast = useToast({ duration: 2000, position: 'top-right' })
 
   const [eventFields, setEventFields] = useState(
     new EventFields(
@@ -95,12 +88,13 @@ function EventPopover(props: IProps) {
     )
   )
   const [participants, setParticipants] = useState<EventParticipant[]>(props.event.participants)
+  const thisUser = useRecoilValue(userState)
+  const myself = participants.find((p) => p.email === thisUser?.email)
 
   const defaultDays = eventFields.allDay
     ? Math.max(dates.diff(eventFields.end, eventFields.start, 'day'), 1)
     : 1
 
-  const isExistingEvent = props.event.syncStatus !== 'NOT_SYNCED'
   const contentEditableRef = createRef<HTMLInputElement>()
 
   useEffect(() => {
@@ -116,141 +110,28 @@ function EventPopover(props: IProps) {
   function keyboardEvents(e: KeyboardEvent) {
     if (e.key === 'Enter') {
       if (contentEditableRef.current && document.activeElement !== contentEditableRef.current) {
-        props.eventService.saveEvent(getUpdatedEvent(props.event, eventFields))
+        props.eventService.saveEvent(getUpdatedEvent(props.event, eventFields, participants))
       }
     }
   }
 
-  function getUpdatedEvent(e: Event, fields: EventFields) {
-    const event = {
+  function getUpdatedEvent(
+    e: Event,
+    fields: EventFields,
+    eventParticipants: EventParticipant[]
+  ): Event {
+    return {
       ...e,
       ...EventFields.getMutableEventFields(fields),
-      participants: participants,
-    }
-
-    return event
-  }
-
-  function renderEditEventButton() {
-    if (props.event.recurring_event_id) {
-      return (
-        <Menu>
-          <MenuButton
-            ml="2"
-            borderRadius="sm"
-            size="sm"
-            fontWeight="normal"
-            colorScheme="primary"
-            as={Button}
-            rightIcon={<FiChevronDown />}
-          >
-            Edit
-          </MenuButton>
-
-          <MenuList mt="-2">
-            <MenuItem
-              fontSize="sm"
-              onClick={() => eventActions.updateEditMode('FULL_EDIT', 'SINGLE')}
-            >
-              This event
-            </MenuItem>
-            <MenuDivider m="0" />
-            <MenuItem
-              fontSize="sm"
-              onClick={() => eventActions.updateEditMode('FULL_EDIT', 'THIS_AND_FOLLOWING')}
-            >
-              This and following events
-            </MenuItem>
-            <MenuDivider m="0" />
-            <MenuItem
-              fontSize="sm"
-              onClick={() => {
-                eventActions.updateEditMode('FULL_EDIT', 'ALL')
-              }}
-            >
-              All events
-            </MenuItem>
-          </MenuList>
-        </Menu>
-      )
-    } else {
-      return (
-        <Button
-          size="sm"
-          borderRadius="sm"
-          fontWeight="normal"
-          colorScheme="primary"
-          onClick={() => {
-            eventActions.updateEditMode('FULL_EDIT', 'SINGLE')
-          }}
-        >
-          Edit
-        </Button>
-      )
+      participants: eventParticipants,
     }
   }
 
-  function renderDeleteEventButton() {
+  function onDeleteEvent() {
     if (props.event.recurring_event_id) {
-      return (
-        <Menu>
-          <MenuButton
-            ml="2"
-            borderRadius="sm"
-            size="sm"
-            fontWeight="normal"
-            as={Button}
-            leftIcon={<FiTrash />}
-            rightIcon={<FiChevronDown />}
-          >
-            Delete
-          </MenuButton>
-
-          <MenuList mt="-2">
-            <MenuItem
-              fontSize="sm"
-              onClick={() =>
-                props.eventService.deleteEvent(props.event.calendar_id, props.event.id)
-              }
-            >
-              This event
-            </MenuItem>
-            <MenuDivider m="0" />
-            <MenuItem
-              fontSize="sm"
-              onClick={() => props.eventService.deleteThisAndFollowingEvents(props.event)}
-            >
-              This and following events
-            </MenuItem>
-            <MenuDivider m="0" />
-            <MenuItem
-              fontSize="sm"
-              onClick={() => {
-                props.event.recurring_event_id &&
-                  props.eventService.deleteAllRecurringEvents(
-                    props.event.calendar_id,
-                    props.event.recurring_event_id
-                  )
-              }}
-            >
-              All events
-            </MenuItem>
-          </MenuList>
-        </Menu>
-      )
+      eventActions.showConfirmDialog('DELETE_RECURRING_EVENT')
     } else {
-      return (
-        <Button
-          ml="2"
-          borderRadius="sm"
-          size="sm"
-          fontWeight="normal"
-          leftIcon={<FiTrash />}
-          onClick={() => props.eventService.deleteEvent(props.event.calendar_id, props.event.id)}
-        >
-          Delete
-        </Button>
-      )
+      props.eventService.deleteEvent(props.event.calendar_id, props.event.id)
     }
   }
 
@@ -311,10 +192,27 @@ function EventPopover(props: IProps) {
 
     return (
       <Box>
-        <Box className="cal-event-modal-header">
-          <Flex mr="2" alignItems={'center'} height="100%" onClick={eventActions.cancelSelect}>
-            <MdClose style={{ cursor: 'pointer' }} className="has-text-grey" />
-          </Flex>
+        <Box className="cal-event-modal-header" mt="1">
+          {calendar.isWritable() && (
+            <IconButton
+              variant="ghost"
+              aria-label="delete event"
+              size="sm"
+              icon={<FiTrash />}
+              onClick={onDeleteEvent}
+            />
+          )}
+
+          <IconButton
+            variant="ghost"
+            ml="2"
+            mr="2"
+            size="sm"
+            aria-label="close modal"
+            color="gray.600"
+            icon={<MdClose />}
+            onClick={eventActions.cancelSelect}
+          ></IconButton>
         </Box>
 
         <Flex direction={'column'} mb="3" className="cal-event-modal">
@@ -344,7 +242,7 @@ function EventPopover(props: IProps) {
 
           {participants.length > 0 && (
             <Flex justifyContent="left" mt="2">
-              <Flex mt="2" mr="2">
+              <Flex mt="4" mr="2">
                 <FiMail />
               </Flex>
               <Box w="100%">
@@ -373,10 +271,64 @@ function EventPopover(props: IProps) {
         </Flex>
 
         {calendar.isWritable() && (
-          <Flex ml="4" mb="3">
-            {renderEditEventButton()}
-            {renderDeleteEventButton()}
-          </Flex>
+          <>
+            <Divider></Divider>
+            <Flex mt="2" mb="3" ml="4" mr="4" alignItems="center">
+              {myself && (
+                <EventResponseToggle
+                  initialStatus={myself.response_status || 'needsAction'}
+                  onUpdateResponseStatus={(responseStatus) => {
+                    const updatedParticipants = produce(participants, (draft) => {
+                      const me = draft.find((p) => p.email === myself.email)
+                      if (me) {
+                        me.response_status = responseStatus
+                      }
+                    })
+                    setParticipants(updatedParticipants)
+
+                    let responseText = ''
+                    if (responseStatus === 'accepted') {
+                      responseText = 'Accepted'
+                    } else if (responseStatus === 'declined') {
+                      responseText = 'Declined'
+                    } else if (responseStatus === 'tentative') {
+                      responseText = 'Tentatively accepted'
+                    }
+
+                    if (responseText) {
+                      toast({
+                        title: `${responseText} invite to ${props.event.title}`,
+                        status: 'success',
+                        variant: 'subtle',
+                        isClosable: true,
+                      })
+                    }
+
+                    const updatedEvent = getUpdatedEvent(
+                      props.event,
+                      eventFields,
+                      updatedParticipants
+                    )
+                    eventActions.updateEditingEvent(updatedEvent)
+                    props.eventService.saveEvent(updatedEvent, false, false)
+                  }}
+                />
+              )}
+              <Button
+                size="sm"
+                fontWeight="normal"
+                marginLeft={'auto'}
+                onClick={() => {
+                  eventActions.updateEditingEvent(
+                    getUpdatedEvent(props.event, eventFields, participants)
+                  )
+                  eventActions.updateEditMode('FULL_EDIT', 'SINGLE')
+                }}
+              >
+                Edit
+              </Button>
+            </Flex>
+          </>
         )}
       </Box>
     )
@@ -407,7 +359,9 @@ function EventPopover(props: IProps) {
             portalCls={'.cal-event-modal-container'}
             isHeading={false}
             onBlur={() => {
-              eventActions.updateEditingEvent(getUpdatedEvent(props.event, eventFields))
+              eventActions.updateEditingEvent(
+                getUpdatedEvent(props.event, eventFields, participants)
+              )
             }}
             handleChange={(title, labelIds: number[]) => {
               const updatedLabels = addNewLabels(
@@ -475,7 +429,9 @@ function EventPopover(props: IProps) {
                 setDisplay((prevState) => {
                   return { ...prevState, selectedDate: start }
                 })
-                eventActions.updateEditingEvent(getUpdatedEvent(props.event, updatedFields))
+                eventActions.updateEditingEvent(
+                  getUpdatedEvent(props.event, updatedFields, participants)
+                )
               }}
             />
           </Flex>
@@ -494,7 +450,9 @@ function EventPopover(props: IProps) {
                     endDay: fullDayFormat(endDate),
                   }
                   setEventFields(updatedEventFields)
-                  eventActions.updateEditingEvent(getUpdatedEvent(props.event, updatedEventFields))
+                  eventActions.updateEditingEvent(
+                    getUpdatedEvent(props.event, updatedEventFields, participants)
+                  )
                 }}
               />
             )}
@@ -549,7 +507,9 @@ function EventPopover(props: IProps) {
                 }
 
                 setEventFields(updatedFields)
-                eventActions.updateEditingEvent(getUpdatedEvent(props.event, updatedFields))
+                eventActions.updateEditingEvent(
+                  getUpdatedEvent(props.event, updatedFields, participants)
+                )
               }}
             >
               All Day
@@ -587,7 +547,7 @@ function EventPopover(props: IProps) {
           </Flex>
 
           <Flex mt="2">
-            <Flex mt="1">
+            <Flex mt="4">
               <FiMail />
             </Flex>
             <Box ml="2.5" w="100%">
@@ -623,46 +583,47 @@ function EventPopover(props: IProps) {
             <Flex>
               <Button
                 size="sm"
-                borderRadius="sm"
+                borderRadius="md"
                 fontWeight="normal"
                 colorScheme="primary"
                 onClick={() =>
-                  props.eventService.saveEvent(getUpdatedEvent(props.event, eventFields))
+                  props.eventService.saveEvent(
+                    getUpdatedEvent(props.event, eventFields, participants)
+                  )
                 }
               >
                 Save
               </Button>
 
-              {isExistingEvent ? (
-                renderDeleteEventButton()
-              ) : (
-                <Button
-                  ml="2"
-                  size="sm"
-                  borderRadius="sm"
-                  fontWeight="normal"
-                  onClick={eventActions.cancelSelect}
-                >
-                  Discard
-                </Button>
-              )}
+              <Button
+                ml="2"
+                size="sm"
+                borderRadius="md"
+                fontWeight="normal"
+                onClick={eventActions.cancelSelect}
+              >
+                Cancel
+              </Button>
             </Flex>
 
             <Button
               mt="2"
               mb="1"
               size="sm"
+              borderRadius="md"
               fontWeight="normal"
               variant="ghost"
               onClick={() => {
-                eventActions.updateEditingEvent(getUpdatedEvent(props.event, eventFields))
+                eventActions.updateEditingEvent(
+                  getUpdatedEvent(props.event, eventFields, participants)
+                )
                 eventActions.updateEditMode('FULL_EDIT', 'SINGLE')
               }}
             >
               More Options
             </Button>
           </Flex>
-        </div>
+        </Flex>
       </>
     )
   }

@@ -34,9 +34,9 @@ function ConfirmUpdateRecurringEventModal(props: { event: Event; eventService: E
 
   /**
    * Overrides the existing parent recurring event.
-   * TODO: Update event start / end based on the offsets.
    */
   function getUpdatedParentEvent(parent: Event, child: Event) {
+    // FIXME: Update event start / end based on the offsets.
     return produce(parent, (event) => {
       event.title = child.title
       event.description = child.description
