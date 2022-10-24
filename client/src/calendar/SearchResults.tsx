@@ -30,7 +30,6 @@ function EventItem(props: { event: Event; eventService: EventService }) {
   const editingEvent = useRecoilValue(editingEventState)
 
   const dateDisplay = format(props.event.start, 'D MMM YYYY, ddd')
-
   const isEditing = editingEvent?.id === props.event.id && editingEvent?.editMode !== 'FULL_EDIT'
 
   function onSelectEvent() {

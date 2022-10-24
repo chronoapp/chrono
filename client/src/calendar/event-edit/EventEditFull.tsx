@@ -13,11 +13,6 @@ import {
   ModalBody,
   ModalCloseButton,
   Checkbox,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-  MenuDivider,
   Input,
   Flex,
 } from '@chakra-ui/react'
@@ -25,10 +20,9 @@ import {
 import produce from 'immer'
 import moment from 'moment'
 import { FiMail } from 'react-icons/fi'
-import { FiCalendar, FiAlignLeft, FiClock, FiChevronDown } from 'react-icons/fi'
+import { FiCalendar, FiAlignLeft, FiClock } from 'react-icons/fi'
 
 import * as dates from '@/util/dates'
-import * as API from '@/util/Api'
 import Event from '@/models/Event'
 import Contact from '@/models/Contact'
 import Calendar from '@/models/Calendar'
@@ -37,13 +31,12 @@ import { Label } from '@/models/Label'
 import { labelsState } from '@/state/LabelsState'
 import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
-import { displayState, editingEventState, EditRecurringAction } from '@/state/EventsState'
+import { displayState, editingEventState } from '@/state/EventsState'
 
 import { format, fullDayFormat } from '@/util/localizer'
 import ContentEditable from '@/lib/ContentEditable'
 import { LabelTag } from '@/components/LabelTag'
 import { addNewLabels } from '@/calendar/utils/LabelUtils'
-import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 import EventParticipant from '@/models/EventParticipant'
 import { mergeParticipants } from './EventEditUtils'
 import SelectCalendar from './SelectCalendar'
@@ -96,7 +89,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
   const isUnsavedEvent = props.event.syncStatus === 'NOT_SYNCED'
   const isExistingRecurringEvent = !isUnsavedEvent && props.event.recurrences != null
 
-  function getEventData(): Event {
+  function getUpdatedEvent(): Event {
     return {
       ...props.event,
       ...EventFields.getMutableEventFields(eventFields),
@@ -113,150 +106,30 @@ export default function EventEditFull(props: { event: Event; eventService: Event
     }
   }
 
-  /**
-   * Overrides the existing parent recurring event.
-   * TODO: Update event start / end based on the offsets.
-   */
-  async function updateRecurringEvent(parent: Event) {
-    const updatedParent = produce(parent, (event) => {
-      event.title = eventFields.title
-      event.description = eventFields.description
-      event.labels = eventFields.labels
-    })
-
-    return await props.eventService.updateEventLocal(updatedParent)
-  }
-
   async function onSaveEvent() {
-    const eventData = getEventData()
+    const updatedEvent = getUpdatedEvent()
 
-    if (!isExistingRecurringEvent) {
-      // Update the individual event
-      return await props.eventService.saveEvent(eventData)
-    } else {
+    if (isExistingRecurringEvent) {
       // Update a recurring event.
       if (!props.event.recurring_event_id || !props.event.original_start) {
         throw Error('Could not find recurring event')
       }
 
-      switch (recurringAction) {
-        case 'SINGLE':
-          return await props.eventService.saveEvent(eventData)
-
-        case 'ALL':
-          const parent = await API.getEvent(
-            API.getAuthToken(),
-            props.event.calendar_id,
-            props.event.recurring_event_id
-          )
-          return await updateRecurringEvent(parent)
-
-        case 'THIS_AND_FOLLOWING':
-          /**
-           * To update this event and all following events, we need to split the recurrence into:
-           * 1) The recurrence up to this event. We then use the recurrence to update the parent event.
-           * 2) The recurrence from this event onwards, to create a new series of events.
-           */
-          const parentEvent = await API.getEvent(
-            API.getAuthToken(),
-            props.event.calendar_id,
-            props.event.recurring_event_id
-          )
-
-          if (dates.eq(parentEvent.start, props.event.original_start)) {
-            return updateRecurringEvent(parentEvent)
-          } else {
-            // 1) Update the base event's recurrence, cut off at the current event's original start date.
-            const rules = getSplitRRules(
-              props.event.recurrences!.join('\n'),
-              parentEvent.start,
-              props.event.original_start
-            )
-            const updatedParentEvent = { ...parentEvent, recurrences: [rules.start.toString()] }
-            const req1 = props.eventService.updateEventLocal(updatedParentEvent)
-
-            // 2) Create a new recurring event for the the rest of the events
-            // TODO: Use the new recurrence this & following starting at this date.
-            const thisAndFollowingEvent = {
-              ...eventData,
-              recurrences: [rules.end.toString()],
-              recurring_event_id: null,
-              saved: false,
-            }
-            const req2 = props.eventService.saveEvent(thisAndFollowingEvent, false)
-
-            return Promise.all([req1, req2])
-          }
-      }
+      eventActions.updateEditingEvent(updatedEvent)
+      eventActions.showConfirmDialog('UPDATE_RECURRING_EVENT')
+    } else {
+      // Update the individual event
+      return await props.eventService.saveEvent(updatedEvent)
     }
   }
 
   const labels: Label[] = Object.values(labelState.labelsById)
 
-  function recurringEventActionDescription(action: EditRecurringAction) {
-    if (action === 'ALL') {
-      return 'Editing all events in series'
-    } else if (action === 'THIS_AND_FOLLOWING') {
-      return 'Editing this and following events in series'
-    } else if (action === 'SINGLE') {
-      return 'Editing this event in series'
-    }
-  }
-
-  function renderRecurringEventSelectionMenu() {
-    if (!isExistingRecurringEvent || !recurringAction) {
-      return
-    }
-
-    const currentSelection = recurringEventActionDescription(recurringAction)
-
-    return (
-      <Menu>
-        <MenuButton
-          ml="2"
-          borderRadius="sm"
-          size="sm"
-          fontWeight="normal"
-          variant="outline"
-          as={Button}
-          rightIcon={<FiChevronDown />}
-        >
-          {currentSelection}
-        </MenuButton>
-
-        <MenuList mt="-2">
-          <MenuItem
-            fontSize="sm"
-            onClick={() => eventActions.updateEditMode('FULL_EDIT', 'SINGLE')}
-          >
-            This event
-          </MenuItem>
-          <MenuDivider m="0" />
-          <MenuItem
-            fontSize="sm"
-            onClick={() => eventActions.updateEditMode('FULL_EDIT', 'THIS_AND_FOLLOWING')}
-          >
-            This and following events
-          </MenuItem>
-          <MenuDivider m="0" />
-          <MenuItem
-            fontSize="sm"
-            onClick={() => {
-              eventActions.updateEditMode('FULL_EDIT', 'ALL')
-            }}
-          >
-            All events
-          </MenuItem>
-        </MenuList>
-      </Menu>
-    )
-  }
-
   return (
     <Modal size="3xl" isOpen={true} onClose={eventActions.cancelSelect}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader pb="2">Edit Event {renderRecurringEventSelectionMenu()}</ModalHeader>
+        <ModalHeader pb="2">Edit Event</ModalHeader>
         <ModalCloseButton />
 
         <ModalBody maxHeight="3xl">
@@ -279,7 +152,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                 setEventFields({ ...eventFields, title, labels: updatedLabels })
               }}
               onBlur={() => {
-                eventActions.updateEditingEvent(getEventData())
+                eventActions.updateEditingEvent(getUpdatedEvent())
               }}
               onUpdateContacts={(contacts: Contact[]) => {
                 const updatedParticipants = mergeParticipants(

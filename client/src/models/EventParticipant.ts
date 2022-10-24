@@ -1,9 +1,12 @@
+import { immerable } from 'immer'
 import Contact from './Contact'
 import makeId from '@/lib/js-lib/makeId'
 
 export type ResponseStatus = 'needsAction' | 'accepted' | 'declined' | 'tentative'
 
 export default class EventParticipant {
+  [immerable] = true
+
   constructor(
     readonly id: string | undefined,
     readonly email?: string,

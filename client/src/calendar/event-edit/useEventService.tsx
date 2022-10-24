@@ -29,6 +29,8 @@ import useTaskQueue from '@/lib/hooks/useTaskQueue'
  * perform an update request. By using a queue, we can map the ID
  * from (1), and use it to update the event.
  *
+ * TODO: Simplify this API using a client-generated ID.
+ *
  */
 export default function useEventService() {
   const [events, setEvents] = useRecoilState(eventsState)
@@ -40,9 +42,8 @@ export default function useEventService() {
   const taskQueue = useTaskQueue({ shouldProcess: true })
 
   /**
-   * Update an existing (editing) event and handles updating the recurrence for a parent event.
-   * Use instead of saveEvent when the event hasn't been synced to server yet.
-   *
+   * Update an existing (editing) event. Use instead of saveEvent when
+   * the event hasn't been synced to server yet.
    */
   function updateEventLocal(event: Event) {
     if (!event.id) {
@@ -50,14 +51,6 @@ export default function useEventService() {
     }
 
     const calendarId = event.calendar_id!
-
-    // For recurring events, delete all and refresh.
-    // TODO: Add a filter for updates and deletes to the client store
-    // so we don't need a full refresh and prevent flickering.
-    if (Event.isParentRecurringEvent(event)) {
-      eventActions.cancelSelect()
-      eventActions.deleteEvent(calendarId, event.id, 'ALL')
-    }
 
     // Update the the editing event copy.
     console.log(`Editing ${event.id} ${editingEvent?.id}`)
@@ -79,7 +72,6 @@ export default function useEventService() {
    */
   function saveEvent(event: Event, showToast: boolean = true) {
     const calendarId = event.calendar_id
-
     setEditingEvent(null)
 
     if (event.syncStatus === 'NOT_SYNCED') {
@@ -93,7 +85,9 @@ export default function useEventService() {
       })
       queueCreateEvent(calendarId, event, showToast)
     } else {
-      if (editingEvent?.originalCalendarId && editingEvent.originalCalendarId !== calendarId) {
+      const hasMovedCalendar =
+        editingEvent?.originalCalendarId && editingEvent.originalCalendarId !== calendarId
+      if (hasMovedCalendar && editingEvent.originalCalendarId) {
         console.log(`Moved calendars from ${editingEvent.originalCalendarId} to ${calendarId}`)
         eventActions.moveEventCalendarAction(event.id, editingEvent.originalCalendarId, calendarId)
         queueMoveEvent(event.id, editingEvent.originalCalendarId, calendarId)
@@ -136,7 +130,6 @@ export default function useEventService() {
 
     // Optimistic UI Update.
     eventActions.cancelSelect()
-
     const eventsToDelete = Object.values(events.eventsByCalendar[calendarId]).filter((e) => {
       return (
         e.recurring_event_id == parentEvent.id &&

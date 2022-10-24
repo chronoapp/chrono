@@ -85,7 +85,7 @@ export function ParticipantsHeader(props: { participants: EventParticipant[] }) 
   return (
     <Flex direction={'column'} alignItems="flex-start">
       <Text pl="0" justifyContent={'left'} alignContent={'center'} fontSize={'sm'}>
-        {`${props.participants.length} guest${props.participants.length > 1 && 's'}`}
+        {`${props.participants.length} guest${props.participants.length > 1 ? 's' : ''}`}
       </Text>
       <Text fontSize={'xs'} ml="0.25" mt="0.25">
         {getResponseStatusText(props.participants)}

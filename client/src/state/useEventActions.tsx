@@ -15,10 +15,12 @@ import {
   Direction,
   EventDict,
   EditMode,
+  ConfirmAction,
+  EventState,
 } from '@/state/EventsState'
 
 /**
- * Handles actions that modify the event state.
+ * Handles actions that modify the event state locally.
  * Includes Drag & Drop interactions.
  *
  */
@@ -56,6 +58,7 @@ export default function useEventActions() {
       event: event,
       selectTailSegment: !!selectTailSegment,
       editRecurringAction: 'SINGLE' as EditRecurringAction,
+      confirmAction: undefined,
     })
   }
 
@@ -68,6 +71,18 @@ export default function useEventActions() {
         return {
           ...prevState,
           event: { ...prevState.event, ...event },
+        }
+      }
+      return null
+    })
+  }
+
+  function showConfirmDialog(action: ConfirmAction | undefined) {
+    setEditingEvent((prevEditingEvent) => {
+      if (prevEditingEvent) {
+        return {
+          ...prevEditingEvent,
+          confirmAction: action,
         }
       }
       return null
@@ -178,20 +193,21 @@ export default function useEventActions() {
   }
 
   function moveEventCalendarAction(eventId: string, prevCalendarId: string, newCalendarId: string) {
-    setEvents((prevState) => {
-      return {
-        ...prevState,
-        calendarsById: produce(prevState.eventsByCalendar, (eventsByCalendar) => {
-          const prevEvent = eventsByCalendar[prevCalendarId][eventId]
-          if (prevEvent) {
-            eventsByCalendar[newCalendarId][eventId] = prevEvent
-            delete eventsByCalendar[prevCalendarId][eventId]
-          } else {
-            throw Error(`Event with id=${eventId} not found`)
-          }
-        }),
-      }
-    })
+    const updatedEvents: EventState = {
+      ...events,
+      eventsByCalendar: produce(events.eventsByCalendar, (eventsByCalendar) => {
+        const prevEvent = events.eventsByCalendar[prevCalendarId][eventId]
+
+        if (prevEvent) {
+          eventsByCalendar[newCalendarId][eventId] = prevEvent
+          delete eventsByCalendar[prevCalendarId][eventId]
+        } else {
+          throw Error(`Event with id=${eventId} not found`)
+        }
+      }),
+    }
+
+    setEvents(updatedEvents)
   }
 
   /**
@@ -214,6 +230,7 @@ export default function useEventActions() {
       event,
       selectTailSegment: false,
       editRecurringAction: 'SINGLE' as EditRecurringAction,
+      confirmAction: undefined,
     })
   }
 
@@ -260,6 +277,7 @@ export default function useEventActions() {
     replaceEventId,
     deleteEvent,
     moveEventCalendarAction,
+    showConfirmDialog,
 
     cancelSelect,
     onInteractionStart,

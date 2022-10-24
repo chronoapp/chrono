@@ -11,6 +11,7 @@ export type DisplayView = 'Day' | 'Week' | 'WorkWeek' | 'Month'
 
 export type EditRecurringAction = 'SINGLE' | 'THIS_AND_FOLLOWING' | 'ALL'
 export type EditMode = 'READ' | 'EDIT' | 'FULL_EDIT'
+export type ConfirmAction = 'DELETE_RECURRING_EVENT' | 'UPDATE_RECURRING_EVENT'
 
 export interface DragDropAction {
   action: Action
@@ -29,6 +30,7 @@ export type EditingEvent = {
   selectTailSegment: boolean
   event: Event
   editRecurringAction: EditRecurringAction
+  confirmAction: ConfirmAction | undefined
 }
 
 export interface EventState {

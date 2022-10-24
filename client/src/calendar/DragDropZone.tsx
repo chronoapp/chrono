@@ -146,7 +146,7 @@ export default function DragDropZone(props: IProps) {
         }
 
         if (updatedEvent.syncStatus === 'NOT_SYNCED') {
-          props.eventService.updateEventLocal(updatedEvent, true)
+          props.eventService.updateEventLocal(updatedEvent)
         } else {
           props.eventService.saveEvent(updatedEvent, true)
         }
