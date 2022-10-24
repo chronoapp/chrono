@@ -16,6 +16,8 @@ import Week from './Week'
 import Month from './Month'
 import WorkWeek from './WorkWeek'
 import EventEditFull from './event-edit/EventEditFull'
+import ConfirmDeleteRecurringEventModal from './event-edit/ConfirmDeleteRecurringEventModal'
+import ConfirmUpdateRecurringEventModal from './event-edit/ConfirmUpdateRecurringEventModal'
 
 import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
 import {
@@ -164,11 +166,31 @@ function Calendar() {
   }
 
   function renderFullEditMode() {
-    if (editingEvent) {
-      const fullEditMode = editingEvent?.editMode == 'FULL_EDIT'
-      if (fullEditMode) {
-        const event = editingEvent.event
-        return event && <EventEditFull eventService={eventService} event={event} />
+    const fullEditMode = editingEvent?.editMode == 'FULL_EDIT'
+    if (fullEditMode) {
+      return <EventEditFull eventService={eventService} event={editingEvent.event} />
+    }
+  }
+
+  function renderConfirmationDialog() {
+    if (editingEvent?.confirmAction) {
+      switch (editingEvent.confirmAction) {
+        case 'DELETE_RECURRING_EVENT':
+          return (
+            <ConfirmDeleteRecurringEventModal
+              eventService={eventService}
+              event={editingEvent.event}
+            />
+          )
+        case 'UPDATE_RECURRING_EVENT':
+          return (
+            <ConfirmUpdateRecurringEventModal
+              eventService={eventService}
+              event={editingEvent.event}
+            />
+          )
+        default:
+          throw new Error('Unknown confirm action')
       }
     }
   }
@@ -177,6 +199,7 @@ function Calendar() {
     <div className="cal-calendar">
       {renderCalendar()}
       {renderFullEditMode()}
+      {renderConfirmationDialog()}
     </div>
   )
 }
