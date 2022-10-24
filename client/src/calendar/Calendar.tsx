@@ -51,6 +51,18 @@ function Calendar() {
 
   useKeyPress(['ArrowLeft', 'ArrowRight'], onKeyPress)
 
+  const handleRefreshEvent = React.useCallback(() => {
+    setUpdater(update + 1)
+  }, [])
+
+  useEffect(() => {
+    document.addEventListener(GlobalEvent.refreshCalendar, handleRefreshEvent)
+
+    return function cleanup() {
+      document.removeEventListener(GlobalEvent.refreshCalendar, handleRefreshEvent)
+    }
+  }, [handleRefreshEvent])
+
   function onKeyPress(e) {
     e.preventDefault()
 
@@ -62,14 +74,6 @@ function Calendar() {
       setDisplay((state) => ({ ...state, selectedDate: nextWeek }))
     }
   }
-
-  useEffect(() => {
-    document.addEventListener(GlobalEvent.refreshCalendar, () => setUpdater(update + 1))
-
-    return function cleanup() {
-      document.removeEventListener(GlobalEvent.refreshCalendar, () => setUpdater(update + 1))
-    }
-  }, [])
 
   useEffect(() => {
     loadCurrentViewEvents()
