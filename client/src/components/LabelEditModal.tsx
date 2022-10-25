@@ -21,14 +21,14 @@ import {
   useToast,
 } from '@chakra-ui/react'
 import { FiChevronDown } from 'react-icons/fi'
-import Toast from '@/components/Toast'
+import { InfoAlert } from '@/components/Alert'
 import { getAuthToken, putLabel, createLabel } from '@/util/Api'
 import { getSortedLabelColors, LabelColor } from '@/models/LabelColors'
 import { useRecoilState } from 'recoil'
 import { labelsState, LabelModalState } from '@/state/LabelsState'
 
 function EditLabelModal() {
-  const toast = useToast({ duration: 2000, position: 'top' })
+  const toast = useToast({ duration: 2000, position: 'top-right' })
   const [labelState, setLabelState] = useRecoilState(labelsState)
 
   const allColors = getSortedLabelColors()
@@ -61,7 +61,7 @@ function EditLabelModal() {
 
       toast({
         render: (props) => (
-          <Toast title={`Saved tag ${label.title}.`} showSpinner={false} {...props} />
+          <InfoAlert title={`Saved tag ${label.title}.`} onClose={props.onClose} />
         ),
       })
     }
