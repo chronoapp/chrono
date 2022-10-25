@@ -232,7 +232,7 @@ async def test_event_repo_edit_attendee_permissions_as_guest(user, session):
     # Make sure we can't add a new participant.
     newParticipants.append(EventParticipantVM(email='p3@chrono.so'))
     with pytest.raises(EventRepoPermissionError):
-        event = await eventRepo.updateEvent(
+        await eventRepo.updateEvent(
             user, userCalendar, event.id, eventVM.copy(update={'participants': newParticipants})
         )
 
@@ -241,6 +241,7 @@ async def test_event_repo_edit_attendee_permissions_as_guest(user, session):
     session.add(event)
     await session.commit()
 
+    eventVM = await eventRepo.getEventVM(user, userCalendar, event.id)
     event = await eventRepo.updateEvent(
         user, userCalendar, event.id, eventVM.copy(update={'participants': newParticipants})
     )

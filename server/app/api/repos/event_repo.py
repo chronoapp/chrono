@@ -269,6 +269,9 @@ class EventRepository:
                 or event.start != newEvent.start
                 or event.end != newEvent.end
                 or event.recurrences != newEvent.recurrences
+                or event.guests_can_invite_others != newEvent.guests_can_invite_others
+                or event.guests_can_modify != newEvent.guests_can_modify
+                or event.guests_can_see_other_guests != newEvent.guests_can_see_other_guests
             )
 
             if not canModifyEvent and hasModifiedMainEventFields:
