@@ -10,6 +10,7 @@ import { startOfWeek } from '@/util/localizer'
 import useKeyPress from '@/lib/hooks/useKeyPress'
 import * as dates from '@/util/dates'
 import * as API from '@/util/Api'
+import { generateGuid } from '@/lib/uuid'
 
 import TimeGrid from './TimeGrid'
 import Week from './Week'
@@ -47,12 +48,12 @@ function Calendar() {
 
   const router = useRouter()
   const searchQuery = (router.query.search as string) || ''
-  const [update, setUpdater] = React.useState(0)
+  const [update, setUpdater] = React.useState(generateGuid())
 
   useKeyPress(['ArrowLeft', 'ArrowRight'], onKeyPress)
 
   const handleRefreshEvent = React.useCallback(() => {
-    setUpdater(update + 1)
+    setUpdater(generateGuid())
   }, [])
 
   useEffect(() => {
