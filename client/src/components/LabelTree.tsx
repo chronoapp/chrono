@@ -20,7 +20,7 @@ import { FiChevronDown, FiChevronRight, FiMoreHorizontal, FiTrash, FiEdit } from
 import Hoverable from '@/lib/Hoverable'
 
 import { LABEL_COLORS } from '@/models/LabelColors'
-import Toast from '@/components/Toast'
+import { InfoAlert } from '@/components/Alert'
 import { Label } from '@/models/Label'
 import ColorPicker from './ColorPicker'
 import { LabelTagColor } from './LabelTag'
@@ -54,7 +54,7 @@ function usePrevious(value) {
 
 function LabelTree(props: IProps) {
   const [labelState, setLabelState] = useRecoilState(labelsState)
-  const toast = useToast({ duration: 2000, position: 'top' })
+  const toast = useToast({ duration: 2000, position: 'top-right' })
 
   const [expandedKeys, setExpandedKeys] = useState([])
   const [autoExpandParent, setAutoExpandParent] = useState(false)
@@ -229,7 +229,7 @@ function LabelTree(props: IProps) {
     deleteLabel(item.key, getAuthToken()).then((r) => {
       toast({
         render: (props) => (
-          <Toast title={`Tag ${item.title} deleted.`} showSpinner={false} {...props} />
+          <InfoAlert title={`Tag ${item.title} deleted.`} onClose={props.onClose} />
         ),
       })
     })

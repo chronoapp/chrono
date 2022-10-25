@@ -4,6 +4,7 @@ import { useRecoilState } from 'recoil'
 
 import { useToast } from '@chakra-ui/react'
 import { GlobalEvent } from '@/util/global'
+import { InfoAlert } from '@/components/Alert'
 
 import * as API from '@/util/Api'
 import Event from '@/models/Event'
@@ -12,7 +13,6 @@ import * as dates from '@/util/dates'
 import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 import { eventsState, EditRecurringAction, editingEventState } from '@/state/EventsState'
 import useEventActions from '@/state/useEventActions'
-
 import useTaskQueue from '@/lib/hooks/useTaskQueue'
 
 /**
@@ -177,10 +177,9 @@ export default function useEventService() {
 
           if (showToast) {
             toast({
-              title: 'Event created.',
-              variant: 'subtle',
-              status: 'success',
-              isClosable: true,
+              render: (p) => {
+                return <InfoAlert onClose={p.onClose} title="Event created." />
+              },
             })
           }
         })
@@ -222,10 +221,9 @@ export default function useEventService() {
 
         if (showToast) {
           toast({
-            title: 'Event updated.',
-            variant: 'subtle',
-            status: 'success',
-            isClosable: true,
+            render: (p) => {
+              return <InfoAlert onClose={p.onClose} title="Event updated." />
+            },
           })
         }
       })
@@ -256,10 +254,9 @@ export default function useEventService() {
     const deleteEventTask = () =>
       API.deleteEvent(API.getAuthToken(), calendarId, eventId).then(() => {
         toast({
-          title: 'Event deleted.',
-          variant: 'subtle',
-          status: 'success',
-          isClosable: true,
+          render: (p) => {
+            return <InfoAlert onClose={p.onClose} title="Event deleted." />
+          },
         })
       })
 

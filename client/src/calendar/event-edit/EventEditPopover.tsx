@@ -36,6 +36,7 @@ import Contact from '@/models/Contact'
 
 import { LabelTag } from '@/components/LabelTag'
 import LabelTree from '@/components/LabelTree'
+import { InfoAlert } from '@/components/Alert'
 
 import { labelsState } from '@/state/LabelsState'
 import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
@@ -297,10 +298,14 @@ function EventPopover(props: IProps) {
 
                     if (responseText) {
                       toast({
-                        title: `${responseText} invite to ${props.event.title}`,
-                        status: 'success',
-                        variant: 'subtle',
-                        isClosable: true,
+                        render: (p) => {
+                          return (
+                            <InfoAlert
+                              onClose={p.onClose}
+                              title={`${responseText} invite to ${props.event.title}`}
+                            />
+                          )
+                        },
                       })
                     }
 
