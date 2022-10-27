@@ -166,6 +166,53 @@ function DropdownMenu(props: { display: DisplayView; selectDisplay: (d: DisplayV
 }
 
 /**
+ * Header display when it's not in search mode.
+ */
+function DateHeaderNonSearch(props: {
+  title: string | undefined
+  onSelectToday: () => void
+  onSelectPrevious: () => void
+  onSelectNext: () => void
+}) {
+  console.log('DateHeaderNonSearch')
+
+  return (
+    <Flex alignItems="center">
+      <Button
+        color="gray.600"
+        size="sm"
+        fontWeight="normal"
+        borderRadius="xs"
+        onClick={props.onSelectToday}
+      >
+        Today
+      </Button>
+
+      <IconButton
+        ml="1"
+        aria-label="previous date range"
+        variant="ghost"
+        icon={<FiChevronLeft />}
+        size="sm"
+        onClick={props.onSelectPrevious}
+      />
+
+      <IconButton
+        aria-label="next date range"
+        variant="ghost"
+        size="sm"
+        icon={<FiChevronRight />}
+        onClick={props.onSelectNext}
+      />
+
+      <Text pl="2" color="gray.600" fontSize={'sm'}>
+        {props.title}
+      </Text>
+    </Flex>
+  )
+}
+
+/**
  * Calendar header for date selection.
  */
 export default function Header(props: { search: string }) {
@@ -177,7 +224,6 @@ export default function Header(props: { search: string }) {
   const [isSearchMode, setIsSearchMode] = React.useState<boolean>(!!props.search)
   const router = useRouter()
 
-  const today = new Date()
   const title = getViewTitle(display.view)
 
   React.useEffect(() => {
@@ -187,6 +233,7 @@ export default function Header(props: { search: string }) {
   }, [props.search])
 
   React.useEffect(() => {
+    console.log('update..')
     document.addEventListener('keydown', handleKeyboardShortcuts)
 
     return () => {
@@ -258,88 +305,68 @@ export default function Header(props: { search: string }) {
     setDisplay((display) => ({ ...display, view: view }))
   }
 
-  /**
-   * Header display when it's not in search mode.
-   */
-  function DateHeaderNonSearch() {
-    return (
-      <Flex alignItems="center">
-        <Button
-          color="gray.600"
-          size="sm"
-          fontWeight="normal"
-          borderRadius="xs"
-          onClick={() => {
-            if (dates.eq(display.selectedDate, today, 'day')) {
-              document.dispatchEvent(new Event(GlobalEvent.scrollToEvent))
-            } else {
-              setDisplay((display) => ({ ...display, selectedDate: today }))
-            }
-          }}
-        >
-          Today
-        </Button>
+  function onSelectToday() {
+    const today = new Date()
 
-        <IconButton
-          ml="1"
-          aria-label="previous date range"
-          variant="ghost"
-          icon={<FiChevronLeft />}
-          size="sm"
-          onClick={() => {
-            if (display.view == 'Day') {
-              setDisplay((display) => ({
-                ...display,
-                selectedDate: dates.subtract(display.selectedDate, 1, 'day'),
-              }))
-            } else if (display.view == 'Week' || display.view == 'WorkWeek') {
-              setDisplay((display) => ({
-                ...display,
-                selectedDate: dates.subtract(display.selectedDate, 7, 'day'),
-              }))
-            } else if (display.view == 'Month') {
-              // HACK: Prevents flicker when switching months
-              eventActions.initEvents({})
-              setDisplay((display) => ({
-                ...display,
-                selectedDate: dates.subtract(display.selectedDate, 1, 'month'),
-              }))
-            }
-          }}
-        />
-
-        <IconButton
-          aria-label="next date range"
-          variant="ghost"
-          size="sm"
-          icon={<FiChevronRight />}
-          onClick={() => {
-            if (display.view == 'Day') {
-              setDisplay((display) => ({
-                ...display,
-                selectedDate: dates.add(display.selectedDate, 1, 'day'),
-              }))
-            } else if (display.view == 'Week' || display.view == 'WorkWeek') {
-              setDisplay((display) => ({
-                ...display,
-                selectedDate: dates.add(display.selectedDate, 7, 'day'),
-              }))
-            } else if (display.view == 'Month') {
-              eventActions.initEvents({})
-              setDisplay((display) => ({
-                ...display,
-                selectedDate: dates.add(display.selectedDate, 1, 'month'),
-              }))
-            }
-          }}
-        />
-
-        <Text pl="2" color="gray.600" fontSize={'sm'}>
-          {title}
-        </Text>
-      </Flex>
-    )
+    if (dates.eq(display.selectedDate, today, 'day')) {
+      document.dispatchEvent(new Event(GlobalEvent.scrollToEvent))
+    } else {
+      setDisplay((display) => ({ ...display, selectedDate: today }))
+    }
   }
+
+  function onSelectPrevious() {
+    if (display.view == 'Day') {
+      setDisplay((display) => ({
+        ...display,
+        selectedDate: dates.subtract(display.selectedDate, 1, 'day'),
+      }))
+    } else if (display.view == 'Week' || display.view == 'WorkWeek') {
+      setDisplay((display) => ({
+        ...display,
+        selectedDate: dates.subtract(display.selectedDate, 7, 'day'),
+      }))
+    } else if (display.view == 'Month') {
+      // HACK: Prevents flicker when switching months
+      eventActions.initEvents({})
+      setDisplay((display) => ({
+        ...display,
+        selectedDate: dates.subtract(display.selectedDate, 1, 'month'),
+      }))
+    }
+  }
+
+  function onSelectNext() {
+    if (display.view == 'Day') {
+      setDisplay((display) => ({
+        ...display,
+        selectedDate: dates.add(display.selectedDate, 1, 'day'),
+      }))
+    } else if (display.view == 'Week' || display.view == 'WorkWeek') {
+      setDisplay((display) => ({
+        ...display,
+        selectedDate: dates.add(display.selectedDate, 7, 'day'),
+      }))
+    } else if (display.view == 'Month') {
+      eventActions.initEvents({})
+      setDisplay((display) => ({
+        ...display,
+        selectedDate: dates.add(display.selectedDate, 1, 'month'),
+      }))
+    }
+  }
+
+  const DateHeader = React.useMemo(
+    () => (
+      <DateHeaderNonSearch
+        title={title}
+        onSelectToday={onSelectToday}
+        onSelectPrevious={onSelectPrevious}
+        onSelectNext={onSelectNext}
+      />
+    ),
+    [display]
+  )
 
   return (
     <Flex w="100%" pl="2" justifyContent="space-between" alignItems="center">
@@ -352,7 +379,7 @@ export default function Header(props: { search: string }) {
           }}
         />
       ) : (
-        <DateHeaderNonSearch />
+        DateHeader
       )}
 
       <Flex alignItems={'center'}>
