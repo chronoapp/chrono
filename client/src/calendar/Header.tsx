@@ -174,8 +174,6 @@ function DateHeaderNonSearch(props: {
   onSelectPrevious: () => void
   onSelectNext: () => void
 }) {
-  console.log('DateHeaderNonSearch')
-
   return (
     <Flex alignItems="center">
       <Button
