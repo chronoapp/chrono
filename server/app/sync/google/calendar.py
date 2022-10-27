@@ -195,7 +195,6 @@ async def syncAllEvents(userId: int, fullSync: bool = False):
 
         for calendar in user.calendars:
             if calendar.google_id != None:
-                print(f'Sync {calendar}')
                 await syncCalendar(calendar, session, fullSync=fullSync)
                 await createWebhook(calendar, session)
 
@@ -206,7 +205,6 @@ async def syncCalendar(
     calendar: UserCalendar, session: AsyncSession, fullSync: bool = False
 ) -> None:
     service = getCalendarService(calendar.user)
-
     end = (datetime.utcnow() + timedelta(days=30)).isoformat() + 'Z'
     nextPageToken = None
 
@@ -485,7 +483,7 @@ async def syncEventParticipants(
     from app.db.models import EventAttendee
 
     contactRepo = ContactRepository(session)
-    event.participants = []
+    updatedParticipants = []
 
     for participantVM in participants:
         contact = await contactRepo.findContact(userCalendar.user, participantVM)
@@ -496,7 +494,9 @@ async def syncEventParticipants(
             contact.id if contact else None,
             participantVM.response_status,
         )
-        event.participants.append(participant)
+        updatedParticipants.append(participant)
+
+    event.participants[:] = updatedParticipants
 
 
 def convertStatus(status: str):
