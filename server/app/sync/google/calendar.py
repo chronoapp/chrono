@@ -13,10 +13,10 @@ from googleapiclient.errors import HttpError
 from app.db.models.access_control import AccessControlRule
 
 from app.db.session import AsyncSession
-from app.db.models import User, Event, LabelRule, UserCalendar, Calendar, Webhook
+from app.db.models import User, Event, LabelRule, UserCalendar, Calendar, Webhook, EventAttendee
 from app.core.logger import logger
 from app.core import config
-from app.api.repos.user_repo import UserRepository
+from app.api.repos.contact_repo import ContactRepository
 from app.api.repos.event_utils import (
     EventBaseVM,
     EventParticipantVM,
@@ -87,6 +87,8 @@ NEW_COLORS = [
     '#8e24aa',
     '#9e69af',
 ]
+
+PAGE_SIZE = 1000
 
 
 class GoogleEventVM(EventBaseVM):
@@ -217,7 +219,7 @@ async def syncCalendar(
                     .list(
                         calendarId=calendar.google_id,
                         timeMax=None if calendar.sync_token else end,
-                        maxResults=250,
+                        maxResults=PAGE_SIZE,
                         singleEvents=False,
                         syncToken=calendar.sync_token,
                         pageToken=nextPageToken,
@@ -237,7 +239,7 @@ async def syncCalendar(
                 .list(
                     calendarId=calendar.google_id,
                     timeMax=end,
-                    maxResults=250,
+                    maxResults=PAGE_SIZE,
                     singleEvents=False,
                     pageToken=nextPageToken,
                 )
@@ -479,11 +481,10 @@ async def syncEventParticipants(
     session: AsyncSession,
 ):
     """Re-create event participants on google sync."""
-    from app.api.repos.contact_repo import ContactRepository
-    from app.db.models import EventAttendee
 
     contactRepo = ContactRepository(session)
     updatedParticipants = []
+    event.participants = []
 
     for participantVM in participants:
         contact = await contactRepo.findContact(userCalendar.user, participantVM)
