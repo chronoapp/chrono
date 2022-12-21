@@ -115,14 +115,13 @@ async def createCalendarEvent(
     session: AsyncSession = Depends(get_db),
 ) -> Event:
     # TODO: Add the default organizer.
+    if event.recurring_event_id:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail='Can not modify recurring event from this endpoint.',
+        )
 
     try:
-        if event.recurring_event_id:
-            raise HTTPException(
-                status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail='Can not modify recurring event from this endpoint.',
-            )
-
         calendarRepo = CalendarRepo(session)
         eventRepo = EventRepository(session)
 
