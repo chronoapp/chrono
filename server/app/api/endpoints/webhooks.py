@@ -15,7 +15,7 @@ async def updateGoogleEvent(request: Request, session: Session = Depends(get_db)
 
     channelId = request.headers.get('x-goog-channel-id')
     stmt = select(Webhook).where(Webhook.id == channelId).options(selectinload(Webhook.calendar))
-    webhook = (await session.execute(stmt)).scalar()
+    webhook = (session.execute(stmt)).scalar()
 
     if webhook:
         syncCalendarTask.send(webhook.calendar.user_id, webhook.calendar_id, False)

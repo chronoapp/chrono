@@ -21,9 +21,11 @@ fileConfig(config.config_file_name)
 # target_metadata = mymodel.Base.metadata
 
 from app.db.models import Base  # noqa
+
 target_metadata = Base.metadata
 
 from app.core import config as appConfig
+
 config.set_main_option('sqlalchemy.url', appConfig.SQLALCHEMY_DATABASE_URI)
 
 # other values from the config, defined by the needs of env.py,
@@ -67,9 +69,7 @@ def run_migrations_online():
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata, compare_type=True
-        )
+        context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
 
         with context.begin_transaction():
             context.run_migrations()

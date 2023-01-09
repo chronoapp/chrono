@@ -2,8 +2,7 @@ from typing import List
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import and_, select
-from sqlalchemy.orm import selectinload
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
@@ -34,17 +33,17 @@ async def getLabelRules(
     label_id: int,
     text: str = '',
     user=Depends(get_current_user),
-    session: AsyncSession = Depends(get_db),
+    session: Session = Depends(get_db),
 ):
     if text:
-        result = await session.execute(
+        result = session.execute(
             select(LabelRule).where(
                 LabelRule.user_id == user.id, LabelRule.text == text, LabelRule.label_id == label_id
             )
         )
         return result.scalars().all()
     else:
-        result = await session.execute(
+        result = session.execute(
             select(LabelRule).where(
                 LabelRule.user_id,
             )
@@ -54,14 +53,14 @@ async def getLabelRules(
 
 @router.put('/label_rules/', response_model=LabelRuleInDBVM)
 async def putLabel(
-    labelRule: LabelRuleVM, user=Depends(get_current_user), session: AsyncSession = Depends(get_db)
+    labelRule: LabelRuleVM, user=Depends(get_current_user), session: Session = Depends(get_db)
 ):
-    result = await session.execute(
+    result = session.execute(
         select(Label).where(and_(User.id == user.id, Label.id == labelRule.label_id))
     )
     labelDb = result.scalar()
 
-    result = await session.execute(
+    result = session.execute(
         select(LabelRule).where(
             LabelRule.user_id == user.id,
             LabelRule.label_id == labelRule.label_id,
@@ -81,14 +80,14 @@ async def putLabel(
     selectStmt = user.getSingleEventsStmt(showRecurring=False).filter(
         Event.title.ilike(labelRule.text)
     )
-    result = await session.execute(selectStmt)
+    result = session.execute(selectStmt)
     events = result.scalars()
 
     for event in events:
         if not labelDb in event.labels:
             event.labels.append(labelDb)
 
-    await session.commit()
-    await session.refresh(labelRuleDb)
+    session.commit()
+    session.refresh(labelRuleDb)
 
     return labelRuleDb

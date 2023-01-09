@@ -16,7 +16,7 @@ TOKEN_SECRET = os.environ.get('TOKEN_SECRET', '')
 
 DEBUG = os.environ.get('DEBUG', True)
 
-if (uri := os.environ.get('DATABASE_URL')) :
+if uri := os.environ.get('DATABASE_URL'):
     SQLALCHEMY_DATABASE_URI = uri
 else:
     raise Exception('Database URI not found.')

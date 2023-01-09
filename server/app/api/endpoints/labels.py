@@ -35,13 +35,13 @@ class LabelInDbVM(LabelVM):
     id: int
 
 
-async def createOrUpdateLabel(
+def createOrUpdateLabel(
     user: User, labelId: Optional[int], label: LabelVM, session: Session
 ) -> Label:
     labelDb = None
     if labelId:
         stmt = select(Label).where(and_(User.id == user.id, Label.id == labelId))
-        labelDb = (await session.execute(stmt)).scalar()
+        labelDb = (session.execute(stmt)).scalar()
 
     if not labelDb:
         labelDb = Label(label.title, label.color_hex)
@@ -74,7 +74,7 @@ def combineLabels(labels: List[Label]) -> List[Label]:
 
 @router.get('/labels/', response_model=List[LabelInDbVM])
 async def getLabels(user=Depends(get_current_user), session=Depends(get_db)):
-    result = await session.execute(select(Label).where(Label.user_id == user.id))
+    result = session.execute(select(Label).where(Label.user_id == user.id))
 
     return result.scalars().all()
 
@@ -87,7 +87,7 @@ async def createLabel(
     user.labels.append(labelDb)
     user.labels.reorder()
 
-    await session.commit()
+    session.commit()
 
     return labelDb
 
@@ -98,7 +98,7 @@ async def putLabels(
 ):
     """TODO: Bulk update with one query."""
     updatedLabels = [await createOrUpdateLabel(user, label.id, label, session) for label in labels]
-    await session.commit()
+    session.commit()
 
     return updatedLabels
 
@@ -111,8 +111,8 @@ async def putLabel(
     session: Session = Depends(get_db),
 ) -> Label:
     labelDb = await createOrUpdateLabel(user, labelId, label, session)
-    await session.commit()
-    await session.refresh(labelDb)
+    session.commit()
+    session.refresh(labelDb)
 
     return labelDb
 
@@ -125,16 +125,14 @@ async def deleteLabel(
     TODO: Handle delete subtree.
     TODO: Fix positions, since Sqlalchemy ORM doesn't support deletes yet.
     """
-    result = await session.execute(
-        select(Label).where(Label.user_id == user.id, Label.id == labelId)
-    )
+    result = session.execute(select(Label).where(Label.user_id == user.id, Label.id == labelId))
     label = result.scalar()
 
     if not label:
         raise HTTPException(status_code=404, detail="Label not found.")
     else:
         stmt = delete(Label).where(Label.id == label.id)
-        await session.execute(stmt)
-        await session.commit()
+        session.execute(stmt)
+        session.commit()
 
         return label

@@ -7,7 +7,7 @@ from fastapi.responses import ORJSONResponse
 
 from app.core import config
 from app.api.router import api_router
-from app.db.session import AsyncSession
+from app.db.session import scoped_session
 
 # Register all tasks as part of this module.
 from app.sync.google.tasks import *
@@ -32,11 +32,10 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1' if config.DEBUG else '0'
 
 
 @app.middleware("http")
-async def db_session_middleware(request: Request, call_next):
-    async with AsyncSession() as asyncSession:
-        request.state.db = asyncSession
-        response = await call_next(request)
-        await request.state.db.close()
+def db_session_middleware(request: Request, call_next):
+    with scoped_session() as session:
+        request.state.db = session
+        response = call_next(request)
 
     return response
 

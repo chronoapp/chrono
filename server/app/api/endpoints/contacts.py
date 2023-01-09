@@ -1,7 +1,7 @@
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
@@ -31,11 +31,11 @@ class ContactInDBVM(ContactBaseVM):
 async def getContact(
     contact_id: str,
     user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db),
+    session: Session = Depends(get_db),
 ):
     contactRepo = ContactRepository(session)
 
-    contact = await contactRepo.getContact(user, contact_id)
+    contact = contactRepo.getContact(user, contact_id)
     if not contact:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -47,12 +47,12 @@ async def getContacts(
     user: User = Depends(get_current_user),
     query: str = "",
     limit: int = 25,
-    session: AsyncSession = Depends(get_db),
+    session: Session = Depends(get_db),
 ):
     """TODO: Pagination."""
     contactRepo = ContactRepository(session)
 
     if query:
-        return await contactRepo.searchContacts(user, query, limit)
+        return contactRepo.searchContacts(user, query, limit)
     else:
-        return await contactRepo.getContacts(user, limit)
+        return contactRepo.getContacts(user, limit)

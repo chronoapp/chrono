@@ -1,6 +1,7 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException
 from starlette.status import HTTP_404_NOT_FOUND
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from typing import List
 
@@ -25,12 +26,12 @@ router = APIRouter()
 async def getCalendar(
     calendarId: str,
     user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db),
+    session: Session = Depends(get_db),
 ):
     calendarRepo = CalendarRepo(session)
 
     try:
-        userCalendar = await calendarRepo.getCalendar(user, calendarId)
+        userCalendar = calendarRepo.getCalendar(user, calendarId)
         return userCalendar
 
     except CalendarNotFoundError:
@@ -38,11 +39,9 @@ async def getCalendar(
 
 
 @router.get('/calendars/', response_model=List[CalendarVM])
-async def getCalendars(
-    user: User = Depends(get_current_user), session: AsyncSession = Depends(get_db)
-):
+async def getCalendars(user: User = Depends(get_current_user), session: Session = Depends(get_db)):
     calendarRepo = CalendarRepo(session)
-    calendars = await calendarRepo.getCalendars(user)
+    calendars = calendarRepo.getCalendars(user)
 
     return calendars
 
@@ -51,10 +50,10 @@ async def getCalendars(
 async def postCalendar(
     calendar: CalendarBaseVM,
     user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db),
+    session: Session = Depends(get_db),
 ):
     calendarRepo = CalendarRepo(session)
-    userCalendar = await calendarRepo.createCalendar(user, calendar)
+    userCalendar = calendarRepo.createCalendar(user, calendar)
 
     if calendar.source == 'google':
         resp = gcal.createCalendar(user, userCalendar)
@@ -62,7 +61,7 @@ async def postCalendar(
     else:
         userCalendar.calendar.email_ = user.email
 
-    await session.commit()
+    session.commit()
 
     return userCalendar
 
@@ -72,18 +71,17 @@ async def putCalendar(
     calendarId: str,
     calendar: CalendarVM,
     user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db),
+    session: Session = Depends(get_db),
 ):
     calendarRepo = CalendarRepo(session)
 
     try:
-        userCalendar = await calendarRepo.updateCalendar(user, calendarId, calendar)
-        await session.commit()
+        userCalendar = calendarRepo.updateCalendar(user, calendarId, calendar)
+        session.commit()
 
         if userCalendar.source == 'google':
             updateCalendarTask.send(user.id, userCalendar.id)
 
-        await session.commit()
         return userCalendar
 
     except CalendarNotFoundError:
@@ -94,11 +92,11 @@ async def putCalendar(
 async def deleteCalendar(
     calendarId: str,
     user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db),
+    session: Session = Depends(get_db),
 ):
     try:
         calendarRepo = CalendarRepo(session)
-        await calendarRepo.deleteCalendar(user, calendarId)
+        calendarRepo.deleteCalendar(user, calendarId)
 
     except CalendarNotFoundError:
         raise HTTPException(HTTP_404_NOT_FOUND)

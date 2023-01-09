@@ -15,8 +15,7 @@ from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, Session
 
 from app.core import config
 from app.db.models.user_credentials import UserCredential, ProviderType
@@ -91,7 +90,7 @@ def googleAuth():
 
 
 @router.post('/oauth/google/token')
-async def googleAuthCallback(authData: AuthData, session: AsyncSession = Depends(get_db)):
+def googleAuthCallback(authData: AuthData, session: Session = Depends(get_db)):
     try:
         flow = getAuthFlow(None)
         flow.fetch_token(code=authData.code)
@@ -105,7 +104,7 @@ async def googleAuthCallback(authData: AuthData, session: AsyncSession = Depends
     name = userInfo.get('given_name')
     pictureUrl = userInfo.get('picture')
 
-    result = await session.execute(
+    result = session.execute(
         select(User).where(User.email == email).options(selectinload(User.credentials))
     )
     user = result.scalar()
@@ -120,7 +119,7 @@ async def googleAuthCallback(authData: AuthData, session: AsyncSession = Depends
 
     creds = getCredentialsDict(flow.credentials)
     user.credentials = UserCredential(creds, ProviderType.Google)
-    await session.commit()
+    session.commit()
 
     authToken = getAuthToken(user)
 
@@ -169,7 +168,7 @@ def msftAuth():
 
 
 @router.get('/oauth/msft/callback')
-async def msftCallback(request: Request, session: AsyncSession = Depends(get_db)):
+def msftCallback(request: Request, session: Session = Depends(get_db)):
     expectedState = request.cookies.get('auth_state')
     settings = getMsftSettings()
     callbackUrl = f'{request.url.path}?{request.query_params}'
@@ -191,7 +190,7 @@ async def msftCallback(request: Request, session: AsyncSession = Depends(get_db)
     email = userJson.get('mail')
     name = userJson.get('displayName')
 
-    result = await session.execute(
+    result = session.execute(
         select(User).where(User.email == email).options(selectinload(User.credentials))
     )
     user = result.scalar()
@@ -204,7 +203,7 @@ async def msftCallback(request: Request, session: AsyncSession = Depends(get_db)
         user.name = name
 
     user.credentials = UserCredential(tokenResult, ProviderType.Microsoft)
-    await session.commit()
+    session.commit()
 
     authToken = str(
         jwt.encode(
@@ -238,8 +237,8 @@ def getPasswordHash(plainPass: str) -> str:
     return pwdContext.hash(plainPass)
 
 
-async def authenticateUser(loginUser: LoginUser, session: AsyncSession) -> User:
-    result = await session.execute(
+def authenticateUser(loginUser: LoginUser, session: Session) -> User:
+    result = session.execute(
         select(User).where(User.email == loginUser.email).options(selectinload(User.credentials))
     )
     user = result.scalar()
@@ -257,8 +256,8 @@ async def authenticateUser(loginUser: LoginUser, session: AsyncSession) -> User:
 
 
 @router.post('/auth/login')
-async def login(loginUser: LoginUser, session: AsyncSession = Depends(get_db)):
-    user = await authenticateUser(loginUser, session)
+def login(loginUser: LoginUser, session: Session = Depends(get_db)):
+    user = authenticateUser(loginUser, session)
     authToken = getAuthToken(user)
 
     return {'token': authToken}
