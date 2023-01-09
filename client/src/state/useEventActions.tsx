@@ -48,6 +48,22 @@ export default function useEventActions() {
   }
 
   /**
+   * Initializes all events.
+   */
+  function loadEvents(calendarId: string, events: Event[]) {
+    setEvents((prevState) => {
+      return {
+        ...prevState,
+        loading: false,
+        eventsByCalendar: {
+          ...prevState.eventsByCalendar,
+          [calendarId]: normalizeArr(events, 'id'),
+        },
+      }
+    })
+  }
+
+  /**
    * Starts editing an existing event.
    */
   function initEditEvent(event: Event, selectTailSegment = false) {
@@ -269,6 +285,7 @@ export default function useEventActions() {
 
   return {
     initEvents,
+    loadEvents,
     initEditEvent,
     updateEditingEvent,
     updateEditMode,
