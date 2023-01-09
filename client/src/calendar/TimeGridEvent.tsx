@@ -129,7 +129,10 @@ function TimeGridEvent(props: IProps) {
     const offsetTop = evt.clientY - wrapper.offsetTop + wrapper.scrollTop
     const totalHeight = wrapper.scrollHeight
 
-    const startOfDay: Date = dates.startOf(event.end, 'day')
+    const startOfDay = props.isTailSegment
+      ? dates.startOf(event.end, 'day')
+      : dates.startOf(event.start, 'day')
+
     const minutes = ((dates.MILLI.day / dates.MILLI.minutes) * offsetTop) / totalHeight
     const dateOfDrag = dates.add(startOfDay, minutes, 'minutes')
 
