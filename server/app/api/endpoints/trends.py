@@ -1,6 +1,6 @@
 from typing import Literal, List, Dict
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from datetime import datetime, timedelta
@@ -26,7 +26,7 @@ async def getUserTrends(
     end: str,
     time_period: TimePeriod = "WEEK",
     user=Depends(get_current_user),
-    session: AsyncSession = Depends(get_db),
+    session: Session = Depends(get_db),
 ):
     """TODO: start time, end time as"""
     userId = user.id
@@ -118,7 +118,7 @@ async def getTrendsDataResult(
     startTime: datetime,
     endTime: datetime,
     timePeriod: TimePeriod,
-    session: AsyncSession,
+    session: Session,
 ):
     """Executes the DB query for time spent on the activity label,
     grouped by TimePeriod.

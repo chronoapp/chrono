@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import List, Optional, Union, Iterable
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from app.core.logger import logger
@@ -42,7 +42,7 @@ async def searchEvents(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db),
+    session: Session = Depends(get_db),
 ):
     """
     TODO: Filter queries for recurring events
@@ -60,7 +60,7 @@ async def searchEvents(
 
         if query:
             tsQuery = ' | '.join(query.split())
-            events = await eventRepo.search(user, tsQuery, start, end, limit=limit)
+            events = eventRepo.search(user, tsQuery, start, end, limit=limit)
 
             return events
         else:
@@ -85,7 +85,7 @@ async def getCalendarEvents(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db),
+    session: Session = Depends(get_db),
 ) -> Iterable[Union[EventInDBVM, Event]]:
     """Gets all events for a calendar."""
     try:
@@ -97,7 +97,7 @@ async def getCalendarEvents(
         endDate = datetime.fromisoformat(end_date) if end_date else datetime.now()
 
         eventRepo = EventRepository(session)
-        return await eventRepo.getEventsInRange(user, calendarId, startDate, endDate, limit)
+        return eventRepo.getEventsInRange(user, calendarId, startDate, endDate, limit)
 
     except ValueError as e:
         raise HTTPException(
@@ -112,8 +112,8 @@ async def createCalendarEvent(
     calendarId: str,
     event: EventBaseVM,
     user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db),
-) -> Event:
+    session: Session = Depends(get_db),
+) -> EventInDBVM:
     # TODO: Add the default organizer.
     if event.recurring_event_id:
         raise HTTPException(
@@ -125,8 +125,8 @@ async def createCalendarEvent(
         calendarRepo = CalendarRepo(session)
         eventRepo = EventRepository(session)
 
-        userCalendar = await calendarRepo.getCalendar(user, calendarId)
-        eventDb = await eventRepo.createEvent(user, userCalendar, event)
+        userCalendar = calendarRepo.getCalendar(user, calendarId)
+        eventDb = eventRepo.createEvent(user, userCalendar, event)
 
         # Sync with google calendar.
         if userCalendar.source == 'google':
@@ -145,14 +145,14 @@ async def getCalendarEvent(
     calendar_id: str,
     event_id: str,
     user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db),
-) -> Event:
+    session: Session = Depends(get_db),
+) -> EventInDBVM:
     try:
         eventRepo = EventRepository(session)
         calendarRepo = CalendarRepo(session)
 
-        calendar = await calendarRepo.getCalendar(user, calendar_id)
-        event = await eventRepo.getEventVM(user, calendar, event_id)
+        calendar = calendarRepo.getCalendar(user, calendar_id)
+        event = eventRepo.getEventVM(user, calendar, event_id)
 
         if event:
             return event
@@ -173,8 +173,8 @@ async def updateCalendarEvent(
     calendar_id: str,
     event_id: str,
     user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db),
-) -> Event:
+    session: Session = Depends(get_db),
+) -> EventInDBVM:
     """Update an existing event. For recurring events, create the "override" event
     in the DB with the composite id of {baseId}_{date}.
 
@@ -184,11 +184,11 @@ async def updateCalendarEvent(
         eventRepo = EventRepository(session)
         calendarRepo = CalendarRepo(session)
 
-        userCalendar = await calendarRepo.getCalendar(user, calendar_id)
-        updatedEvent = await eventRepo.updateEvent(user, userCalendar, event_id, event)
+        userCalendar = calendarRepo.getCalendar(user, calendar_id)
+        updatedEvent = eventRepo.updateEvent(user, userCalendar, event_id, event)
 
         if userCalendar.source == 'google' and updatedEvent.isGoogleEvent():
-            syncEventToGoogleTask.send(user.id, userCalendar.id, updatedEvent.id, 'none')
+            syncEventToGoogleTask.send(user.id, userCalendar.id, updatedEvent.id, 'all')
 
         return updatedEvent
 
@@ -206,12 +206,11 @@ async def moveEventCalendar(
     eventId: str,
     calReq: MoveCalendarRequest,
     user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db),
-) -> Event:
+    session: Session = Depends(get_db),
+) -> EventInDBVM:
     try:
         eventRepo = EventRepository(session)
-
-        event = await eventRepo.moveEvent(user, eventId, calendarId, calReq.calendar_id)
+        event = eventRepo.moveEvent(user, eventId, calendarId, calReq.calendar_id)
 
         # Makes sure both are google calendars.
         if event.isGoogleEvent():
@@ -232,20 +231,19 @@ async def deleteCalendarEvent(
     calendarId: str,
     eventId: str,
     user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db),
+    session: Session = Depends(get_db),
 ):
     """Delete an event.
     If the ID does not exist in the DB, it could be a "virtual ID" for a recurring event,
     in which case we'd need to create an override Event to model a deleted event.
     """
-    logger.info(f'Delete Event {eventId}')
 
     try:
         eventRepo = EventRepository(session)
         calendarRepo = CalendarRepo(session)
 
-        userCalendar = await calendarRepo.getCalendar(user, calendarId)
-        event = await eventRepo.deleteEvent(user, userCalendar, eventId)
+        userCalendar = calendarRepo.getCalendar(user, calendarId)
+        event = eventRepo.deleteEvent(user, userCalendar, eventId)
 
         if event.isGoogleEvent():
             syncDeleteEventToGoogleTask.send(user.id, userCalendar.id, event.id)

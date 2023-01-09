@@ -1,4 +1,3 @@
-import pytest
 from sqlalchemy import select
 
 from app.api.endpoints.labels import combineLabels
@@ -22,29 +21,25 @@ def test_combineLabels():
     assert combined[0].id == 2
 
 
-@pytest.mark.asyncio
-async def test_getLabels(user, session, async_client):
+def test_getLabels(user, session, test_client):
     l1 = Label("label-1", "#fff")
     l2 = Label("label-2", "#fff")
     user.labels.append(l1)
     user.labels.append(l2)
-    await session.commit()
+    session.commit()
 
     token = getAuthToken(user)
-    resp = await async_client.get('/api/v1/labels/', headers={'Authorization': token})
+    resp = test_client.get('/api/v1/labels/', headers={'Authorization': token})
 
     labels = resp.json()
     assert labels[0].get('title') == 'label-1'
     assert labels[1].get('title') == 'label-2'
 
 
-@pytest.mark.asyncio
-async def test_createLabel(user, async_client):
+def test_createLabel(user, test_client):
     labelData = {'title': 'label-1', 'color_hex': '#cccccc'}
     token = getAuthToken(user)
-    resp = await async_client.post(
-        f'/api/v1/labels/', headers={'Authorization': token}, json=labelData
-    )
+    resp = test_client.post(f'/api/v1/labels/', headers={'Authorization': token}, json=labelData)
 
     label = resp.json()
     assert label.get('title') == 'label-1'
@@ -53,16 +48,13 @@ async def test_createLabel(user, async_client):
     # Label 2
     labelData = {'title': 'label-2', 'color_hex': '#ffffff'}
     token = getAuthToken(user)
-    resp = await async_client.post(
-        f'/api/v1/labels/', headers={'Authorization': token}, json=labelData
-    )
+    resp = test_client.post(f'/api/v1/labels/', headers={'Authorization': token}, json=labelData)
 
     label = resp.json()
     assert label.get('position') == 1
 
 
-@pytest.mark.asyncio
-async def test_deleteLabel(user, session, async_client):
+def test_deleteLabel(user, session, test_client):
     l1 = Label("label-1", "#ffffff")
     l2 = Label("label-2", "#ffffff")
     l3 = Label("label-3", "#ffffff")
@@ -71,14 +63,14 @@ async def test_deleteLabel(user, session, async_client):
     user.labels.append(l3)
 
     user.labels.reorder()
-    await session.commit()
+    session.commit()
 
     token = getAuthToken(user)
-    resp = await async_client.delete(f'/api/v1/labels/{l2.id}', headers={'Authorization': token})
+    resp = test_client.delete(f'/api/v1/labels/{l2.id}', headers={'Authorization': token})
 
     assert resp.status_code == 200
 
-    result = await session.execute(select(Label).where(Label.user_id == user.id))
+    result = session.execute(select(Label).where(Label.user_id == user.id))
     labels = result.scalars().all()
 
     assert len(labels) == 2

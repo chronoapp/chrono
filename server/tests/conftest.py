@@ -1,10 +1,6 @@
-import pytest_asyncio
-
-from httpx import AsyncClient
+import pytest
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.pool import NullPool
 
 from app.db.base_class import Base
 from app.db.models import User, UserCalendar
@@ -15,43 +11,23 @@ from app.api.utils.security import get_current_user
 from app.api.utils.db import get_db
 from app.api.repos.event_repo import EventRepository
 
-SQLALCHEMY_DATABASE_URI = "postgresql+asyncpg://{0}:{1}@{2}/{3}".format(
-    'postgres', 'postgres', 'postgres_test', 'postgres'
-)
+from tests.test_session import scoped_session, engine
+from fastapi.testclient import TestClient
 
 
-@pytest_asyncio.fixture(scope="session")
-def engine():
-    async_engine = create_async_engine(
-        SQLALCHEMY_DATABASE_URI,
-        poolclass=NullPool,
-        future=True,
-    )
+@pytest.fixture(autouse=True)
+def setup_database():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
 
-    yield async_engine
-
-    async_engine.sync_engine.dispose()
-
-
-@pytest_asyncio.fixture()
-async def create(engine):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
     yield
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+
+    Base.metadata.drop_all(bind=engine)
 
 
-@pytest_asyncio.fixture
-async def async_client():
-    async with AsyncClient(app=app, base_url="http://localhost") as ac:
-        yield ac
-
-
-@pytest_asyncio.fixture
-async def session(engine, create):
-    async with AsyncSession(engine, expire_on_commit=False) as session:
+@pytest.fixture
+def session():
+    with scoped_session() as session:
 
         def getDbSession():
             return session
@@ -61,14 +37,20 @@ async def session(engine, create):
         yield session
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
+def test_client():
+    yield TestClient(app)
+
+
+@pytest.fixture
 def eventRepo(session):
     yield EventRepository(session)
 
 
-@pytest_asyncio.fixture
-async def user(session):
+@pytest.fixture
+def user(session):
     """Default user with a primary calendar."""
+
     user = User('user@chrono.so', 'Test User', None)
 
     calendar = Calendar(
@@ -88,9 +70,9 @@ async def user(session):
     user.calendars.append(userCalendar)
 
     session.add(user)
-    await session.commit()
+    session.commit()
 
-    user = (await session.execute(select(User).where(User.id == user.id))).scalar()
+    user = (session.execute(select(User).where(User.id == user.id))).scalar()
 
     def override_get_user():
         return user

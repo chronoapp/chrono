@@ -4,7 +4,7 @@ from typing import Optional, List
 from pydantic import BaseModel, Field, validator
 
 from sqlalchemy import and_, update, delete, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from app.db.models.event import isValidTimezone
 from app.db.models.user_calendar import CalendarSource
@@ -43,12 +43,12 @@ class CalendarVM(CalendarBaseVM):
 
 
 class CalendarRepo:
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: Session):
         self.session = session
 
-    async def getCalendar(self, user: User, calendarId: str) -> UserCalendar:
+    def getCalendar(self, user: User, calendarId: str) -> UserCalendar:
         userCalendar = (
-            await self.session.execute(
+            self.session.execute(
                 select(UserCalendar).where(
                     and_(UserCalendar.user_id == user.id, UserCalendar.id == calendarId)
                 )
@@ -60,20 +60,18 @@ class CalendarRepo:
 
         return userCalendar
 
-    async def getCalendars(self, user: User) -> List[UserCalendar]:
-        result = await self.session.execute(
-            select(UserCalendar).where(UserCalendar.user_id == user.id)
-        )
+    def getCalendars(self, user: User) -> List[UserCalendar]:
+        result = self.session.execute(select(UserCalendar).where(UserCalendar.user_id == user.id))
         calendars = result.scalars().all()
 
         return calendars
 
-    async def createCalendar(self, user: User, calendar: CalendarBaseVM) -> UserCalendar:
+    def createCalendar(self, user: User, calendar: CalendarBaseVM) -> UserCalendar:
         isPrimary = calendar.primary or False
 
         if isPrimary:
             stmt = update(UserCalendar).where(UserCalendar.user_id == user.id).values(primary=False)
-            await self.session.execute(stmt)
+            self.session.execute(stmt)
 
         calendarId = shortuuid.uuid()
         baseCalendar = Calendar(
@@ -95,25 +93,22 @@ class CalendarRepo:
 
         return userCalendar
 
-    async def updateCalendar(
-        self, user: User, calendarId: str, userCalendar: CalendarVM
-    ) -> Optional[UserCalendar]:
-        calendarDb = await self.getCalendar(user, calendarId)
+    def updateCalendar(self, user: User, calendarId: str, userCalendar: CalendarVM) -> UserCalendar:
+        calendarDb = self.getCalendar(user, calendarId)
+        if not calendarDb:
+            raise CalendarNotFoundError('Calendar not found.')
 
-        if calendarDb:
-            calendarDb.selected = userCalendar.selected
-            calendarDb.summary_override = userCalendar.summary
-            calendarDb.background_color = userCalendar.background_color
-            calendarDb.foreground_color = userCalendar.foreground_color
+        calendarDb.selected = userCalendar.selected
+        calendarDb.summary_override = userCalendar.summary
+        calendarDb.background_color = userCalendar.background_color
+        calendarDb.foreground_color = userCalendar.foreground_color
 
-            # TODO: More fields to update.
-        else:
-            return None
+        # TODO: More fields to update.
 
         return calendarDb
 
-    async def deleteCalendar(self, user: User, calendarId: str) -> None:
-        calendarDb = await self.getCalendar(user, calendarId)
+    def deleteCalendar(self, user: User, calendarId: str) -> None:
+        calendarDb = self.getCalendar(user, calendarId)
 
-        await self.session.execute(delete(UserCalendar).where(UserCalendar.id == calendarDb.id))
-        await self.session.commit()
+        self.session.execute(delete(UserCalendar).where(UserCalendar.id == calendarDb.id))
+        self.session.commit()

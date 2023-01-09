@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -14,15 +14,15 @@ def getPeopleService(user: User):
     return service
 
 
-async def syncContacts(user: User, session: AsyncSession, fullSync: bool = False) -> None:
+def syncContacts(user: User, session: Session, fullSync: bool = False) -> None:
     """Sync contacts from Google to the DB."""
     service = getPeopleService(user)
 
-    await syncOtherContacts(service, user, session)
-    await syncConnections(service, user, session)
+    syncOtherContacts(service, user, session)
+    syncConnections(service, user, session)
 
 
-async def syncOtherContacts(service, user: User, session: AsyncSession):
+def syncOtherContacts(service, user: User, session: Session):
     nextPageToken = None
     while True:
         results = (
@@ -35,14 +35,14 @@ async def syncOtherContacts(service, user: User, session: AsyncSession):
         )
 
         contacts = results.get('otherContacts', [])
-        await syncContactsToDB(user, contacts, session)
+        syncContactsToDB(user, contacts, session)
 
         nextPageToken = results.get('nextPageToken')
         if not nextPageToken:
             break
 
 
-async def syncConnections(service, user: User, session: AsyncSession):
+def syncConnections(service, user: User, session: Session):
     nextPageToken = None
     while True:
         results = (
@@ -57,14 +57,14 @@ async def syncConnections(service, user: User, session: AsyncSession):
         )
 
         connections = results.get('connections', [])
-        await syncContactsToDB(user, connections, session)
+        syncContactsToDB(user, connections, session)
 
         nextPageToken = results.get('nextPageToken')
         if not nextPageToken:
             break
 
 
-async def syncContactsToDB(user: User, contacts, session: AsyncSession):
+def syncContactsToDB(user: User, contacts, session: Session):
     for contact in contacts:
         resourceId = contact.get('resourceName')
         names = contact.get('names', [])
@@ -82,7 +82,7 @@ async def syncContactsToDB(user: User, contacts, session: AsyncSession):
         photoUrl = photos[0].get('url') if len(photos) > 0 else None
 
         stmt = select(Contact).where(Contact.user_id == user.id, Contact.google_id == resourceId)
-        contact = (await session.execute(stmt)).scalar()
+        contact = (session.execute(stmt)).scalar()
 
         if contact:
             contact.email = emailAddress
@@ -93,4 +93,4 @@ async def syncContactsToDB(user: User, contacts, session: AsyncSession):
             contact = Contact(givenName, familyName, emailAddress, photoUrl, resourceId)
             user.contacts.append(contact)
 
-    await session.commit()
+    session.commit()

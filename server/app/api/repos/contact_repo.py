@@ -2,7 +2,7 @@ from typing import Optional, List
 from pydantic import BaseModel
 
 from sqlalchemy import and_, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from app.db.models import User, Contact
@@ -25,22 +25,22 @@ class ContactVM(BaseModel):
 
 
 class ContactRepository:
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: Session):
         self.session = session
 
-    async def searchContacts(self, user: User, query: str, limit: int = 10) -> List[Contact]:
+    def searchContacts(self, user: User, query: str, limit: int = 10) -> List[Contact]:
         tsQuery = ' | '.join(query.split())
-        rows = await self.session.execute(
+        rows = self.session.execute(
             text(CONTACT_SEARCH_QUERY), {'userId': user.id, 'query': tsQuery, 'limit': limit}
         )
         rowIds = [r[0] for r in rows]
 
         stmt = select(Contact).filter(Contact.id.in_(rowIds))
-        result = await self.session.execute(stmt)
+        result = self.session.execute(stmt)
 
         return result.scalars().all()
 
-    async def addContact(self, user: User, contactVM: ContactVM) -> List[Contact]:
+    def addContact(self, user: User, contactVM: ContactVM) -> List[Contact]:
         contact = Contact(
             contactVM.first_name,
             contactVM.last_name,
@@ -52,35 +52,35 @@ class ContactRepository:
 
         return contact
 
-    async def getContacts(self, user: User, limit: int = 10) -> List[Contact]:
-        result = await self.session.execute(
+    def getContacts(self, user: User, limit: int = 10) -> List[Contact]:
+        result = self.session.execute(
             select(Contact).where(Contact.user_id == user.id).limit(limit)
         )
 
         return result.scalars().all()
 
-    async def findContact(self, user: User, participantVM: EventParticipantVM) -> Optional[Contact]:
+    def findContact(self, user: User, participantVM: EventParticipantVM) -> Optional[Contact]:
         existingContact = None
 
         if participantVM.contact_id:
-            existingContact = await self.getContact(user, participantVM.contact_id)
+            existingContact = self.getContact(user, participantVM.contact_id)
             if not existingContact:
                 raise ContactRepoError('Invalid Participant.')
         elif participantVM.email:
-            existingContact = await self.getContactWithEmail(user, participantVM.email)
+            existingContact = self.getContactWithEmail(user, participantVM.email)
 
         return existingContact
 
-    async def getContact(self, user: User, contactId: str) -> Optional[Contact]:
+    def getContact(self, user: User, contactId: str) -> Optional[Contact]:
         return (
-            await self.session.execute(
+            self.session.execute(
                 select(Contact).where(and_(Contact.user_id == user.id, Contact.id == contactId))
             )
         ).scalar()
 
-    async def getContactWithEmail(self, user: User, email: str) -> Optional[Contact]:
+    def getContactWithEmail(self, user: User, email: str) -> Optional[Contact]:
         return (
-            await self.session.execute(
+            self.session.execute(
                 select(Contact).where(and_(Contact.user_id == user.id, Contact.email == email))
             )
         ).scalar()

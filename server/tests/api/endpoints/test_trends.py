@@ -1,11 +1,8 @@
-import pytest
-
 from app.db.models import Label
 from app.api.endpoints.trends import getSubtreeLabelIds
 
 
-@pytest.mark.asyncio
-async def test_getSubtreeLabelIds(user, session):
+def test_getSubtreeLabelIds(user, session):
     l1 = Label('l1')
     l1_2 = Label('l1_2')
     l1_3 = Label('l1_3')
@@ -21,7 +18,7 @@ async def test_getSubtreeLabelIds(user, session):
     user.labels.append(l1_3)
     user.labels.append(l1_3_1)
     user.labels.append(l2)
-    await session.commit()
+    session.commit()
 
     assert getSubtreeLabelIds(user, l1_3.id) == [l1_3.id, l1_3_1.id]
     assert set(getSubtreeLabelIds(user, l1.id)) == set([l1.id, l1_2.id, l1_3.id, l1_3_1.id])

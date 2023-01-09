@@ -3,8 +3,7 @@ from uuid import uuid4
 from typing import Optional, Dict, Tuple, List, Any
 
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload, Session
 
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
@@ -12,18 +11,17 @@ from dateutil.rrule import rrulestr
 from googleapiclient.errors import HttpError
 from app.db.models.access_control import AccessControlRule
 
-from app.db.session import AsyncSession
 from app.db.models import User, Event, LabelRule, UserCalendar, Calendar, Webhook, EventAttendee
 from app.core.logger import logger
 from app.core import config
 from app.api.repos.contact_repo import ContactRepository
+from app.api.repos.event_repo import EventRepository
 from app.api.repos.event_utils import (
     EventBaseVM,
     EventParticipantVM,
     createOrUpdateEvent,
     getRecurringEventId,
 )
-from app.api.repos.event_repo import EventRepository
 
 from app.sync.google.gcal import getCalendarService, addEventsWebhook
 
@@ -119,8 +117,6 @@ def syncGoogleCalendars(user: User, calendarList):
     for calendarItem in calendarList:
         gCalId = calendarItem.get('id')
         calSummary = calendarItem.get('summary')
-
-        print(f'Update Calendar: {gCalId}: {calSummary}')
         backgroundColor = mapGoogleColor(calendarItem.get('backgroundColor'))
 
         userCalendar = calendarsMap.get(gCalId)
@@ -163,7 +159,7 @@ def syncGoogleCalendars(user: User, calendarList):
             user.calendars.append(userCalendar)
 
 
-async def syncAccessControlList(userCalendar: UserCalendar, aclResult):
+def syncAccessControlList(userCalendar: UserCalendar, aclResult):
     for aclRule in aclResult.get('items'):
         scope = aclRule.get('scope')
         scopeType = scope.get('type')
@@ -173,38 +169,24 @@ async def syncAccessControlList(userCalendar: UserCalendar, aclResult):
         userCalendar.calendar.access_control_rules.append(acl)
 
 
-async def syncAccessControlListAllCalendars(user: User, service):
+def syncAccessControlListAllCalendars(user: User, service):
     for calendar in user.getGoogleCalendars():
         if calendar.access_role == 'owner':
             aclResult = service.acl().list(calendarId=calendar.google_id).execute()
-            await syncAccessControlList(calendar, aclResult)
+            syncAccessControlList(calendar, aclResult)
 
 
-async def syncAllEvents(userId: int, fullSync: bool = False):
-    """Syncs events from google calendar."""
+def syncCalendarsAndACL(user: User):
+    """Syncs calendars and access control list from google calendar."""
+    service = getCalendarService(user)
+    calendarList = service.calendarList().list().execute()
 
-    async with AsyncSession() as session:
-        stmt = select(User).where(User.id == userId).options(selectinload(User.credentials))
-        user = (await session.execute(stmt)).scalar()
-
-        service = getCalendarService(user)
-        calendarList = service.calendarList().list().execute()
-
-        syncGoogleCalendars(user, calendarList.get('items'))
-        await syncAccessControlListAllCalendars(user, service)
-
-        await session.commit()
-
-        for calendar in user.calendars:
-            if calendar.google_id != None:
-                await syncCalendar(calendar, session, fullSync=fullSync)
-                await createWebhook(calendar, session)
-
-        await session.commit()
+    syncGoogleCalendars(user, calendarList.get('items'))
+    syncAccessControlListAllCalendars(user, service)
 
 
-async def syncCalendar(
-    calendar: UserCalendar, session: AsyncSession, fullSync: bool = False
+def syncCalendarEvents(
+    calendar: UserCalendar, session: Session, fullSync: bool = False
 ) -> None:
     service = getCalendarService(calendar.user)
     end = (datetime.utcnow() + timedelta(days=30)).isoformat() + 'Z'
@@ -251,17 +233,18 @@ async def syncCalendar(
         nextSyncToken = eventsResult.get('nextSyncToken')
 
         logger.info(f'Sync {len(events)} events for {calendar.summary}')
-        await syncEventsToDb(calendar, events, session)
+        syncEventsToDb(calendar, events, session)
 
         if not nextPageToken:
             break
 
     calendar.sync_token = nextSyncToken
-    await session.commit()
+
+    session.commit()
 
 
-async def syncEventsToDb(
-    calendar: UserCalendar, eventItems: List[Dict[str, Any]], session: AsyncSession
+def syncEventsToDb(
+    calendar: UserCalendar, eventItems: List[Dict[str, Any]], session: Session
 ) -> None:
     """Sync items from google to the calendar.
 
@@ -278,21 +261,21 @@ async def syncEventsToDb(
     for eventItem in eventItems:
         user = calendar.user
         googleEventId = eventItem['id']
-        existingEvent = await eventRepo.getGoogleEvent(calendar, googleEventId)
+        existingEvent = eventRepo.getGoogleEvent(calendar, googleEventId)
 
         if eventItem['status'] == 'cancelled':
-            await syncDeletedEvent(calendar, existingEvent, eventItem, eventRepo, session)
+            syncDeletedEvent(calendar, existingEvent, eventItem, eventRepo, session)
         else:
-            event = await syncCreatedOrUpdatedGoogleEvent(
+            event = syncCreatedOrUpdatedGoogleEvent(
                 calendar, eventRepo, existingEvent, eventItem, session
             )
 
-            await autoLabelEvents(event, user, session)
+            autoLabelEvents(event, user, session)
 
-        await session.commit()
+        session.commit()
 
 
-async def autoLabelEvents(event: Event, user: User, session: AsyncSession):
+def autoLabelEvents(event: Event, user: User, session: Session):
     """Auto adds labels based on the LabelRule."""
 
     if event.title:
@@ -302,24 +285,24 @@ async def autoLabelEvents(event: Event, user: User, session: AsyncSession):
             .filter(LabelRule.text.ilike(event.title))
             .options(selectinload(LabelRule.label))
         )
-        result = await session.execute(stmt)
+        result = session.execute(stmt)
         labelRules = result.scalars().all()
 
         if len(labelRules) > 0:
             # Makes sure labels are refreshed.
-            await session.refresh(event)
+            session.refresh(event)
 
             for rule in labelRules:
                 if rule.label not in event.labels:
                     event.labels.append(rule.label)
 
 
-async def syncDeletedEvent(
+def syncDeletedEvent(
     userCalendar: UserCalendar,
     existingEvent: Optional[Event],
     eventItem: Dict[str, Any],
     eventRepo: EventRepository,
-    session: AsyncSession,
+    session: Session,
 ):
     """Sync deleted events to the DB.
 
@@ -335,7 +318,7 @@ async def syncDeletedEvent(
 
     googleRecurringEventId = eventItem.get('recurringEventId')
     if not existingEvent and googleRecurringEventId:
-        baseRecurringEvent = await getOrCreateBaseRecurringEvent(
+        baseRecurringEvent = getOrCreateBaseRecurringEvent(
             userCalendar, googleRecurringEventId, eventRepo, session
         )
 
@@ -378,17 +361,17 @@ async def syncDeletedEvent(
         userCalendar.calendar.events.append(event)
 
 
-async def getOrCreateBaseRecurringEvent(
+def getOrCreateBaseRecurringEvent(
     userCalendar: UserCalendar,
     googleRecurringEventId: str,
     eventRepo: EventRepository,
-    session: AsyncSession,
+    session: Session,
 ) -> Event:
     """Retrieves the existing base recurring event, or make a stub event in case
     the parent has not been created yet. For the stub parent event, we only need a primary ID,
     since the rest of the info will be populated then the parent is synced.
     """
-    baseRecurringEvent = await eventRepo.getGoogleEvent(userCalendar, googleRecurringEventId)
+    baseRecurringEvent = eventRepo.getGoogleEvent(userCalendar, googleRecurringEventId)
 
     if not baseRecurringEvent:
         baseRecurringEvent = Event(
@@ -414,17 +397,17 @@ async def getOrCreateBaseRecurringEvent(
         userCalendar.calendar.events.append(baseRecurringEvent)
 
     if not baseRecurringEvent.id:
-        await session.commit()
+        session.commit()
 
     return baseRecurringEvent
 
 
-async def syncCreatedOrUpdatedGoogleEvent(
+def syncCreatedOrUpdatedGoogleEvent(
     userCalendar: UserCalendar,
     eventRepo: EventRepository,
     existingEvent: Optional[Event],
     eventItem: Dict[str, Any],
-    session: AsyncSession,
+    session: Session,
 ) -> Event:
     """Syncs new event, or update existing from Google.
     For recurring events, translate the google reference to the internal event reference.
@@ -434,14 +417,14 @@ async def syncCreatedOrUpdatedGoogleEvent(
     baseRecurringEvent = None
     overrideId = existingEvent.id if existingEvent else None
     if eventVM.recurring_event_g_id:
-        baseRecurringEvent = await getOrCreateBaseRecurringEvent(
+        baseRecurringEvent = getOrCreateBaseRecurringEvent(
             userCalendar, eventVM.recurring_event_g_id, eventRepo, session
         )
 
         # Case: we've moved a recurring event to another calendar
         if existingEvent and existingEvent.recurring_event_id != baseRecurringEvent.id:
-            await session.delete(existingEvent)
-            await session.commit()
+            session.delete(existingEvent)
+            session.commit()
             existingEvent = None
 
         eventVM.recurring_event_id = baseRecurringEvent.id
@@ -469,25 +452,24 @@ async def syncCreatedOrUpdatedGoogleEvent(
 
         event.id = recurringEventId
 
-    await syncEventParticipants(userCalendar, event, eventVM.participants, session)
+    syncEventParticipants(userCalendar, event, eventVM.participants, session)
 
     return event
 
 
-async def syncEventParticipants(
+def syncEventParticipants(
     userCalendar: UserCalendar,
     event: Event,
     participants: List[EventParticipantVM],
-    session: AsyncSession,
+    session: Session,
 ):
     """Re-create event participants on google sync."""
-
     contactRepo = ContactRepository(session)
     updatedParticipants = []
     event.participants = []
 
     for participantVM in participants:
-        contact = await contactRepo.findContact(userCalendar.user, participantVM)
+        contact = contactRepo.findContact(userCalendar.user, participantVM)
 
         participant = EventAttendee(
             participantVM.email,
@@ -595,7 +577,7 @@ EVENTS_WEBHOOK_TTL_DAYS = 30
 EVENTS_WEBHOOK_TTL_SECONDS = timedelta(days=EVENTS_WEBHOOK_TTL_DAYS).total_seconds()
 
 
-async def createWebhook(calendar: UserCalendar, session) -> Optional[Webhook]:
+def createWebhook(calendar: UserCalendar, session) -> Optional[Webhook]:
     """Create a webhook for the calendar to watche for event updates.
     Only creates one webhook per calendar.
     """
@@ -604,7 +586,7 @@ async def createWebhook(calendar: UserCalendar, session) -> Optional[Webhook]:
         return None
 
     stmt = select(Webhook).where(Webhook.calendar_id == calendar.id)
-    webhook = (await session.execute(stmt)).scalar()
+    webhook = (session.execute(stmt)).scalar()
 
     if webhook:
         logger.info(f'Webhook exists.')
@@ -618,7 +600,7 @@ async def createWebhook(calendar: UserCalendar, session) -> Optional[Webhook]:
         )
         webhook.calendar = calendar
         session.add(webhook)
-        await session.commit()
+        session.commit()
 
         return webhook
 
@@ -627,7 +609,7 @@ async def createWebhook(calendar: UserCalendar, session) -> Optional[Webhook]:
         return None
 
 
-async def cancelWebhook(user: User, webhook: Webhook, session: AsyncSession):
+def cancelWebhook(user: User, webhook: Webhook, session: Session):
     body = {'resourceId': webhook.resource_id, 'id': webhook.id}
 
     try:
@@ -635,16 +617,16 @@ async def cancelWebhook(user: User, webhook: Webhook, session: AsyncSession):
     except HttpError as e:
         logger.error(e.reason)
 
-    await session.delete(webhook)
+    session.delete(webhook)
 
 
-async def refreshWebhooks(session: AsyncSession):
+def refreshWebhooks(session: Session):
     """Refreshes all webhooks that are about to expire."""
     stmt = select(Webhook).options(selectinload(Webhook.calendar).selectinload(UserCalendar.user))
-    webhooks = (await session.execute(stmt)).scalars()
+    webhooks = (session.execute(stmt)).scalars()
 
     for webhook in webhooks:
         isExpiring = webhook.expiration - timedelta(days=3) < datetime.now(timezone.utc)
         if isExpiring:
-            await cancelWebhook(webhook.calendar.user, webhook, session)
-            await createWebhook(webhook.calendar, session)
+            cancelWebhook(webhook.calendar.user, webhook, session)
+            createWebhook(webhook.calendar, session)

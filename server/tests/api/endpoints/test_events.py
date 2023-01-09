@@ -1,5 +1,3 @@
-import pytest
-from uuid import uuid4
 from datetime import datetime, timedelta
 
 from sqlalchemy import select, func
@@ -22,16 +20,14 @@ from app.db.models import User, Event, Contact
 from app.db.models.event import stripParticipants
 
 
-@pytest.mark.asyncio
-async def test_stripParticipants():
+def test_stripParticipants():
     title = """eat with @[jony]([id:abcabc123][type:Contact])"""
 
     assert stripParticipants(title) == 'eat with jony'
 
 
-@pytest.mark.asyncio
-async def test_getEventsBasic(user: User, session, async_client):
-    userCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+def test_getEventsBasic(user: User, session, test_client):
+    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     start = datetime.fromisoformat('2020-01-02T12:00:00-05:00')
     event1 = createEvent(userCalendar, start, start + timedelta(hours=1))
@@ -43,7 +39,7 @@ async def test_getEventsBasic(user: User, session, async_client):
 
     token = getAuthToken(user)
     startFilter = (start - timedelta(days=1)).isoformat()
-    resp = await async_client.get(
+    resp = test_client.get(
         f'/api/v1/calendars/{userCalendar.id}/events/',
         headers={'Authorization': token},
         params={'start_date': startFilter},
@@ -55,9 +51,8 @@ async def test_getEventsBasic(user: User, session, async_client):
     assert events[1].get('id') == event2.id
 
 
-@pytest.mark.asyncio
-async def test_createEvent_single(user: User, session, async_client):
-    userCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+def test_createEvent_single(user: User, session, test_client):
+    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     start = datetime.fromisoformat("2021-01-11T09:30:00+00:00")
     end = start + timedelta(hours=1)
@@ -69,7 +64,7 @@ async def test_createEvent_single(user: User, session, async_client):
         "calendar_id": userCalendar.id,
     }
 
-    resp = await async_client.post(
+    resp = test_client.post(
         f'/api/v1/calendars/{userCalendar.id}/events/',
         headers={'Authorization': getAuthToken(user)},
         json=event,
@@ -78,7 +73,7 @@ async def test_createEvent_single(user: User, session, async_client):
 
     assert eventResp.get('title') == event.get('title')
 
-    result = await session.execute(user.getSingleEventsStmt())
+    result = session.execute(user.getSingleEventsStmt())
     userEvents = result.scalars().all()
 
     assert len(userEvents) == 1
@@ -90,10 +85,9 @@ async def test_createEvent_single(user: User, session, async_client):
     assert not eventDb.all_day
 
 
-@pytest.mark.asyncio
-async def test_createEvent_recurring_invalid(user: User, session, async_client):
+def test_createEvent_recurring_invalid(user: User, session, test_client):
     """Malformed recurrence string."""
-    userCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
     start = datetime.fromisoformat("2021-01-11T05:00:00+00:00")
     end = start + timedelta(hours=1)
     event = {
@@ -108,7 +102,7 @@ async def test_createEvent_recurring_invalid(user: User, session, async_client):
         RRULE:FREQ=DAILY;INTERVAL=1;COUNT=5
     """
     event['recurrences'] = [r.strip() for r in rule.split('\n') if r.strip()]
-    resp = await async_client.post(
+    resp = test_client.post(
         f'/api/v1/calendars/{userCalendar.id}/events/',
         headers={'Authorization': getAuthToken(user)},
         json=event,
@@ -116,7 +110,7 @@ async def test_createEvent_recurring_invalid(user: User, session, async_client):
     assert resp.status_code == 422
 
     event['recurrences'] = ['RRULE:FREQ=DAILY;INTERVAL=1;COUNT=invalid']
-    resp = await async_client.post(
+    resp = test_client.post(
         f'/api/v1/calendars/{userCalendar.id}/events/',
         headers={'Authorization': getAuthToken(user)},
         json=event,
@@ -124,9 +118,8 @@ async def test_createEvent_recurring_invalid(user: User, session, async_client):
     assert resp.status_code == 422
 
 
-@pytest.mark.asyncio
-async def test_createEvent_recurring(user: User, session, async_client, eventRepo: EventRepository):
-    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+def test_createEvent_recurring(user: User, session, test_client, eventRepo: EventRepository):
+    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     start = datetime.fromisoformat("2021-01-11T05:00:00+00:00")
     end = start + timedelta(hours=1)
@@ -142,7 +135,7 @@ async def test_createEvent_recurring(user: User, session, async_client, eventRep
         "recurrences": recurrences,
     }
 
-    resp = await async_client.post(
+    resp = test_client.post(
         f'/api/v1/calendars/{calendar.id}/events/',
         headers={'Authorization': getAuthToken(user)},
         json=event,
@@ -150,7 +143,8 @@ async def test_createEvent_recurring(user: User, session, async_client, eventRep
     assert resp.status_code == 200
 
     eventId = resp.json()['id']
-    eventDb = await eventRepo.getEvent(user, calendar, eventId)
+    eventDb = eventRepo.getEvent(user, calendar, eventId)
+    assert eventDb is not None
 
     assert eventDb.recurrences == recurrences
 
@@ -158,10 +152,9 @@ async def test_createEvent_recurring(user: User, session, async_client, eventRep
     assert len(events) == 3
 
 
-@pytest.mark.asyncio
-async def test_createEvent_allDay(user: User, session, async_client, eventRepo: EventRepository):
+def test_createEvent_allDay(user: User, session, test_client, eventRepo: EventRepository):
     """TODO: API Should only need one of start / end and start_day / end_day"""
-    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     start = datetime.fromisoformat("2021-01-11T00:00:00+00:00")
     end = start + timedelta(days=1)
@@ -175,7 +168,7 @@ async def test_createEvent_allDay(user: User, session, async_client, eventRepo: 
         "calendar_id": calendar.id,
     }
 
-    resp = await async_client.post(
+    resp = test_client.post(
         f'/api/v1/calendars/{calendar.id}/events/',
         headers={'Authorization': getAuthToken(user)},
         json=event,
@@ -186,20 +179,19 @@ async def test_createEvent_allDay(user: User, session, async_client, eventRepo: 
     assert eventResp.get('all_day') == True
 
     eventId = resp.json()['id']
-    eventDb = await eventRepo.getEvent(user, calendar, eventId)
+    eventDb = eventRepo.getEvent(user, calendar, eventId)
     assert eventDb
 
 
-@pytest.mark.asyncio
-async def test_createEvent_withLabels(user: User, session, async_client):
+def test_createEvent_withLabels(user: User, session, test_client):
     """Create event with label"""
-    userCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
     from app.api.endpoints.labels import createOrUpdateLabel, LabelVM, LabelInDbVM
 
     # Create a label in DB
     labelVM = LabelVM(title='label-1', color_hex='#ffffff')
-    label = await createOrUpdateLabel(user, None, labelVM, session)
-    await session.commit()
+    label = createOrUpdateLabel(user, None, labelVM, session)
+    session.commit()
     labelInDB = LabelInDbVM.from_orm(label)
 
     # Create an event with the existing label
@@ -214,7 +206,7 @@ async def test_createEvent_withLabels(user: User, session, async_client):
         'labels': [labelInDB.dict()],
     }
 
-    resp = await async_client.post(
+    resp = test_client.post(
         f'/api/v1/calendars/{userCalendar.id}/events/',
         headers={'Authorization': getAuthToken(user)},
         json=event,
@@ -228,10 +220,9 @@ async def test_createEvent_withLabels(user: User, session, async_client):
     assert labels[0]['id'] == labelInDB.id
 
 
-@pytest.mark.asyncio
-async def test_createEvent_withLabels_nonExisting(user: User, session, async_client):
+def test_createEvent_withLabels_nonExisting(user: User, session, test_client):
     """Create event with label"""
-    userCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     # Create an event with a non existing label
     start = datetime.fromisoformat("2021-01-11T05:00:00+00:00")
@@ -245,7 +236,7 @@ async def test_createEvent_withLabels_nonExisting(user: User, session, async_cli
         'labels': [{'id': 123, 'title': 'chore', 'color_hex': '#ffffff'}],
     }
 
-    resp = await async_client.post(
+    resp = test_client.post(
         f'/api/v1/calendars/{userCalendar.id}/events/',
         headers={'Authorization': getAuthToken(user)},
         json=event,
@@ -253,8 +244,7 @@ async def test_createEvent_withLabels_nonExisting(user: User, session, async_cli
     assert resp.status_code == 400
 
 
-@pytest.mark.asyncio
-async def test_createEvent_withParticipants(user: User, session, async_client):
+def test_createEvent_withParticipants(user: User, session, test_client):
     """Create event with participants emails.
     If the user has the contact stored, make sure that it's linked to the participant.
     """
@@ -263,11 +253,11 @@ async def test_createEvent_withParticipants(user: User, session, async_client):
 
     contact = Contact('Jon', 'Snow', 'jon@example.com', 'test-img.png', None)
     user.contacts.append(contact)
-    await session.commit()
+    session.commit()
 
     # Create new event with two participants
 
-    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
     start = datetime.fromisoformat("2021-01-11T00:00:00+00:00")
     end = start + timedelta(days=1)
     event = {
@@ -283,7 +273,7 @@ async def test_createEvent_withParticipants(user: User, session, async_client):
         ],
     }
 
-    resp = await async_client.post(
+    resp = test_client.post(
         f'/api/v1/calendars/{calendar.id}/events/',
         headers={'Authorization': getAuthToken(user)},
         json=event,
@@ -292,7 +282,7 @@ async def test_createEvent_withParticipants(user: User, session, async_client):
     assert len(resp.json().get('participants')) == 2
 
     eventId = resp.json().get('id')
-    eventDb = (await session.execute(select(Event).where(Event.id == eventId))).scalar()
+    eventDb = (session.execute(select(Event).where(Event.id == eventId))).scalar()
     for participant in eventDb.participants:
         if participant.email == contact.email:
             assert participant.contact_id == contact.id
@@ -300,7 +290,7 @@ async def test_createEvent_withParticipants(user: User, session, async_client):
     # Make sure the event has the added participants
 
     eventJson = (
-        await async_client.get(
+        test_client.get(
             f'/api/v1/calendars/{calendar.id}/events/{eventId}',
             headers={'Authorization': getAuthToken(user)},
         )
@@ -317,29 +307,28 @@ async def test_createEvent_withParticipants(user: User, session, async_client):
     assert p2
 
 
-@pytest.mark.asyncio
-async def test_updateEvent_withParticipants(user: User, session, async_client):
+def test_updateEvent_withParticipants(user: User, session, test_client):
     # Setup Existing Contact
     contact = Contact('Jon', 'Snow', 'jon@example.com', 'test-img.png', None)
     user.contacts.append(contact)
 
     # Create an event with participants.
-    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
     start = datetime.fromisoformat('2020-01-02T12:00:00-05:00')
     event1 = createEvent(calendar, start, start + timedelta(hours=1))
     session.add(event1)
 
-    await session.commit()
+    session.commit()
 
     participant = EventAttendee(contact.email, None, contact.id, 'needsAction')
     participant.event_id = event1.id
     session.add(participant)
 
-    await session.commit()
+    session.commit()
 
     # Update: add a participant and remove another.
     eventJson = (
-        await async_client.get(
+        test_client.get(
             f'/api/v1/calendars/{calendar.id}/events/{event1.id}',
             headers={'Authorization': getAuthToken(user)},
         )
@@ -349,7 +338,7 @@ async def test_updateEvent_withParticipants(user: User, session, async_client):
         {'email': 'new@example.com', 'photoUrl': 'xyz.png'},
     ]
 
-    _ = await async_client.put(
+    _ = test_client.put(
         f'/api/v1/calendars/{calendar.id}/events/{event1.id}',
         headers={'Authorization': getAuthToken(user)},
         json=eventJson,
@@ -358,7 +347,7 @@ async def test_updateEvent_withParticipants(user: User, session, async_client):
     # Make sure the event is updated in the DB.
 
     event = (
-        await session.execute(
+        session.execute(
             select(Event).where(Event.id == event1.id).options(selectinload(Event.participants))
         )
     ).scalar()
@@ -367,19 +356,18 @@ async def test_updateEvent_withParticipants(user: User, session, async_client):
     assert event.participants[0].email == 'new@example.com'
 
 
-@pytest.mark.asyncio
-async def test_updateEvent_recurring(user: User, session, async_client):
+def test_updateEvent_recurring(user: User, session, test_client):
     """Modify for this & following events.
     TODO: Should delete outdated, overriden events.
     """
-    userCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     # Create a new recurring event 2020-01-01 to 2020-01-10 => 10 events.
     start = datetime.fromisoformat('2020-01-01T12:00:00')
     recurringEvent = createEvent(userCalendar, start, start + timedelta(hours=1))
     recurringEvent.recurrences = ['RRULE:FREQ=DAILY;UNTIL=20200110T120000Z']
 
-    events = await getAllExpandedRecurringEventsList(
+    events = getAllExpandedRecurringEventsList(
         user, userCalendar, start, start + timedelta(days=20), session
     )
     assert len(events) == 10
@@ -390,7 +378,7 @@ async def test_updateEvent_recurring(user: User, session, async_client):
     override.title = 'Override'
     override.id = events[8].id
 
-    await session.commit()
+    session.commit()
 
     # Trim the original event's instance list
     # Now, it starts from 2020-01-05.
@@ -402,7 +390,7 @@ async def test_updateEvent_recurring(user: User, session, async_client):
         "calendar_id": userCalendar.id,
         "recurrences": ['RRULE:FREQ=DAILY;UNTIL=20200105T120000Z'],
     }
-    resp = await async_client.put(
+    resp = test_client.put(
         f'/api/v1/calendars/{userCalendar.id}/events/{recurringEvent.id}',
         headers={'Authorization': getAuthToken(user)},
         json=eventData,
@@ -410,7 +398,7 @@ async def test_updateEvent_recurring(user: User, session, async_client):
 
     assert resp.status_code == 200
 
-    events = await getAllExpandedRecurringEventsList(
+    events = getAllExpandedRecurringEventsList(
         user, userCalendar, start, start + timedelta(days=20), session
     )
 
@@ -418,17 +406,16 @@ async def test_updateEvent_recurring(user: User, session, async_client):
     assert len(events) == 5
 
 
-@pytest.mark.asyncio
-async def test_moveEvent_single(user, session, async_client):
-    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+def test_moveEvent_single(user, session, test_client):
+    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
     start = datetime.now()
     end = start + timedelta(hours=1)
     event = createEvent(calendar, start, end)
     session.add(event)
-    await session.commit()
+    session.commit()
 
     # Move in same calendar returns error message.
-    resp = await async_client.post(
+    resp = test_client.post(
         f'/api/v1/calendars/{calendar.id}/events/{event.id}/move',
         headers={'Authorization': getAuthToken(user)},
         json={'calendar_id': calendar.id},
@@ -438,63 +425,61 @@ async def test_moveEvent_single(user, session, async_client):
     # Move to different calendar
     cal2 = createCalendar(user, 'calendar-id-2')
 
-    resp = await async_client.post(
+    resp = test_client.post(
         f'/api/v1/calendars/{calendar.id}/events/{event.id}/move',
         headers={'Authorization': getAuthToken(user)},
         json={'calendar_id': cal2.id},
     )
 
     # Make sure it's not in the old calendar
-    resp = await async_client.get(
+    resp = test_client.get(
         f'/api/v1/calendars/{calendar.id}/events/{event.id}',
         headers={'Authorization': getAuthToken(user)},
     )
     assert resp.status_code == 404
 
     # Make sure we can fetch from the new calendar
-    resp = await async_client.get(
+    resp = test_client.get(
         f'/api/v1/calendars/{cal2.id}/events/{event.id}',
         headers={'Authorization': getAuthToken(user)},
     )
     assert resp.json().get('id') == event.id
 
 
-@pytest.mark.asyncio
-async def test_deleteEvent_single(user, session, async_client):
-    calendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+def test_deleteEvent_single(user, session, test_client):
+    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     start = datetime.now()
     end = start + timedelta(hours=1)
     event = createEvent(calendar, start, end)
     session.add(event)
 
-    await session.commit()
+    session.commit()
 
-    result = await session.execute(user.getSingleEventsStmt())
+    result = session.execute(user.getSingleEventsStmt())
     events = result.scalars().all()
 
     assert len(events) == 1
 
-    resp = await async_client.delete(
+    resp = test_client.delete(
         f'/api/v1/calendars/{calendar.id}/events/{event.id}',
         headers={'Authorization': getAuthToken(user)},
     )
 
     assert resp.status_code == 200
-    result = await session.execute(user.getSingleEventsStmt())
+    result = session.execute(user.getSingleEventsStmt())
     events = result.scalars().all()
     assert len(events) == 0
 
 
-@pytest.mark.asyncio
-async def test_deleteEvent_overrides(user: User, session, async_client):
-    userCalendar = (await session.execute(user.getPrimaryCalendarStmt())).scalar()
+def test_deleteEvent_overrides(user: User, session, test_client):
+    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
 
     start = datetime.fromisoformat('2020-01-01T12:00:00')
     recurringEvent = createEvent(userCalendar, start, start + timedelta(hours=1))
     recurringEvent.recurrences = ['RRULE:FREQ=DAILY;UNTIL=20200105T120000Z']
 
-    events = await getAllExpandedRecurringEventsList(
+    events = getAllExpandedRecurringEventsList(
         user, userCalendar, start, start + timedelta(days=5), session
     )
     override = createOrUpdateEvent(userCalendar, None, events[2])
@@ -502,14 +487,14 @@ async def test_deleteEvent_overrides(user: User, session, async_client):
     override.id = events[2].id
     override.calendar_id = userCalendar.id
 
-    await session.commit()
+    session.commit()
 
-    resp = await async_client.delete(
+    resp = test_client.delete(
         f'/api/v1/calendars/{userCalendar.id}/events/{recurringEvent.id}',
         headers={'Authorization': getAuthToken(user)},
     )
 
-    result = await session.execute(
+    result = session.execute(
         select(Event).options(selectinload(Event.labels)).options(selectinload(Event.participants))
     )
     events = result.scalars().all()
