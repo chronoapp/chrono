@@ -6,7 +6,7 @@ import useEventService, { EventService } from './event-edit/useEventService'
 import SearchResults from '@/calendar/SearchResults'
 
 import { GlobalEvent } from '@/util/global'
-import { startOfWeek } from '@/util/localizer'
+import { startOfWeek, formatDateTime } from '@/util/localizer'
 import useKeyPress from '@/lib/hooks/useKeyPress'
 import * as dates from '@/util/dates'
 import * as API from '@/util/Api'
@@ -36,7 +36,7 @@ function Calendar() {
   const firstOfWeek = startOfWeek()
   const today = new Date()
   const eventService: EventService = useEventService()
-  const eventInteraction = useEventActions()
+  const eventActions = useEventActions()
 
   const calendars = useRecoilValue(calendarsState)
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
@@ -105,14 +105,29 @@ function Calendar() {
 
   async function loadEvents(start: Date, end: Date) {
     const authToken = API.getAuthToken()
-    const eventsByCalendar = await API.getAllEvents(
-      authToken,
-      start,
-      end,
-      Object.values(calendars.calendarsById)
-    )
 
-    eventInteraction.initEvents(eventsByCalendar)
+    const eventPromises = Object.values(calendars.calendarsById)
+      .filter((cal) => cal.selected)
+      .map((calendar) => {
+        try {
+          return {
+            eventsPromise: API.getCalendarEvents(
+              authToken,
+              calendar.id,
+              formatDateTime(start),
+              formatDateTime(end)
+            ),
+            calendarId: calendar.id,
+          }
+        } catch (err) {
+          return { eventsPromise: Promise.resolve([]), calendarId: calendar.id }
+        }
+      })
+
+    for (const e of eventPromises) {
+      const calendarEvents = await e.eventsPromise
+      eventActions.loadEvents(e.calendarId, calendarEvents)
+    }
   }
 
   function renderCalendar() {

@@ -184,38 +184,6 @@ export async function deleteCalendar(calendarId: string, authToken: string) {
 
 // ================== Events ==================
 
-export async function getAllEvents(
-  authToken: string,
-  start: Date,
-  end: Date,
-  calendars: Calendar[]
-) {
-  const eventPromises = calendars
-    .filter((cal) => cal.selected)
-    .map((calendar) => {
-      try {
-        return {
-          eventsPromise: getCalendarEvents(
-            authToken,
-            calendar.id,
-            formatDateTime(start),
-            formatDateTime(end)
-          ),
-          calendarId: calendar.id,
-        }
-      } catch (err) {
-        return { eventsPromise: Promise.resolve([]), calendarId: calendar.id }
-      }
-    })
-
-  const records: Record<string, Event[]> = {}
-  for (const e of eventPromises) {
-    records[e.calendarId] = await e.eventsPromise
-  }
-
-  return records
-}
-
 export async function getCalendarEvents(
   authToken: string,
   calendarId: string,

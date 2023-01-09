@@ -77,7 +77,7 @@ function ParticipantInput(props: IProps) {
   }
 
   return (
-    <FormControl width="100%" {...getComboboxProps()} isInvalid={hasError} zIndex="5">
+    <FormControl width="100%" {...getComboboxProps()} isInvalid={hasError}>
       <Box onKeyDown={handleEnter}>
         <Tooltip label={error} isOpen={hasError}>
           <Input
@@ -97,7 +97,6 @@ function ParticipantInput(props: IProps) {
         bg="white"
         position={'absolute'}
         borderRadius="md"
-        zIndex={2}
         width={'100%'}
         boxShadow="md"
       >
