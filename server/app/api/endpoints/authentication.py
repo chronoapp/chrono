@@ -7,6 +7,7 @@ from typing import Tuple
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, Request, status, HTTPException
 from fastapi.responses import RedirectResponse
+from oauthlib.oauth2.rfc6749.errors import InvalidGrantError
 
 from datetime import datetime
 from urllib.parse import unquote
@@ -94,7 +95,7 @@ def googleAuthCallback(authData: AuthData, session: Session = Depends(get_db)):
     try:
         flow = getAuthFlow(None)
         flow.fetch_token(code=authData.code)
-    except oauthlib.oauth2.rfc6749.errors.InvalidGrantError:
+    except InvalidGrantError:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, 'Invalid oauth grant details.')
 
     googleSession = flow.authorized_session()
