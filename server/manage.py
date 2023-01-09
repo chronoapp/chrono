@@ -1,14 +1,7 @@
-from datetime import datetime
 import click
 import asyncio
 from functools import wraps
-
-
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
-from app.api.repos.calendar_repo import CalendarRepo
-from app.api.repos.event_repo import EventRepository
-from app.api.repos.user_repo import UserRepository
 from app.db.session import scoped_session
 from app.db.models import User, Label
 
@@ -88,22 +81,6 @@ def sync_cal_id(userid: int, cal: str, full: bool):
 
         print(f'Syncing {calendar.summary}..')
         syncCalendarEvents(calendar, session, fullSync=full)
-
-
-@main.command()
-@click.argument('userid')
-def update_classifier(userid):
-    from app.classify.classifier import updateClassifier
-
-    updateClassifier(userid)
-
-
-@main.command()
-@click.argument('userid')
-def auto_label(userid):
-    from app.classify.classifier import classifyEvents
-
-    classifyEvents(userid, startDaysAgo=30)
 
 
 @main.command()
