@@ -1,7 +1,13 @@
+from typing import Optional, TYPE_CHECKING
+
 from sqlalchemy import Column, Integer, String, ForeignKey, BigInteger
 from sqlalchemy.orm import relationship, backref
 
 from app.db.base_class import Base
+
+if TYPE_CHECKING:
+    from .user import User
+    from .label import Label
 
 
 class LabelRule(Base):
@@ -14,12 +20,14 @@ class LabelRule(Base):
     text = Column(String(255), nullable=False)
 
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    user = relationship(
+    user: 'User' = relationship(
         'User', backref=backref('label_rules', lazy='dynamic', cascade='all,delete')
     )
 
     label_id = Column(Integer, ForeignKey('label.id'), nullable=False)
-    label = relationship('Label', backref=backref('rules', lazy='dynamic', cascade='all,delete'))
+    label: 'Label' = relationship(
+        'Label', backref=backref('rules', lazy='dynamic', cascade='all,delete')
+    )
 
     def __init__(self, text: str):
         self.text = text

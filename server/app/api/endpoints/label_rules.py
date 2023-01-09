@@ -1,5 +1,5 @@
-from typing import List
-from fastapi import APIRouter, Depends
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
@@ -54,11 +54,15 @@ async def getLabelRules(
 @router.put('/label_rules/', response_model=LabelRuleInDBVM)
 async def putLabel(
     labelRule: LabelRuleVM, user=Depends(get_current_user), session: Session = Depends(get_db)
-):
-    result = session.execute(
-        select(Label).where(and_(User.id == user.id, Label.id == labelRule.label_id))
-    )
-    labelDb = result.scalar()
+) -> LabelRule:
+    labelDb: Optional[Label] = (
+        session.execute(
+            select(Label).where(and_(User.id == user.id, Label.id == labelRule.label_id))
+        )
+    ).scalar()
+
+    if not labelDb:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Label not found")
 
     result = session.execute(
         select(LabelRule).where(

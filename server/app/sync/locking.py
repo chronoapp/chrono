@@ -19,11 +19,11 @@ def getRedisConnection():
     return redis.Redis(host=redis_host, port=6379, db=0)
 
 
-def _lockkey(lockId: int):
+def _lockkey(lockId: str):
     return f'lock:{lockId}'
 
 
-def acquireLock(lockId: int, acquire_timeout: int = 10, lock_timeout: int = 10) -> Optional[str]:
+def acquireLock(lockId: str, acquire_timeout: int = 10, lock_timeout: int = 10) -> Optional[str]:
     """Locking expires in 15 minutes to make sure other processes
     are unlocked if a the lock's owner crashes.
     """
@@ -49,7 +49,7 @@ def acquireLock(lockId: int, acquire_timeout: int = 10, lock_timeout: int = 10) 
     return None
 
 
-def releaseLock(lockId: int, identifier: Optional[str]):
+def releaseLock(lockId: str, identifier: Optional[str]):
     if not identifier:
         return False
 

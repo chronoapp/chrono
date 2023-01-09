@@ -1,8 +1,13 @@
+from typing import TYPE_CHECKING
+
 from datetime import datetime
 from sqlalchemy import Column, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
+
+if TYPE_CHECKING:
+    from .user_calendar import UserCalendar
 
 
 class Webhook(Base):
@@ -12,7 +17,7 @@ class Webhook(Base):
     id = Column(String, primary_key=True, nullable=False)
 
     calendar_id = Column(String(255), ForeignKey('user_calendar.id'), nullable=False)
-    calendar = relationship('UserCalendar', back_populates='webhook')
+    calendar: 'UserCalendar' = relationship('UserCalendar', back_populates='webhook')
 
     resource_id = Column(String())
     resource_uri = Column(String())

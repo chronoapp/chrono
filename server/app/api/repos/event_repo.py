@@ -1,5 +1,5 @@
 import heapq
-from typing import List, Optional, Iterable, Tuple, Generator, AsyncGenerator, Dict
+from typing import List, Optional, Iterable, Tuple, Generator, AsyncGenerator, Dict, cast
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from itertools import islice
@@ -306,6 +306,9 @@ class EventRepository:
             except InputError as err:
                 raise EventNotFoundError(str(err))
 
+            if not eventVM.original_start:
+                raise EventRepoError('No original start for recurring event.')
+
             dt = eventVM.original_start
             googleId = None
             if parentEvent.recurring_event_gId:
@@ -368,8 +371,8 @@ class EventRepository:
     def moveEvent(self, user: User, eventId: str, fromCalendarId: str, toCalendarId: str) -> Event:
         calendarRepo = CalendarRepo(self.session)
 
-        fromCalendar: Calendar = calendarRepo.getCalendar(user, fromCalendarId)
-        toCalendar: Calendar = calendarRepo.getCalendar(user, toCalendarId)
+        fromCalendar = calendarRepo.getCalendar(user, fromCalendarId)
+        toCalendar = calendarRepo.getCalendar(user, toCalendarId)
         if fromCalendar.id == toCalendar.id:
             raise EventRepoError('Cannot move between same calendars')
 

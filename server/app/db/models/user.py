@@ -1,13 +1,17 @@
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
 
 from sqlalchemy import Column, Integer, String, and_, select
-from sqlalchemy.orm import relationship, selectinload
+from sqlalchemy.orm import relationship, selectinload, Mapped
 
 from app.db.base_class import Base
 from app.db.models.user_credentials import ProviderType
 from app.db.models.user_calendar import UserCalendar
 from app.db.models.calendar import Calendar
 from app.db.models.event import Event
+from app.db.models.user_credentials import UserCredential
+
+if TYPE_CHECKING:
+    from .label import Label
 
 
 class User(Base):
@@ -17,19 +21,22 @@ class User(Base):
     username = Column(String(255))
     hashed_password = Column(String(255))
 
-    email = Column(String(255))
+    email: str = Column(String(255))
     name = Column(String(255))  # display name
     picture_url = Column(String(255))
 
     google_oauth_state = Column(String(255), nullable=True)
-    credentials = relationship(
+    credentials: UserCredential = relationship(
         'UserCredential',
         cascade='save-update, merge, delete, delete-orphan',
         uselist=False,
         backref='user',
     )
 
-    timezone = Column(String(255), nullable=False, server_default='UTC')
+    timezone: str = Column(String(255), nullable=False, server_default='UTC')
+
+    calendars: list[UserCalendar]
+    labels: list['Label']
 
     def __repr__(self):
         return f'<User {self.id=} {self.email=}/>'
@@ -49,10 +56,10 @@ class User(Base):
         return (
             self.credentials is not None
             and self.credentials.provider == ProviderType.Google
-            and self.credentials.token_data
+            and self.credentials.token_data is not None
         )
 
-    def getPrimaryCalendarStmt(self) -> UserCalendar:
+    def getPrimaryCalendarStmt(self):
         return select(UserCalendar).where(
             UserCalendar.user_id == self.id, UserCalendar.primary == True
         )

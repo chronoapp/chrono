@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, TYPE_CHECKING
 from uuid import uuid4
 
 from sqlalchemy import Column, String, ForeignKey
@@ -6,6 +6,9 @@ from sqlalchemy.orm import relationship, backref
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.db.base_class import Base
+
+if TYPE_CHECKING:
+    from .calendar import Calendar
 
 
 """Reference: https://developers.google.com/calendar/api/v3/reference/acl"""
@@ -39,7 +42,7 @@ class AccessControlRule(Base):
 
     google_id = Column(String, index=True)
     calendar_id = Column(String, ForeignKey('calendar.id'), nullable=True)
-    calendar = relationship(
+    calendar: 'Calendar' = relationship(
         'Calendar', backref=backref('access_control_rules', lazy='dynamic', cascade='all,delete')
     )
     role = Column(String(50))  # AccessRole

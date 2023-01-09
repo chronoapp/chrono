@@ -1,10 +1,14 @@
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 import shortuuid
 
 from sqlalchemy import Column, String, Text
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
+
+if TYPE_CHECKING:
+    from .user_calendar import UserCalendar
+    from .event import Event
 
 
 """The base calendar is attached to an Event.
@@ -23,7 +27,11 @@ class Calendar(Base):
     timezone = Column(String(255), nullable=True)
 
     email_ = Column(String(255), nullable=True)
-    user_calendars = relationship("UserCalendar", foreign_keys='[UserCalendar.id]')
+    user_calendars: list['UserCalendar'] = relationship(
+        "UserCalendar", foreign_keys='[UserCalendar.id]'
+    )
+
+    events: list['Event']
 
     @property
     def email(self) -> Optional[str]:
