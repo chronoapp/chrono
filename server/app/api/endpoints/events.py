@@ -188,7 +188,7 @@ async def updateCalendarEvent(
         updatedEvent = eventRepo.updateEvent(user, userCalendar, event_id, event)
 
         if userCalendar.source == 'google' and updatedEvent.isGoogleEvent():
-            syncEventToGoogleTask.send(user.id, userCalendar.id, updatedEvent.id, 'all')
+            syncEventToGoogleTask.send(user.id, userCalendar.id, updatedEvent.id, 'none')
 
         return updatedEvent
 
