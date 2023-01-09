@@ -118,7 +118,8 @@ def googleAuthCallback(authData: AuthData, session: Session = Depends(get_db)):
         user.picture_url = pictureUrl
 
     creds = getCredentialsDict(flow.credentials)
-    user.credentials = UserCredential(creds, ProviderType.Google)
+
+    user.credentials = UserCredential(creds, ProviderType(ProviderType.Google))
     session.commit()
 
     authToken = getAuthToken(user)
@@ -202,7 +203,7 @@ def msftCallback(request: Request, session: Session = Depends(get_db)):
         user.email = email
         user.name = name
 
-    user.credentials = UserCredential(tokenResult, ProviderType.Microsoft)
+    user.credentials = UserCredential(tokenResult, ProviderType(ProviderType.Microsoft))
     session.commit()
 
     authToken = str(
