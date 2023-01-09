@@ -32,6 +32,9 @@ def convertToLocalTime(dateTime: datetime, timeZone: Optional[str]):
 
 
 def getEventBody(event: Event, timeZone: str):
+    if event.organizer is None or event.start is None or event.end is None:
+        raise ValueError('Event missing required fields')
+
     organizer = {'email': event.organizer.email, 'displayName': event.organizer.display_name}
     participants = [
         {'email': p.email, 'displayName': p.display_name, 'responseStatus': p.response_status}
@@ -167,7 +170,7 @@ def updateCalendar(user: User, calendar: UserCalendar):
     )
 
 
-def addEventsWebhook(calendar: UserCalendar, ttlSeconds: int):
+def addEventsWebhook(calendar: UserCalendar, ttlSeconds: float):
     """Subscribes to an event notification channel. The subscription lasts for 30 days."""
     webhookUrl = f'{config.API_URL}{config.API_V1_STR}/webhooks/google_events'
     uniqueId = uuid4().hex

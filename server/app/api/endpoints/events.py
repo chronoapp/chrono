@@ -113,7 +113,7 @@ async def createCalendarEvent(
     event: EventBaseVM,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
-) -> EventInDBVM:
+) -> Event:
     # TODO: Add the default organizer.
     if event.recurring_event_id:
         raise HTTPException(
@@ -174,7 +174,7 @@ async def updateCalendarEvent(
     event_id: str,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
-) -> EventInDBVM:
+) -> Event:
     """Update an existing event. For recurring events, create the "override" event
     in the DB with the composite id of {baseId}_{date}.
 
@@ -207,7 +207,7 @@ async def moveEventCalendar(
     calReq: MoveCalendarRequest,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
-) -> EventInDBVM:
+) -> Event:
     try:
         eventRepo = EventRepository(session)
         event = eventRepo.moveEvent(user, eventId, calendarId, calReq.calendar_id)

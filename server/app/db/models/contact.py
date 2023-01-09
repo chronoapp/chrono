@@ -1,10 +1,13 @@
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 import shortuuid
 
 from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship, backref
 
 from app.db.base_class import Base
+
+if TYPE_CHECKING:
+    from .user import User
 
 
 class Contact(Base):
@@ -14,7 +17,9 @@ class Contact(Base):
     google_id = Column(String(255), unique=True, nullable=True)
 
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    user = relationship('User', backref=backref('contacts', lazy='dynamic', cascade='all,delete'))
+    user: 'User' = relationship(
+        'User', backref=backref('contacts', lazy='dynamic', cascade='all,delete')
+    )
 
     first_name = Column(String(255), nullable=True)
     last_name = Column(String(255), nullable=True)

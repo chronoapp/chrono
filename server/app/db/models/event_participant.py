@@ -1,4 +1,4 @@
-from typing import Optional, Literal
+from typing import Optional, Literal, TYPE_CHECKING
 import shortuuid
 
 from sqlalchemy import Column, String, ForeignKey
@@ -6,6 +6,9 @@ from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
 
+if TYPE_CHECKING:
+    from .contact import Contact
+    from .event import Event
 
 ResponseStatus = Literal['needsAction', 'accepted', 'declined', 'tentative']
 EventParticipantType = Literal['attendee', 'creator', 'organizer']
@@ -22,19 +25,21 @@ class EventParticipant(Base):
     id = Column(String(255), primary_key=True, default=shortuuid.uuid)
 
     event_pk = Column(String(255), ForeignKey('event.pk'), nullable=True)
-    email_ = Column(String(255), nullable=True, index=True)
-    display_name_ = Column(String(255), nullable=True)
+    email_: Optional[str] = Column(String(255), nullable=True, index=True)
+    display_name_: Optional[str] = Column(String(255), nullable=True)
 
     contact_id = Column(String(255), ForeignKey('contact.id'), nullable=True)
-    contact = relationship(
+    contact: Optional['Contact'] = relationship(
         'Contact', lazy="joined", backref="participating_events", foreign_keys=[contact_id]
     )
-    response_status = Column(String(255), nullable=True)
+    response_status: Optional[ResponseStatus] = Column(String(255), nullable=True)
 
     # Used for joined table inheritance. An EventParticipant can be a creator, organizer, or attendee.
     type_ = Column(String(20), nullable=False)
 
-    __mapper_args__ = {"polymorphic_on": type_}
+    event: 'Event'
+
+    __mapper_args__: dict[str, str] = {"polymorphic_on": type_}
 
     @property
     def photo_url(self) -> Optional[str]:

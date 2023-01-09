@@ -1,11 +1,10 @@
 import shortuuid
-from uuid import uuid4
 from typing import Optional, Dict, Tuple, List, Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload, Session
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from dateutil.rrule import rrulestr
 from googleapiclient.errors import HttpError
@@ -13,7 +12,6 @@ from app.db.models.access_control import AccessControlRule
 
 from app.db.models import User, Event, LabelRule, UserCalendar, Calendar, Webhook, EventAttendee
 from app.core.logger import logger
-from app.core import config
 from app.api.repos.contact_repo import ContactRepository
 from app.api.repos.event_repo import EventRepository
 from app.api.repos.event_utils import (
@@ -185,9 +183,7 @@ def syncCalendarsAndACL(user: User):
     syncAccessControlListAllCalendars(user, service)
 
 
-def syncCalendarEvents(
-    calendar: UserCalendar, session: Session, fullSync: bool = False
-) -> None:
+def syncCalendarEvents(calendar: UserCalendar, session: Session, fullSync: bool = False) -> None:
     service = getCalendarService(calendar.user)
     end = (datetime.utcnow() + timedelta(days=30)).isoformat() + 'Z'
     nextPageToken = None
@@ -569,64 +565,3 @@ def googleEventToEventVM(calendarId: str, eventItem: Dict[str, Any]) -> GoogleEv
         guests_can_see_other_guests=guestsCanSeeOtherGuests,
     )
     return eventVM
-
-
-"""Webhook management"""
-
-EVENTS_WEBHOOK_TTL_DAYS = 30
-EVENTS_WEBHOOK_TTL_SECONDS = timedelta(days=EVENTS_WEBHOOK_TTL_DAYS).total_seconds()
-
-
-def createWebhook(calendar: UserCalendar, session) -> Optional[Webhook]:
-    """Create a webhook for the calendar to watche for event updates.
-    Only creates one webhook per calendar.
-    """
-    if not config.API_URL:
-        logger.error(f'No API URL specified.')
-        return None
-
-    stmt = select(Webhook).where(Webhook.calendar_id == calendar.id)
-    webhook = (session.execute(stmt)).scalar()
-
-    if webhook:
-        logger.info(f'Webhook exists.')
-        return webhook
-
-    try:
-        resp = addEventsWebhook(calendar, EVENTS_WEBHOOK_TTL_SECONDS)
-        expiration = resp.get('expiration')
-        webhook = Webhook(
-            resp.get('id'), resp.get('resourceId'), resp.get('resourceUri'), int(expiration)
-        )
-        webhook.calendar = calendar
-        session.add(webhook)
-        session.commit()
-
-        return webhook
-
-    except HttpError as e:
-        logger.error(e.reason)
-        return None
-
-
-def cancelWebhook(user: User, webhook: Webhook, session: Session):
-    body = {'resourceId': webhook.resource_id, 'id': webhook.id}
-
-    try:
-        _resp = getCalendarService(user).channels().stop(body=body).execute()
-    except HttpError as e:
-        logger.error(e.reason)
-
-    session.delete(webhook)
-
-
-def refreshWebhooks(session: Session):
-    """Refreshes all webhooks that are about to expire."""
-    stmt = select(Webhook).options(selectinload(Webhook.calendar).selectinload(UserCalendar.user))
-    webhooks = (session.execute(stmt)).scalars()
-
-    for webhook in webhooks:
-        isExpiring = webhook.expiration - timedelta(days=3) < datetime.now(timezone.utc)
-        if isExpiring:
-            cancelWebhook(webhook.calendar.user, webhook, session)
-            createWebhook(webhook.calendar, session)

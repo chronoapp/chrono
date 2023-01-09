@@ -1,10 +1,13 @@
-from typing import Literal, Optional
+from typing import Literal, Optional, TYPE_CHECKING
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship, backref
 
 from app.db.base_class import Base
 from app.db.models.access_control import AccessRole
+
+if TYPE_CHECKING:
+    from app.db.models import User, Webhook, Calendar
 
 CalendarSource = Literal['google', 'chrono']
 
@@ -17,8 +20,8 @@ class UserCalendar(Base):
     """TODO: id should not be the same as the calendar id."""
 
     __tablename__ = 'user_calendar'
-    id = Column(String(255), ForeignKey('calendar.id'), primary_key=True)
-    calendar = relationship(
+    id: str = Column(String(255), ForeignKey('calendar.id'), primary_key=True)
+    calendar: 'Calendar' = relationship(
         "Calendar",
         back_populates="user_calendars",
         uselist=False,
@@ -27,22 +30,26 @@ class UserCalendar(Base):
     )
 
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    user = relationship('User', backref=backref('calendars', lazy='joined', cascade='all,delete'))
+    user: 'User' = relationship(
+        'User', backref=backref('calendars', lazy='joined', cascade='all,delete')
+    )
 
     # IDs for google / msft / aapl.
     google_id = Column(String(255), ForeignKey('calendar.google_id'), nullable=True)
     sync_token = Column(String(255))  # TODO: Rename to google_sync_token.
 
     # User specific properties
-    summary_override = Column(String(255))
-    background_color = Column(String(10))
-    foreground_color = Column(String(10))
-    selected = Column(Boolean)
+    summary_override: Optional[str] = Column(String(255))
+    background_color: Optional[str] = Column(String(10))
+    foreground_color: Optional[str] = Column(String(10))
+    selected: bool = Column(Boolean)
     access_role = Column(String(50))  # AccessRole
     primary = Column(Boolean)
     deleted = Column(Boolean)
 
-    webhook = relationship("Webhook", uselist=False, back_populates="calendar", lazy='joined')
+    webhook: 'Webhook' = relationship(
+        "Webhook", uselist=False, back_populates="calendar", lazy='joined'
+    )
 
     def __repr__(self) -> str:
         return f'<UserCalendar id={self.id} summary={self.summary}/>'
@@ -71,15 +78,15 @@ class UserCalendar(Base):
         return self.access_role == 'writer' or self.access_role == 'owner'
 
     @property
-    def summary(self) -> str:
+    def summary(self):
         return self.summary_override if self.summary_override else self.calendar.summary
 
     @property
-    def timezone(self) -> str:
+    def timezone(self):
         return self.calendar.timezone
 
     @property
-    def description(self) -> str:
+    def description(self):
         return self.calendar.description
 
     @property
@@ -90,5 +97,5 @@ class UserCalendar(Base):
             return 'chrono'
 
     @property
-    def email(self) -> str:
+    def email(self):
         return self.calendar.email

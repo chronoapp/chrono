@@ -98,7 +98,7 @@ class CalendarRepo:
         if not calendarDb:
             raise CalendarNotFoundError('Calendar not found.')
 
-        calendarDb.selected = userCalendar.selected
+        calendarDb.selected = userCalendar.selected or False
         calendarDb.summary_override = userCalendar.summary
         calendarDb.background_color = userCalendar.background_color
         calendarDb.foreground_color = userCalendar.foreground_color

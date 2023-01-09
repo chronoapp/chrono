@@ -4,6 +4,7 @@ from worker import dramatiq
 from app.api.repos.event_repo import EventRepository
 from app.api.repos.user_repo import UserRepository
 from app.api.repos.calendar_repo import CalendarRepo
+from app.api.repos.webhook_repo import WebhookRepository
 from app.db.session import scoped_session
 
 from .gcal import (
@@ -19,7 +20,6 @@ from .calendar import (
     syncCreatedOrUpdatedGoogleEvent,
     syncCalendarEvents,
     syncCalendarsAndACL,
-    createWebhook,
 )
 from app.core.logger import logger
 
@@ -76,6 +76,9 @@ def syncDeleteEventToGoogleTask(userId: int, userCalendarId: str, eventId: str) 
         user = userRepo.getUser(userId)
         userCalendar = calRepo.getCalendar(user, userCalendarId)
         event = eventRepo.getEventVM(user, userCalendar, eventId)
+        if not event:
+            logger.warning(f'Event {eventId} not found')
+            return
 
         if event.g_id:
             try:
@@ -110,6 +113,7 @@ def syncAllCalendarsTask(userId: int, fullSync: bool) -> None:
 
     with scoped_session() as session:
         userRepo = UserRepository(session)
+        webhookRepo = WebhookRepository(session)
         user = userRepo.getUser(userId)
 
         syncCalendarsAndACL(user)
@@ -117,7 +121,7 @@ def syncAllCalendarsTask(userId: int, fullSync: bool) -> None:
 
         for calendar in user.calendars:
             if calendar.google_id != None:
-                createWebhook(calendar, session)
+                webhookRepo.createCalendarWebhook(calendar)
                 syncCalendarTask.send(user.id, calendar.id, False)
 
 
@@ -144,5 +148,5 @@ def updateCalendarTask(userId: int, calendarId: str) -> None:
         user = userRepo.getUser(userId)
         calendar = calRepo.getCalendar(user, calendarId)
 
-        logger.info(f'Update Calendar {calendar.google_id}')
+        logger.debug(f'Update Calendar {calendar.google_id}')
         updateCalendar(user, calendar)

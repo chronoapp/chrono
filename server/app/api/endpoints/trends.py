@@ -35,7 +35,7 @@ async def getUserTrends(
     try:
         startTime = datetime.fromisoformat(start)
         endTime = datetime.fromisoformat(end)
-        labels, durations = await getTrendsDataResult(
+        labels, durations = getTrendsDataResult(
             user, labelId, startTime, endTime, time_period, session
         )
 
@@ -50,12 +50,16 @@ def getSubtreeLabelIds(user: User, labelId: int) -> List[int]:
     but this should be fast when we have O(100) labels.
     """
     labels: List[Label] = user.labels
+
     labelMap = {l.id: l for l in labels}
     if labelId not in labelMap:
         raise ValueError(f'Invalid Label {labelId}')
 
     childIdsMap: Dict[int, List[int]] = {}
     for l in labels:
+        if l.parent_id is None:
+            continue
+
         if l.parent_id in childIdsMap:
             childIdsMap[l.parent_id].append(l.id)
         else:
@@ -112,7 +116,7 @@ def getNextPeriodDt(dt: datetime, period: TimePeriod) -> datetime:
         raise ValueError('Period not found.')
 
 
-async def getTrendsDataResult(
+def getTrendsDataResult(
     user: User,
     labelId: int,
     startTime: datetime,
@@ -165,7 +169,7 @@ async def getTrendsDataResult(
         ORDER BY starting;
     """
 
-    result = await session.execute(
+    result = session.execute(
         text(query),
         {
             'userId': userId,
