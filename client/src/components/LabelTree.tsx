@@ -14,8 +14,8 @@ import {
   useToast,
 } from '@chakra-ui/react'
 
-import Tree from 'rc-tree'
-import { EventDataNode, DataNode } from 'rc-tree/lib/interface'
+import Tree, { TreeNodeProps } from 'rc-tree'
+import { DataNode } from 'rc-tree/lib/interface'
 import { FiChevronDown, FiChevronRight, FiMoreHorizontal, FiTrash, FiEdit } from 'react-icons/fi'
 import Hoverable from '@/lib/Hoverable'
 
@@ -251,8 +251,76 @@ function LabelTree(props: IProps) {
     })
   }
 
+  function LabelTitle(item: TreeItem, allowEdit: boolean, curMenuExpanded: boolean) {
+    if (allowEdit) {
+      return (
+        <Hoverable>
+          {(isMouseInside, onMouseEnter, onMouseLeave) => (
+            <Flex
+              onMouseEnter={onMouseEnter}
+              onMouseLeave={onMouseLeave}
+              justifyContent="space-between"
+              alignItems="center"
+              paddingBottom="2px"
+            >
+              <Text fontSize="sm">{item.title}</Text>
+              {(isMouseInside || curMenuExpanded) && (
+                <Menu isLazy>
+                  <MenuButton
+                    variant="unstyled"
+                    color="gray.600"
+                    size="sm"
+                    pb="1"
+                    as={Button}
+                    fontWeight="normal"
+                  >
+                    <FiMoreHorizontal size={'1.25em'} />
+                  </MenuButton>
+                  <Portal>
+                    <MenuList mt="-5">
+                      <MenuItem
+                        onClick={() => {
+                          onClickEditLabel(item)
+                          onMouseLeave()
+                        }}
+                        icon={<FiEdit />}
+                        iconSpacing="1"
+                      >
+                        Edit
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => {
+                          onDeleteLabel(item)
+                          onMouseLeave()
+                        }}
+                        icon={<FiTrash />}
+                        iconSpacing="1"
+                      >
+                        Delete
+                      </MenuItem>
+                    </MenuList>
+                  </Portal>
+                </Menu>
+              )}
+            </Flex>
+          )}
+        </Hoverable>
+      )
+    } else {
+      return (
+        <span
+          style={{ display: 'inline-block' }}
+          className="pl-1"
+          onClick={() => props.onSelect && props.onSelect(item.label)}
+        >
+          {item.title}
+        </span>
+      )
+    }
+  }
+
   function treeData(data: TreeItem[], allowEdit: boolean): DataNode[] {
-    const Switcher = (props: EventDataNode) => {
+    const Switcher = (props: TreeNodeProps) => {
       if (props.expanded) {
         return <FiChevronDown size={'1.25em'} style={{ marginTop: 1 }} />
       } else {
@@ -263,87 +331,20 @@ function LabelTree(props: IProps) {
     return data.map((item) => {
       const curMenuExpanded = selectedLabelId == item.key
 
-      const Title = () => {
-        if (allowEdit) {
-          return (
-            <Hoverable>
-              {(isMouseInside, onMouseEnter, onMouseLeave) => (
-                <Flex
-                  onMouseEnter={onMouseEnter}
-                  onMouseLeave={onMouseLeave}
-                  justifyContent="space-between"
-                  alignItems="center"
-                  paddingBottom="2px"
-                >
-                  <Text fontSize="sm">{item.title}</Text>
-                  {(isMouseInside || curMenuExpanded) && (
-                    <Menu isLazy>
-                      <MenuButton
-                        variant="unstyled"
-                        color="gray.600"
-                        size="sm"
-                        pb="1"
-                        as={Button}
-                        fontWeight="normal"
-                      >
-                        <FiMoreHorizontal size={'1.25em'} />
-                      </MenuButton>
-                      <Portal>
-                        <MenuList mt="-5">
-                          <MenuItem
-                            onClick={() => {
-                              onClickEditLabel(item)
-                              onMouseLeave()
-                            }}
-                            icon={<FiEdit />}
-                            iconSpacing="1"
-                          >
-                            Edit
-                          </MenuItem>
-                          <MenuItem
-                            onClick={() => {
-                              onDeleteLabel(item)
-                              onMouseLeave()
-                            }}
-                            icon={<FiTrash />}
-                            iconSpacing="1"
-                          >
-                            Delete
-                          </MenuItem>
-                        </MenuList>
-                      </Portal>
-                    </Menu>
-                  )}
-                </Flex>
-              )}
-            </Hoverable>
-          )
-        } else {
-          return (
-            <span
-              style={{ display: 'inline-block' }}
-              className="pl-1"
-              onClick={() => props.onSelect && props.onSelect(item.label)}
-            >
-              {item.title}
-            </span>
-          )
-        }
-      }
-
       if (item.children && item.children.length) {
         return {
           switcherIcon: Switcher,
           key: item.key,
           icon: LabelView(item.label, allowEdit),
-          title: Title,
+          title: LabelTitle(item, allowEdit, curMenuExpanded),
           children: treeData(item.children, allowEdit),
         }
       }
+
       return {
         key: item.key,
         icon: LabelView(item.label, allowEdit),
-        title: Title,
+        title: LabelTitle(item, allowEdit, curMenuExpanded),
       }
     })
   }

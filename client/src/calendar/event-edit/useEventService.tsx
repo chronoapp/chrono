@@ -89,7 +89,7 @@ export default function useEventService() {
     } else {
       const hasMovedCalendar =
         editingEvent?.originalCalendarId && editingEvent.originalCalendarId !== calendarId
-      if (hasMovedCalendar && editingEvent.originalCalendarId) {
+      if (hasMovedCalendar && editingEvent?.originalCalendarId) {
         console.log(`Moved calendars from ${editingEvent.originalCalendarId} to ${calendarId}`)
         eventActions.moveEventCalendarAction(event.id, editingEvent.originalCalendarId, calendarId)
         queueMoveEvent(event.id, editingEvent.originalCalendarId, calendarId)

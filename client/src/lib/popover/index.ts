@@ -48,7 +48,7 @@ export declare interface ArrowContainerProps {
   arrowStyle?: React.CSSProperties
 }
 
-export declare const ArrowContainer: React.StatelessComponent<ArrowContainerProps>
+export declare const ArrowContainer: React.Component<ArrowContainerProps>
 
 export declare interface PopoverState {
   popoverInfo: PopoverInfo

@@ -255,7 +255,7 @@ function RecurringEventEditor(props: IProps) {
                 min={1}
                 max={99}
                 value={recurringOptions?.count || ''}
-                disabled={endCondition != EndCondition.ByCount}
+                isDisabled={endCondition != EndCondition.ByCount}
                 w="20"
                 onChange={(val) => {
                   setRecurringOptions({
@@ -332,7 +332,11 @@ function RecurringEventEditor(props: IProps) {
     }
 
     return (
-      <Modal isOpen={modalEnabled} onClose={() => setModalEnabled(false)}>
+      <Modal
+        isOpen={modalEnabled}
+        onClose={() => setModalEnabled(false)}
+        blockScrollOnMount={false}
+      >
         <ModalOverlay />
         <ModalContent pt="4">
           <ModalCloseButton />

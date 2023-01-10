@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 interface PopoverPortalProps {
   container: Element
   element: Element
+  children: React.ReactNode
 }
 
 const PopoverPortal: React.FC<PopoverPortalProps> = ({ container, element, children }) => {
