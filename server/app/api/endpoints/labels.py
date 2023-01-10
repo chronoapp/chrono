@@ -97,7 +97,7 @@ async def putLabels(
     labels: List[LabelInDbVM], user=Depends(get_current_user), session=Depends(get_db)
 ):
     """TODO: Bulk update with one query."""
-    updatedLabels = [await createOrUpdateLabel(user, label.id, label, session) for label in labels]
+    updatedLabels = [createOrUpdateLabel(user, label.id, label, session) for label in labels]
     session.commit()
 
     return updatedLabels
@@ -110,7 +110,7 @@ async def putLabel(
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> Label:
-    labelDb = await createOrUpdateLabel(user, labelId, label, session)
+    labelDb = createOrUpdateLabel(user, labelId, label, session)
     session.commit()
     session.refresh(labelDb)
 
