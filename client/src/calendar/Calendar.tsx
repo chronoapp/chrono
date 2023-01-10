@@ -187,7 +187,7 @@ function Calendar() {
 
   function renderFullEditMode() {
     const fullEditMode = editingEvent?.editMode == 'FULL_EDIT'
-    if (fullEditMode) {
+    if (fullEditMode && editingEvent) {
       return <EventEditFull eventService={eventService} event={editingEvent.event} />
     }
   }
