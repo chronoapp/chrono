@@ -68,11 +68,8 @@ def sync_cal_id(userid: int, cal: str, full: bool):
     from sqlalchemy.orm import selectinload
 
     with scoped_session() as session:
-        user = (
-            session.execute(
-                select(User).where(User.id == userid).options(selectinload(User.credentials))
-            )
-        ).scalar()
+        userRepo = UserRepository(session)
+        user = userRepo.getUser(userid)
 
         calendar = next((c for c in user.calendars if cal.lower() in c.summary.lower()), None)
         if not calendar:
