@@ -34,11 +34,14 @@ import { calendarsState } from '@/state/CalendarState'
 import Calendar, { AccessRole, CalendarSource } from '@/models/Calendar'
 import CalendarEditModal from './CalendarEditModal'
 
+import GoogleLogo from '@/assets/google.svg'
+import ChronoLogo from '@/assets/chrono.svg'
+
 function renderImageForSource(source: CalendarSource) {
   if (source === 'google') {
-    return <img src={'./google.svg'} width={22} />
+    return <img src={GoogleLogo} width={22} />
   } else {
-    return <img src={'./chrono.svg'} width={22} height="100%" />
+    return <img src={ChronoLogo} width={22} height="100%" />
   }
 }
 

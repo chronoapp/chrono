@@ -1,14 +1,11 @@
 import React, { useState } from 'react'
 import { useRecoilValue } from 'recoil'
 
-import dynamic from 'next/dynamic'
-
 import { TrendView } from '@/trends/ViewSelector'
 import { Label } from '@/models/Label'
 import { labelsState } from '@/state/LabelsState'
-
-const TrendChart = dynamic(() => import('@/trends/TrendChart'), { ssr: false })
-const HabitGraph = dynamic(() => import('@/trends/HabitGraph'), { ssr: false })
+import TrendChart from '@/trends/TrendChart'
+import HabitGraph from '@/trends/HabitGraph'
 
 interface IProps {
   authToken: string

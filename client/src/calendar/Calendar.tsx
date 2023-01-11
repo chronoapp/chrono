@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
-import { useRouter } from 'next/router'
+import useQuery from '@/lib/hooks/useQuery'
 
 import useEventService, { EventService } from './event-edit/useEventService'
 import SearchResults from '@/calendar/SearchResults'
@@ -46,8 +46,8 @@ function Calendar() {
   const editingEvent = useRecoilValue(editingEventState)
   const allVisibleEvents = useRecoilValue(allVisibleEventsSelector)
 
-  const router = useRouter()
-  const searchQuery = (router.query.search as string) || ''
+  const queryParams = useQuery()
+  const searchQuery = (queryParams.get('search') as string) || ''
   const [update, setUpdater] = React.useState(generateGuid())
 
   useKeyPress(['ArrowLeft', 'ArrowRight'], onKeyPress)

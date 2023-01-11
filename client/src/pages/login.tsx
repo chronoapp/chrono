@@ -5,6 +5,10 @@ import Cookies from 'universal-cookie'
 import * as dates from '@/util/dates'
 import { getGoogleOauthUrl, getMsftOauthUrl, loginWithEmail } from '@/util/Api'
 
+import MicrosoftLogo from '@/assets/microsoft-logo.png'
+import GoogleLogo from '@/assets/google-logo.png'
+import ChronoLogo from '@/assets/chrono.svg'
+
 const COOKIE_EXPIRE_DAYS = 30
 
 /**
@@ -17,12 +21,7 @@ function Login() {
   return (
     <Box width="400px" position="fixed" top="30%" left="50%" transform="translate(-50%, -30%)">
       <Flex alignItems="center" justifyContent="center">
-        <Image
-          fallbackSrc={'./chrono.svg'}
-          src={'./chrono.svg'}
-          alt="Chrono logo"
-          boxSize={'5em'}
-        />
+        <Image src={ChronoLogo} alt="Chrono logo" boxSize={'5em'} />
       </Flex>
       <Box boxShadow="lg" padding="5">
         <Text textAlign="center" mt="2" fontSize="lg">
@@ -35,7 +34,7 @@ function Login() {
           w="100%"
           onClick={() => (window.location.href = getGoogleOauthUrl())}
         >
-          <img src={'./google.svg'} style={{ width: '40px', paddingRight: 5 }}></img> Continue with
+          <img src={GoogleLogo.src} style={{ width: '40px', paddingRight: 5 }}></img> Continue with
           Google
         </Button>
 
@@ -45,8 +44,8 @@ function Login() {
           w="100%"
           onClick={() => (window.location.href = getMsftOauthUrl())}
         >
-          <img src={'./microsoft-logo.png'} style={{ width: '32px', paddingRight: 5 }}></img>{' '}
-          Continue with Microsoft
+          <img src={MicrosoftLogo.src} style={{ width: '32px', paddingRight: 5 }}></img> Continue
+          with Microsoft
         </Button>
 
         <hr />
