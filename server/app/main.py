@@ -1,8 +1,9 @@
 import os
 import uvicorn
-from fastapi import FastAPI
 from starlette.requests import Request
 from starlette.middleware.cors import CORSMiddleware
+
+from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 
 from app.core import config
@@ -27,6 +28,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1' if config.DEBUG else '0'
 

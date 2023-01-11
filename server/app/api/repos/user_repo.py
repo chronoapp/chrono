@@ -22,3 +22,12 @@ class UserRepository:
             return user
         else:
             raise NotFoundError('User not found.')
+
+    def getUserByEmail(self, email: str) -> Optional[User]:
+        user = (
+            self.session.execute(
+                select(User).where(User.email == email).options(selectinload(User.credentials))
+            )
+        ).scalar()
+
+        return user
