@@ -52,6 +52,16 @@ export const LoggedInRoute = () => {
   return <Outlet />
 }
 
+export const LoggedOutRoute = () => {
+  const authToken = getAuthToken()
+
+  if (authToken) {
+    return <Navigate to="/" />
+  }
+
+  return <Outlet />
+}
+
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <ChakraProvider theme={theme}>
     <RecoilRoot>
@@ -61,8 +71,10 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
             <Route path="/" element={<Home />}></Route>
             <Route path="/settings" element={<Settings />}></Route>
           </Route>
-          <Route path="/login" element={<Login />}></Route>
-          <Route path="/auth" element={<Auth />}></Route>
+          <Route path="/" element={<LoggedOutRoute />}>
+            <Route path="/login" element={<Login />}></Route>
+            <Route path="/auth" element={<Auth />}></Route>
+          </Route>
         </Routes>
       </BrowserRouter>
     </RecoilRoot>
