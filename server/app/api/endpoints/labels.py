@@ -2,13 +2,12 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, validator
 
-from sqlalchemy import select, and_, delete
 from sqlalchemy.orm import Session
 
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
 from app.db.models import Label, User
-from app.core.logger import logger
+from app.api.repos.user_repo import UserRepository
 
 router = APIRouter()
 
@@ -38,11 +37,9 @@ class LabelInDbVM(LabelVM):
 def createOrUpdateLabel(
     user: User, labelId: Optional[int], label: LabelVM, session: Session
 ) -> Label:
-    labelDb = None
-    if labelId:
-        stmt = select(Label).where(and_(User.id == user.id, Label.id == labelId))
-        labelDb = (session.execute(stmt)).scalar()
+    userRepo = UserRepository(session)
 
+    labelDb = userRepo.getLabel(user.id, labelId)
     if not labelDb:
         labelDb = Label(label.title, label.color_hex)
         user.labels.append(labelDb)
@@ -74,9 +71,10 @@ def combineLabels(labels: List[Label]) -> List[Label]:
 
 @router.get('/labels/', response_model=List[LabelInDbVM])
 async def getLabels(user=Depends(get_current_user), session=Depends(get_db)):
-    result = session.execute(select(Label).where(Label.user_id == user.id))
+    userRepo = UserRepository(session)
+    labels = userRepo.getLabels(user.id)
 
-    return result.scalars().all()
+    return labels
 
 
 @router.post('/labels/', response_model=LabelInDbVM)
@@ -125,14 +123,12 @@ async def deleteLabel(
     TODO: Handle delete subtree.
     TODO: Fix positions, since Sqlalchemy ORM doesn't support deletes yet.
     """
-    result = session.execute(select(Label).where(Label.user_id == user.id, Label.id == labelId))
-    label = result.scalar()
+    userRepo = UserRepository(session)
+    label = userRepo.getLabel(user.id, labelId)
 
     if not label:
         raise HTTPException(status_code=404, detail="Label not found.")
     else:
-        stmt = delete(Label).where(Label.id == label.id)
-        session.execute(stmt)
-        session.commit()
+        userRepo.deleteLabel(user.id, labelId)
 
         return label

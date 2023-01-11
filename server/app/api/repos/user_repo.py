@@ -1,9 +1,9 @@
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload, Session
 
-from app.db.models import User
+from app.db.models import User, Label
 from .exceptions import NotFoundError
 
 
@@ -31,3 +31,20 @@ class UserRepository:
         ).scalar()
 
         return user
+
+    def getLabel(self, userId: int, labelId: Optional[int]) -> Optional[Label]:
+        stmt = select(Label).where(User.id == userId, Label.id == labelId)
+        label = (self.session.execute(stmt)).scalar()
+
+        return label
+
+    def getLabels(self, userId: int) -> list[Label]:
+        stmt = select(Label).where(Label.user_id == userId)
+        labels = (self.session.execute(stmt)).scalars().all()
+
+        return labels
+
+    def deleteLabel(self, userId: int, labelId: int) -> None:
+        stmt = delete(Label).where(Label.user_id == userId, Label.id == labelId)
+        self.session.execute(stmt)
+        self.session.commit()
