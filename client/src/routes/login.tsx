@@ -23,8 +23,8 @@ function Login() {
       <Flex alignItems="center" justifyContent="center">
         <Image src={ChronoLogo} alt="Chrono logo" boxSize={'5em'} />
       </Flex>
-      <Box boxShadow="lg" padding="5">
-        <Text textAlign="center" mt="2" fontSize="lg">
+      <Box padding="5">
+        <Text textAlign="center" mt="2" fontSize="16" fontWeight={'medium'}>
           Sign in to Chrono
         </Text>
 
@@ -34,8 +34,10 @@ function Login() {
           w="100%"
           onClick={() => (window.location.href = getGoogleOauthUrl())}
         >
-          <img src={GoogleLogo} style={{ width: '40px', paddingRight: 5 }}></img> Continue with
-          Google
+          <img src={GoogleLogo} style={{ width: '40px', paddingRight: 5 }}></img>
+          <Text fontSize={'sm'} fontWeight={'medium'}>
+            Continue with Google
+          </Text>
         </Button>
 
         <Button
@@ -44,13 +46,15 @@ function Login() {
           w="100%"
           onClick={() => (window.location.href = getMsftOauthUrl())}
         >
-          <img src={MicrosoftLogo.src} style={{ width: '32px', paddingRight: 5 }}></img> Continue
-          with Microsoft
+          <img src={MicrosoftLogo.src} style={{ width: '32px', paddingRight: 5 }}></img>
+          <Text fontSize={'sm'} fontWeight={'medium'}>
+            Continue with Microsoft
+          </Text>
         </Button>
 
         <hr />
 
-        <Text textAlign="center" color="gray.500" mt="4">
+        <Text fontSize={'sm'} textAlign="center" color="gray.500" mt="4">
           Or, sign in with email
         </Text>
 
