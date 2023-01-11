@@ -62,7 +62,7 @@ export function loginWithEmail(email: string, password: string) {
   }).then(handleErrors)
 }
 
-export async function authenticate(code: string, state: string) {
+export async function authenticateGoogleOauth(code: string, state: string) {
   return fetch(`${API_URL}/oauth/google/token`, {
     method: 'POST',
     headers: {
