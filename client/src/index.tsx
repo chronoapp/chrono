@@ -1,18 +1,14 @@
 import React from 'react'
-import App from 'next/app'
-import Router from 'next/router'
-import NProgress from 'nprogress'
-import { RecoilRoot } from 'recoil'
+import ReactDOM from 'react-dom/client'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
+import { RecoilRoot } from 'recoil'
 import { ChakraProvider, extendTheme } from '@chakra-ui/react'
 
-Router.events.on('routeChangeStart', () => NProgress.start())
-Router.events.on('routeChangeComplete', () => NProgress.done())
-Router.events.on('routeChangeError', () => NProgress.done())
-NProgress.configure({ showSpinner: false })
+import Home from './routes/home'
 
 import 'nprogress/nprogress.css'
-import 'style/index.scss'
+import './style/index.scss'
 
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/500.css'
@@ -40,22 +36,16 @@ const theme = extendTheme({
   },
 })
 
-/**
- * Custom Page Initiation.
- * TODO: Move common state to a merged context.
- */
-class MyApp extends App {
-  render() {
-    const { Component, pageProps } = this.props
-
-    return (
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+  <React.StrictMode>
+    <BrowserRouter>
       <ChakraProvider theme={theme}>
         <RecoilRoot>
-          <Component {...pageProps} />
+          <Routes>
+            <Route path="/" element={<Home />}></Route>
+          </Routes>
         </RecoilRoot>
       </ChakraProvider>
-    )
-  }
-}
-
-export default MyApp
+    </BrowserRouter>
+  </React.StrictMode>
+)

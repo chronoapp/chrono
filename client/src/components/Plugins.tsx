@@ -1,7 +1,6 @@
 import React from 'react'
-import { useRouter } from 'next/router'
-
 import clsx from 'clsx'
+
 import { BsBarChartFill } from 'react-icons/bs'
 import {
   Box,
@@ -21,7 +20,6 @@ import * as API from '@/util/Api'
 type PluginType = 'Trends'
 
 export default function Plugins() {
-  const router = useRouter()
   const [viewPlugin, setViewPlugin] = React.useState<PluginType | null>(null)
 
   function renderPluginView() {

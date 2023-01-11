@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useCombobox } from 'downshift'
-import isemail from 'isemail'
+import validator from 'validator'
 
 import { Flex, Box, FormControl, Input, Tooltip } from '@chakra-ui/react'
 import debounce from 'lodash.debounce'
@@ -62,7 +62,7 @@ function ParticipantInput(props: IProps) {
 
   const handleEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      if (isemail.validate(inputValue)) {
+      if (validator.isEmail(inputValue)) {
         props.onSelect(EventParticipant.fromEmail(inputValue))
         setSelectInput('')
         setSearchValue('')
