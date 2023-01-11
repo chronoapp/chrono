@@ -65,3 +65,7 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "requests_oauthlib"
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "sqlalchemy.*"
+ignore_missing_imports = true
