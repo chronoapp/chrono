@@ -9,7 +9,7 @@ const HTMLWebpackPluginConfig = new HtmlWebpackPlugin({
 
 function buildConfig(env) {
   return {
-    entry: './src/index.tsx',
+    entry: './src/app.tsx',
     resolve: {
       extensions: ['.tsx', '.ts', '.js', '.scss'],
       alias: {

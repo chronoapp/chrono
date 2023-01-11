@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import useQuery from '@/lib/hooks/useQuery'
 import { setLocalStorageItem } from '@/lib/local-storage'
 
-import { authenticate } from '@/util/Api'
+import { authenticateGoogleOauth } from '@/util/Api'
 import * as dates from '@/util/dates'
 
 import NProgress from 'nprogress'
@@ -32,7 +32,7 @@ function Auth() {
     if (!code || !state) {
       navigate('/login')
     } else {
-      const resp = await authenticate(code, state)
+      const resp = await authenticateGoogleOauth(code, state)
       const tokenData = {
         token: resp.token,
         expires: dates.add(Date.now(), 30, 'day'),

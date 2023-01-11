@@ -6,8 +6,6 @@ Chrono is an extensible calendar with analytics.
 
 We use [Poetry](https://python-poetry.org/) for package management.
 
-Run `poetry config virtualenvs.in-project true` to enable virtualenvs to be created in the project directory.
-
 In the server/ directory, install packages with `poetry install`. In your editor settings, the python path will be at `${workspaceFolder}/server/.venv`.
 
 Build Containers `docker-compose -f docker-compose.dev.yml build`\
