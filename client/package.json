@@ -2,7 +2,7 @@
   "scripts": {
     "type-check": "tsc",
     "test": "jest",
-    "dev": "webpack serve --mode development",
+    "dev": "webpack serve --mode development --port 3300",
     "build": "webpack --config webpack.config.ts --mode development"
   },
   "private": true,
