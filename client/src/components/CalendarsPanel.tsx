@@ -120,8 +120,7 @@ export default function CalendarsPanel() {
 
   React.useEffect(() => {
     async function init() {
-      const authToken = API.getAuthToken()
-      const calendars = await API.getCalendars(authToken)
+      const calendars = await API.getCalendars()
       initCalendars(calendars)
     }
     init()
@@ -133,7 +132,7 @@ export default function CalendarsPanel() {
     })
     updateCalendar(updated)
 
-    API.putCalendar(updated, API.getAuthToken())
+    API.putCalendar(updated)
   }
 
   async function onDeleteCalendar(calendarId: string) {
@@ -141,7 +140,7 @@ export default function CalendarsPanel() {
     deleteCalendar(calendarId)
 
     // TODO: Show loading
-    API.deleteCalendar(calendarId, API.getAuthToken()).then(() => {
+    API.deleteCalendar(calendarId).then(() => {
       console.log(`Deleted: ${calendarId}`)
     })
   }
@@ -271,11 +270,10 @@ export default function CalendarsPanel() {
               ...fields,
             } as Calendar
 
-            const calendar = await API.putCalendar(updatedCalendar, API.getAuthToken())
+            const calendar = await API.putCalendar(updatedCalendar)
             updateCalendar(updatedCalendar)
           } else {
             const calendar = await API.createCalendar(
-              API.getAuthToken(),
               fields.summary,
               fields.backgroundColor,
               fields.source,

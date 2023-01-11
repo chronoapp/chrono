@@ -117,7 +117,7 @@ export default function SearchResults(props: IProps) {
 
   async function searchEvents() {
     setLoading(true)
-    const events = await API.searchEvents(API.getAuthToken(), props.searchQuery)
+    const events = await API.searchEvents(props.searchQuery)
     setEvents(events)
     setLoading(false)
   }

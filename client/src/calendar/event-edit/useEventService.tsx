@@ -121,7 +121,7 @@ export default function useEventService() {
       throw Error('Invalid Recurring Event')
     }
     const calendarId = event.calendar_id
-    const parentEvent = await API.getEvent(API.getAuthToken(), calendarId, event.recurring_event_id)
+    const parentEvent = await API.getEvent(calendarId, event.recurring_event_id)
 
     const rules = getSplitRRules(
       event.recurrences!.join('\n'),
@@ -152,13 +152,12 @@ export default function useEventService() {
    * Queues API request to create an event.
    */
   function queueCreateEvent(calendarId: string, event: Event, showToast: boolean) {
-    const token = API.getAuthToken()
     const tempEventId = event.id
 
     const createEventTask = () => {
       console.log(`RUN createEventTask id=${event.id} ${event.title}...`)
 
-      return API.createEvent(token, calendarId, event)
+      return API.createEvent(calendarId, event)
         .then((event) => {
           console.log(`Created event id=${event.id}`)
 
@@ -201,8 +200,6 @@ export default function useEventService() {
    *
    */
   function queueUpdateEvent(calendarId: string, event: Partial<Event>, showToast: boolean) {
-    const token = API.getAuthToken()
-
     const updateEventTask = () => {
       console.log(`RUN updateEventTask ${event.title}..`)
       let serverEventId = getLatestEventId(event.id)
@@ -213,7 +210,7 @@ export default function useEventService() {
         return Promise.resolve()
       }
 
-      return API.updateEvent(token, calendarId, { ...event, id: serverEventId }).then((event) => {
+      return API.updateEvent(calendarId, { ...event, id: serverEventId }).then((event) => {
         // Recurring event: TODO: Only refresh if moved calendar.
         if (Event.isParentRecurringEvent(event)) {
           document.dispatchEvent(new CustomEvent(GlobalEvent.refreshCalendar))
@@ -239,7 +236,7 @@ export default function useEventService() {
     const moveEventTask = () => {
       console.log(`Moving event ${eventId} from ${fromCalendarId} to ${toCalendarId}`)
 
-      return API.moveEvent(API.getAuthToken(), eventId, fromCalendarId, toCalendarId).then((e) => {
+      return API.moveEvent(eventId, fromCalendarId, toCalendarId).then((e) => {
         console.log(`Moved event ${e.id}`)
       })
     }
@@ -252,7 +249,7 @@ export default function useEventService() {
    */
   function queueDeleteEvent(calendarId: string, eventId: string) {
     const deleteEventTask = () =>
-      API.deleteEvent(API.getAuthToken(), calendarId, eventId).then(() => {
+      API.deleteEvent(calendarId, eventId).then(() => {
         toast({
           render: (p) => {
             return <InfoAlert onClose={p.onClose} title="Event deleted." />

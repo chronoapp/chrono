@@ -4,7 +4,7 @@ import { Button, Center, Flex, Box, Text } from '@chakra-ui/react'
 import { Bar } from 'react-chartjs-2'
 
 import * as dates from '@/util/dates'
-import { getTrends, getAuthToken } from '@/util/Api'
+import { getTrends } from '@/util/Api'
 import { Label, TimePeriod } from '@/models/Label'
 
 import ViewSelector, { TrendView } from './ViewSelector'
@@ -13,7 +13,6 @@ import { useRecoilValue } from 'recoil'
 import { labelsState } from '@/state/LabelsState'
 
 interface IProps {
-  authToken: string
   setSelectedView: (view: TrendView) => void
   selectedLabel?: Label
   setSelectedLabel: (label: Label) => void
@@ -36,8 +35,6 @@ function TrendChart(props: IProps) {
   }, [selectedTimePeriod, props.selectedLabel])
 
   async function updateTrendsData() {
-    const authToken = getAuthToken()
-
     if (props.selectedLabel) {
       const end = new Date()
       let start
@@ -50,13 +47,7 @@ function TrendChart(props: IProps) {
         start = dates.subtract(end, 30, 'day')
       }
 
-      const trends = await getTrends(
-        props.selectedLabel.id,
-        authToken,
-        selectedTimePeriod,
-        start,
-        end
-      )
+      const trends = await getTrends(props.selectedLabel.id, selectedTimePeriod, start, end)
       setTrends(trends)
     }
   }

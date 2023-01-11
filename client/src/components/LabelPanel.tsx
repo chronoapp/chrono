@@ -16,7 +16,7 @@ import { FiPlus } from 'react-icons/fi'
 import { FaTag } from 'react-icons/fa'
 import { normalizeArr } from '@/lib/normalizer'
 
-import { getAuthToken, getLabels } from '@/util/Api'
+import { getLabels } from '@/util/Api'
 import LabelEditModal from './LabelEditModal'
 import LabelTree from './LabelTree'
 import { labelsState } from '@/state/LabelsState'
@@ -32,9 +32,7 @@ function LabelPanel() {
       setLabelState((labelState) => {
         return { ...labelState, loading: true }
       })
-
-      const authToken = getAuthToken()
-      const labels = await getLabels(authToken)
+      const labels = await getLabels()
 
       setLabelState((labelState) => {
         return { ...labelState, loading: false, labelsById: normalizeArr(labels, 'id') }

@@ -6,7 +6,7 @@ import * as dates from '@/util/dates'
 import { getGoogleOauthUrl, getMsftOauthUrl, loginWithEmail } from '@/util/Api'
 
 import MicrosoftLogo from '@/assets/microsoft-logo.png'
-import GoogleLogo from '@/assets/google-logo.png'
+import GoogleLogo from '@/assets/google.svg'
 import ChronoLogo from '@/assets/chrono.svg'
 
 const COOKIE_EXPIRE_DAYS = 30
@@ -34,7 +34,7 @@ function Login() {
           w="100%"
           onClick={() => (window.location.href = getGoogleOauthUrl())}
         >
-          <img src={GoogleLogo.src} style={{ width: '40px', paddingRight: 5 }}></img> Continue with
+          <img src={GoogleLogo} style={{ width: '40px', paddingRight: 5 }}></img> Continue with
           Google
         </Button>
 

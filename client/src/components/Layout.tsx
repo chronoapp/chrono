@@ -1,5 +1,6 @@
 import React from 'react'
 import { useRecoilValue, useSetRecoilState } from 'recoil'
+import { useParams, useNavigate } from 'react-router-dom'
 
 import {
   Box,
@@ -15,9 +16,6 @@ import {
 } from '@chakra-ui/react'
 import { FiSettings, FiLogOut } from 'react-icons/fi'
 
-import Head from 'next/head'
-import { useRouter } from 'next/router'
-
 import { roundNext15Min } from '@/util/localizer'
 import { GlobalEvent } from '@/util/global'
 
@@ -32,6 +30,7 @@ import * as API from '@/util/Api'
 import { userState } from '@/state/UserState'
 import { primaryCalendarSelector } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
+import { setLocalStorageItem } from '@/lib/local-storage'
 
 interface Props {
   title: string
@@ -69,8 +68,6 @@ function TopNavigationBar(props: {
   canCreateEvent: boolean
   searchQuery: string
 }) {
-  const router = useRouter()
-
   return (
     <Flex
       height="3.25rem"
@@ -90,7 +87,12 @@ function TopNavigationBar(props: {
 }
 
 function Settings(props: { refreshCalendar: () => void }) {
-  const router = useRouter()
+  const navigate = useNavigate()
+
+  const logout = () => {
+    setLocalStorageItem('auth_token', undefined)
+    navigate('/login', { replace: true })
+  }
 
   return (
     <Menu>
@@ -100,11 +102,16 @@ function Settings(props: { refreshCalendar: () => void }) {
       <MenuList zIndex="2">
         <MenuItem onClick={props.refreshCalendar}>Refresh Events</MenuItem>
         <MenuDivider m="0" />
-        <MenuItem icon={<FiSettings />} onClick={() => router.push('/settings')}>
+        <MenuItem
+          icon={<FiSettings />}
+          onClick={() => {
+            navigate('/settings')
+          }}
+        >
           Settings
         </MenuItem>
         <MenuDivider m="0" />
-        <MenuItem icon={<FiLogOut />} onClick={API.signOut}>
+        <MenuItem icon={<FiLogOut />} onClick={logout}>
           Sign Out
         </MenuItem>
       </MenuList>
@@ -117,14 +124,14 @@ function Settings(props: { refreshCalendar: () => void }) {
  */
 function Layout(props: Props) {
   const toast = useToast({ duration: 2000, position: 'top' })
-  const router = useRouter()
-  const searchQuery = (router.query.search as string) || ''
+
+  const params = useParams()
+  const searchQuery = (params.search as string) || ''
   const setUser = useSetRecoilState(userState)
 
   React.useEffect(() => {
     async function fetchUser() {
-      const authToken = API.getAuthToken()
-      const userInfo = await API.getUser(authToken)
+      const userInfo = await API.getUser()
       setUser(userInfo)
     }
 
@@ -136,7 +143,7 @@ function Layout(props: Props) {
       render: (props) => <ToastTag title={'Updating calendar..'} showSpinner={false} {...props} />,
     })
 
-    await API.syncCalendar(API.getAuthToken())
+    await API.syncCalendar()
 
     document.dispatchEvent(new Event(GlobalEvent.refreshCalendar))
 
@@ -148,13 +155,6 @@ function Layout(props: Props) {
 
   return (
     <Box className="App">
-      <Head>
-        <title>{props.title}</title>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="initial-scale=1.0, width=device-width" />
-        <link rel="icon" type="image/svg+xml" href="/chrono.svg" />
-      </Head>
-
       <Flex height="100vh" width="100%" overflowY={'auto'}>
         {props.includeLeftPanel && (
           <Box className="left-section">

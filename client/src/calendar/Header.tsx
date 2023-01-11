@@ -1,4 +1,7 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useRecoilState, useRecoilValue } from 'recoil'
+
 import {
   Flex,
   Text,
@@ -15,8 +18,6 @@ import {
   InputLeftElement,
   InputRightElement,
 } from '@chakra-ui/react'
-import { useRecoilState, useRecoilValue } from 'recoil'
-import { useRouter } from 'next/router'
 
 import {
   FiChevronDown,
@@ -26,6 +27,7 @@ import {
   FiX,
   FiArrowLeft,
 } from 'react-icons/fi'
+
 import { format } from '@/util/localizer'
 import { GlobalEvent } from '@/util/global'
 import * as dates from '@/util/dates'
@@ -38,7 +40,8 @@ import useEventActions from '@/state/useEventActions'
 import { displayState, editingEventState, DisplayView } from '@/state/EventsState'
 
 function DateHeaderSearch(props: { disableSearchMode: () => void; defaultSearchQuery: string }) {
-  const router = useRouter()
+  const navigate = useNavigate()
+
   const [searchValue, setSearchValue] = React.useState<string>(props.defaultSearchQuery)
   const inputRef = React.useRef<HTMLInputElement>(null)
 
@@ -48,7 +51,7 @@ function DateHeaderSearch(props: { disableSearchMode: () => void; defaultSearchQ
 
   function executeSearchQuery(search: string) {
     if (search) {
-      router.push(`/?search=${search}`, undefined, { shallow: true })
+      navigate({ search: `?search=${search}` })
     }
   }
 
@@ -215,12 +218,12 @@ function DateHeaderNonSearch(props: {
  */
 export default function Header(props: { search: string }) {
   const eventActions = useEventActions()
+  const navigate = useNavigate()
+
   const [display, setDisplay] = useRecoilState(displayState)
   const editingEvent = useRecoilValue(editingEventState)
   const labels = useRecoilValue(labelsState)
-
   const [isSearchMode, setIsSearchMode] = React.useState<boolean>(!!props.search)
-  const router = useRouter()
 
   const title = getViewTitle(display.view)
 
@@ -231,7 +234,6 @@ export default function Header(props: { search: string }) {
   }, [props.search])
 
   React.useEffect(() => {
-    console.log('update..')
     document.addEventListener('keydown', handleKeyboardShortcuts)
 
     return () => {
@@ -252,7 +254,7 @@ export default function Header(props: { search: string }) {
           eventActions.cancelSelect()
         } else {
           setIsSearchMode(false)
-          router.push(`/`, undefined, { shallow: true })
+          navigate({ pathname: '/', search: '' })
         }
       }
     } else {
@@ -373,7 +375,7 @@ export default function Header(props: { search: string }) {
           defaultSearchQuery={props.search}
           disableSearchMode={() => {
             setIsSearchMode(false)
-            router.push(`/`, undefined, { shallow: true })
+            navigate({ pathname: '/', search: '' })
           }}
         />
       ) : (

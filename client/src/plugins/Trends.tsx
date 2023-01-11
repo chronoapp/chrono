@@ -7,11 +7,7 @@ import { labelsState } from '@/state/LabelsState'
 import TrendChart from '@/trends/TrendChart'
 import HabitGraph from '@/trends/HabitGraph'
 
-interface IProps {
-  authToken: string
-}
-
-function Trends(props: IProps) {
+function Trends() {
   const [selectedView, setSelectedView] = useState<TrendView>('CHART')
   const labelState = useRecoilValue(labelsState)
 
@@ -29,7 +25,6 @@ function Trends(props: IProps) {
         setSelectedLabel={(label) => {
           setSelectedLabel(label)
         }}
-        authToken={props.authToken}
         setSelectedView={setSelectedView}
       />
     )

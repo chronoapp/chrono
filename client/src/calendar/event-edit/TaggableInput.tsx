@@ -102,7 +102,7 @@ function TaggableInput(props: IProps) {
       return
     }
 
-    const contacts = await API.getContacts(API.getAuthToken(), query, 5)
+    const contacts = await API.getContacts(query, 5)
     const contactsDisplay = contacts.map((contact) => ({
       id: compositeId(contact.id, 'Contact'),
       display: contact.displayName,

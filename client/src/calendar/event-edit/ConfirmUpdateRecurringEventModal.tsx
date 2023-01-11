@@ -46,12 +46,7 @@ function ConfirmUpdateRecurringEventModal(props: { event: Event; eventService: E
 
   async function updateAllRecurringEvents(parentEvent?: Event) {
     const parent =
-      parentEvent ||
-      (await API.getEvent(
-        API.getAuthToken(),
-        props.event.calendar_id,
-        props.event.recurring_event_id!
-      ))
+      parentEvent || (await API.getEvent(props.event.calendar_id, props.event.recurring_event_id!))
 
     const updatedParent = getUpdatedParentEvent(parent, props.event)
 
@@ -68,11 +63,7 @@ function ConfirmUpdateRecurringEventModal(props: { event: Event; eventService: E
      * 1) The recurrence up to this event. We then use the recurrence to update the parent event.
      * 2) The recurrence from this event onwards, to create a new series of events.
      */
-    const parent = await API.getEvent(
-      API.getAuthToken(),
-      props.event.calendar_id,
-      props.event.recurring_event_id!
-    )
+    const parent = await API.getEvent(props.event.calendar_id, props.event.recurring_event_id!)
 
     if (dates.eq(parent.start, props.event.original_start)) {
       return await updateAllRecurringEvents(parent)

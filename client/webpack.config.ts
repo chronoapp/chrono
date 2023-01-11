@@ -45,6 +45,7 @@ function buildConfig(env) {
       publicPath: '/',
     },
     devServer: {
+      historyApiFallback: true,
       static: {
         directory: path.join(__dirname, 'dist'),
       },

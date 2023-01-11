@@ -22,7 +22,7 @@ import {
 } from '@chakra-ui/react'
 import { FiChevronDown } from 'react-icons/fi'
 import { InfoAlert } from '@/components/Alert'
-import { getAuthToken, putLabel, createLabel } from '@/util/Api'
+import { putLabel, createLabel } from '@/util/Api'
 import { getSortedLabelColors, LabelColor } from '@/models/LabelColors'
 import { useRecoilState } from 'recoil'
 import { labelsState, LabelModalState } from '@/state/LabelsState'
@@ -74,9 +74,9 @@ function EditLabelModal() {
         title: newLabelModal.labelTitle,
       }
       console.log(updatedLabel)
-      putLabel(updatedLabel, getAuthToken()).then(updateLabel)
+      putLabel(updatedLabel).then(updateLabel)
     } else {
-      createLabel(newLabelModal.labelTitle, selectedColor.hex, getAuthToken()).then(updateLabel)
+      createLabel(newLabelModal.labelTitle, selectedColor.hex).then(updateLabel)
     }
   }
 
