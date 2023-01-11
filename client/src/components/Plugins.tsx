@@ -41,7 +41,7 @@ export default function Plugins() {
           <ModalHeader>Trends</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <Trends authToken={API.getAuthToken()} />
+            <Trends />
           </ModalBody>
         </ModalContent>
       </Modal>

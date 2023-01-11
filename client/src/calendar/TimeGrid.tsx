@@ -52,6 +52,7 @@ class TimeGrid extends React.Component<IProps, IState> {
 
   constructor(props: IProps) {
     super(props)
+
     this.slotMetrics = new SlotMetrics(props.min, props.max, props.step, props.timeslots)
     this.gutterRef = React.createRef()
     this.contentRef = React.createRef()
@@ -62,10 +63,7 @@ class TimeGrid extends React.Component<IProps, IState> {
     }
 
     this.scrollToEvent = this.scrollToEvent.bind(this)
-  }
-
-  UNSAFE_componentWillMount() {
-    this.calculateTopScroll(this.props.events)
+    this.calculateTopScroll(props.events)
   }
 
   componentDidMount() {

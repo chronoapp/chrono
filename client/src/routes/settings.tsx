@@ -1,4 +1,3 @@
-import React from 'react'
 import { Text, Container, Heading } from '@chakra-ui/react'
 
 import Layout from '@/components/Layout'

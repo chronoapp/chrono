@@ -1,11 +1,14 @@
-import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, Outlet, Navigate } from 'react-router-dom'
 
 import { RecoilRoot } from 'recoil'
 import { ChakraProvider, extendTheme } from '@chakra-ui/react'
+import { getAuthToken } from '@/util/Api'
 
 import Home from './routes/home'
+import Settings from './routes/settings'
+import Auth from './routes/auth'
+import Login from './routes/login'
 
 import 'nprogress/nprogress.css'
 import './style/index.scss'
@@ -36,16 +39,32 @@ const theme = extendTheme({
   },
 })
 
+/**
+ * Makes sure we have an authenticated user before rendering the app.
+ */
+export const LoggedInRoute = () => {
+  const authToken = getAuthToken()
+
+  if (!authToken) {
+    return <Navigate to="/login" />
+  }
+
+  return <Outlet />
+}
+
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <ChakraProvider theme={theme}>
-        <RecoilRoot>
-          <Routes>
+  <ChakraProvider theme={theme}>
+    <RecoilRoot>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LoggedInRoute />}>
             <Route path="/" element={<Home />}></Route>
-          </Routes>
-        </RecoilRoot>
-      </ChakraProvider>
-    </BrowserRouter>
-  </React.StrictMode>
+            <Route path="/settings" element={<Settings />}></Route>
+          </Route>
+          <Route path="/login" element={<Login />}></Route>
+          <Route path="/auth" element={<Auth />}></Route>
+        </Routes>
+      </BrowserRouter>
+    </RecoilRoot>
+  </ChakraProvider>
 )

@@ -12,7 +12,7 @@ export default class ContactCache {
       }
     }
 
-    const contact = await API.getContact(API.getAuthToken(), id)
+    const contact = await API.getContact(id)
     this.contactMap.set(id, contact)
 
     return contact

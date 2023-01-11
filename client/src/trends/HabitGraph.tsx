@@ -8,7 +8,7 @@ import { startOfWeek, format, getWeekRange } from '@/util/localizer'
 
 import { hexToHSL } from '@/calendar/utils/Colors'
 import * as dates from '@/util/dates'
-import { getTrends, getAuthToken } from '@/util/Api'
+import { getTrends } from '@/util/Api'
 import ViewSelector, { TrendView } from './ViewSelector'
 import TagDropdown from './TagDropdown'
 import { useRecoilValue } from 'recoil'
@@ -40,10 +40,9 @@ function HabitGraph(props: IProps) {
       return
     }
 
-    const authToken = getAuthToken()
     const start = dates.firstVisibleDay(viewDate, startOfWeek())
     const end = dates.lastVisibleDay(viewDate, startOfWeek())
-    const trends = await getTrends(props.selectedLabel.id, authToken, 'DAY', start, end)
+    const trends = await getTrends(props.selectedLabel.id, 'DAY', start, end)
 
     const trendMap = new Map<string, number>()
     for (let i = 0; i < trends.labels.length; i++) {

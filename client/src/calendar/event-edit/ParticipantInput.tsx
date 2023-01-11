@@ -23,11 +23,7 @@ function ParticipantInput(props: IProps) {
   const debounceFetchContacts = useCallback(
     debounce(async (newValue) => {
       if (newValue) {
-        const contacts = await API.getContacts(
-          API.getAuthToken(),
-          newValue,
-          props.maxRecommendations
-        )
+        const contacts = await API.getContacts(newValue, props.maxRecommendations)
         setContacts(contacts.map((c) => EventParticipant.fromContact(c)))
       }
     }, 300),

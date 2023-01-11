@@ -104,15 +104,12 @@ function Calendar() {
   }
 
   async function loadEvents(start: Date, end: Date) {
-    const authToken = API.getAuthToken()
-
     const eventPromises = Object.values(calendars.calendarsById)
       .filter((cal) => cal.selected)
       .map((calendar) => {
         try {
           return {
             eventsPromise: API.getCalendarEvents(
-              authToken,
               calendar.id,
               formatDateTime(start),
               formatDateTime(end)

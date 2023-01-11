@@ -1,5 +1,4 @@
-import Router from 'next/router'
-import Cookies from 'universal-cookie'
+import { getLocalStorageItem, setLocalStorageItem } from '@/lib/local-storage'
 
 import { formatDateTime } from '@/util/localizer'
 import Event from '@/models/Event'
@@ -9,13 +8,13 @@ import Calendar, { CalendarSource } from '@/models/Calendar'
 import Contact from '@/models/Contact'
 import User from '@/models/User'
 
-const API_URL = '/api/v1'
+const API_URL = 'http://localhost:8888/api/v1'
 
 function handleErrors(response: any) {
   if (!response.ok) {
     if (response.status === 401) {
-      new Cookies().set('auth_token', null)
-      Router.push('/login')
+      setLocalStorageItem('auth_token', null)
+      window.location.href = '/login'
     } else {
       response.json().then((r: any) => {
         console.log(r)
@@ -31,44 +30,14 @@ function handleErrors(response: any) {
 
 // TODO: Log users out if response is 403.
 
-export function auth(ctx) {
-  let token
-  if (ctx.req) {
-    const cookies = new Cookies(ctx.req.headers.cookie)
-    token = cookies.get('auth_token')
-
-    if (!token) {
-      ctx.res.writeHead(302, { Location: '/login' })
-      ctx.res.end()
-      return
-    }
-  } else {
-    let cookies = new Cookies()
-    token = cookies.get('auth_token')
-  }
-
-  if (!token) {
-    Router.push('/login')
-  }
-
-  return token
+export function getAuthToken() {
+  return getLocalStorageItem('auth_token', '').token
 }
 
-export function getAuthToken(req?: any) {
-  let cookies
-  if (req != null) {
-    cookies = new Cookies(req.headers.cookie)
-  } else {
-    cookies = new Cookies()
-  }
-
-  return cookies.get('auth_token') || ''
-}
-
-export function getHeaders(authToken: string) {
+export function getHeaders() {
   return {
     'Content-Type': 'application/json',
-    Authorization: authToken,
+    Authorization: getAuthToken(),
   }
 }
 
@@ -93,15 +62,6 @@ export function loginWithEmail(email: string, password: string) {
   }).then(handleErrors)
 }
 
-export function signOut() {
-  // TODO: Update state after this.
-  const cookies = new Cookies()
-  cookies.remove('auth_token')
-
-  Router.push('/login')
-  Router.reload()
-}
-
 export async function authenticate(code: string, state: string) {
   return fetch(`${API_URL}/oauth/google/token`, {
     method: 'POST',
@@ -117,17 +77,16 @@ export async function authenticate(code: string, state: string) {
 
 // ================== User Info ==================
 
-export async function getUser(authToken: string): Promise<User> {
+export async function getUser(): Promise<User> {
   return fetch(`${API_URL}/user/`, {
     method: 'GET',
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
   }).then(handleErrors)
 }
 
 // ================== Calendars ==================
 
 export async function createCalendar(
-  authToken: string,
   summary: string,
   backgroundColor: string,
   source: CalendarSource,
@@ -145,7 +104,7 @@ export async function createCalendar(
       source,
       foregroundColor,
     }),
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
   })
     .then(handleErrors)
     .then((resp) => {
@@ -153,9 +112,9 @@ export async function createCalendar(
     })
 }
 
-export async function getCalendars(authToken: string): Promise<Calendar[]> {
+export async function getCalendars(): Promise<Calendar[]> {
   return fetch(`${API_URL}/calendars/`, {
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
   })
     .then(handleErrors)
     .then((resp) => {
@@ -163,11 +122,11 @@ export async function getCalendars(authToken: string): Promise<Calendar[]> {
     })
 }
 
-export async function putCalendar(calendar: Calendar, authToken: string): Promise<Calendar> {
+export async function putCalendar(calendar: Calendar): Promise<Calendar> {
   return fetch(`${API_URL}/calendars/${calendar.id}`, {
     method: 'PUT',
     body: JSON.stringify(calendar),
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
   })
     .then(handleErrors)
     .then((resp) => {
@@ -175,17 +134,16 @@ export async function putCalendar(calendar: Calendar, authToken: string): Promis
     })
 }
 
-export async function deleteCalendar(calendarId: string, authToken: string) {
+export async function deleteCalendar(calendarId: string) {
   return fetch(`${API_URL}/calendars/${calendarId}`, {
     method: 'DELETE',
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
   }).then(handleErrors)
 }
 
 // ================== Events ==================
 
 export async function getCalendarEvents(
-  authToken: string,
   calendarId: string,
   startDate: string,
   endDate: string
@@ -200,7 +158,7 @@ export async function getCalendarEvents(
     .join('&')
 
   return fetch(`${API_URL}/calendars/${calendarId}/events/?${queryString}`, {
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
   })
     .then(handleErrors)
     .then((resp) => {
@@ -208,13 +166,9 @@ export async function getCalendarEvents(
     })
 }
 
-export async function getEvent(
-  authToken: string,
-  calendarId: string,
-  eventId: string
-): Promise<Event> {
+export async function getEvent(calendarId: string, eventId: string): Promise<Event> {
   return fetch(`${API_URL}/calendars/${calendarId}/events/${eventId}`, {
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
   })
     .then(handleErrors)
     .then((resp) => {
@@ -222,28 +176,20 @@ export async function getEvent(
     })
 }
 
-export async function createEvent(
-  authToken: string,
-  calendarId: string,
-  event: Event
-): Promise<Event> {
+export async function createEvent(calendarId: string, event: Event): Promise<Event> {
   return fetch(`${API_URL}/calendars/${calendarId}/events/`, {
     method: 'POST',
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
     body: JSON.stringify(event),
   })
     .then(handleErrors)
     .then((resp) => Event.fromJson(calendarId, resp))
 }
 
-export async function updateEvent(
-  authToken: string,
-  calendarId: string,
-  event: Partial<Event>
-): Promise<Event> {
+export async function updateEvent(calendarId: string, event: Partial<Event>): Promise<Event> {
   return fetch(`${API_URL}/calendars/${calendarId}/events/${event.id}`, {
     method: 'PUT',
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
     body: JSON.stringify(event),
   })
     .then(handleErrors)
@@ -251,35 +197,30 @@ export async function updateEvent(
 }
 
 export async function moveEvent(
-  authToken: string,
   eventId: string,
   fromCalendarId: string,
   toCalendarId: string
 ): Promise<Event> {
   return fetch(`${API_URL}/calendars/${fromCalendarId}/events/${eventId}/move`, {
     method: 'POST',
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
     body: JSON.stringify({ calendar_id: toCalendarId }),
   })
     .then(handleErrors)
     .then((resp) => Event.fromJson(toCalendarId, resp))
 }
 
-export async function deleteEvent(
-  authToken: string,
-  calendarId: string,
-  eventId: string
-): Promise<{}> {
+export async function deleteEvent(calendarId: string, eventId: string): Promise<{}> {
   return fetch(`${API_URL}/calendars/${calendarId}/events/${eventId}`, {
     method: 'DELETE',
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
     body: JSON.stringify(event),
   }).then(handleErrors)
 }
 
-export async function searchEvents(authToken: string, query: string): Promise<Event[]> {
+export async function searchEvents(query: string): Promise<Event[]> {
   return fetch(`${API_URL}/events/?query=${query}`, {
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
   })
     .then(handleErrors)
     .then((resp) => {
@@ -290,13 +231,7 @@ export async function searchEvents(authToken: string, query: string): Promise<Ev
 
 // ================== Trends and Stats ==================
 
-export async function getTrends(
-  labelId: number,
-  authToken: string,
-  timePeriod: TimePeriod,
-  start: Date,
-  end: Date
-) {
+export async function getTrends(labelId: number, timePeriod: TimePeriod, start: Date, end: Date) {
   const params = {
     start: formatDateTime(start),
     end: formatDateTime(end),
@@ -308,25 +243,21 @@ export async function getTrends(
     .join('&')
 
   return fetch(`${API_URL}/trends/${labelId}?${queryString}`, {
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
   }).then(handleErrors)
 }
 
 // Labels
 
-export async function getLabels(authToken: string, title: string = ''): Promise<Label[]> {
+export async function getLabels(title: string = ''): Promise<Label[]> {
   return fetch(`${API_URL}/labels/?title=${title}`, {
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
   })
     .then(handleErrors)
     .then((resp) => resp.map((label: any) => Label.fromJson(label)))
 }
 
-export async function createLabel(
-  title: string,
-  colorHex: string,
-  authToken: string
-): Promise<Label> {
+export async function createLabel(title: string, colorHex: string): Promise<Label> {
   const label = {
     title: title,
     color_hex: colorHex,
@@ -336,36 +267,36 @@ export async function createLabel(
   return fetch(`${API_URL}/labels/`, {
     method: 'POST',
     body: JSON.stringify(label),
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
   })
     .then(handleErrors)
     .then(Label.fromJson)
 }
 
-export async function putLabel(label: Label, authToken: string): Promise<Label> {
+export async function putLabel(label: Label): Promise<Label> {
   return fetch(`${API_URL}/labels/${label.id}`, {
     method: 'PUT',
     body: JSON.stringify(label),
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
   })
     .then(handleErrors)
     .then(Label.fromJson)
 }
 
-export async function deleteLabel(labelId: number, authToken: string): Promise<Label> {
+export async function deleteLabel(labelId: number): Promise<Label> {
   return fetch(`${API_URL}/labels/${labelId}`, {
     method: 'DELETE',
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
   })
     .then(handleErrors)
     .then(Label.fromJson)
 }
 
-export async function putLabels(labels: Label[], authToken: string): Promise<Label[]> {
+export async function putLabels(labels: Label[]): Promise<Label[]> {
   return fetch(`${API_URL}/labels/`, {
     method: 'PUT',
     body: JSON.stringify(labels),
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
   })
     .then(handleErrors)
     .then((labels) => labels.map((label) => Label.fromJson(label)))
@@ -373,54 +304,46 @@ export async function putLabels(labels: Label[], authToken: string): Promise<Lab
 
 // Label Rules
 
-export async function getLabelRules(
-  labelText: string,
-  labelId: number,
-  authToken: string
-): Promise<LabelRule[]> {
+export async function getLabelRules(labelText: string, labelId: number): Promise<LabelRule[]> {
   return fetch(`${API_URL}/label_rules/?text=${labelText}&label_id=${labelId}`, {
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
   })
     .then(handleErrors)
     .then((resp) => resp.map((rule: any) => LabelRule.fromJson(rule)))
 }
 
-export async function putLabelRule(labelRule: LabelRule, authToken: string): Promise<LabelRule> {
+export async function putLabelRule(labelRule: LabelRule): Promise<LabelRule> {
   return fetch(`${API_URL}/label_rules/`, {
     method: 'PUT',
     body: JSON.stringify(labelRule),
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
   })
     .then(handleErrors)
     .then(LabelRule.fromJson)
 }
 
-export async function syncCalendar(authToken: string) {
+export async function syncCalendar() {
   return fetch(`${API_URL}/sync/`, {
     method: 'POST',
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
   }).then(handleErrors)
 }
 
 // Contacts
 
-export async function getContacts(
-  authToken: string,
-  query?: string,
-  limit?: number
-): Promise<Contact[]> {
+export async function getContacts(query?: string, limit?: number): Promise<Contact[]> {
   return fetch(`${API_URL}/contacts/?query=${query || ''}&limit=${limit || 10}`, {
     method: 'GET',
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
   })
     .then(handleErrors)
     .then((resp) => resp.map((contact) => Contact.fromJson(contact)))
 }
 
-export async function getContact(authToken: string, contactId: string): Promise<Contact> {
+export async function getContact(contactId: string): Promise<Contact> {
   return fetch(`${API_URL}/contacts/${contactId}`, {
     method: 'GET',
-    headers: getHeaders(authToken),
+    headers: getHeaders(),
   })
     .then(handleErrors)
     .then((resp) => Contact.fromJson(resp))

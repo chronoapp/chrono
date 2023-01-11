@@ -25,7 +25,7 @@ import { Label } from '@/models/Label'
 import ColorPicker from './ColorPicker'
 import { LabelTagColor } from './LabelTag'
 
-import { getAuthToken, putLabel, putLabels, deleteLabel } from '../util/Api'
+import { putLabel, putLabels, deleteLabel } from '../util/Api'
 import { labelsState } from '@/state/LabelsState'
 
 interface IProps {
@@ -164,7 +164,7 @@ function LabelTree(props: IProps) {
       }
     })
 
-    putLabels(Object.values(tagUpdates), getAuthToken())
+    putLabels(Object.values(tagUpdates))
   }
 
   function onExpand(expandedKeys) {
@@ -179,8 +179,7 @@ function LabelTree(props: IProps) {
         labelsById: { ...labelsState.labelsById, [label.id]: label },
       }
     })
-    const authToken = getAuthToken()
-    const _updatedLabel = await putLabel(label, authToken)
+    const _updatedLabel = await putLabel(label)
   }
 
   function LabelView(label: Label, allowEdit: boolean) {
@@ -226,7 +225,7 @@ function LabelTree(props: IProps) {
       })
     })
 
-    deleteLabel(item.key, getAuthToken()).then((r) => {
+    deleteLabel(item.key).then((r) => {
       toast({
         render: (props) => (
           <InfoAlert title={`Tag ${item.title} deleted.`} onClose={props.onClose} />
