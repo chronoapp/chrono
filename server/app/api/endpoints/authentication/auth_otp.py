@@ -2,13 +2,11 @@ import pyotp
 import logging
 
 from pydantic import BaseModel
-from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from fastapi import Depends, status, HTTPException, APIRouter
 from base64 import b32encode
 
 from app.core import config
-from app.db.models.user import User
 from app.utils.emails import sendOTPCodeEmail
 
 from app.api.utils.db import get_db
@@ -19,7 +17,7 @@ router = APIRouter()
 
 """Sign in with One Time Password (OTP)"""
 
-TOPT_INTERVAL = 60 * 5
+TOPT_INTERVAL = 60 * 10
 
 
 class OTPUser(BaseModel):
