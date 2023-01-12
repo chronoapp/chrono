@@ -49,17 +49,29 @@ export function getMsftOauthUrl(): string {
   return `${API_URL}/oauth/msft/auth`
 }
 
-export function loginWithEmail(email: string, password: string) {
-  return fetch(`${API_URL}/auth/login`, {
+export function loginWithOTP(email: string) {
+  return fetch(`${API_URL}/auth/otp/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       email,
-      password,
     }),
   }).then(handleErrors)
+}
+
+export function verifyOTPCode(email: string, code: string) {
+  return fetch(`${API_URL}/auth/otp/verify`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email,
+      code,
+    }),
+  })
 }
 
 export async function authenticateGoogleOauth(code: string, state: string) {
