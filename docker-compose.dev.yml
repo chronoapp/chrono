@@ -10,13 +10,8 @@ services:
     command: supervisord -n -c /etc/supervisord/supervisord-worker.conf
     environment:
       - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@postgres_db:5432/${DATABASE_NAME}
-      - APP_URL=${APP_URL}
-      - API_URL=${API_URL}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - MSFT_APP_ID=${MSFT_APP_ID}
-      - MSFT_APP_SECRET=${MSFT_APP_SECRET}
-      - TOKEN_SECRET=${TOKEN_SECRET}
+    env_file:
+      - .env
 
   # FastAPI / Starlette
   api:
