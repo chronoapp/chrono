@@ -1,5 +1,3 @@
-import jwt
-
 from pydantic import BaseModel
 from fastapi import Depends, status, HTTPException, APIRouter
 from fastapi.responses import RedirectResponse
@@ -29,6 +27,7 @@ GOOGLE_API_SCOPES = [
     'https://www.googleapis.com/auth/contacts.readonly',
     'https://www.googleapis.com/auth/contacts.other.readonly',
     'openid',
+    'https://www.googleapis.com/auth/userinfo.email',
 ]
 
 
@@ -57,11 +56,11 @@ def getAuthFlow(scopes):
             "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
             "client_secret": config.GOOGLE_CLIENT_SECRET,
             "redirect_uris": [
-                "https://test.timecouncil.com/oauth/callback",
-                "https://api.timecouncil.com/oauth/callback",
+                "https://test.chrono.so/oauth/callback",
+                "https://api.chrono.so/oauth/callback",
                 'http://localhost:3000/auth',
             ],
-            "javascript_origins": ["https://test.timecouncil.com"],
+            "javascript_origins": ["https://test.chrono.so"],
         }
     }
     flow = Flow.from_client_config(credentials, scopes=scopes)
