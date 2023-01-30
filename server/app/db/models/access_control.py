@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.db.base_class import Base
@@ -40,15 +41,15 @@ class AccessControlRule(Base):
 
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
 
-    google_id = Column(String, index=True)
-    calendar_id = Column(String, ForeignKey('calendar.id'), nullable=True)
-    calendar: 'Calendar' = relationship(
+    google_id = mapped_column(String, index=True)
+    calendar_id = mapped_column(String, ForeignKey('calendar.id'), nullable=True)
+    calendar: Mapped['Calendar'] = relationship(
         'Calendar', backref=backref('access_control_rules', lazy='dynamic', cascade='all,delete')
     )
-    role = Column(String(50))  # AccessRole
+    role = mapped_column(String(50))  # AccessRole
 
-    scope_type = Column(String(50))  # ScopeType
-    scope_value = Column(String)
+    scope_type = mapped_column(String(50))  # ScopeType
+    scope_value = mapped_column(String)
 
     def __init__(
         self,

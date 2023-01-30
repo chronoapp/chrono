@@ -1,8 +1,8 @@
 from typing import Optional, TYPE_CHECKING
 import shortuuid
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy import Integer, String, ForeignKey
+from sqlalchemy.orm import relationship, backref, Mapped, mapped_column
 
 from app.db.base_class import Base
 
@@ -13,18 +13,18 @@ if TYPE_CHECKING:
 class Contact(Base):
     __tablename__ = 'contact'
 
-    id = Column(String(255), primary_key=True, default=shortuuid.uuid)
-    google_id = Column(String(255), unique=True, nullable=True)
+    id = mapped_column(String(255), primary_key=True, default=shortuuid.uuid)
+    google_id = mapped_column(String(255), unique=True, nullable=True)
 
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    user: 'User' = relationship(
+    user_id = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
+    user: Mapped['User'] = relationship(
         'User', backref=backref('contacts', lazy='dynamic', cascade='all,delete')
     )
 
-    first_name = Column(String(255), nullable=True)
-    last_name = Column(String(255), nullable=True)
-    email = Column(String(255), nullable=True, index=True)
-    photo_url = Column(String(255), nullable=True)
+    first_name = mapped_column(String(255), nullable=True)
+    last_name = mapped_column(String(255), nullable=True)
+    email = mapped_column(String(255), nullable=True, index=True)
+    photo_url = mapped_column(String(255), nullable=True)
 
     @property
     def display_name(self) -> Optional[str]:

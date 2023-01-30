@@ -42,7 +42,7 @@ class UserRepository:
         stmt = select(Label).where(Label.user_id == userId)
         labels = (self.session.execute(stmt)).scalars().all()
 
-        return labels
+        return list(labels)
 
     def deleteLabel(self, userId: int, labelId: int) -> None:
         stmt = delete(Label).where(Label.user_id == userId, Label.id == labelId)

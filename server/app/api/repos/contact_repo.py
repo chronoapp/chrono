@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional
 from pydantic import BaseModel
 
 from sqlalchemy import and_, select
@@ -28,7 +28,7 @@ class ContactRepository:
     def __init__(self, session: Session):
         self.session = session
 
-    def searchContacts(self, user: User, query: str, limit: int = 10) -> List[Contact]:
+    def searchContacts(self, user: User, query: str, limit: int = 10) -> list[Contact]:
         tsQuery = ' | '.join(query.split())
         rows = self.session.execute(
             text(CONTACT_SEARCH_QUERY), {'userId': user.id, 'query': tsQuery, 'limit': limit}
@@ -37,10 +37,11 @@ class ContactRepository:
 
         stmt = select(Contact).filter(Contact.id.in_(rowIds))
         result = self.session.execute(stmt)
+        contacts = result.scalars().all()
 
-        return result.scalars().all()
+        return list(contacts)
 
-    def addContact(self, user: User, contactVM: ContactVM) -> List[Contact]:
+    def addContact(self, user: User, contactVM: ContactVM) -> list[Contact]:
         contact = Contact(
             contactVM.first_name,
             contactVM.last_name,
@@ -52,12 +53,14 @@ class ContactRepository:
 
         return contact
 
-    def getContacts(self, user: User, limit: int = 10) -> List[Contact]:
+    def getContacts(self, user: User, limit: int = 10) -> list[Contact]:
         result = self.session.execute(
             select(Contact).where(Contact.user_id == user.id).limit(limit)
         )
 
-        return result.scalars().all()
+        contacts = result.scalars().all()
+
+        return list(contacts)
 
     def findContact(self, user: User, participantVM: EventParticipantVM) -> Optional[Contact]:
         existingContact = None

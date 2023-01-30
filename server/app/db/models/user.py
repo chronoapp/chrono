@@ -1,7 +1,7 @@
-from typing import Optional, List, TYPE_CHECKING
+from typing import Optional, List
 
-from sqlalchemy import Column, Integer, String, and_, select
-from sqlalchemy.orm import relationship, selectinload, Mapped
+from sqlalchemy import Integer, String, select
+from sqlalchemy.orm import relationship, selectinload, Mapped, mapped_column
 
 from app.db.base_class import Base
 from app.db.models.user_credentials import ProviderType
@@ -10,33 +10,27 @@ from app.db.models.calendar import Calendar
 from app.db.models.event import Event
 from app.db.models.user_credentials import UserCredential
 
-if TYPE_CHECKING:
-    from .label import Label
-
 
 class User(Base):
     __tablename__ = 'user'
 
-    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
-    username = Column(String(255))
-    hashed_password = Column(String(255))
+    id = mapped_column(Integer, primary_key=True, autoincrement=True, nullable=False)
+    username = mapped_column(String(255))
+    hashed_password = mapped_column(String(255))
 
-    email: str = Column(String(255))
-    name = Column(String(255))  # display name
-    picture_url = Column(String(255))
+    email = mapped_column(String(255))
+    name = mapped_column(String(255))  # display name
+    picture_url = mapped_column(String(255))
 
-    google_oauth_state = Column(String(255), nullable=True)
-    credentials: UserCredential = relationship(
+    google_oauth_state = mapped_column(String(255), nullable=True)
+    credentials: Mapped[UserCredential] = relationship(
         'UserCredential',
         cascade='save-update, merge, delete, delete-orphan',
         uselist=False,
         backref='user',
     )
 
-    timezone: str = Column(String(255), nullable=False, server_default='UTC')
-
-    calendars: list[UserCalendar]
-    labels: list['Label']
+    timezone: Mapped[str] = mapped_column(String(255), nullable=False, server_default='UTC')
 
     def __repr__(self):
         return f'<User {self.id=} {self.email=}/>'

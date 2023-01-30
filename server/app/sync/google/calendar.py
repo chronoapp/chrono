@@ -330,6 +330,9 @@ def syncDeletedEvent(
             startDay = startDt.strftime('%Y-%m-%d')
             recurringEventId = getRecurringEventId(baseRecurringEvent.id, startDt, True)
 
+        if not recurringEventId:
+            raise Exception('Recurring event ID is None')
+
         event = Event(
             googleEventId,
             None,
@@ -445,6 +448,9 @@ def syncCreatedOrUpdatedGoogleEvent(
             )
         else:
             raise Exception(f'No start time for event: {eventVM.g_id}')
+
+        if not recurringEventId:
+            raise Exception('Recurring event ID is None')
 
         event.id = recurringEventId
 

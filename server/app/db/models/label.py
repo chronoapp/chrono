@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Column, Integer, String, ForeignKey, BigInteger
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy import Integer, String, ForeignKey, BigInteger
+from sqlalchemy.orm import relationship, backref, Mapped, mapped_column
 from sqlalchemy.ext.orderinglist import ordering_list
 
 from app.db.base_class import Base
@@ -10,19 +10,20 @@ DEFAULT_TAG_COLOR = '#cecece'
 
 if TYPE_CHECKING:
     from .user import User
-    from .label_rule import LabelRule
 
 
 class Label(Base):
     __tablename__ = 'label'
 
-    id: int = Column(BigInteger, primary_key=True, autoincrement=True, nullable=False)
+    id: Mapped[int] = mapped_column(
+        BigInteger, primary_key=True, autoincrement=True, nullable=False
+    )
 
-    parent: 'Label' = relationship('Label', remote_side=[id])
-    parent_id = Column(BigInteger, ForeignKey('label.id'), nullable=True)
+    parent: Mapped['Label'] = relationship('Label', remote_side=[id])
+    parent_id = mapped_column(BigInteger, ForeignKey('label.id'), nullable=True)
 
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    user: 'User' = relationship(
+    user_id = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
+    user: Mapped['User'] = relationship(
         'User',
         backref=backref(
             'labels',
@@ -32,13 +33,12 @@ class Label(Base):
             collection_class=ordering_list('position', count_from=0),
         ),
     )
-    title = Column(String(255))
-    key = Column(String(50), index=True)
-    color_hex = Column(String(50), nullable=False)
+    title = mapped_column(String(255))
+    key = mapped_column(String(50), index=True)
+    color_hex = mapped_column(String(50), nullable=False)
 
     # Position within parent node.
-    position = Column(Integer, default=0)
-    rules: list['LabelRule']
+    position = mapped_column(Integer, default=0)
 
     def __init__(self, title: str, color_hex: str = DEFAULT_TAG_COLOR) -> None:
         self.title = title
