@@ -50,7 +50,7 @@ BASE_EVENT_STATEMENT = (
 )
 
 
-def getCalendarEventsStmt() -> Select:
+def getCalendarEventsStmt():
     """Statement to fetch events for a user calendar."""
     return BASE_EVENT_STATEMENT.join(Event.calendar).join(Calendar.user_calendars).join(User)
 
@@ -82,7 +82,7 @@ class EventRepository:
 
         result = self.session.execute(stmt)
 
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     def getSingleEvents(
         self, user: User, calendarId: str, showRecurring: bool = True
@@ -96,7 +96,7 @@ class EventRepository:
         result = self.session.execute(stmt)
         singleEvents = result.scalars().all()
 
-        return singleEvents
+        return list(singleEvents)
 
     def getEventsInRange(
         self, user: User, calendarId: str, startDate: datetime, endDate: datetime, limit: int

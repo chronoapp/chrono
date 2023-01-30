@@ -1,14 +1,13 @@
 from typing import Optional, TYPE_CHECKING
 import shortuuid
 
-from sqlalchemy import Column, String, Text
-from sqlalchemy.orm import relationship
+from sqlalchemy import String, Text
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.db.base_class import Base
 
 if TYPE_CHECKING:
     from .user_calendar import UserCalendar
-    from .event import Event
 
 
 """The base calendar is attached to an Event.
@@ -19,19 +18,18 @@ Every event many-1 relationship to this calendar.
 class Calendar(Base):
     __tablename__ = 'calendar'
 
-    id = Column(String(255), primary_key=True, default=shortuuid.uuid)
+    id = mapped_column(String(255), primary_key=True, default=shortuuid.uuid)
 
-    google_id = Column(String(255), unique=True, nullable=True)
-    summary = Column(String(255))
-    description = Column(Text())
-    timezone = Column(String(255), nullable=True)
+    google_id = mapped_column(String(255), unique=True, nullable=True)
+    summary = mapped_column(String(255))
+    description = mapped_column(Text())
+    timezone = mapped_column(String(255), nullable=True)
 
-    email_ = Column(String(255), nullable=True)
-    user_calendars: list['UserCalendar'] = relationship(
+    email_ = mapped_column(String(255), nullable=True)
+
+    user_calendars: Mapped[list['UserCalendar']] = relationship(
         "UserCalendar", foreign_keys='[UserCalendar.id]'
     )
-
-    events: list['Event']
 
     @property
     def email(self) -> Optional[str]:

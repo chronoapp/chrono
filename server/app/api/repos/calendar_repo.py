@@ -60,11 +60,11 @@ class CalendarRepo:
 
         return userCalendar
 
-    def getCalendars(self, user: User) -> List[UserCalendar]:
+    def getCalendars(self, user: User) -> list[UserCalendar]:
         result = self.session.execute(select(UserCalendar).where(UserCalendar.user_id == user.id))
         calendars = result.scalars().all()
 
-        return calendars
+        return list(calendars)
 
     def createCalendar(self, user: User, calendar: CalendarBaseVM) -> UserCalendar:
         isPrimary = calendar.primary or False

@@ -29,10 +29,12 @@ class WebhookRepository:
             .options(selectinload(Webhook.calendar).selectinload(UserCalendar.user))
         )
 
-        return (self.session.execute(stmt)).scalars().all()
+        webhooks = (self.session.execute(stmt)).scalars().all()
+
+        return list(webhooks)
 
     def getUserWebhooks(self, userId: int) -> list[Webhook]:
-        return (
+        webhooks = (
             (
                 self.session.execute(
                     select(Webhook).join(UserCalendar).join(User).where(User.id == userId)
@@ -41,6 +43,8 @@ class WebhookRepository:
             .scalars()
             .all()
         )
+
+        return list(webhooks)
 
     def createCalendarWebhook(self, calendar: UserCalendar) -> Optional[Webhook]:
         """Create a webhook for the calendar to watche for event updates.

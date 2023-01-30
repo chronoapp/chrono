@@ -1,7 +1,8 @@
 from typing import Literal, Optional, TYPE_CHECKING
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy import Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import mapped_column, Mapped
 
 from app.db.base_class import Base
 from app.db.models.access_control import AccessRole
@@ -20,8 +21,8 @@ class UserCalendar(Base):
     """TODO: id should not be the same as the calendar id."""
 
     __tablename__ = 'user_calendar'
-    id: str = Column(String(255), ForeignKey('calendar.id'), primary_key=True)
-    calendar: 'Calendar' = relationship(
+    id: Mapped[str] = mapped_column(String(255), ForeignKey('calendar.id'), primary_key=True)
+    calendar: Mapped['Calendar'] = relationship(
         "Calendar",
         back_populates="user_calendars",
         uselist=False,
@@ -29,25 +30,25 @@ class UserCalendar(Base):
         lazy='joined',
     )
 
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    user: 'User' = relationship(
+    user_id = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
+    user: Mapped['User'] = relationship(
         'User', backref=backref('calendars', lazy='joined', cascade='all,delete')
     )
 
     # IDs for google / msft / aapl.
-    google_id = Column(String(255), ForeignKey('calendar.google_id'), nullable=True)
-    sync_token = Column(String(255))  # TODO: Rename to google_sync_token.
+    google_id = mapped_column(String(255), ForeignKey('calendar.google_id'), nullable=True)
+    sync_token = mapped_column(String(255))  # TODO: Rename to google_sync_token.
 
     # User specific properties
-    summary_override: Optional[str] = Column(String(255))
-    background_color: Optional[str] = Column(String(10))
-    foreground_color: Optional[str] = Column(String(10))
-    selected: bool = Column(Boolean)
-    access_role = Column(String(50))  # AccessRole
-    primary = Column(Boolean)
-    deleted = Column(Boolean)
+    summary_override: Mapped[Optional[str]] = mapped_column(String(255))
+    background_color: Mapped[Optional[str]] = mapped_column(String(10))
+    foreground_color: Mapped[Optional[str]] = mapped_column(String(10))
+    selected: Mapped[bool] = mapped_column(Boolean)
+    access_role = mapped_column(String(50))  # AccessRole
+    primary = mapped_column(Boolean)
+    deleted = mapped_column(Boolean)
 
-    webhook: 'Webhook' = relationship(
+    webhook: Mapped['Webhook'] = relationship(
         "Webhook", uselist=False, back_populates="calendar", lazy='joined'
     )
 
@@ -70,7 +71,7 @@ class UserCalendar(Base):
         self.background_color = background_color
         self.foreground_color = foreground_color
         self.selected = selected
-        self.access_role = access_role
+        self.access_role = str(access_role)
         self.primary = primary
         self.deleted = deleted
 

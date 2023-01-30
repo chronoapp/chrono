@@ -16,7 +16,7 @@ from sqlalchemy import (
     UniqueConstraint,
     ForeignKeyConstraint,
 )
-from sqlalchemy.orm import relationship, backref, Mapped
+from sqlalchemy.orm import relationship, backref, Mapped, mapped_column
 
 from app.db.base_class import Base
 from app.db.models.event_label import event_label_association_table
@@ -69,13 +69,13 @@ class Event(Base):
     require a single id (rather than a combination of calendar_id and id).
     """
     pk = Column(String, primary_key=True, default=shortuuid.uuid, nullable=False)
-    id: Mapped[str] = Column(String, default=shortuuid.uuid, nullable=False, index=True)
+    id: Mapped[str] = mapped_column(String, default=shortuuid.uuid, nullable=False, index=True)
 
-    calendar_id = Column(
+    calendar_id: Mapped[str] = mapped_column(
         String(255),
         ForeignKey('calendar.id', name='event_calendar_id_fk'),
     )
-    calendar: 'Calendar' = relationship(
+    calendar: Mapped['Calendar'] = relationship(
         'Calendar',
         backref=backref(
             'events', lazy='dynamic', cascade='all,delete', order_by='Event.start.asc()'
@@ -83,28 +83,34 @@ class Event(Base):
     )
 
     # Google-specific
-    g_id: Optional[str] = Column(String(255), index=True)
+    g_id: Mapped[Optional[str]] = mapped_column(String(255), index=True)
 
-    title: Mapped[str] = Column(String(255), index=True)
-    description: Optional[str] = Column(Text())
-    status: str = Column(String(20), server_default='active')
+    title: Mapped[str] = mapped_column(String(255), index=True)
+    description: Mapped[Optional[str]] = mapped_column(Text())
+    status: Mapped[str] = mapped_column(String(20), server_default='active')
 
-    start = Column(DateTime(timezone=True), nullable=True)
-    end = Column(DateTime(timezone=True), nullable=True)
+    start = mapped_column(DateTime(timezone=True), nullable=True)
+    end = mapped_column(DateTime(timezone=True), nullable=True)
 
     # TODO: Validate these fields.
-    start_day: Optional[str] = Column(String(10), nullable=True)  # YYYY-MM-DD date if full day
-    end_day: Optional[str] = Column(String(10), nullable=True)  # YYYY-MM-DD date if full day
-    time_zone: Optional[str] = Column(String(255))
+    start_day: Mapped[Optional[str]] = mapped_column(
+        String(10), nullable=True
+    )  # YYYY-MM-DD date if full day
 
-    labels: list['Label'] = relationship(
+    end_day: Mapped[Optional[str]] = mapped_column(
+        String(10), nullable=True
+    )  # YYYY-MM-DD date if full day
+
+    time_zone: Mapped[Optional[str]] = mapped_column(String(255))
+
+    labels: Mapped[list['Label']] = relationship(
         'Label',
         lazy='joined',
         secondary=event_label_association_table,
         cascade="all,delete",
     )
 
-    participants: list['EventAttendee'] = relationship(
+    participants: Mapped[list['EventAttendee']] = relationship(
         "EventAttendee",
         lazy='joined',
         cascade="all, delete-orphan",
@@ -113,12 +119,12 @@ class Event(Base):
     )
 
     # The calendar / user who created this Event.
-    creator_id = Column(
+    creator_id = mapped_column(
         String(255),
         ForeignKey('event_participant.id', name='event_creator_fk', use_alter=True),
         nullable=True,
     )
-    creator: Optional['EventCreator'] = relationship(
+    creator: Mapped[Optional['EventCreator']] = relationship(
         'EventCreator',
         lazy='joined',
         uselist=False,
@@ -132,7 +138,7 @@ class Event(Base):
         ForeignKey('event_participant.id', name='event_organizer_fk', use_alter=True),
         nullable=True,
     )
-    organizer: Optional['EventOrganizer'] = relationship(
+    organizer: Mapped[Optional['EventOrganizer']] = relationship(
         'EventOrganizer',
         lazy='joined',
         uselist=False,
@@ -141,19 +147,21 @@ class Event(Base):
     )
 
     # Recurring Events.
-    recurrences: Optional[List[Any]] = Column(ARRAY(String), nullable=True)
-    recurring_event_id: Optional[str] = Column(String, nullable=True, index=True)
-    recurring_event_calendar_id: Optional[str] = Column(String, nullable=True, index=True)
+    recurrences: Mapped[Optional[List[Any]]] = mapped_column(ARRAY(String), nullable=True)
+    recurring_event_id: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
+    recurring_event_calendar_id: Mapped[Optional[str]] = mapped_column(
+        String, nullable=True, index=True
+    )
 
     # Original time (For recurring events). Child event use the parent's value.
-    original_start = Column(DateTime(timezone=True))
-    original_start_day = Column(String(10))
-    original_timezone = Column(String(255))
+    original_start = mapped_column(DateTime(timezone=True))
+    original_start_day = mapped_column(String(10))
+    original_timezone = mapped_column(String(255))
 
     # Guest permissions
-    guests_can_modify: bool = Column(Boolean, default=False, nullable=False)
-    guests_can_invite_others: bool = Column(Boolean, default=True, nullable=False)
-    guests_can_see_other_guests: bool = Column(Boolean, default=True, nullable=False)
+    guests_can_modify: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    guests_can_invite_others: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    guests_can_see_other_guests: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     @property
     def title_short(self) -> Optional[str]:

@@ -1,7 +1,7 @@
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-from sqlalchemy import Column, Integer, String, ForeignKey, BigInteger
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy import Integer, String, ForeignKey, BigInteger
+from sqlalchemy.orm import relationship, backref, Mapped, mapped_column
 
 from app.db.base_class import Base
 
@@ -16,16 +16,16 @@ class LabelRule(Base):
     """
 
     __tablename__ = 'label_rule'
-    id = Column(BigInteger, primary_key=True, autoincrement=True, nullable=False)
-    text = Column(String(255), nullable=False)
+    id = mapped_column(BigInteger, primary_key=True, autoincrement=True, nullable=False)
+    text = mapped_column(String(255), nullable=False)
 
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    user: 'User' = relationship(
+    user_id = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
+    user: Mapped['User'] = relationship(
         'User', backref=backref('label_rules', lazy='dynamic', cascade='all,delete')
     )
 
-    label_id = Column(Integer, ForeignKey('label.id'), nullable=False)
-    label: 'Label' = relationship(
+    label_id = mapped_column(Integer, ForeignKey('label.id'), nullable=False)
+    label: Mapped['Label'] = relationship(
         'Label', backref=backref('rules', lazy='dynamic', cascade='all,delete')
     )
 

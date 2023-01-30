@@ -1,14 +1,13 @@
 from typing import Optional, Literal, TYPE_CHECKING
 import shortuuid
 
-from sqlalchemy import Column, String, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import String, ForeignKey
+from sqlalchemy.orm import relationship, mapped_column, Mapped
 
 from app.db.base_class import Base
 
 if TYPE_CHECKING:
     from .contact import Contact
-    from .event import Event
 
 ResponseStatus = Literal['needsAction', 'accepted', 'declined', 'tentative']
 EventParticipantType = Literal['attendee', 'creator', 'organizer']
@@ -22,24 +21,22 @@ class EventParticipant(Base):
 
     __tablename__ = 'event_participant'
 
-    id = Column(String(255), primary_key=True, default=shortuuid.uuid)
+    id = mapped_column(String(255), primary_key=True, default=shortuuid.uuid)
 
-    event_pk = Column(String(255), ForeignKey('event.pk'), nullable=True)
-    email_: Optional[str] = Column(String(255), nullable=True, index=True)
-    display_name_: Optional[str] = Column(String(255), nullable=True)
+    event_pk = mapped_column(String(255), ForeignKey('event.pk'), nullable=True)
+    email_: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
+    display_name_: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
-    contact_id = Column(String(255), ForeignKey('contact.id'), nullable=True)
-    contact: Optional['Contact'] = relationship(
+    contact_id = mapped_column(String(255), ForeignKey('contact.id'), nullable=True)
+    contact: Mapped[Optional['Contact']] = relationship(
         'Contact', lazy="joined", backref="participating_events", foreign_keys=[contact_id]
     )
-    response_status: Optional[ResponseStatus] = Column(String(255), nullable=True)
+    response_status: Mapped[Optional[ResponseStatus]] = mapped_column(String(255), nullable=True)
 
     # Used for joined table inheritance. An EventParticipant can be a creator, organizer, or attendee.
-    type_ = Column(String(20), nullable=False)
+    type_ = mapped_column(String(20), nullable=False)
 
-    event: 'Event'
-
-    __mapper_args__: dict[str, str] = {"polymorphic_on": type_}
+    __mapper_args__ = {"polymorphic_on": type_, "polymorphic_identity": "participant"}
 
     @property
     def photo_url(self) -> Optional[str]:
