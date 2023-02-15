@@ -48,6 +48,21 @@ export default function useEventActions() {
   }
 
   /**
+   * Handles new user with no events.
+   */
+  function initEmptyEvents() {
+    setEvents((prevState) => {
+      return {
+        ...prevState,
+        loading: false,
+        eventsByCalendar: {
+          ...prevState.eventsByCalendar,
+        },
+      }
+    })
+  }
+
+  /**
    * Initializes all events.
    */
   function loadEvents(calendarId: string, events: Event[]) {
@@ -286,6 +301,7 @@ export default function useEventActions() {
   return {
     initEvents,
     loadEvents,
+    initEmptyEvents,
     initEditEvent,
     updateEditingEvent,
     updateEditMode,

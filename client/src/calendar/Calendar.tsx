@@ -104,6 +104,8 @@ function Calendar() {
   }
 
   async function loadEvents(start: Date, end: Date) {
+    eventActions.initEmptyEvents()
+
     const eventPromises = Object.values(calendars.calendarsById)
       .filter((cal) => cal.selected)
       .map((calendar) => {
