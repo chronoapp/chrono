@@ -11,7 +11,7 @@ from app.api.utils.security import get_current_user
 from app.db.models.user import User
 from app.db.models.user_calendar import CalendarSource
 from app.db.repos.calendar_repo import (
-    CalendarRepo,
+    CalendarRepository,
     CalendarBaseVM,
     CalendarVM,
     CalendarNotFoundError,
@@ -28,7 +28,7 @@ async def getCalendar(
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
-    calendarRepo = CalendarRepo(session)
+    calendarRepo = CalendarRepository(session)
 
     try:
         userCalendar = calendarRepo.getCalendar(user, calendarId)
@@ -40,7 +40,7 @@ async def getCalendar(
 
 @router.get('/calendars/', response_model=List[CalendarVM])
 async def getCalendars(user: User = Depends(get_current_user), session: Session = Depends(get_db)):
-    calendarRepo = CalendarRepo(session)
+    calendarRepo = CalendarRepository(session)
     calendars = calendarRepo.getCalendars(user)
 
     return calendars
@@ -52,7 +52,7 @@ async def postCalendar(
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
-    calendarRepo = CalendarRepo(session)
+    calendarRepo = CalendarRepository(session)
     userCalendar = calendarRepo.createCalendar(user, calendar)
 
     if calendar.source == 'google':
@@ -73,7 +73,7 @@ async def putCalendar(
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
-    calendarRepo = CalendarRepo(session)
+    calendarRepo = CalendarRepository(session)
 
     try:
         userCalendar = calendarRepo.updateCalendar(user, calendarId, calendar)
@@ -95,7 +95,7 @@ async def deleteCalendar(
     session: Session = Depends(get_db),
 ):
     try:
-        calendarRepo = CalendarRepo(session)
+        calendarRepo = CalendarRepository(session)
         calendarRepo.deleteCalendar(user, calendarId)
 
     except CalendarNotFoundError:

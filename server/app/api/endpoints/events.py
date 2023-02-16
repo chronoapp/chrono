@@ -11,7 +11,7 @@ from app.db.repos.event_repo import (
     EventRepoError,
     EventRepository,
 )
-from app.db.repos.calendar_repo import CalendarRepo
+from app.db.repos.calendar_repo import CalendarRepository
 from app.db.repos.exceptions import (
     RepoError,
     EventRepoError,
@@ -122,7 +122,7 @@ async def createCalendarEvent(
         )
 
     try:
-        calendarRepo = CalendarRepo(session)
+        calendarRepo = CalendarRepository(session)
         eventRepo = EventRepository(session)
 
         userCalendar = calendarRepo.getCalendar(user, calendarId)
@@ -149,7 +149,7 @@ async def getCalendarEvent(
 ) -> EventInDBVM:
     try:
         eventRepo = EventRepository(session)
-        calendarRepo = CalendarRepo(session)
+        calendarRepo = CalendarRepository(session)
 
         calendar = calendarRepo.getCalendar(user, calendar_id)
         event = eventRepo.getEventVM(user, calendar, event_id)
@@ -182,7 +182,7 @@ async def updateCalendarEvent(
     """
     try:
         eventRepo = EventRepository(session)
-        calendarRepo = CalendarRepo(session)
+        calendarRepo = CalendarRepository(session)
 
         userCalendar = calendarRepo.getCalendar(user, calendar_id)
         updatedEvent = eventRepo.updateEvent(user, userCalendar, event_id, event)
@@ -240,7 +240,7 @@ async def deleteCalendarEvent(
 
     try:
         eventRepo = EventRepository(session)
-        calendarRepo = CalendarRepo(session)
+        calendarRepo = CalendarRepository(session)
 
         userCalendar = calendarRepo.getCalendar(user, calendarId)
         event = eventRepo.deleteEvent(user, userCalendar, eventId)

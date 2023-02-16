@@ -1,6 +1,6 @@
 import shortuuid
 
-from typing import Optional, List
+from typing import Optional
 from pydantic import BaseModel, Field, validator
 
 from sqlalchemy import and_, update, delete, select
@@ -42,9 +42,23 @@ class CalendarVM(CalendarBaseVM):
     id: str
 
 
-class CalendarRepo:
+class CalendarRepository:
     def __init__(self, session: Session):
         self.session = session
+
+    def getPrimaryCalendar(self, userId: int) -> UserCalendar:
+        userCalendar = (
+            self.session.execute(
+                select(UserCalendar).where(
+                    UserCalendar.user_id == userId, UserCalendar.primary == True
+                )
+            )
+        ).scalar()
+
+        if not userCalendar:
+            raise CalendarNotFoundError('Calendar not found.')
+
+        return userCalendar
 
     def getCalendar(self, user: User, calendarId: str) -> UserCalendar:
         userCalendar = (

@@ -11,13 +11,12 @@ from sqlalchemy.orm import selectinload, Session
 from sqlalchemy import text, asc
 from sqlalchemy.sql.selectable import Select
 
-from app.core.logger import logger
 from app.db.sql.event_search import EVENT_SEARCH_QUERY
 from app.db.sql.event_search_recurring import RECURRING_EVENT_SEARCH_QUERY
 from app.db.models import Event, User, UserCalendar, Calendar, EventAttendee
 
 from app.db.repos.contact_repo import ContactRepository
-from app.db.repos.calendar_repo import CalendarRepo
+from app.db.repos.calendar_repo import CalendarRepository
 from app.db.repos.event_utils import (
     EventBaseVM,
     EventInDBVM,
@@ -85,10 +84,13 @@ class EventRepository:
         return list(result.scalars().all())
 
     def getSingleEvents(
-        self, user: User, calendarId: str, showRecurring: bool = True
+        self, user: User, calendarId: str, showRecurring: bool = True, showDeleted=False
     ) -> list[Event]:
         """Gets all events for the calendar."""
         stmt = getCalendarEventsStmt().where(and_(User.id == user.id, Calendar.id == calendarId))
+
+        if not showDeleted:
+            stmt = stmt.filter(Event.status != 'deleted')
 
         if not showRecurring:
             stmt = stmt.filter(Event.recurring_event_id == None)
@@ -101,7 +103,7 @@ class EventRepository:
     def getEventsInRange(
         self, user: User, calendarId: str, startDate: datetime, endDate: datetime, limit: int
     ) -> Iterable[EventInDBVM]:
-        calendarRepo = CalendarRepo(self.session)
+        calendarRepo = CalendarRepository(self.session)
         calendar = calendarRepo.getCalendar(user, calendarId)
 
         singleEventsStmt = (
@@ -369,7 +371,7 @@ class EventRepository:
         return updatedEvent
 
     def moveEvent(self, user: User, eventId: str, fromCalendarId: str, toCalendarId: str) -> Event:
-        calendarRepo = CalendarRepo(self.session)
+        calendarRepo = CalendarRepository(self.session)
 
         fromCalendar = calendarRepo.getCalendar(user, fromCalendarId)
         toCalendar = calendarRepo.getCalendar(user, toCalendarId)

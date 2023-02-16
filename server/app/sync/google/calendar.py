@@ -415,6 +415,8 @@ def syncCreatedOrUpdatedGoogleEvent(
 
     baseRecurringEvent = None
     overrideId = existingEvent.id if existingEvent else None
+
+    # Instance of recurring event.
     if eventVM.recurring_event_g_id:
         baseRecurringEvent = getOrCreateBaseRecurringEvent(
             userCalendar, eventVM.recurring_event_g_id, eventRepo, session

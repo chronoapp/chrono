@@ -52,31 +52,3 @@ class User(Base):
             and self.credentials.provider == ProviderType.Google
             and self.credentials.token_data is not None
         )
-
-    def getPrimaryCalendarStmt(self):
-        return select(UserCalendar).where(
-            UserCalendar.user_id == self.id, UserCalendar.primary == True
-        )
-
-    def getSingleEventsStmt(self, showDeleted=False, showRecurring=True):
-        """Events query without the base recurring events."""
-        stmt = (
-            select(Event)
-            .options(selectinload(Event.participants))
-            .options(selectinload(Event.labels))
-            .join(Event.calendar)
-            .join(Calendar.user_calendars)
-            .join(User)
-            .where(
-                User.id == self.id,
-                Event.recurrences == None,
-            )
-        )
-
-        if not showRecurring:
-            stmt = stmt.filter(Event.recurring_event_id == None)
-
-        if showDeleted:
-            return stmt
-        else:
-            return stmt.filter(Event.status != 'deleted')

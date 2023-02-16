@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
-from app.db.models import Label, LabelRule, User, Event
+
+from app.db.models import Label, LabelRule, User
 from app.core.logger import logger
 
 """Rules for each event.
@@ -80,18 +81,6 @@ async def putLabel(
     else:
         labelRuleDb.text = labelRule.text
 
-    # applies the rule to all previous events
-    selectStmt = user.getSingleEventsStmt(showRecurring=False).filter(
-        Event.title.ilike(labelRule.text)
-    )
-    result = session.execute(selectStmt)
-    events = result.scalars()
-
-    for event in events:
-        if not labelDb in event.labels:
-            event.labels.append(labelDb)
-
-    session.commit()
     session.refresh(labelRuleDb)
 
     return labelRuleDb
