@@ -236,6 +236,7 @@ class EventRepository:
                     eventOverride = createOverrideDeletedEvent(
                         parentEvent, eventVM.original_start, eventVM.id
                     )
+                    userCalendar.calendar.events.append(eventOverride)
                     self.session.add(eventOverride)
 
                 self.session.commit()

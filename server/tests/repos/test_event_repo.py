@@ -332,7 +332,10 @@ def test_event_repo_deleteRecurring(user: User, session: Session):
     eventId = getRecurringEventId(
         recurringEvent.id, datetime.fromisoformat('2020-12-02T12:00:00'), False
     )
+    assert eventId
+
     event = eventRepo.getEventVM(user, userCalendar, eventId)
+    assert event
 
     eventRepo.deleteEvent(user, userCalendar, event.id)
     session.commit()
@@ -341,7 +344,11 @@ def test_event_repo_deleteRecurring(user: User, session: Session):
     eventId = getRecurringEventId(
         recurringEvent.id, datetime.fromisoformat('2020-12-03T12:00:00'), False
     )
+    assert eventId
+
     event = eventRepo.getEventVM(user, userCalendar, eventId)
+    assert event
+
     eventRepo.deleteEvent(user, userCalendar, event.id)
     eventRepo.deleteEvent(user, userCalendar, event.id)
     session.commit()
@@ -351,7 +358,11 @@ def test_event_repo_deleteRecurring(user: User, session: Session):
     eventId = getRecurringEventId(
         recurringEvent.id, datetime.fromisoformat('2020-12-04T12:00:00'), False
     )
+    assert eventId
+
     event = eventRepo.getEventVM(user, userCalendar, eventId)
+    assert event
+
     event.title = 'override'
     eventRepo.updateEvent(user, userCalendar, event.id, event)
     eventRepo.deleteEvent(user, userCalendar, event.id)
