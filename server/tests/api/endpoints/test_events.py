@@ -12,7 +12,7 @@ from app.db.repos.event_repo import (
 from app.db.repos.event_utils import (
     createOrUpdateEvent,
 )
-from app.api.endpoints.authentication import getAuthToken
+from app.api.endpoints.authentication.token_utils import getAuthToken
 from app.db.models.event_participant import EventAttendee
 
 from tests.utils import createEvent
