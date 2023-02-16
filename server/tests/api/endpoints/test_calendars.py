@@ -1,6 +1,6 @@
 from sqlalchemy import func, select
 
-from app.api.endpoints.authentication import getAuthToken
+from app.api.endpoints.authentication.token_utils import getAuthToken
 from app.db.models import UserCalendar
 
 

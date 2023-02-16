@@ -1,7 +1,7 @@
 from sqlalchemy import select
 
 from app.api.endpoints.labels import combineLabels
-from app.api.endpoints.authentication import getAuthToken
+from app.api.endpoints.authentication.token_utils import getAuthToken
 from app.db.models.label import Label
 from app.db.models import User
 
