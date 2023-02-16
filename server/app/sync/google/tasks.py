@@ -1,10 +1,10 @@
 import googleapiclient
 from worker import dramatiq
 
-from app.api.repos.event_repo import EventRepository
-from app.api.repos.user_repo import UserRepository
-from app.api.repos.calendar_repo import CalendarRepo
-from app.api.repos.webhook_repo import WebhookRepository
+from app.db.repos.event_repo import EventRepository
+from app.db.repos.user_repo import UserRepository
+from app.db.repos.calendar_repo import CalendarRepo
+from app.db.repos.webhook_repo import WebhookRepository
 from app.db.session import scoped_session
 
 from .gcal import (

@@ -1,4 +1,4 @@
-from app.api.repos.calendar_repo import CalendarRepo
+from app.db.repos.calendar_repo import CalendarRepo
 
 
 def test_get_calendar(user, session):

@@ -10,7 +10,7 @@ from app.api.utils.security import get_current_user
 
 from app.db.models.user import User
 from app.db.models.user_calendar import CalendarSource
-from app.api.repos.calendar_repo import (
+from app.db.repos.calendar_repo import (
     CalendarRepo,
     CalendarBaseVM,
     CalendarVM,

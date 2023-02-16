@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime, timedelta
-from app.api.repos.exceptions import EventRepoPermissionError
+from app.db.repos.exceptions import EventRepoPermissionError
 from app.db.models.event_participant import EventAttendee, EventOrganizer
 from app.db.models.user_calendar import UserCalendar
 from tests.utils import createEvent, createCalendar
@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models import Event, User
-from app.api.repos.event_repo import (
+from app.db.repos.event_repo import (
     EventRepository,
     getRecurringEvent,
     InputError,
@@ -18,7 +18,7 @@ from app.api.repos.event_repo import (
     EventRepoError,
     EventNotFoundError,
 )
-from app.api.repos.event_utils import (
+from app.db.repos.event_utils import (
     EventBaseVM,
     EventParticipantVM,
     createOrUpdateEvent,

@@ -10,7 +10,7 @@ from app.db.models.event import isValidTimezone
 from app.db.models.user_calendar import CalendarSource
 from app.db.models import User, UserCalendar, Calendar
 
-from app.api.repos.exceptions import CalendarNotFoundError
+from app.db.repos.exceptions import CalendarNotFoundError
 
 
 class CalendarBaseVM(BaseModel):

@@ -9,7 +9,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.core import config
-from app.api.repos.user_repo import UserRepository
+from app.db.repos.user_repo import UserRepository
 from app.db.models.user_credentials import UserCredential, ProviderType
 from app.db.models.user import User
 from app.api.utils.db import get_db

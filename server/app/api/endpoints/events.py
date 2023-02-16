@@ -7,19 +7,19 @@ from pydantic import BaseModel
 from app.core.logger import logger
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
-from app.api.repos.event_repo import (
+from app.db.repos.event_repo import (
     EventRepoError,
     EventRepository,
 )
-from app.api.repos.calendar_repo import CalendarRepo
-from app.api.repos.exceptions import (
+from app.db.repos.calendar_repo import CalendarRepo
+from app.db.repos.exceptions import (
     RepoError,
     EventRepoError,
     InputError,
     NotFoundError,
 )
 
-from app.api.repos.event_utils import (
+from app.db.repos.event_utils import (
     EventBaseVM,
     EventInDBVM,
 )
