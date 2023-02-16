@@ -3,7 +3,7 @@ from worker import dramatiq
 
 from app.db.repos.event_repo import EventRepository
 from app.db.repos.user_repo import UserRepository
-from app.db.repos.calendar_repo import CalendarRepo
+from app.db.repos.calendar_repo import CalendarRepository
 from app.db.repos.webhook_repo import WebhookRepository
 from app.db.session import scoped_session
 
@@ -36,7 +36,7 @@ def syncEventToGoogleTask(
 
     with scoped_session() as session:
         userRepo = UserRepository(session)
-        calRepo = CalendarRepo(session)
+        calRepo = CalendarRepository(session)
         eventRepo = EventRepository(session)
 
         user = userRepo.getUser(userId)
@@ -70,7 +70,7 @@ def syncDeleteEventToGoogleTask(userId: int, userCalendarId: str, eventId: str) 
 
     with scoped_session() as session:
         userRepo = UserRepository(session)
-        calRepo = CalendarRepo(session)
+        calRepo = CalendarRepository(session)
         eventRepo = EventRepository(session)
 
         user = userRepo.getUser(userId)
@@ -94,7 +94,7 @@ def syncMoveGoogleEventCalendarTask(
 ) -> None:
     with scoped_session() as session:
         userRepo = UserRepository(session)
-        calRepo = CalendarRepo(session)
+        calRepo = CalendarRepository(session)
 
         user = userRepo.getUser(userId)
         fromCalendar = calRepo.getCalendar(user, fromCalendarId)
@@ -129,7 +129,7 @@ def syncAllCalendarsTask(userId: int, fullSync: bool) -> None:
 def syncCalendarTask(userId: int, calendarId: str, fullSync: bool) -> None:
     with scoped_session() as session:
         userRepo = UserRepository(session)
-        calRepo = CalendarRepo(session)
+        calRepo = CalendarRepository(session)
 
         user = userRepo.getUser(userId)
         calendar = calRepo.getCalendar(user, calendarId)
@@ -143,7 +143,7 @@ def updateCalendarTask(userId: int, calendarId: str) -> None:
 
     with scoped_session() as session:
         userRepo = UserRepository(session)
-        calRepo = CalendarRepo(session)
+        calRepo = CalendarRepository(session)
 
         user = userRepo.getUser(userId)
         calendar = calRepo.getCalendar(user, calendarId)

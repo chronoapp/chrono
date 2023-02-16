@@ -11,6 +11,7 @@ from app.sync.google.calendar import (
 )
 from app.db.repos.event_utils import getRecurringEventId
 from app.db.repos.event_repo import EventRepository, getCalendarEventsStmt
+from app.db.repos.calendar_repo import CalendarRepository
 from app.db.repos.contact_repo import ContactRepository, ContactVM
 
 EVENT_ITEM_RECURRING = {
@@ -53,7 +54,7 @@ def getRecurringEventItem(eventItem, datetime: datetime):
 
 
 def test_syncCreatedOrUpdatedGoogleEvent_single(user, session: Session, eventRepo: EventRepository):
-    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     eventItem = EVENT_ITEM_RECURRING.copy()
     del eventItem['recurrence']
@@ -63,14 +64,14 @@ def test_syncCreatedOrUpdatedGoogleEvent_single(user, session: Session, eventRep
 
     assert event.title == eventItem.get('summary')
     assert event.g_id == eventItem.get('id')
-    assert event.creator.email == 'test-email@example.com'
+    assert event.creator and event.creator.email == 'test-email@example.com'
 
     events = eventRepo.getSingleEvents(user, calendar.id)
     assert len(events) == 1
 
 
 def test_syncCreatedOrUpdatedGoogleEvent_single_with_attendees(user, session, eventRepo):
-    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Initial contact list. Make sure the contact is linked to the event attendee.
     contactRepo = ContactRepository(session)
@@ -108,7 +109,7 @@ def test_syncCreatedOrUpdatedGoogleEvent_single_with_attendees(user, session, ev
 
 
 def test_syncCreatedOrUpdatedGoogleEvent_recurring(user, session, eventRepo):
-    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     event = syncCreatedOrUpdatedGoogleEvent(
         calendar, eventRepo, None, EVENT_ITEM_RECURRING, session
@@ -140,7 +141,7 @@ def test_syncCreatedOrUpdatedGoogleEvent_allDay(user, session, eventRepo):
         'visibility': 'public',
     }
 
-    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
     event = syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
 
     assert event.all_day
@@ -154,7 +155,7 @@ def test_syncEventsToDb_deleted(user, session: Session):
     """TODO: Ensures that all child events are deleted when the parent
     recurring event is deleted.
     """
-    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     syncEventsToDb(calendar, [EVENT_ITEM_RECURRING], session)
     session.commit()
@@ -182,11 +183,12 @@ def test_syncEventsToDb_recurring(user, session: Session):
     - DELETE event at 01-12
     Result: [Event: 01-09, Event: 01-11 (updated)]
     """
-    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    googleEventId = '7bpp8ujgsitkcuk6h1er0nadfn'
+    calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     eventItems = [
         {
-            "id": "7bpp8ujgsitkcuk6h1er0nadfn",
+            "id": googleEventId,
             "status": "confirmed",
             "summary": "recurring-event",
             "start": {"dateTime": "2021-01-09T23:00:00-05:00", "timeZone": "America/Toronto"},
@@ -197,18 +199,18 @@ def test_syncEventsToDb_recurring(user, session: Session):
             ],
         },
         {
-            "id": "7bpp8ujgsitkcuk6h1er0nadfn_20210111T040000Z",
+            "id": f"{googleEventId}_20210111T040000Z",
             "status": "confirmed",
             "summary": "recurring-event",
             "start": {"dateTime": "2021-01-11T09:15:00-05:00"},
             "end": {"dateTime": "2021-01-11T09:45:00-05:00"},
-            "recurringEventId": "7bpp8ujgsitkcuk6h1er0nadfn",
+            "recurringEventId": googleEventId,
             "originalStartTime": {"dateTime": "2021-01-10T23:00:00-05:00"},
         },
         {
-            "id": "7bpp8ujgsitkcuk6h1er0nadfn_20210113T040000Z",
+            "id": f"{googleEventId}_20210113T040000Z",
             "status": "cancelled",
-            "recurringEventId": "7bpp8ujgsitkcuk6h1er0nadfn",
+            "recurringEventId": googleEventId,
             "originalStartTime": {"dateTime": "2021-01-12T23:00:00-05:00"},
         },
     ]
@@ -216,21 +218,27 @@ def test_syncEventsToDb_recurring(user, session: Session):
     syncEventsToDb(calendar, eventItems, session)
     session.commit()
 
-    parent = (
-        session.execute(select(Event).where(Event.g_id == '7bpp8ujgsitkcuk6h1er0nadfn'))
-    ).scalar()
+    eventRepo = EventRepository(session)
+    parent = eventRepo.getGoogleEvent(calendar, googleEventId)
 
-    events = (session.execute(user.getSingleEventsStmt(showDeleted=True))).scalars().all()
-    assert len(events) == 2
+    assert parent is not None
 
-    for e in events:
+    events = eventRepo.getSingleEvents(user, calendar.id, showDeleted=True)
+
+    assert len(events) == 3
+
+    recurringEvents = [e for e in events if e.recurring_event_id]
+
+    assert len(recurringEvents) == 2
+
+    for e in recurringEvents:
         assert e.recurring_event_id == parent.id
         assert e.recurring_event_calendar_id == parent.calendar_id
 
 
 def test_syncEventsToDb_recurring_withParticipants(user, session):
     """Make sure participants are created."""
-    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Add the parent event
 
@@ -248,16 +256,14 @@ def test_syncEventsToDb_recurring_withParticipants(user, session):
     )
 
     syncEventsToDb(calendar, [eventItem, eventItemParent], session)
+    session.commit()
 
     eventRepo = EventRepository(session)
     events = eventRepo.getSingleEvents(user, calendar.id)
 
-    result = session.execute(user.getSingleEventsStmt(showRecurring=True))
-    events = result.scalars().all()
+    assert len(events) == 2
 
-    assert len(events) == 1
-
-    recurringEventInstance = events[0]
+    recurringEventInstance = next(e for e in events if e.recurrences is None)
 
     assert recurringEventInstance.g_id == eventItem['id']
     assert len(recurringEventInstance.participants) == 2
@@ -273,7 +279,7 @@ def test_syncEventsToDb_duplicateEventMultipleCalendars(user: User, session: Ses
     It should be duplicated and exist in each calendar.
     """
     # Original Calendar
-    myCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    myCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Add another calendar
     readOnlyCalendar = UserCalendar(
@@ -316,7 +322,7 @@ def test_syncEventsToDb_changedRecurringEvent(user: User, session: Session):
     """Sync a google event where:
     - Event id is the same, but the recurring event has changed.
     """
-    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     parentEvent = EVENT_ITEM_RECURRING.copy()
     recurringEvent = getRecurringEventItem(

@@ -1,8 +1,8 @@
 import pytest
 from datetime import datetime, timedelta
 from app.db.repos.exceptions import EventRepoPermissionError
+from app.db.repos.calendar_repo import CalendarRepository
 from app.db.models.event_participant import EventAttendee, EventOrganizer
-from app.db.models.user_calendar import UserCalendar
 from tests.utils import createEvent, createCalendar
 
 from sqlalchemy import select
@@ -27,7 +27,7 @@ from app.db.repos.event_utils import (
 
 
 def test_event_repo_search(user, session):
-    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
     start = datetime.fromisoformat('2020-01-01T12:00:00-05:00')
     end = start + timedelta(hours=1)
 
@@ -47,7 +47,7 @@ def test_event_repo_search(user, session):
 
 def test_event_repo_search_recurring(user, session):
     """Assure we can search instances of a recurring event."""
-    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
     start = datetime.fromisoformat('2020-01-01T12:00:00-05:00')
     end = start + timedelta(hours=1)
 
@@ -109,7 +109,7 @@ def test_event_repo_CRUD(user, session):
     2) Get Event
     3) Update Event
     """
-    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     startDay = '2020-12-25'
     endDay = '2020-12-26'
@@ -156,7 +156,7 @@ def test_event_repo_CRUD(user, session):
 
 def test_event_repo_edit_permissions(user, session):
     """Tests that we can't edit an event if we don't have permission."""
-    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Creates an event. The user is not the organizer.
     # That means the event is duplicated on this calendar and not editable.
@@ -189,7 +189,7 @@ def test_event_repo_edit_permissions(user, session):
 
 def test_event_repo_edit_attendee_permissions_as_guest(user, session):
     """Tests edit event attendees when the user is not the organizer."""
-    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
     event = createEvent(
         userCalendar, datetime.now(), datetime.now() + timedelta(hours=1), title='Event'
     )
@@ -256,7 +256,7 @@ def test_event_repo_edit_attendee_permissions_as_guest(user, session):
 
 def test_event_repo_edit_attendee_permissions_as_organizer(user, session):
     """Tests edit event attendees when the user is the organizer."""
-    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
     event = createEvent(
         userCalendar, datetime.now(), datetime.now() + timedelta(hours=1), title='Event'
     )
@@ -296,7 +296,7 @@ def test_event_repo_edit_attendee_permissions_as_organizer(user, session):
 
 
 def test_event_repo_delete(user, session):
-    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
     start = datetime.fromisoformat('2020-01-01T12:00:00-05:00')
     end = start + timedelta(hours=1)
 
@@ -318,7 +318,7 @@ def test_event_repo_delete(user, session):
 
 
 def test_event_repo_deleteRecurring(user: User, session: Session):
-    userCalendar: UserCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Create a new recurring event.
     start = datetime.fromisoformat('2020-12-01T12:00:00')
@@ -360,7 +360,7 @@ def test_event_repo_deleteRecurring(user: User, session: Session):
 
 def test_event_repo_getRecurringEventWithParent(user, session):
     """Make sure we can fetch an instance of a recurring event and its parent."""
-    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Create a new recurring event.
     start = datetime.fromisoformat('2020-12-01T12:00:00')
@@ -379,7 +379,7 @@ def test_event_repo_getRecurringEventWithParent(user, session):
 
 
 def test_event_repo_getRecurringEvent(user, session):
-    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Create a new recurring event.
     start = datetime.fromisoformat('2020-12-01T12:00:00')
@@ -405,7 +405,7 @@ def test_event_repo_getRecurringEvent(user, session):
 
 
 def test_event_repo_getAllExpandedRecurringEvents_override(user, session):
-    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Create a new recurring event. 01-02 to 01-07 => 6 events
     start = datetime.fromisoformat('2020-01-02T12:00:00')
@@ -449,7 +449,7 @@ def test_event_repo_getAllExpandedRecurringEvents_override(user, session):
 
 
 def test_event_repo_getAllExpandedRecurringEvents_fullDay(user, session):
-    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     startDay = '2020-12-25'
     endDay = '2020-12-26'
@@ -492,7 +492,7 @@ def test_event_repo_getAllExpandedRecurringEvents_withTimezone(user, session):
 
 def test_event_repo_updateEvent_recurring(user, session):
     """Move recurring event to outside a range."""
-    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Create a new recurring event. 01-02 to 01-07 => 6 events
     start = datetime.fromisoformat('2020-01-02T12:00:00')
@@ -526,7 +526,7 @@ def test_event_repo_moveEvent(user, session):
     """Moved the event from one calendar to another and make sure
     we've updated the association table.
     """
-    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Create a new calendar
     userCalendar2 = createCalendar(user, 'calendar-id-2')
@@ -560,7 +560,7 @@ def test_event_repo_moveEvent_recurring(user, session):
     """Moved the event from one calendar to another.
     Makes sure all the recurring events instances are expanded.
     """
-    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Create a new calendar
     userCalendar2 = createCalendar(user, 'calendar-id-2')
@@ -601,7 +601,7 @@ def test_event_repo_moveEvent_recurring(user, session):
 
 def test_event_repo_eventMatchesQuery(user, session):
     """TODO: Test that the OR filters match results given from a full text Postgres search."""
-    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
     start = datetime.fromisoformat('2020-01-01T12:00:00-05:00')
     end = start + timedelta(hours=1)
     event = createEvent(

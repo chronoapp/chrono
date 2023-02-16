@@ -2,7 +2,9 @@ from datetime import datetime, timedelta
 
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
-from tests.utils import createCalendar
+from tests.utils import createCalendar, createEvent
+
+from app.api.endpoints.authentication.token_utils import getAuthToken
 
 from app.db.repos.event_repo import (
     EventRepository,
@@ -12,12 +14,11 @@ from app.db.repos.event_repo import (
 from app.db.repos.event_utils import (
     createOrUpdateEvent,
 )
-from app.api.endpoints.authentication.token_utils import getAuthToken
-from app.db.models.event_participant import EventAttendee
+from app.db.repos.calendar_repo import CalendarRepository
 
-from tests.utils import createEvent
 from app.db.models import User, Event, Contact
 from app.db.models.event import stripParticipants
+from app.db.models.event_participant import EventAttendee
 
 
 def test_stripParticipants():
@@ -27,7 +28,7 @@ def test_stripParticipants():
 
 
 def test_getEventsBasic(user: User, session, test_client):
-    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     start = datetime.fromisoformat('2020-01-02T12:00:00-05:00')
     event1 = createEvent(userCalendar, start, start + timedelta(hours=1))
@@ -52,7 +53,7 @@ def test_getEventsBasic(user: User, session, test_client):
 
 
 def test_createEvent_single(user: User, session, test_client):
-    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     start = datetime.fromisoformat("2021-01-11T09:30:00+00:00")
     end = start + timedelta(hours=1)
@@ -73,8 +74,8 @@ def test_createEvent_single(user: User, session, test_client):
 
     assert eventResp.get('title') == event.get('title')
 
-    result = session.execute(user.getSingleEventsStmt())
-    userEvents = result.scalars().all()
+    eventRepo = EventRepository(session)
+    userEvents = eventRepo.getSingleEvents(user, userCalendar.id)
 
     assert len(userEvents) == 1
 
@@ -87,7 +88,7 @@ def test_createEvent_single(user: User, session, test_client):
 
 def test_createEvent_recurring_invalid(user: User, session, test_client):
     """Malformed recurrence string."""
-    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
     start = datetime.fromisoformat("2021-01-11T05:00:00+00:00")
     end = start + timedelta(hours=1)
     event = {
@@ -119,7 +120,7 @@ def test_createEvent_recurring_invalid(user: User, session, test_client):
 
 
 def test_createEvent_recurring(user: User, session, test_client, eventRepo: EventRepository):
-    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     start = datetime.fromisoformat("2021-01-11T05:00:00+00:00")
     end = start + timedelta(hours=1)
@@ -131,19 +132,19 @@ def test_createEvent_recurring(user: User, session, test_client, eventRepo: Even
         "title": "laundry",
         "start": start.isoformat(),
         "end": end.isoformat(),
-        "calendar_id": calendar.id,
+        "calendar_id": userCalendar.id,
         "recurrences": recurrences,
     }
 
     resp = test_client.post(
-        f'/api/v1/calendars/{calendar.id}/events/',
+        f'/api/v1/calendars/{userCalendar.id}/events/',
         headers={'Authorization': getAuthToken(user)},
         json=event,
     )
     assert resp.status_code == 200
 
     eventId = resp.json()['id']
-    eventDb = eventRepo.getEvent(user, calendar, eventId)
+    eventDb = eventRepo.getEvent(user, userCalendar, eventId)
     assert eventDb is not None
 
     assert eventDb.recurrences == recurrences
@@ -154,7 +155,7 @@ def test_createEvent_recurring(user: User, session, test_client, eventRepo: Even
 
 def test_createEvent_allDay(user: User, session, test_client, eventRepo: EventRepository):
     """TODO: API Should only need one of start / end and start_day / end_day"""
-    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     start = datetime.fromisoformat("2021-01-11T00:00:00+00:00")
     end = start + timedelta(days=1)
@@ -165,11 +166,11 @@ def test_createEvent_allDay(user: User, session, test_client, eventRepo: EventRe
         "end": end.isoformat(),
         "start_day": start.strftime('%Y-%m-%d'),
         "end_day": end.strftime('%Y-%m-%d'),
-        "calendar_id": calendar.id,
+        "calendar_id": userCalendar.id,
     }
 
     resp = test_client.post(
-        f'/api/v1/calendars/{calendar.id}/events/',
+        f'/api/v1/calendars/{userCalendar.id}/events/',
         headers={'Authorization': getAuthToken(user)},
         json=event,
     )
@@ -179,13 +180,13 @@ def test_createEvent_allDay(user: User, session, test_client, eventRepo: EventRe
     assert eventResp.get('all_day') == True
 
     eventId = resp.json()['id']
-    eventDb = eventRepo.getEvent(user, calendar, eventId)
+    eventDb = eventRepo.getEvent(user, userCalendar, eventId)
     assert eventDb
 
 
 def test_createEvent_withLabels(user: User, session, test_client):
     """Create event with label"""
-    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
     from app.api.endpoints.labels import createOrUpdateLabel, LabelVM, LabelInDbVM
 
     # Create a label in DB
@@ -222,7 +223,7 @@ def test_createEvent_withLabels(user: User, session, test_client):
 
 def test_createEvent_withLabels_nonExisting(user: User, session, test_client):
     """Create event with label"""
-    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Create an event with a non existing label
     start = datetime.fromisoformat("2021-01-11T05:00:00+00:00")
@@ -257,7 +258,7 @@ def test_createEvent_withParticipants(user: User, session, test_client):
 
     # Create new event with two participants
 
-    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
     start = datetime.fromisoformat("2021-01-11T00:00:00+00:00")
     end = start + timedelta(days=1)
     event = {
@@ -266,7 +267,7 @@ def test_createEvent_withParticipants(user: User, session, test_client):
         "end": end.isoformat(),
         "start_day": start.strftime('%Y-%m-%d'),
         "end_day": end.strftime('%Y-%m-%d'),
-        "calendar_id": calendar.id,
+        "calendar_id": userCalendar.id,
         "participants": [
             {'contact_id': contact.id},
             {'email': 'adam@example.com'},
@@ -274,7 +275,7 @@ def test_createEvent_withParticipants(user: User, session, test_client):
     }
 
     resp = test_client.post(
-        f'/api/v1/calendars/{calendar.id}/events/',
+        f'/api/v1/calendars/{userCalendar.id}/events/',
         headers={'Authorization': getAuthToken(user)},
         json=event,
     )
@@ -291,7 +292,7 @@ def test_createEvent_withParticipants(user: User, session, test_client):
 
     eventJson = (
         test_client.get(
-            f'/api/v1/calendars/{calendar.id}/events/{eventId}',
+            f'/api/v1/calendars/{userCalendar.id}/events/{eventId}',
             headers={'Authorization': getAuthToken(user)},
         )
     ).json()
@@ -313,9 +314,9 @@ def test_updateEvent_withParticipants(user: User, session, test_client):
     user.contacts.append(contact)
 
     # Create an event with participants.
-    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
     start = datetime.fromisoformat('2020-01-02T12:00:00-05:00')
-    event1 = createEvent(calendar, start, start + timedelta(hours=1))
+    event1 = createEvent(userCalendar, start, start + timedelta(hours=1))
     session.add(event1)
 
     session.commit()
@@ -329,7 +330,7 @@ def test_updateEvent_withParticipants(user: User, session, test_client):
     # Update: add a participant and remove another.
     eventJson = (
         test_client.get(
-            f'/api/v1/calendars/{calendar.id}/events/{event1.id}',
+            f'/api/v1/calendars/{userCalendar.id}/events/{event1.id}',
             headers={'Authorization': getAuthToken(user)},
         )
     ).json()
@@ -339,7 +340,7 @@ def test_updateEvent_withParticipants(user: User, session, test_client):
     ]
 
     _ = test_client.put(
-        f'/api/v1/calendars/{calendar.id}/events/{event1.id}',
+        f'/api/v1/calendars/{userCalendar.id}/events/{event1.id}',
         headers={'Authorization': getAuthToken(user)},
         json=eventJson,
     )
@@ -360,7 +361,7 @@ def test_updateEvent_recurring(user: User, session, test_client):
     """Modify for this & following events.
     TODO: Should delete outdated, overriden events.
     """
-    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Create a new recurring event 2020-01-01 to 2020-01-10 => 10 events.
     start = datetime.fromisoformat('2020-01-01T12:00:00')
@@ -407,18 +408,18 @@ def test_updateEvent_recurring(user: User, session, test_client):
 
 
 def test_moveEvent_single(user, session, test_client):
-    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
     start = datetime.now()
     end = start + timedelta(hours=1)
-    event = createEvent(calendar, start, end)
+    event = createEvent(userCalendar, start, end)
     session.add(event)
     session.commit()
 
     # Move in same calendar returns error message.
     resp = test_client.post(
-        f'/api/v1/calendars/{calendar.id}/events/{event.id}/move',
+        f'/api/v1/calendars/{userCalendar.id}/events/{event.id}/move',
         headers={'Authorization': getAuthToken(user)},
-        json={'calendar_id': calendar.id},
+        json={'calendar_id': userCalendar.id},
     )
     assert resp.status_code == 400
 
@@ -426,14 +427,14 @@ def test_moveEvent_single(user, session, test_client):
     cal2 = createCalendar(user, 'calendar-id-2')
 
     resp = test_client.post(
-        f'/api/v1/calendars/{calendar.id}/events/{event.id}/move',
+        f'/api/v1/calendars/{userCalendar.id}/events/{event.id}/move',
         headers={'Authorization': getAuthToken(user)},
         json={'calendar_id': cal2.id},
     )
 
     # Make sure it's not in the old calendar
     resp = test_client.get(
-        f'/api/v1/calendars/{calendar.id}/events/{event.id}',
+        f'/api/v1/calendars/{userCalendar.id}/events/{event.id}',
         headers={'Authorization': getAuthToken(user)},
     )
     assert resp.status_code == 404
@@ -447,33 +448,33 @@ def test_moveEvent_single(user, session, test_client):
 
 
 def test_deleteEvent_single(user, session, test_client):
-    calendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     start = datetime.now()
     end = start + timedelta(hours=1)
-    event = createEvent(calendar, start, end)
+    event = createEvent(userCalendar, start, end)
     session.add(event)
-
     session.commit()
 
-    result = session.execute(user.getSingleEventsStmt())
-    events = result.scalars().all()
+    eventRepo = EventRepository(session)
+    events = eventRepo.getSingleEvents(user, userCalendar.id)
 
     assert len(events) == 1
 
     resp = test_client.delete(
-        f'/api/v1/calendars/{calendar.id}/events/{event.id}',
+        f'/api/v1/calendars/{userCalendar.id}/events/{event.id}',
         headers={'Authorization': getAuthToken(user)},
     )
 
     assert resp.status_code == 200
-    result = session.execute(user.getSingleEventsStmt())
-    events = result.scalars().all()
+
+    events = eventRepo.getSingleEvents(user, userCalendar.id)
+
     assert len(events) == 0
 
 
 def test_deleteEvent_overrides(user: User, session, test_client):
-    userCalendar = (session.execute(user.getPrimaryCalendarStmt())).scalar()
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     start = datetime.fromisoformat('2020-01-01T12:00:00')
     recurringEvent = createEvent(userCalendar, start, start + timedelta(hours=1))
