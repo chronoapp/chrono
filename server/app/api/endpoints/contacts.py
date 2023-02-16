@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
-from app.api.repos.contact_repo import ContactRepository
+from app.db.repos.contact_repo import ContactRepository
 from app.db.models import User
 
 router = APIRouter()

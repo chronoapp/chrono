@@ -12,9 +12,9 @@ from app.db.models.access_control import AccessControlRule
 
 from app.db.models import User, Event, LabelRule, UserCalendar, Calendar, Webhook, EventAttendee
 from app.core.logger import logger
-from app.api.repos.contact_repo import ContactRepository
-from app.api.repos.event_repo import EventRepository
-from app.api.repos.event_utils import (
+from app.db.repos.contact_repo import ContactRepository
+from app.db.repos.event_repo import EventRepository
+from app.db.repos.event_utils import (
     EventBaseVM,
     EventParticipantVM,
     createOrUpdateEvent,

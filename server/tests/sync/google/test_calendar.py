@@ -9,9 +9,9 @@ from app.sync.google.calendar import (
     syncEventsToDb,
     syncCreatedOrUpdatedGoogleEvent,
 )
-from app.api.repos.event_utils import getRecurringEventId
-from app.api.repos.event_repo import EventRepository, getCalendarEventsStmt
-from app.api.repos.contact_repo import ContactRepository, ContactVM
+from app.db.repos.event_utils import getRecurringEventId
+from app.db.repos.event_repo import EventRepository, getCalendarEventsStmt
+from app.db.repos.contact_repo import ContactRepository, ContactVM
 
 EVENT_ITEM_RECURRING = {
     'kind': 'calendar#event',

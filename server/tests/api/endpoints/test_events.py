@@ -4,12 +4,12 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from tests.utils import createCalendar
 
-from app.api.repos.event_repo import (
+from app.db.repos.event_repo import (
     EventRepository,
     getExpandedRecurringEvents,
     getAllExpandedRecurringEventsList,
 )
-from app.api.repos.event_utils import (
+from app.db.repos.event_utils import (
     createOrUpdateEvent,
 )
 from app.api.endpoints.authentication import getAuthToken

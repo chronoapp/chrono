@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
 from app.db.models import Label, User
-from app.api.repos.user_repo import UserRepository
+from app.db.repos.user_repo import UserRepository
 
 router = APIRouter()
 

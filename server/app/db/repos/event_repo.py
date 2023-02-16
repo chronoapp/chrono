@@ -16,9 +16,9 @@ from app.db.sql.event_search import EVENT_SEARCH_QUERY
 from app.db.sql.event_search_recurring import RECURRING_EVENT_SEARCH_QUERY
 from app.db.models import Event, User, UserCalendar, Calendar, EventAttendee
 
-from app.api.repos.contact_repo import ContactRepository
-from app.api.repos.calendar_repo import CalendarRepo
-from app.api.repos.event_utils import (
+from app.db.repos.contact_repo import ContactRepository
+from app.db.repos.calendar_repo import CalendarRepo
+from app.db.repos.event_utils import (
     EventBaseVM,
     EventInDBVM,
     GoogleEventInDBVM,
@@ -29,7 +29,7 @@ from app.api.repos.event_utils import (
 )
 
 from app.api.endpoints.labels import LabelInDbVM, Label, combineLabels
-from app.api.repos.exceptions import (
+from app.db.repos.exceptions import (
     EventRepoError,
     InputError,
     EventNotFoundError,

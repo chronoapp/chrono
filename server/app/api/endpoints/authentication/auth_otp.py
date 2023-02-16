@@ -10,7 +10,7 @@ from app.core import config
 from app.utils.emails import sendOTPCodeEmail
 
 from app.api.utils.db import get_db
-from app.api.repos.user_repo import UserRepository
+from app.db.repos.user_repo import UserRepository
 from .token_utils import getAuthToken
 
 router = APIRouter()

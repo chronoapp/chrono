@@ -9,7 +9,7 @@ from app.main import app
 
 from app.api.utils.security import get_current_user
 from app.api.utils.db import get_db
-from app.api.repos.event_repo import EventRepository
+from app.db.repos.event_repo import EventRepository
 
 from tests.test_session import scoped_session, engine
 from fastapi.testclient import TestClient

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.api.utils.db import get_db
 from app.db.models import User
-from app.api.repos.user_repo import UserRepository
+from app.db.repos.user_repo import UserRepository
 from app.core import config
 
 
