@@ -41,7 +41,7 @@ class ContactRepository:
 
         return list(contacts)
 
-    def addContact(self, user: User, contactVM: ContactVM) -> list[Contact]:
+    def addContact(self, user: User, contactVM: ContactVM) -> Contact:
         contact = Contact(
             contactVM.first_name,
             contactVM.last_name,

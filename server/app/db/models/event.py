@@ -69,18 +69,16 @@ class Event(Base):
     require a single id (rather than a combination of calendar_id and id).
     """
     pk = Column(String, primary_key=True, default=shortuuid.uuid, nullable=False)
+
+    """This ID could be duplicated to multiple calendars, so it's not a primary key.
+    """
     id: Mapped[str] = mapped_column(String, default=shortuuid.uuid, nullable=False, index=True)
 
     calendar_id: Mapped[str] = mapped_column(
         String(255),
         ForeignKey('calendar.id', name='event_calendar_id_fk'),
     )
-    calendar: Mapped['Calendar'] = relationship(
-        'Calendar',
-        backref=backref(
-            'events', lazy='dynamic', cascade='all,delete', order_by='Event.start.asc()'
-        ),
-    )
+    calendar: Mapped['Calendar'] = relationship('Calendar', back_populates='events')
 
     # Google-specific
     g_id: Mapped[Optional[str]] = mapped_column(String(255), index=True)

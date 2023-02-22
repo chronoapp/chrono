@@ -8,6 +8,8 @@ from app.db.base_class import Base
 
 if TYPE_CHECKING:
     from .user_calendar import UserCalendar
+    from .event import Event
+    from .access_control import AccessControlRule
 
 
 """The base calendar is attached to an Event.
@@ -29,6 +31,16 @@ class Calendar(Base):
 
     user_calendars: Mapped[list['UserCalendar']] = relationship(
         "UserCalendar", foreign_keys='[UserCalendar.id]'
+    )
+    events: Mapped[list['Event']] = relationship(
+        "Event",
+        lazy='dynamic',
+        cascade='all,delete',
+        order_by='Event.start.asc()',
+        back_populates='calendar',
+    )
+    access_control_rules: Mapped[list['AccessControlRule']] = relationship(
+        "AccessControlRule", back_populates='calendar', lazy='dynamic', cascade='all,delete'
     )
 
     @property
