@@ -174,7 +174,9 @@ function Layout(props: Props) {
             searchQuery={searchQuery}
           />
 
-          <Box overflowY="auto">{props.children}</Box>
+          <Box height="100%" overflowY="auto">
+            {props.children}
+          </Box>
         </Flex>
 
         <Plugins />

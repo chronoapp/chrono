@@ -182,7 +182,7 @@ function TimeGridEvent(props: IProps) {
   const isInteracting = dnd && dnd.interacting && dnd.event.id === event.id && !props.isPreview
 
   const isEditing = editingEvent?.id === event.id
-  const backgroundColor = Event.getBackgroundColor(event, calendar.backgroundColor, props.now)
+  const backgroundColor = Event.getBackgroundColor(event.end, calendar.backgroundColor, props.now)
 
   // This is in a separate section so that the drag mouse down event does not conflict with
   // the resize event.
@@ -207,7 +207,7 @@ function TimeGridEvent(props: IProps) {
 
   const color = ['needsAction', 'declined'].includes(responseStatus)
     ? backgroundColor
-    : Event.getForegroundColor(event, props.now)
+    : Event.getForegroundColor(event.end, props.now, event.foregroundColor)
 
   const textDecoration = responseStatus === 'declined' ? 'line-through' : undefined
 
