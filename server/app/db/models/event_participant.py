@@ -34,7 +34,7 @@ class EventParticipant(Base):
     response_status: Mapped[Optional[ResponseStatus]] = mapped_column(String(255), nullable=True)
 
     # Used for joined table inheritance. An EventParticipant can be a creator, organizer, or attendee.
-    type_ = mapped_column(String(20), nullable=False)
+    type_: Mapped[str] = mapped_column(String(20), nullable=False)
 
     __mapper_args__ = {"polymorphic_on": type_, "polymorphic_identity": "participant"}
 
@@ -65,7 +65,8 @@ class EventParticipant(Base):
 
     @property
     def is_self(self) -> bool:
-        return self.event.calendar.email == self.email_
+        # TODO: Figure out typing with table inheritance.
+        return self.event.calendar.email == self.email_  # type: ignore
 
     def __init__(
         self,

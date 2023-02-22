@@ -715,6 +715,8 @@ def getExpandedRecurringEvents(
     For now, assumes that the ruleset composes only of one rrule, and exdates so that
     we can do optimizations like checking for _dtstart and _until.
     """
+    assert baseRecurringEvent.start and baseRecurringEvent.end
+
     duration = baseRecurringEvent.end - baseRecurringEvent.start
     isAllDay = baseRecurringEvent.all_day
     baseEventVM = GoogleEventInDBVM.from_orm(baseRecurringEvent)

@@ -1,8 +1,8 @@
-from typing import Literal, TYPE_CHECKING
-from uuid import uuid4
+import uuid as uuid_lib
+from typing import Literal, Optional, TYPE_CHECKING
 
-from sqlalchemy import Column, String, ForeignKey
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy import String, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -39,15 +39,17 @@ AccessRole = Literal['freeBusyReader', 'reader', 'writer', 'owner']
 class AccessControlRule(Base):
     __tablename__ = 'access_control_rule'
 
-    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    uuid: Mapped[uuid_lib.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid_lib.uuid4
+    )
 
-    google_id = mapped_column(String, index=True)
+    google_id: Mapped[Optional[str]] = mapped_column(String, index=True)
     calendar_id = mapped_column(String, ForeignKey('calendar.id'), nullable=True)
     calendar: Mapped['Calendar'] = relationship('Calendar', back_populates='access_control_rules')
-    role = mapped_column(String(50))  # AccessRole
 
-    scope_type = mapped_column(String(50))  # ScopeType
-    scope_value = mapped_column(String)
+    role: Mapped[Optional[str]] = mapped_column(String(50))  # AccessRole
+    scope_type: Mapped[Optional[str]] = mapped_column(String(50))  # ScopeType
+    scope_value: Mapped[Optional[str]] = mapped_column(String)
 
     def __init__(
         self,

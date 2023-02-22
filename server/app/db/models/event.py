@@ -7,7 +7,6 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import (
     Boolean,
-    Column,
     String,
     ForeignKey,
     Text,
@@ -16,7 +15,7 @@ from sqlalchemy import (
     UniqueConstraint,
     ForeignKeyConstraint,
 )
-from sqlalchemy.orm import relationship, backref, Mapped, mapped_column
+from sqlalchemy.orm import relationship, Mapped, mapped_column, backref
 
 from app.db.base_class import Base
 from app.db.models.event_label import event_label_association_table
@@ -68,7 +67,7 @@ class Event(Base):
     """This is the Internal primary key, used so that references to this event only
     require a single id (rather than a combination of calendar_id and id).
     """
-    pk = Column(String, primary_key=True, default=shortuuid.uuid, nullable=False)
+    pk = mapped_column(String, primary_key=True, default=shortuuid.uuid, nullable=False)
 
     """This ID could be duplicated to multiple calendars, so it's not a primary key.
     """
@@ -87,8 +86,8 @@ class Event(Base):
     description: Mapped[Optional[str]] = mapped_column(Text())
     status: Mapped[str] = mapped_column(String(20), server_default='active')
 
-    start = mapped_column(DateTime(timezone=True), nullable=True)
-    end = mapped_column(DateTime(timezone=True), nullable=True)
+    start: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    end: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # TODO: Validate these fields.
     start_day: Mapped[Optional[str]] = mapped_column(
@@ -131,7 +130,7 @@ class Event(Base):
     )
 
     # The calendar / user who currently owns this Event.
-    organizer_id = Column(
+    organizer_id = mapped_column(
         String(255),
         ForeignKey('event_participant.id', name='event_organizer_fk', use_alter=True),
         nullable=True,
