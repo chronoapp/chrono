@@ -82,8 +82,8 @@ export default class Event {
     )
   }
 
-  static getBackgroundColor(event: Event, defaultColor: string, today: Date) {
-    if (event.end < today) {
+  static getBackgroundColor(endDate: Date, defaultColor: string, today: Date) {
+    if (endDate < today) {
       const { h, s } = hexToHSL(defaultColor)
       const hsl = `hsl(${h}, ${s}%, 90%)`
       return hsl
@@ -92,8 +92,8 @@ export default class Event {
     }
   }
 
-  static getForegroundColor(event: Event, today: Date) {
-    return event.end < today ? 'hsl(0, 0%, 45%)' : event.foregroundColor
+  static getForegroundColor(endDate: Date, today: Date, foregroundColor: string) {
+    return endDate < today ? 'hsl(0, 0%, 45%)' : foregroundColor
   }
 
   static newDefaultEvent(calendar: Calendar, startDate: Date, endDate: Date, allDay: boolean) {

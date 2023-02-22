@@ -47,8 +47,8 @@ export function EventItem(props: {
       <div
         className={clsx('cal-event', props.isPreview && 'cal-event-preview-full')}
         style={{
-          backgroundColor: Event.getBackgroundColor(event, calendar.backgroundColor, props.now),
-          color: Event.getForegroundColor(event, props.now),
+          backgroundColor: Event.getBackgroundColor(event.end, calendar.backgroundColor, props.now),
+          color: Event.getForegroundColor(event.end, props.now, event.foregroundColor),
         }}
         onMouseDown={handleStartDragging}
         onTouchStart={handleStartDragging}
@@ -63,7 +63,10 @@ export function EventItem(props: {
     eventDisplay = (
       <div
         className={clsx('cal-event-row', props.isPreview && 'cal-event-preview')}
-        style={{ alignItems: 'center', color: Event.getForegroundColor(event, props.now) }}
+        style={{
+          alignItems: 'center',
+          color: Event.getForegroundColor(event.end, props.now, event.foregroundColor),
+        }}
         onMouseDown={handleStartDragging}
         onTouchStart={handleStartDragging}
         onClick={handleClickEvent}
@@ -92,9 +95,9 @@ export function EventItem(props: {
         </Portal>
       </Popover>
     )
+  } else {
+    return eventDisplay
   }
-
-  return eventDisplay
 }
 
 interface IProps {
