@@ -15,6 +15,7 @@ interface IProps {
   range: Date[]
   events: Event[]
   eventService: EventService
+  expandRows: boolean
 }
 
 const CELL_WRAPPER_CLS = 'cal-allday-cell'
@@ -25,7 +26,8 @@ const CELL_WRAPPER_CLS = 'cal-allday-cell'
  * TODO: Merge with WeekRow?
  */
 function WeekHeaderRow(props: IProps) {
-  const dayMetrics = new DateSlotMetrics(props.range, props.events, 8, 1)
+  const maxRows = props.expandRows ? Infinity : 2
+  const dayMetrics = new DateSlotMetrics(props.range, props.events, maxRows, 1)
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
 
   function renderBackgroundCells() {

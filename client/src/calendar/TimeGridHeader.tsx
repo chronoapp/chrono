@@ -7,6 +7,12 @@ import * as dates from '../util/dates'
 import Event from '../models/Event'
 import WeekHeaderRow from './WeekHeaderRow'
 import { EventService } from './event-edit/useEventService'
+
+import { IconButton, Flex } from '@chakra-ui/react'
+import { FiChevronUp, FiChevronDown } from 'react-icons/fi'
+import { uiState } from '@/state/UIState'
+import { useRecoilValue, useSetRecoilState } from 'recoil'
+
 interface IProps {
   range: Date[]
   events: Event[]
@@ -15,7 +21,39 @@ interface IProps {
   eventService: EventService
 }
 
+function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
+  const setUiState = useSetRecoilState(uiState)
+
+  if (props.expanded) {
+    return (
+      <IconButton
+        size={'xs'}
+        variant="ghost"
+        aria-label="collapse events"
+        icon={<FiChevronUp />}
+        onClick={() => setUiState({ expandWeeklyRows: false })}
+        width="4"
+        mt="8"
+      />
+    )
+  } else {
+    return (
+      <IconButton
+        size={'xs'}
+        variant="ghost"
+        aria-label="expand events"
+        icon={<FiChevronDown />}
+        onClick={() => setUiState({ expandWeeklyRows: true })}
+        width="4"
+        mt="8"
+      />
+    )
+  }
+}
+
 function TimeGridHeader(props: IProps) {
+  const { expandWeeklyRows } = useRecoilValue(uiState)
+
   function renderHeaderCells() {
     const today = new Date() // TODO: pass via props.
 
@@ -46,13 +84,22 @@ function TimeGridHeader(props: IProps) {
 
   return (
     <div style={{ marginRight: props.marginRight }} className={clsx('cal-time-header', 'mt-2')}>
-      <div style={{ width: props.leftPad }} className="rbc-label cal-time-header-gutter" />
+      <Flex
+        width={props.leftPad}
+        direction={'column'}
+        justifyContent={'flex-start'}
+        alignItems={'center'}
+        className="rbc-label cal-time-header-gutter"
+      >
+        <ToggleExpandWeeklyRows expanded={expandWeeklyRows} />
+      </Flex>
       <div className="cal-time-header-content">
         <div className="cal-row">{renderHeaderCells()}</div>
         <WeekHeaderRow
           range={props.range}
           events={props.events}
           eventService={props.eventService}
+          expandRows={expandWeeklyRows}
         />
       </div>
     </div>
