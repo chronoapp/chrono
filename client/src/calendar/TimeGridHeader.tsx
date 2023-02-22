@@ -31,7 +31,7 @@ function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
         variant="ghost"
         aria-label="collapse events"
         icon={<FiChevronUp />}
-        onClick={() => setUiState({ expandWeeklyRows: false })}
+        onClick={() => setUiState((state) => ({ ...state, expandWeeklyRows: false }))}
         width="4"
         mt="8"
       />
@@ -43,7 +43,7 @@ function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
         variant="ghost"
         aria-label="expand events"
         icon={<FiChevronDown />}
-        onClick={() => setUiState({ expandWeeklyRows: true })}
+        onClick={() => setUiState((state) => ({ ...state, expandWeeklyRows: true }))}
         width="4"
         mt="8"
       />

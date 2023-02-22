@@ -1,15 +1,15 @@
-import React from 'react'
-import { useRecoilValue } from 'recoil'
-
+import { useRecoilValue, useSetRecoilState } from 'recoil'
 import clsx from 'clsx'
 import DateSlotMetrics from './utils/DateSlotMetrics'
-
 import EventRow from './EventRow'
 import Event from '../models/Event'
 
 import WeekRowContainer from './WeekRowContainer'
+import EventEndingRow from './EventEndingRow'
 import { EventService } from './event-edit/useEventService'
+
 import { primaryCalendarSelector } from '@/state/CalendarState'
+import { uiState } from '@/state/UIState'
 
 interface IProps {
   range: Date[]
@@ -29,6 +29,7 @@ function WeekHeaderRow(props: IProps) {
   const maxRows = props.expandRows ? Infinity : 2
   const dayMetrics = new DateSlotMetrics(props.range, props.events, maxRows, 1)
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
+  const setUiState = useSetRecoilState(uiState)
 
   function renderBackgroundCells() {
     return (
@@ -61,6 +62,16 @@ function WeekHeaderRow(props: IProps) {
               eventService={props.eventService}
             />
           ))}
+
+          {!!dayMetrics.extra.length && (
+            <EventEndingRow
+              segments={dayMetrics.extra}
+              slots={dayMetrics.slots}
+              now={new Date()}
+              eventService={props.eventService}
+              onShowMore={() => setUiState((state) => ({ ...state, expandWeeklyRows: true }))}
+            />
+          )}
         </WeekRowContainer>
       </div>
     </div>

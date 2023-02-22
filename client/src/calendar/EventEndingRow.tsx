@@ -21,10 +21,11 @@ interface IProps {
   slots: number
   now: Date
   eventService: EventService
+  onShowMore?: () => void
 }
 
 let isSegmentInSlot = (seg: EventSegment, slot: number) => seg.left <= slot && seg.right >= slot
-let eventsInSlot = (segments: EventSegment[], slot: number) =>
+export const eventsInSlot = (segments: EventSegment[], slot: number) =>
   segments.filter((seg) => isSegmentInSlot(seg, slot))
 
 function range(start: number, count: number) {
@@ -76,33 +77,41 @@ export default function EventEndingRow(props: IProps) {
   function renderShowMore(segments: EventSegment[], slot: number) {
     let count = eventsInSlot(segments, slot).length
 
-    return (
-      <Popover isLazy={true} closeOnBlur={false}>
-        <PopoverTrigger>
-          <Text
-            color="gray.700"
-            fontSize="xs"
-            className="cal-event-row"
-            onClick={(e) => {
-              eventActions.cancelSelect()
-            }}
-          >
-            {count} more
-          </Text>
-        </PopoverTrigger>
+    if (props.onShowMore) {
+      return (
+        <Text color="gray.600" fontSize="xs" className="cal-event-row" onClick={props.onShowMore}>
+          {count} more
+        </Text>
+      )
+    } else {
+      return (
+        <Popover isLazy={true} closeOnBlur={false}>
+          <PopoverTrigger>
+            <Text
+              color="gray.600"
+              fontSize="xs"
+              className="cal-event-row"
+              onClick={(e) => {
+                eventActions.cancelSelect()
+              }}
+            >
+              {count} more
+            </Text>
+          </PopoverTrigger>
 
-        <Portal>
-          <PopoverContent>
-            <InnerPopoverContent
-              slot={slot}
-              segments={props.segments}
-              now={props.now}
-              eventService={props.eventService}
-            />
-          </PopoverContent>
-        </Portal>
-      </Popover>
-    )
+          <Portal>
+            <PopoverContent>
+              <InnerPopoverContent
+                slot={slot}
+                segments={props.segments}
+                now={props.now}
+                eventService={props.eventService}
+              />
+            </PopoverContent>
+          </Portal>
+        </Popover>
+      )
+    }
   }
 
   const rowSegments = eventLevels(props.segments).levels[0]
