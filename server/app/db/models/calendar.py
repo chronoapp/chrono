@@ -22,12 +22,11 @@ class Calendar(Base):
 
     id = mapped_column(String(255), primary_key=True, default=shortuuid.uuid)
 
-    google_id = mapped_column(String(255), nullable=True, index=True)
-    summary = mapped_column(String(255))
-    description = mapped_column(Text())
-    timezone = mapped_column(String(255), nullable=True)
-
-    email_ = mapped_column(String(255), nullable=True)
+    google_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
+    summary: Mapped[Optional[str]] = mapped_column(String(255))
+    description: Mapped[Optional[str]] = mapped_column(Text())
+    timezone: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    email_: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     user_calendars: Mapped[list['UserCalendar']] = relationship(
         "UserCalendar", foreign_keys='[UserCalendar.id]'
