@@ -1,8 +1,8 @@
-"""init
+"""initial
 
-Revision ID: 4338ced04a1d
+Revision ID: 8f1bf3908324
 Revises: 
-Create Date: 2022-06-26 18:57:53.691336
+Create Date: 2023-02-16 09:18:05.062284
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '4338ced04a1d'
+revision = '8f1bf3908324'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -26,8 +26,7 @@ def upgrade():
     sa.Column('timezone', sa.String(length=255), nullable=True),
     sa.Column('email_', sa.String(length=255), nullable=True),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('google_id'),
-    sa.UniqueConstraint('id')
+    sa.UniqueConstraint('google_id')
     )
     op.create_table('user',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -40,6 +39,17 @@ def upgrade():
     sa.Column('timezone', sa.String(length=255), server_default='UTC', nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('access_control_rule',
+    sa.Column('uuid', sa.UUID(), nullable=False),
+    sa.Column('google_id', sa.String(), nullable=True),
+    sa.Column('calendar_id', sa.String(), nullable=True),
+    sa.Column('role', sa.String(length=50), nullable=True),
+    sa.Column('scope_type', sa.String(length=50), nullable=True),
+    sa.Column('scope_value', sa.String(), nullable=True),
+    sa.ForeignKeyConstraint(['calendar_id'], ['calendar.id'], ),
+    sa.PrimaryKeyConstraint('uuid')
+    )
+    op.create_index(op.f('ix_access_control_rule_google_id'), 'access_control_rule', ['google_id'], unique=False)
     op.create_table('contact',
     sa.Column('id', sa.String(length=255), nullable=False),
     sa.Column('google_id', sa.String(length=255), nullable=True),
@@ -56,26 +66,31 @@ def upgrade():
     op.create_table('event',
     sa.Column('pk', sa.String(), nullable=False),
     sa.Column('id', sa.String(), nullable=False),
-    sa.Column('calendar_id', sa.String(length=255), nullable=True),
+    sa.Column('calendar_id', sa.String(length=255), nullable=False),
     sa.Column('g_id', sa.String(length=255), nullable=True),
-    sa.Column('title', sa.String(length=255), nullable=True),
+    sa.Column('title', sa.String(length=255), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
-    sa.Column('status', sa.String(length=20), server_default='active', nullable=True),
+    sa.Column('status', sa.String(length=20), server_default='active', nullable=False),
     sa.Column('start', sa.DateTime(timezone=True), nullable=True),
     sa.Column('end', sa.DateTime(timezone=True), nullable=True),
     sa.Column('start_day', sa.String(length=10), nullable=True),
     sa.Column('end_day', sa.String(length=10), nullable=True),
     sa.Column('time_zone', sa.String(length=255), nullable=True),
     sa.Column('creator_id', sa.String(length=255), nullable=True),
+    sa.Column('organizer_id', sa.String(length=255), nullable=True),
     sa.Column('recurrences', sa.ARRAY(sa.String()), nullable=True),
     sa.Column('recurring_event_id', sa.String(), nullable=True),
     sa.Column('recurring_event_calendar_id', sa.String(), nullable=True),
     sa.Column('original_start', sa.DateTime(timezone=True), nullable=True),
     sa.Column('original_start_day', sa.String(length=10), nullable=True),
     sa.Column('original_timezone', sa.String(length=255), nullable=True),
+    sa.Column('guests_can_modify', sa.Boolean(), nullable=False),
+    sa.Column('guests_can_invite_others', sa.Boolean(), nullable=False),
+    sa.Column('guests_can_see_other_guests', sa.Boolean(), nullable=False),
     sa.ForeignKeyConstraint(['calendar_id'], ['calendar.id'], name='event_calendar_id_fk'),
     sa.ForeignKeyConstraint(['creator_id'], ['event_participant.id'], name='event_creator_fk', use_alter=True),
-    sa.ForeignKeyConstraint(['recurring_event_id', 'recurring_event_calendar_id'], ['event.id', 'event.calendar_id'], ),
+    sa.ForeignKeyConstraint(['organizer_id'], ['event_participant.id'], name='event_organizer_fk', use_alter=True),
+    sa.ForeignKeyConstraint(['recurring_event_id', 'recurring_event_calendar_id'], ['event.id', 'event.calendar_id'], name='fk_recurring_event_id_calendar_id'),
     sa.PrimaryKeyConstraint('pk'),
     sa.UniqueConstraint('id', 'calendar_id', name='uix_calendar_event_id')
     )
@@ -105,15 +120,14 @@ def upgrade():
     sa.Column('summary_override', sa.String(length=255), nullable=True),
     sa.Column('background_color', sa.String(length=10), nullable=True),
     sa.Column('foreground_color', sa.String(length=10), nullable=True),
-    sa.Column('selected', sa.Boolean(), nullable=True),
+    sa.Column('selected', sa.Boolean(), nullable=False),
     sa.Column('access_role', sa.String(length=50), nullable=True),
     sa.Column('primary', sa.Boolean(), nullable=True),
     sa.Column('deleted', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['google_id'], ['calendar.google_id'], ),
     sa.ForeignKeyConstraint(['id'], ['calendar.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('id')
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('user_credentials',
     sa.Column('user_id', sa.Integer(), nullable=False),
@@ -134,7 +148,8 @@ def upgrade():
     sa.Column('email_', sa.String(length=255), nullable=True),
     sa.Column('display_name_', sa.String(length=255), nullable=True),
     sa.Column('contact_id', sa.String(length=255), nullable=True),
-    sa.Column('response_status', sa.String(length=255), nullable=False),
+    sa.Column('response_status', sa.String(length=255), nullable=True),
+    sa.Column('type_', sa.String(length=20), nullable=False),
     sa.ForeignKeyConstraint(['contact_id'], ['contact.id'], ),
     sa.ForeignKeyConstraint(['event_pk'], ['event.pk'], ),
     sa.PrimaryKeyConstraint('id')
@@ -154,6 +169,7 @@ def upgrade():
     sa.Column('calendar_id', sa.String(length=255), nullable=False),
     sa.Column('resource_id', sa.String(), nullable=True),
     sa.Column('resource_uri', sa.String(), nullable=True),
+    sa.Column('expiration', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['calendar_id'], ['user_calendar.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -179,6 +195,8 @@ def downgrade():
     op.drop_table('event')
     op.drop_index(op.f('ix_contact_email'), table_name='contact')
     op.drop_table('contact')
+    op.drop_index(op.f('ix_access_control_rule_google_id'), table_name='access_control_rule')
+    op.drop_table('access_control_rule')
     op.drop_table('user')
     op.drop_table('calendar')
     # ### end Alembic commands ###
