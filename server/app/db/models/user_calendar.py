@@ -36,7 +36,7 @@ class UserCalendar(Base):
     )
 
     # IDs for google / msft / aapl.
-    google_id = mapped_column(String(255), ForeignKey('calendar.google_id'), nullable=True)
+    google_id = mapped_column(String(255), nullable=True, index=True)
     sync_token = mapped_column(String(255))  # TODO: Rename to google_sync_token.
 
     # User specific properties

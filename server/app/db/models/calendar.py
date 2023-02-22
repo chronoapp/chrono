@@ -20,7 +20,7 @@ class Calendar(Base):
 
     id = mapped_column(String(255), primary_key=True, default=shortuuid.uuid)
 
-    google_id = mapped_column(String(255), unique=True, nullable=True)
+    google_id = mapped_column(String(255), nullable=True, index=True)
     summary = mapped_column(String(255))
     description = mapped_column(Text())
     timezone = mapped_column(String(255), nullable=True)
