@@ -43,9 +43,7 @@ class AccessControlRule(Base):
 
     google_id = mapped_column(String, index=True)
     calendar_id = mapped_column(String, ForeignKey('calendar.id'), nullable=True)
-    calendar: Mapped['Calendar'] = relationship(
-        'Calendar', backref=backref('access_control_rules', lazy='dynamic', cascade='all,delete')
-    )
+    calendar: Mapped['Calendar'] = relationship('Calendar', back_populates='access_control_rules')
     role = mapped_column(String(50))  # AccessRole
 
     scope_type = mapped_column(String(50))  # ScopeType

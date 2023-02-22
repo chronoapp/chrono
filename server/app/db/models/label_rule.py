@@ -25,9 +25,7 @@ class LabelRule(Base):
     )
 
     label_id = mapped_column(Integer, ForeignKey('label.id'), nullable=False)
-    label: Mapped['Label'] = relationship(
-        'Label', backref=backref('rules', lazy='dynamic', cascade='all,delete')
-    )
+    label: Mapped['Label'] = relationship('Label', back_populates='rules')
 
     def __init__(self, text: str):
         self.text = text

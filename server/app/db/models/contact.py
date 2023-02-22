@@ -14,17 +14,15 @@ class Contact(Base):
     __tablename__ = 'contact'
 
     id = mapped_column(String(255), primary_key=True, default=shortuuid.uuid)
-    google_id = mapped_column(String(255), unique=True, nullable=True)
+    google_id: Mapped[Optional[str]] = mapped_column(String(255), unique=True, nullable=True)
 
     user_id = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
-    user: Mapped['User'] = relationship(
-        'User', backref=backref('contacts', lazy='dynamic', cascade='all,delete')
-    )
+    user: Mapped['User'] = relationship('User', back_populates='contacts')
 
-    first_name = mapped_column(String(255), nullable=True)
-    last_name = mapped_column(String(255), nullable=True)
-    email = mapped_column(String(255), nullable=True, index=True)
-    photo_url = mapped_column(String(255), nullable=True)
+    first_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    last_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
+    photo_url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     @property
     def display_name(self) -> Optional[str]:

@@ -127,7 +127,7 @@ def syncGoogleCalendars(user: User, calendarList):
             userCalendar.google_id = gCalId
             userCalendar.background_color = backgroundColor
             userCalendar.foreground_color = calendarItem.get('foregroundColor')
-            userCalendar.selected = calendarItem.get('selected')
+            userCalendar.selected = calendarItem.get('selected', True)
             userCalendar.access_role = calendarItem.get('accessRole')
             userCalendar.primary = calendarItem.get('primary', False)
             userCalendar.deleted = calendarItem.get('deleted')
@@ -147,7 +147,7 @@ def syncGoogleCalendars(user: User, calendarList):
                 calendarItem.get('summaryOverride'),
                 backgroundColor,
                 calendarItem.get('foregroundColor'),
-                calendarItem.get('selected'),
+                calendarItem.get('selected', True),
                 calendarItem.get('accessRole'),
                 calendarItem.get('primary'),
                 calendarItem.get('deleted'),

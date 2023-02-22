@@ -31,9 +31,7 @@ class UserCalendar(Base):
     )
 
     user_id = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
-    user: Mapped['User'] = relationship(
-        'User', backref=backref('calendars', lazy='joined', cascade='all,delete')
-    )
+    user: Mapped['User'] = relationship('User', back_populates='calendars')
 
     # IDs for google / msft / aapl.
     google_id = mapped_column(String(255), nullable=True, index=True)

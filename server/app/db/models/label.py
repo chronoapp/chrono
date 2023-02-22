@@ -10,6 +10,7 @@ DEFAULT_TAG_COLOR = '#cecece'
 
 if TYPE_CHECKING:
     from .user import User
+    from .label_rule import LabelRule
 
 
 class Label(Base):
@@ -23,22 +24,18 @@ class Label(Base):
     parent_id = mapped_column(BigInteger, ForeignKey('label.id'), nullable=True)
 
     user_id = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
-    user: Mapped['User'] = relationship(
-        'User',
-        backref=backref(
-            'labels',
-            lazy='joined',
-            cascade='all,delete',
-            order_by="Label.position",
-            collection_class=ordering_list('position', count_from=0),
-        ),
-    )
+    user: Mapped['User'] = relationship('User', back_populates='labels')
+
     title = mapped_column(String(255))
     key = mapped_column(String(50), index=True)
     color_hex = mapped_column(String(50), nullable=False)
 
     # Position within parent node.
     position = mapped_column(Integer, default=0)
+
+    rules: Mapped[list['LabelRule']] = relationship(
+        'LabelRule', back_populates='label', lazy='dynamic', cascade='all,delete'
+    )
 
     def __init__(self, title: str, color_hex: str = DEFAULT_TAG_COLOR) -> None:
         self.title = title

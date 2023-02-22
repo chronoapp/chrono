@@ -8,7 +8,6 @@ from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
 
 from app.db.models import Label, LabelRule, User
-from app.core.logger import logger
 
 """Rules for each event.
 """

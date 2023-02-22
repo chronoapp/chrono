@@ -1,14 +1,17 @@
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
 
-from sqlalchemy import Integer, String, select
-from sqlalchemy.orm import relationship, selectinload, Mapped, mapped_column
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.ext.orderinglist import ordering_list
 
 from app.db.base_class import Base
 from app.db.models.user_credentials import ProviderType
 from app.db.models.user_calendar import UserCalendar
-from app.db.models.calendar import Calendar
-from app.db.models.event import Event
 from app.db.models.user_credentials import UserCredential
+
+if TYPE_CHECKING:
+    from .label import Label
+    from .contact import Contact
 
 
 class User(Base):
@@ -29,8 +32,22 @@ class User(Base):
         uselist=False,
         backref='user',
     )
-
     timezone: Mapped[str] = mapped_column(String(255), nullable=False, server_default='UTC')
+
+    calendars: Mapped[list[UserCalendar]] = relationship(
+        "UserCalendar", back_populates='user', lazy='joined', cascade='all,delete'
+    )
+    labels: Mapped[list['Label']] = relationship(
+        'Label',
+        lazy='joined',
+        cascade='all,delete',
+        order_by="Label.position",
+        collection_class=ordering_list('position', count_from=0),
+        back_populates='user',
+    )
+    contacts: Mapped[list['Contact']] = relationship(
+        'Contact', lazy='dynamic', cascade='all,delete'
+    )
 
     def __repr__(self):
         return f'<User {self.id=} {self.email=}/>'
