@@ -93,6 +93,7 @@ export function sortEvents(evtA: Event, evtB: Event) {
     Math.max(durB, 1) - Math.max(durA, 1) || // events spanning multiple days go first
     +evtB.all_day - +evtA.all_day || // then allDay single day events
     +evtA.start - +evtB.start || // then sort by start time
-    +evtA.end - +evtB.end // then sort by end time
+    +evtA.end - +evtB.end || // then sort by end time
+    (evtA.title || '').localeCompare(evtB.title) // then sort by title
   )
 }
