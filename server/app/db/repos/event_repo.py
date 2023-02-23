@@ -135,7 +135,7 @@ class EventRepository:
 
     def getGoogleEvent(self, calendar: UserCalendar, googleEventId: str) -> Optional[Event]:
         stmt = getCalendarEventsStmt().where(
-            Calendar.id == calendar.id, Event.g_id == googleEventId
+            Calendar.id == calendar.id, Event.google_id == googleEventId
         )
         googleEvent = (self.session.execute(stmt)).scalar()
 
@@ -771,7 +771,7 @@ def getExpandedRecurringEvents(
                     eventVM = baseEventVM.copy(
                         update={
                             'id': eventId,
-                            'g_id': getRecurringEventId(baseEventVM.g_id, start, isAllDay),
+                            'google_id': getRecurringEventId(baseEventVM.google_id, start, isAllDay),
                             'calendar_id': userCalendar.id,
                             'start': start,
                             'end': end,

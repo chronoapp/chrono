@@ -2,8 +2,10 @@ from sqlalchemy import select
 
 from app.api.endpoints.labels import combineLabels
 from app.api.endpoints.authentication.token_utils import getAuthToken
+
 from app.db.models.label import Label
 from app.db.models import User
+from app.db.repos.user_repo import UserRepository
 
 
 def test_combineLabels():
@@ -55,27 +57,30 @@ def test_createLabel(user, test_client):
 
 
 def test_deleteLabel(user, session, test_client):
+    userRepo = UserRepository(session)
+
     l1 = Label("label-1", "#ffffff")
     l2 = Label("label-2", "#ffffff")
     l3 = Label("label-3", "#ffffff")
     user.labels.append(l1)
     user.labels.append(l2)
     user.labels.append(l3)
-
-    user.labels.reorder()
     session.commit()
+
+    labels = userRepo.getLabels(user.id)
+    assert len(labels) == 3
 
     token = getAuthToken(user)
     resp = test_client.delete(f'/api/v1/labels/{l2.id}', headers={'Authorization': token})
 
     assert resp.status_code == 200
 
-    result = session.execute(select(Label).where(Label.user_id == user.id))
-    labels = result.scalars().all()
+    labels = userRepo.getLabels(user.id)
 
     assert len(labels) == 2
 
     labelIds = [l.id for l in labels]
+
     assert l1.id in labelIds
     assert l2.id not in labelIds
     assert l3.id in labelIds

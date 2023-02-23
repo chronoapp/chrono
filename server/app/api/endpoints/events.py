@@ -215,7 +215,7 @@ async def moveEventCalendar(
         # Makes sure both are google calendars.
         if event.isGoogleEvent():
             syncMoveGoogleEventCalendarTask.send(
-                user.id, event.g_id, calendarId, calReq.calendar_id
+                user.id, event.google_id, calendarId, calReq.calendar_id
             )
 
         return event

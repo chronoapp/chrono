@@ -88,7 +88,7 @@ PAGE_SIZE = 1000
 
 
 class GoogleEventVM(EventBaseVM):
-    g_id: Optional[str]
+    google_id: Optional[str]
     recurring_event_g_id: Optional[str]
 
 
@@ -431,7 +431,7 @@ def syncCreatedOrUpdatedGoogleEvent(
         eventVM.recurring_event_id = baseRecurringEvent.id
 
     event = createOrUpdateEvent(
-        userCalendar, existingEvent, eventVM, overrideId=overrideId, googleId=eventVM.g_id
+        userCalendar, existingEvent, eventVM, overrideId=overrideId, googleId=eventVM.google_id
     )
 
     if baseRecurringEvent:
@@ -551,7 +551,7 @@ def googleEventToEventVM(calendarId: str, eventItem: Dict[str, Any]) -> GoogleEv
         )
 
     eventVM = GoogleEventVM(
-        g_id=eventId,
+        google_id=eventId,
         title=eventSummary,
         status=status,
         description=eventDescription,

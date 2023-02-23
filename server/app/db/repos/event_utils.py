@@ -102,7 +102,7 @@ class EventInDBVM(EventBaseVM):
 
 
 class GoogleEventInDBVM(EventInDBVM):
-    g_id: Optional[str]
+    google_id: Optional[str]
 
 
 MAX_RECURRING_EVENT_COUNT = 1000
@@ -206,7 +206,7 @@ def createOrUpdateEvent(
 
         return event
     else:
-        eventDb.g_id = googleId or eventDb.g_id
+        eventDb.google_id = googleId or eventDb.google_id
         eventDb.title = eventVM.title or eventDb.title
         eventDb.description = eventVM.description or eventDb.description
         eventDb.start = eventVM.start or eventDb.start

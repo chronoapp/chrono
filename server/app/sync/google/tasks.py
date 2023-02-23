@@ -52,16 +52,16 @@ def syncEventToGoogleTask(
 
         eventBody = getEventBody(event, userCalendar.timezone)
 
-        if event.g_id:
+        if event.google_id:
             eventResp = updateGoogleEvent(
-                user, userCalendar.google_id, event.g_id, eventBody, sendUpdates
+                user, userCalendar.google_id, event.google_id, eventBody, sendUpdates
             )
         else:
             eventResp = createGoogleEvent(user, userCalendar.google_id, eventBody, sendUpdates)
 
         event = syncCreatedOrUpdatedGoogleEvent(userCalendar, eventRepo, event, eventResp, session)
 
-        logger.info(f'Synced event {event.title} {event.id=} to Google {event.g_id}')
+        logger.info(f'Synced event {event.title} {event.id=} to Google {event.google_id}')
 
 
 @dramatiq.actor(max_retries=1)
@@ -80,10 +80,10 @@ def syncDeleteEventToGoogleTask(userId: int, userCalendarId: str, eventId: str) 
             logger.warning(f'Event {eventId} not found')
             return
 
-        if event.g_id:
+        if event.google_id:
             try:
-                _resp = deleteGoogleEvent(user, userCalendar.google_id, event.g_id)
-                logger.info(f'Deleted event from Google: {event.title} {event.id=} {event.g_id=}')
+                _resp = deleteGoogleEvent(user, userCalendar.google_id, event.google_id)
+                logger.info(f'Deleted event from Google: {event.title} {event.id=} {event.google_id=}')
             except googleapiclient.errors.HttpError as e:
                 logger.warning(e)
 
