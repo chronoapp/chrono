@@ -51,6 +51,7 @@ def isValidTimezone(timeZone: str) -> bool:
 class Event(Base):
     """
     Cloned in attendee's calendar after inviting them to the event.
+
     Changes to the organizer calendar are propagated to attendee copies.
     """
 
@@ -73,14 +74,14 @@ class Event(Base):
     """
     id: Mapped[str] = mapped_column(String, default=shortuuid.uuid, nullable=False, index=True)
 
+    # Google-specific
+    google_id: Mapped[Optional[str]] = mapped_column(String(255), index=True)
+
     calendar_id: Mapped[str] = mapped_column(
         String(255),
         ForeignKey('calendar.id', name='event_calendar_id_fk'),
     )
     calendar: Mapped['Calendar'] = relationship('Calendar', back_populates='events')
-
-    # Google-specific
-    g_id: Mapped[Optional[str]] = mapped_column(String(255), index=True)
 
     title: Mapped[str] = mapped_column(String(255), index=True)
     description: Mapped[Optional[str]] = mapped_column(Text())
@@ -174,15 +175,15 @@ class Event(Base):
 
     @property
     def recurring_event_gId(self) -> Optional[str]:
-        if self.is_parent_recurring_event and self.g_id:
-            parts = self.g_id.split('_')
-            return ''.join(parts[:-1]) if len(parts) >= 2 else self.g_id
+        if self.is_parent_recurring_event and self.google_id:
+            parts = self.google_id.split('_')
+            return ''.join(parts[:-1]) if len(parts) >= 2 else self.google_id
         else:
-            return self.g_id
+            return self.google_id
 
     def __init__(
         self,
-        g_id: Optional[str],
+        googleId: Optional[str],
         title: Optional[str],
         description: Optional[str],
         start: Optional[datetime],
@@ -207,7 +208,7 @@ class Event(Base):
         if overrideId:
             self.id = overrideId
 
-        self.g_id = g_id
+        self.google_id = googleId
         self.title = title or ''
         self.description = description
         self.start = start
@@ -252,4 +253,4 @@ class Event(Base):
         )
 
     def isGoogleEvent(self) -> bool:
-        return self.g_id is not None
+        return self.google_id is not None

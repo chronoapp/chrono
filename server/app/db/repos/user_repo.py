@@ -33,7 +33,7 @@ class UserRepository:
         return user
 
     def getLabel(self, userId: int, labelId: Optional[int]) -> Optional[Label]:
-        stmt = select(Label).where(User.id == userId, Label.id == labelId)
+        stmt = select(Label).where(Label.user_id == userId, Label.id == labelId)
         label = (self.session.execute(stmt)).scalar()
 
         return label
