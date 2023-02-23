@@ -367,6 +367,7 @@ class DayColumn extends React.Component<IProps & InjectedEventActionsProps, ISta
         style={{
           top: `${selectRange.top}%`,
           height: `${selectRange.height}%`,
+          color: Event.getForegroundColor(selectRange.endDate, this.props.now, 'white'),
           backgroundColor: Event.getBackgroundColor(
             selectRange.endDate,
             this.props.primaryCalendar.backgroundColor,

@@ -80,7 +80,7 @@ function LabelPanel() {
             <LabelTree allowEdit={true} />
 
             <Button
-              fontSize={'sm'}
+              fontSize={'xs'}
               color="gray.600"
               fontWeight="normal"
               variant="link"

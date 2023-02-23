@@ -262,7 +262,9 @@ function LabelTree(props: IProps) {
               alignItems="center"
               paddingBottom="2px"
             >
-              <Text fontSize="sm">{item.title}</Text>
+              <Text fontSize="xs" color="gray.800">
+                {item.title}
+              </Text>
               {(isMouseInside || curMenuExpanded) && (
                 <Menu isLazy>
                   <MenuButton
