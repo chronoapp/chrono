@@ -185,12 +185,14 @@ export default function CalendarsPanel() {
                   />
                   <span
                     className="cal-checkmark"
-                    style={{ backgroundColor: selected ? calendar.backgroundColor : '#eee' }}
+                    style={{
+                      backgroundColor: selected ? calendar.backgroundColor : '#eee',
+                    }}
                   ></span>
                 </label>
 
                 <Flex align="center" justifyContent="space-between" w="100%">
-                  <Text fontSize="sm" pl="2">
+                  <Text userSelect="none" fontSize="xs" color={'gray.800'} pl="2">
                     {calendar.summary}
                   </Text>
 
@@ -202,7 +204,6 @@ export default function CalendarsPanel() {
                         color="gray.600"
                         size="xs"
                         as={Button}
-                        fontWeight="normal"
                       >
                         <FiMoreHorizontal size={'1.25em'} />
                       </MenuButton>
@@ -313,7 +314,7 @@ export default function CalendarsPanel() {
                   {renderCalendarList(calendars)}
 
                   <Button
-                    fontSize={'sm'}
+                    fontSize={'xs'}
                     color="gray.600"
                     fontWeight="normal"
                     variant="link"

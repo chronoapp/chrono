@@ -1,4 +1,4 @@
-$sidebar-width: 240px;
+$sidebar-width: 230px;
 
 html {
   overflow-y: auto;
@@ -130,4 +130,22 @@ code {
 
 .has-shadow {
   box-shadow: $event-shadow;
+}
+
+
+// Custom Scrollbar
+
+/* Works on Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+  width: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #f8f8f8;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: $grey-light;
+  border-radius: 20px;
+  border: 2px solid #f8f8f8;
 }

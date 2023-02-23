@@ -33,9 +33,9 @@ export default function MiniCalendar() {
   function renderHeader() {
     const range = getWeekRange(viewDate)
     return range.map((day, idx) => (
-      <div key={idx} className="cal-mini-month-day">
+      <Text key={idx} className="cal-mini-month-day" size="xs">
         {format(day, 'dd')}
-      </div>
+      </Text>
     ))
   }
 
@@ -49,7 +49,7 @@ export default function MiniCalendar() {
           const isSelected = dates.eq(day, display.selectedDate, 'day')
 
           return (
-            <div
+            <Text
               key={idx}
               onClick={() =>
                 setDisplay((prev) => {
@@ -64,7 +64,7 @@ export default function MiniCalendar() {
               )}
             >
               {label}
-            </div>
+            </Text>
           )
         })}
       </Flex>
