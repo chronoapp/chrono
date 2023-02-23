@@ -1,7 +1,8 @@
+import uuid
 from typing import TYPE_CHECKING
 
 from datetime import datetime
-from sqlalchemy import String, ForeignKey, DateTime
+from sqlalchemy import String, ForeignKey, DateTime, UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.db.base_class import Base
@@ -16,7 +17,9 @@ class Webhook(Base):
     __tablename__ = 'webhook'
     id = mapped_column(String, primary_key=True, nullable=False)
 
-    calendar_id = mapped_column(String(255), ForeignKey('user_calendar.id'), nullable=False)
+    calendar_id: Mapped[uuid.UUID] = mapped_column(
+        UUID, ForeignKey('user_calendar.id'), nullable=False
+    )
     calendar: Mapped['UserCalendar'] = relationship('UserCalendar', back_populates='webhook')
 
     resource_id = mapped_column(String())

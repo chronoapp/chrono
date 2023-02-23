@@ -771,7 +771,9 @@ def getExpandedRecurringEvents(
                     eventVM = baseEventVM.copy(
                         update={
                             'id': eventId,
-                            'google_id': getRecurringEventId(baseEventVM.google_id, start, isAllDay),
+                            'google_id': getRecurringEventId(
+                                baseEventVM.google_id, start, isAllDay
+                            ),
                             'calendar_id': userCalendar.id,
                             'start': start,
                             'end': end,

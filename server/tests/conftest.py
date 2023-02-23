@@ -1,3 +1,4 @@
+import uuid
 import pytest
 
 from sqlalchemy import select
@@ -54,11 +55,10 @@ def user(session):
 
     user = User('user@chrono.so', 'Test User', None)
 
-    calendar = Calendar(
-        'calendar-id', 'summary', 'description', 'America/Toronto', 'user@chrono.so'
-    )
+    calendarId = uuid.uuid4()
+    calendar = Calendar(calendarId, 'summary', 'description', 'America/Toronto', 'user@chrono.so')
     userCalendar = UserCalendar(
-        'calendar-id',
+        calendarId,
         None,
         '#ffffff',
         '#000000',

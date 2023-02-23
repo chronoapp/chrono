@@ -1,4 +1,4 @@
-import shortuuid
+import uuid
 from typing import Optional, Dict, Tuple, List, Any
 
 from sqlalchemy import select
@@ -132,7 +132,7 @@ def syncGoogleCalendars(user: User, calendarList):
             userCalendar.primary = calendarItem.get('primary', False)
             userCalendar.deleted = calendarItem.get('deleted')
         else:
-            calId = shortuuid.uuid()
+            calId = uuid.uuid4()
             calendar = Calendar(
                 calId,
                 calSummary,
@@ -449,7 +449,7 @@ def syncCreatedOrUpdatedGoogleEvent(
                 True,
             )
         else:
-            raise Exception(f'No start time for event: {eventVM.g_id}')
+            raise Exception(f'No start time for event: {eventVM.google_id}')
 
         if not recurringEventId:
             raise Exception('Recurring event ID is None')
@@ -495,7 +495,7 @@ def convertStatus(status: str):
         return 'active'
 
 
-def googleEventToEventVM(calendarId: str, eventItem: Dict[str, Any]) -> GoogleEventVM:
+def googleEventToEventVM(calendarId: uuid.UUID, eventItem: Dict[str, Any]) -> GoogleEventVM:
     """Converts the google event to our ViewModel."""
 
     eventId = eventItem.get('id')

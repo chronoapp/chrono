@@ -1,4 +1,4 @@
-import shortuuid
+import uuid
 
 from typing import Optional
 from pydantic import BaseModel, Field, validator
@@ -60,7 +60,7 @@ class CalendarRepository:
 
         return userCalendar
 
-    def getCalendar(self, user: User, calendarId: str) -> UserCalendar:
+    def getCalendar(self, user: User, calendarId: uuid.UUID) -> UserCalendar:
         userCalendar = (
             self.session.execute(
                 select(UserCalendar).where(
@@ -87,7 +87,7 @@ class CalendarRepository:
             stmt = update(UserCalendar).where(UserCalendar.user_id == user.id).values(primary=False)
             self.session.execute(stmt)
 
-        calendarId = shortuuid.uuid()
+        calendarId = uuid.uuid4()
         baseCalendar = Calendar(
             calendarId, calendar.summary, calendar.description, calendar.timezone, user.email
         )
@@ -107,7 +107,9 @@ class CalendarRepository:
 
         return userCalendar
 
-    def updateCalendar(self, user: User, calendarId: str, userCalendar: CalendarVM) -> UserCalendar:
+    def updateCalendar(
+        self, user: User, calendarId: uuid.UUID, userCalendar: CalendarVM
+    ) -> UserCalendar:
         calendarDb = self.getCalendar(user, calendarId)
         if not calendarDb:
             raise CalendarNotFoundError('Calendar not found.')
@@ -121,7 +123,7 @@ class CalendarRepository:
 
         return calendarDb
 
-    def deleteCalendar(self, user: User, calendarId: str) -> None:
+    def deleteCalendar(self, user: User, calendarId: uuid.UUID) -> None:
         calendarDb = self.getCalendar(user, calendarId)
 
         self.session.execute(delete(UserCalendar).where(UserCalendar.id == calendarDb.id))

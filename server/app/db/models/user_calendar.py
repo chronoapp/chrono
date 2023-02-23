@@ -1,8 +1,8 @@
+import uuid
 from typing import Literal, Optional, TYPE_CHECKING
 
-from sqlalchemy import Integer, String, ForeignKey, Boolean
-from sqlalchemy.orm import relationship, backref
-from sqlalchemy.orm import mapped_column, Mapped
+from sqlalchemy import Integer, String, ForeignKey, Boolean, UUID
+from sqlalchemy.orm import relationship, mapped_column, Mapped
 
 from app.db.base_class import Base
 from app.db.models.access_control import AccessRole
@@ -21,7 +21,10 @@ class UserCalendar(Base):
     """TODO: id should not be the same as the calendar id."""
 
     __tablename__ = 'user_calendar'
-    id: Mapped[str] = mapped_column(String(255), ForeignKey('calendar.id'), primary_key=True)
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey('calendar.id'), primary_key=True
+    )
+
     calendar: Mapped['Calendar'] = relationship(
         "Calendar",
         back_populates="user_calendars",
@@ -55,7 +58,7 @@ class UserCalendar(Base):
 
     def __init__(
         self,
-        id: str,
+        id: uuid.UUID,
         summary_override: Optional[str],
         background_color: Optional[str],
         foreground_color: Optional[str],

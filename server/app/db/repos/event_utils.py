@@ -1,3 +1,5 @@
+import uuid
+
 from datetime import datetime
 from typing import List, Dict, Optional, Literal, Any, Union
 from dateutil.rrule import rrule, rruleset, rrulestr
@@ -55,7 +57,7 @@ class EventBaseVM(BaseModel):
     all_day: Optional[bool]
     background_color: Optional[str]
     timezone: Optional[str]
-    calendar_id: Optional[str]
+    calendar_id: Optional[uuid.UUID]
     recurrences: Optional[List[str]]
     recurring_event_id: Optional[str]
 

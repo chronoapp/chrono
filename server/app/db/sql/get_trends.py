@@ -6,7 +6,7 @@ with filtered_events as (
             label.key as label
         FROM event
         INNER JOIN user_calendar ON event.calendar_id = user_calendar.id
-        INNER JOIN event_label ON event_label.event_pk = event.pk
+        INNER JOIN event_label ON event_label.event_uid = event.uid
         INNER JOIN label ON label.id = event_label.label_id
         WHERE {labelIdsFilter}
         AND event.status != 'deleted'

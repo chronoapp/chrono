@@ -1,4 +1,5 @@
 import re
+import uuid
 import shortuuid
 
 from datetime import datetime
@@ -14,6 +15,7 @@ from sqlalchemy import (
     ARRAY,
     UniqueConstraint,
     ForeignKeyConstraint,
+    UUID,
 )
 from sqlalchemy.orm import relationship, Mapped, mapped_column, backref
 
@@ -68,7 +70,7 @@ class Event(Base):
     """This is the Internal primary key, used so that references to this event only
     require a single id (rather than a combination of calendar_id and id).
     """
-    pk = mapped_column(String, primary_key=True, default=shortuuid.uuid, nullable=False)
+    uid = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
 
     """This ID could be duplicated to multiple calendars, so it's not a primary key.
     """
@@ -77,8 +79,8 @@ class Event(Base):
     # Google-specific
     google_id: Mapped[Optional[str]] = mapped_column(String(255), index=True)
 
-    calendar_id: Mapped[str] = mapped_column(
-        String(255),
+    calendar_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(),
         ForeignKey('calendar.id', name='event_calendar_id_fk'),
     )
     calendar: Mapped['Calendar'] = relationship('Calendar', back_populates='events')
@@ -113,7 +115,7 @@ class Event(Base):
         lazy='joined',
         cascade="all, delete-orphan",
         backref=backref('event', lazy='joined'),
-        foreign_keys='[EventParticipant.event_pk]',
+        foreign_keys='[EventParticipant.event_uid]',
     )
 
     # The calendar / user who created this Event.
@@ -147,8 +149,8 @@ class Event(Base):
     # Recurring Events.
     recurrences: Mapped[Optional[List[Any]]] = mapped_column(ARRAY(String), nullable=True)
     recurring_event_id: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
-    recurring_event_calendar_id: Mapped[Optional[str]] = mapped_column(
-        String, nullable=True, index=True
+    recurring_event_calendar_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID, nullable=True, index=True
     )
 
     # Original time (For recurring events). Child event use the parent's value.
@@ -203,7 +205,7 @@ class Event(Base):
         overrideId: Optional[str] = None,
         status: EventStatus = 'active',
         recurringEventId: Optional[str] = None,
-        recurringEventCalendarId: Optional[str] = None,
+        recurringEventCalendarId: Optional[uuid.UUID] = None,
     ):
         if overrideId:
             self.id = overrideId
