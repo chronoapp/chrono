@@ -1,7 +1,7 @@
 from typing import Optional, TYPE_CHECKING
-import shortuuid
+import uuid
 
-from sqlalchemy import String, Text
+from sqlalchemy import String, Text, UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.db.base_class import Base
@@ -20,7 +20,7 @@ Every event many-1 relationship to this calendar.
 class Calendar(Base):
     __tablename__ = 'calendar'
 
-    id = mapped_column(String(255), primary_key=True, default=shortuuid.uuid)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     google_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
     summary: Mapped[Optional[str]] = mapped_column(String(255))
@@ -51,7 +51,7 @@ class Calendar(Base):
 
     def __init__(
         self,
-        id: str,
+        id: uuid.UUID,
         summary: Optional[str],
         description: Optional[str],
         timezone: Optional[str],

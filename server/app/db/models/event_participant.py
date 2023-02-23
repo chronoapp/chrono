@@ -1,7 +1,9 @@
 from typing import Optional, Literal, TYPE_CHECKING
-import shortuuid
 
-from sqlalchemy import String, ForeignKey
+import shortuuid
+import uuid
+
+from sqlalchemy import String, ForeignKey, UUID
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 
 from app.db.base_class import Base
@@ -22,8 +24,8 @@ class EventParticipant(Base):
     __tablename__ = 'event_participant'
 
     id = mapped_column(String(255), primary_key=True, default=shortuuid.uuid)
+    event_uid: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('event.uid'), nullable=True)
 
-    event_pk = mapped_column(String(255), ForeignKey('event.pk'), nullable=True)
     email_: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
     display_name_: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
