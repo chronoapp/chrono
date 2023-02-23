@@ -13,11 +13,11 @@ export class Label {
   }
 
   constructor(
-    readonly id: number,
+    readonly id: string,
     readonly title: string,
     readonly key: string,
     readonly color_hex: string,
     readonly position: number,
-    readonly parent_id?: number
+    readonly parent_id?: string
   ) {}
 }

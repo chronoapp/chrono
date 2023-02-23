@@ -1,26 +1,26 @@
-from sqlalchemy import select
+import uuid
 
 from app.api.endpoints.labels import combineLabels
 from app.api.endpoints.authentication.token_utils import getAuthToken
 
 from app.db.models.label import Label
-from app.db.models import User
 from app.db.repos.user_repo import UserRepository
 
 
-def test_combineLabels():
+def test_combineLabels(session):
     l1 = Label("label-1", "#fff")
-    l1.id = 1
+    l1.id = uuid.uuid4()
+    session.commit()
 
     l2 = Label("label-2", "#fff")
-    l2.id = 2
-    l2.parent_id = 1
+    l2.id = uuid.uuid4()
+    l2.parent_id = l1.id
 
     labels = [l1, l2]
     combined = combineLabels(labels)
 
     assert len(combined) == 1
-    assert combined[0].id == 2
+    assert combined[0].id == l2.id
 
 
 def test_getLabels(user, session, test_client):

@@ -51,25 +51,35 @@ def add_labels(userid):
 
 
 @main.command()
-@click.argument('userid', type=click.INT)
+@click.argument('email', type=click.STRING)
 @click.option('--full', is_flag=True, default=False)
-def sync_cal_all(userid: int, full: bool):
+def sync_cal_all(email: str, full: bool):
     from app.sync.google.tasks import syncAllCalendarsTask
 
-    syncAllCalendarsTask.send(userid, fullSync=full)
+    with scoped_session() as session:
+        userRepo = UserRepository(session)
+        user = userRepo.getUserByEmail(email)
+        if not user:
+            print(f'User {email} not found')
+            return
+
+        syncAllCalendarsTask.send(user.id, fullSync=full)
 
 
 @main.command()
-@click.argument('userId', type=click.INT)
+@click.argument('email', type=click.STRING)
 @click.argument('cal', type=click.STRING)
 @click.option('--full', is_flag=True, default=False)
-def sync_cal_id(userid: int, cal: str, full: bool):
+def sync_cal_id(email: str, cal: str, full: bool):
     from app.sync.google.calendar import syncCalendarEvents
     from sqlalchemy.orm import selectinload
 
     with scoped_session() as session:
         userRepo = UserRepository(session)
-        user = userRepo.getUser(userid)
+        user = userRepo.getUserByEmail(email)
+        if not user:
+            print(f'User {email} not found')
+            return
 
         calendar = next((c for c in user.calendars if cal.lower() in c.summary.lower()), None)
         if not calendar:

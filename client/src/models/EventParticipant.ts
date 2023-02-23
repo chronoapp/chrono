@@ -1,6 +1,6 @@
 import { immerable } from 'immer'
 import Contact from './Contact'
-import makeId from '@/lib/js-lib/makeId'
+import { makeUUID } from '@/lib/js-lib/makeId'
 
 export type ResponseStatus = 'needsAction' | 'accepted' | 'declined' | 'tentative'
 
@@ -33,7 +33,7 @@ export default class EventParticipant {
 
   static fromContact(contact: Contact) {
     return new EventParticipant(
-      makeId(),
+      makeUUID(),
       contact.email,
       contact.id,
       'needsAction',
@@ -45,11 +45,20 @@ export default class EventParticipant {
   }
 
   static fromEmail(email: string) {
-    return new EventParticipant(makeId(), email, undefined, 'needsAction', null, null, null, false)
+    return new EventParticipant(
+      makeUUID(),
+      email,
+      undefined,
+      'needsAction',
+      null,
+      null,
+      null,
+      false
+    )
   }
 
   static fromCreatorOrOrganizer(email: string, displayName: string) {
-    return new EventParticipant(makeId(), email, undefined, 'accepted', displayName, null, false)
+    return new EventParticipant(makeUUID(), email, undefined, 'accepted', displayName, null, false)
   }
 
   static getMutableFields(participant: Partial<EventParticipant>) {

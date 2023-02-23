@@ -243,7 +243,7 @@ export async function searchEvents(query: string): Promise<Event[]> {
 
 // ================== Trends and Stats ==================
 
-export async function getTrends(labelId: number, timePeriod: TimePeriod, start: Date, end: Date) {
+export async function getTrends(labelId: string, timePeriod: TimePeriod, start: Date, end: Date) {
   const params = {
     start: formatDateTime(start),
     end: formatDateTime(end),
@@ -295,7 +295,7 @@ export async function putLabel(label: Label): Promise<Label> {
     .then(Label.fromJson)
 }
 
-export async function deleteLabel(labelId: number): Promise<Label> {
+export async function deleteLabel(labelId: string): Promise<Label> {
   return fetch(`${API_URL}/labels/${labelId}`, {
     method: 'DELETE',
     headers: getHeaders(),
@@ -316,7 +316,7 @@ export async function putLabels(labels: Label[]): Promise<Label[]> {
 
 // Label Rules
 
-export async function getLabelRules(labelText: string, labelId: number): Promise<LabelRule[]> {
+export async function getLabelRules(labelText: string, labelId: string): Promise<LabelRule[]> {
   return fetch(`${API_URL}/label_rules/?text=${labelText}&label_id=${labelId}`, {
     headers: getHeaders(),
   })

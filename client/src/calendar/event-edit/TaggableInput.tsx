@@ -14,7 +14,7 @@ interface IProps {
   wrapperCls?: string
   portalCls?: string
   title: string
-  handleChange?: (newValue: string, labelIds: number[]) => void
+  handleChange?: (newValue: string, labelIds: string[]) => void
   onUpdateContacts?: (contacts: Contact[]) => void
   onBlur?: (v) => void
   isHeading: boolean
@@ -46,7 +46,7 @@ function compositeId(id: number | string, type: TagType) {
 }
 
 function getIdAndType(idTxt: string) {
-  const m = idTxt.match(/\[id:([\w]+)\]\[type:([\w]+)\]/)
+  const m = idTxt.match(/\[id:([\w\-]+)\]\[type:([\w]+)\]/)
   if (m) {
     const [_, id, type] = m
     return { id, type }
@@ -163,9 +163,9 @@ function TaggableInput(props: IProps) {
     if (props.handleChange) {
       let title = newValue
 
-      const labelIds: number[] = newEntities
+      const labelIds: string[] = newEntities
         .filter((e) => getIdAndType(e.id).type === 'Label')
-        .map((l) => parseInt(getIdAndType(l.id).id))
+        .map((l) => getIdAndType(l.id).id)
 
       const contactIds: string[] = newEntities
         .filter((e) => getIdAndType(e.id).type === 'Contact')

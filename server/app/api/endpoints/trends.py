@@ -1,4 +1,6 @@
-from typing import Literal, List, Dict
+import uuid
+
+from typing import Literal
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -22,7 +24,7 @@ TimePeriod = Literal['DAY', 'WEEK', 'MONTH']
 
 @router.get('/trends/{labelId}')
 async def getUserTrends(
-    labelId: int,
+    labelId: uuid.UUID,
     start: str,
     end: str,
     time_period: TimePeriod = "WEEK",
@@ -46,17 +48,17 @@ async def getUserTrends(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
 
 
-def getSubtreeLabelIds(user: User, labelId: int) -> List[int]:
+def getSubtreeLabelIds(user: User, labelId: uuid.UUID) -> list[uuid.UUID]:
     """Gets all Label IDs in the subtree. Could also do this in SQL,
     but this should be fast when we have O(100) labels.
     """
-    labels: List[Label] = user.labels
+    labels: list[Label] = user.labels
 
     labelMap = {l.id: l for l in labels}
     if labelId not in labelMap:
         raise ValueError(f'Invalid Label {labelId}')
 
-    childIdsMap: Dict[int, List[int]] = {}
+    childIdsMap: dict[uuid.UUID, list[uuid.UUID]] = {}
     for l in labels:
         if l.parent_id is None:
             continue
@@ -66,7 +68,7 @@ def getSubtreeLabelIds(user: User, labelId: int) -> List[int]:
         else:
             childIdsMap[l.parent_id] = [l.id]
 
-    labelIds: List[int] = []
+    labelIds: list[uuid.UUID] = []
     queue = [labelMap[labelId]]
 
     while len(queue) > 0:
@@ -119,7 +121,7 @@ def getNextPeriodDt(dt: datetime, period: TimePeriod) -> datetime:
 
 def getTrendsDataResult(
     user: User,
-    labelId: int,
+    labelId: uuid.UUID,
     startTime: datetime,
     endTime: datetime,
     timePeriod: TimePeriod,
@@ -138,7 +140,7 @@ def getTrendsDataResult(
     labels, durations = [], []
 
     labelIds = getSubtreeLabelIds(user, labelId)
-    labelIdsFilter = ' OR '.join([f'label.id = {labelId}' for labelId in labelIds])
+    labelIdsFilter = ' OR '.join([f'label.id = \'{labelId}\'' for labelId in labelIds])
     interval = getInterval(timePeriod)
 
     query = TRENDS_QUERY.format(labelIdsFilter=labelIdsFilter, interval=interval)

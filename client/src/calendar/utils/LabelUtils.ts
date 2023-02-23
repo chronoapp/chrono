@@ -5,12 +5,12 @@ import { normalizeArr } from '../../lib/normalizer'
  * Existing parent id in label map.
  */
 export function getParentIds(
-  labelsById: Record<number, Label>,
-  myLabels: Record<number, Label>,
+  labelsById: Record<string, Label>,
+  myLabels: Record<string, Label>,
   label: Label
-): Array<number> {
+): Array<string> {
   let parentId = label.parent_id
-  const parentIds = new Array<number>()
+  const parentIds = new Array<string>()
 
   while (parentId) {
     const parentLabel = labelsById[parentId]
@@ -29,9 +29,9 @@ export function getParentIds(
  * Makes sure that a parent is removed if a child is added and vice versa.
  */
 export function addNewLabels(
-  labelsById: Record<number, Label>,
+  labelsById: Record<string, Label>,
   curLabels: Label[],
-  newLabelIds: number[]
+  newLabelIds: string[]
 ): Label[] {
   const curLabelsMap = normalizeArr(curLabels, 'id')
   let updatedLabels = curLabels // Maintain order

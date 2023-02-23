@@ -142,7 +142,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
               portalCls={'.cal-event-modal-container'}
               isHeading={false}
               placeholder={Event.getDefaultTitle(eventFields.title)}
-              handleChange={(title, labelIds: number[]) => {
+              handleChange={(title, labelIds: string[]) => {
                 const updatedLabels = addNewLabels(
                   labelState.labelsById,
                   eventFields.labels,

@@ -368,7 +368,7 @@ function EventPopover(props: IProps) {
                 getUpdatedEvent(props.event, eventFields, participants)
               )
             }}
-            handleChange={(title, labelIds: number[]) => {
+            handleChange={(title, labelIds: string[]) => {
               const updatedLabels = addNewLabels(
                 labelState.labelsById,
                 eventFields.labels,

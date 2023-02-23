@@ -1,4 +1,6 @@
-from typing import List, Optional
+import uuid
+
+from typing import List, Optional, Sequence
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import and_, select
@@ -17,24 +19,24 @@ router = APIRouter()
 
 class LabelRuleVM(BaseModel):
     text: str
-    label_id: int
+    label_id: uuid.UUID
 
     class Config:
         orm_mode = True
 
 
 class LabelRuleInDBVM(LabelRuleVM):
-    user_id: int
-    id: int
+    user_id: uuid.UUID
+    id: uuid.UUID
 
 
 @router.get('/label_rules/', response_model=List[LabelRuleInDBVM])
 async def getLabelRules(
-    label_id: int,
+    label_id: uuid.UUID,
     text: str = '',
     user=Depends(get_current_user),
     session: Session = Depends(get_db),
-):
+) -> Sequence[LabelRule]:
     if text:
         result = session.execute(
             select(LabelRule).where(
@@ -53,7 +55,9 @@ async def getLabelRules(
 
 @router.put('/label_rules/', response_model=LabelRuleInDBVM)
 async def putLabel(
-    labelRule: LabelRuleVM, user=Depends(get_current_user), session: Session = Depends(get_db)
+    labelRule: LabelRuleVM,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_db),
 ) -> LabelRule:
     labelDb: Optional[Label] = (
         session.execute(

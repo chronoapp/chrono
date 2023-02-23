@@ -36,7 +36,7 @@ interface IProps {
 class TreeItem {
   constructor(
     readonly title: string,
-    readonly key: number,
+    readonly key: string,
     readonly label: Label,
     readonly children: TreeItem[],
     readonly position: number,
@@ -59,7 +59,7 @@ function LabelTree(props: IProps) {
   const [expandedKeys, setExpandedKeys] = useState([])
   const [autoExpandParent, setAutoExpandParent] = useState(false)
 
-  const [selectedLabelId, setSelectedLabelId] = useState<number | undefined>(undefined)
+  const [selectedLabelId, setSelectedLabelId] = useState<string | undefined>(undefined)
 
   const labelItems = getOrderedLabels(labelState.labelsById)
   const prevEditLabelModalOpen = usePrevious(labelState.editingLabel.active)
@@ -90,7 +90,7 @@ function LabelTree(props: IProps) {
       callback: (item: TreeItem, idx: number, arr: TreeItem[]) => void
     ) => {
       data.forEach((item, index, arr) => {
-        if (item.key === parseInt(key)) {
+        if (item.key === key) {
           callback(item, index, arr)
           return
         }
