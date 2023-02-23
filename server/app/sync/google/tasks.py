@@ -1,3 +1,5 @@
+import uuid
+
 import googleapiclient
 from worker import dramatiq
 
@@ -30,7 +32,7 @@ from app.core.logger import logger
 
 @dramatiq.actor(max_retries=1)
 def syncEventToGoogleTask(
-    userId: int, userCalendarId: str, eventId: str, sendUpdates: SendUpdateType = 'none'
+    userId: int, userCalendarId: uuid.UUID, eventId: str, sendUpdates: SendUpdateType = 'none'
 ) -> None:
     """Sync Chrono's event to Google Calendar."""
 
@@ -65,7 +67,7 @@ def syncEventToGoogleTask(
 
 
 @dramatiq.actor(max_retries=1)
-def syncDeleteEventToGoogleTask(userId: int, userCalendarId: str, eventId: str) -> None:
+def syncDeleteEventToGoogleTask(userId: int, userCalendarId: uuid.UUID, eventId: str) -> None:
     """Sync Chrono's event to Google Calendar."""
 
     with scoped_session() as session:
@@ -83,14 +85,16 @@ def syncDeleteEventToGoogleTask(userId: int, userCalendarId: str, eventId: str) 
         if event.google_id:
             try:
                 _resp = deleteGoogleEvent(user, userCalendar.google_id, event.google_id)
-                logger.info(f'Deleted event from Google: {event.title} {event.id=} {event.google_id=}')
+                logger.info(
+                    f'Deleted event from Google: {event.title} {event.id=} {event.google_id=}'
+                )
             except googleapiclient.errors.HttpError as e:
                 logger.warning(e)
 
 
 @dramatiq.actor(max_retries=1)
 def syncMoveGoogleEventCalendarTask(
-    userId: int, googleEventId: str, fromCalendarId: str, toCalendarId: str
+    userId: int, googleEventId: str, fromCalendarId: uuid.UUID, toCalendarId: uuid.UUID
 ) -> None:
     with scoped_session() as session:
         userRepo = UserRepository(session)
@@ -126,7 +130,7 @@ def syncAllCalendarsTask(userId: int, fullSync: bool) -> None:
 
 
 @dramatiq.actor(max_retries=1)
-def syncCalendarTask(userId: int, calendarId: str, fullSync: bool) -> None:
+def syncCalendarTask(userId: int, calendarId: uuid.UUID, fullSync: bool) -> None:
     with scoped_session() as session:
         userRepo = UserRepository(session)
         calRepo = CalendarRepository(session)
@@ -138,7 +142,7 @@ def syncCalendarTask(userId: int, calendarId: str, fullSync: bool) -> None:
 
 
 @dramatiq.actor(max_retries=1)
-def updateCalendarTask(userId: int, calendarId: str) -> None:
+def updateCalendarTask(userId: int, calendarId: uuid.UUID) -> None:
     """Update google calendar details like summary, selected, color"""
 
     with scoped_session() as session:

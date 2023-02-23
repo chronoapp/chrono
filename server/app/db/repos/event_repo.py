@@ -1,4 +1,6 @@
+import uuid
 import heapq
+
 from typing import List, Optional, Iterable, Tuple, Generator, AsyncGenerator, Dict, cast
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -65,7 +67,7 @@ class EventRepository:
     def __init__(self, session: Session):
         self.session = session
 
-    def getRecurringEvents(self, user: User, calendarId: str, endDate: datetime) -> list[Event]:
+    def getRecurringEvents(self, user: User, calendarId: uuid.UUID, endDate: datetime) -> list[Event]:
         stmt = (
             getCalendarEventsStmt()
             .where(User.id == user.id)
@@ -101,7 +103,7 @@ class EventRepository:
         return list(singleEvents)
 
     def getEventsInRange(
-        self, user: User, calendarId: str, startDate: datetime, endDate: datetime, limit: int
+        self, user: User, calendarId: uuid.UUID, startDate: datetime, endDate: datetime, limit: int
     ) -> Iterable[EventInDBVM]:
         calendarRepo = CalendarRepository(self.session)
         calendar = calendarRepo.getCalendar(user, calendarId)
@@ -371,7 +373,7 @@ class EventRepository:
 
         return updatedEvent
 
-    def moveEvent(self, user: User, eventId: str, fromCalendarId: str, toCalendarId: str) -> Event:
+    def moveEvent(self, user: User, eventId: str, fromCalendarId: uuid.UUID, toCalendarId: uuid.UUID) -> Event:
         calendarRepo = CalendarRepository(self.session)
 
         fromCalendar = calendarRepo.getCalendar(user, fromCalendarId)

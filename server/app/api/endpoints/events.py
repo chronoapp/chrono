@@ -1,3 +1,5 @@
+import uuid
+
 from datetime import datetime, timedelta
 from typing import List, Optional, Union, Iterable
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -75,12 +77,12 @@ async def searchEvents(
 
 
 class MoveCalendarRequest(BaseModel):
-    calendar_id: str
+    calendar_id: uuid.UUID
 
 
 @router.get('/calendars/{calendarId}/events/', response_model=List[EventInDBVM])
 async def getCalendarEvents(
-    calendarId: str,
+    calendarId: uuid.UUID,
     limit: int = 250,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
@@ -109,7 +111,7 @@ async def getCalendarEvents(
 
 @router.post('/calendars/{calendarId}/events/', response_model=EventInDBVM)
 async def createCalendarEvent(
-    calendarId: str,
+    calendarId: uuid.UUID,
     event: EventBaseVM,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
@@ -140,10 +142,10 @@ async def createCalendarEvent(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.get('/calendars/{calendar_id}/events/{event_id}', response_model=EventInDBVM)
+@router.get('/calendars/{calendarId}/events/{eventId}', response_model=EventInDBVM)
 async def getCalendarEvent(
-    calendar_id: str,
-    event_id: str,
+    calendarId: uuid.UUID,
+    eventId: str,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> EventInDBVM:
@@ -151,8 +153,8 @@ async def getCalendarEvent(
         eventRepo = EventRepository(session)
         calendarRepo = CalendarRepository(session)
 
-        calendar = calendarRepo.getCalendar(user, calendar_id)
-        event = eventRepo.getEventVM(user, calendar, event_id)
+        calendar = calendarRepo.getCalendar(user, calendarId)
+        event = eventRepo.getEventVM(user, calendar, eventId)
 
         if event:
             return event
@@ -167,11 +169,11 @@ async def getCalendarEvent(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.put('/calendars/{calendar_id}/events/{event_id}', response_model=EventInDBVM)
+@router.put('/calendars/{calendarId}/events/{eventId}', response_model=EventInDBVM)
 async def updateCalendarEvent(
     event: EventBaseVM,
-    calendar_id: str,
-    event_id: str,
+    calendarId: uuid.UUID,
+    eventId: str,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> Event:
@@ -184,8 +186,8 @@ async def updateCalendarEvent(
         eventRepo = EventRepository(session)
         calendarRepo = CalendarRepository(session)
 
-        userCalendar = calendarRepo.getCalendar(user, calendar_id)
-        updatedEvent = eventRepo.updateEvent(user, userCalendar, event_id, event)
+        userCalendar = calendarRepo.getCalendar(user, calendarId)
+        updatedEvent = eventRepo.updateEvent(user, userCalendar, eventId, event)
 
         if userCalendar.source == 'google' and updatedEvent.isGoogleEvent():
             syncEventToGoogleTask.send(user.id, userCalendar.id, updatedEvent.id, 'none')
@@ -202,7 +204,7 @@ async def updateCalendarEvent(
 
 @router.post('/calendars/{calendarId}/events/{eventId}/move', response_model=EventInDBVM)
 async def moveEventCalendar(
-    calendarId: str,
+    calendarId: uuid.UUID,
     eventId: str,
     calReq: MoveCalendarRequest,
     user: User = Depends(get_current_user),
@@ -228,7 +230,7 @@ async def moveEventCalendar(
 
 @router.delete('/calendars/{calendarId}/events/{eventId}')
 async def deleteCalendarEvent(
-    calendarId: str,
+    calendarId: uuid.UUID,
     eventId: str,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
