@@ -1,4 +1,5 @@
-import logging
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException
 from starlette.status import HTTP_404_NOT_FOUND
 from sqlalchemy.orm import Session
@@ -9,7 +10,6 @@ from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
 
 from app.db.models.user import User
-from app.db.models.user_calendar import CalendarSource
 from app.db.repos.calendar_repo import (
     CalendarRepository,
     CalendarBaseVM,
@@ -24,7 +24,7 @@ router = APIRouter()
 
 @router.get('/calendars/{calendarId}', response_model=CalendarVM)
 async def getCalendar(
-    calendarId: str,
+    calendarId: uuid.UUID,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
@@ -68,7 +68,7 @@ async def postCalendar(
 
 @router.put('/calendars/{calendarId}', response_model=CalendarVM)
 async def putCalendar(
-    calendarId: str,
+    calendarId: uuid.UUID,
     calendar: CalendarVM,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
@@ -90,7 +90,7 @@ async def putCalendar(
 
 @router.delete('/calendars/{calendarId}')
 async def deleteCalendar(
-    calendarId: str,
+    calendarId: uuid.UUID,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
