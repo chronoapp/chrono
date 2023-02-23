@@ -1,5 +1,10 @@
-import { nanoid } from 'nanoid/non-secure'
+import { generate } from 'short-uuid'
+import { v4 } from 'uuid'
 
-export default function makeId(prefix?: string): string {
-  return prefix || '' + nanoid()
+export function makeShortId(prefix?: string): string {
+  return prefix || '' + generate()
+}
+
+export function makeUUID(): string {
+  return v4()
 }

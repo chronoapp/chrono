@@ -1,14 +1,36 @@
 import { getParentIds, addNewLabels } from './LabelUtils'
 import { normalizeArr } from '../../lib/normalizer'
 import { Label } from '../../models/Label'
+import { makeUUID } from '@/lib/js-lib/makeId'
 
 // l1 is parent of both l2 and l3
-const l1 = new Label(1, 'Label 1', 'label-1', '#fff', 1, undefined)
-const l2 = new Label(2, 'Label 2', 'label-2', '#fff', 2, 1)
-const l3 = new Label(3, 'Label 3', 'label-3', '#fff', 3, 1)
+const l1 = new Label(
+  '00000000-0000-0000-0000-000000000001',
+  'Label 1',
+  'label-1',
+  '#fff',
+  1,
+  undefined
+)
+const l2 = new Label(
+  makeUUID(),
+  'Label 2',
+  'label-2',
+  '#fff',
+  2,
+  '00000000-0000-0000-0000-000000000001'
+)
+const l3 = new Label(
+  makeUUID(),
+  'Label 3',
+  'label-3',
+  '#fff',
+  3,
+  '00000000-0000-0000-0000-000000000001'
+)
 
 test('getParentIds empty input', () => {
-  const result = getParentIds([], [], l1)
+  const result = getParentIds({}, {}, l1)
   expect(result.length).toBe(0)
 })
 

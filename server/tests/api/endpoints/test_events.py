@@ -1,4 +1,6 @@
 import uuid
+import json
+
 from datetime import datetime, timedelta
 
 from sqlalchemy import select, func
@@ -205,7 +207,7 @@ def test_createEvent_withLabels(user: User, session, test_client):
         'start': start.isoformat(),
         'end': end.isoformat(),
         'calendar_id': str(userCalendar.id),
-        'labels': [labelInDB.dict()],
+        'labels': [json.loads(labelInDB.json())],
     }
 
     resp = test_client.post(
@@ -219,7 +221,7 @@ def test_createEvent_withLabels(user: User, session, test_client):
 
     labels = resp.json()['labels']
     assert len(labels) == 1
-    assert labels[0]['id'] == labelInDB.id
+    assert labels[0]['id'] == str(labelInDB.id)
 
 
 def test_createEvent_withLabels_nonExisting(user: User, session, test_client):
@@ -235,7 +237,7 @@ def test_createEvent_withLabels_nonExisting(user: User, session, test_client):
         'start': start.isoformat(),
         'end': end.isoformat(),
         'calendar_id': str(userCalendar.id),
-        'labels': [{'id': 123, 'title': 'chore', 'color_hex': '#ffffff'}],
+        'labels': [{'id': str(uuid.uuid4()), 'title': 'chore', 'color_hex': '#ffffff'}],
     }
 
     resp = test_client.post(

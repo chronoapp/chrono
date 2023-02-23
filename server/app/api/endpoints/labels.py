@@ -1,3 +1,5 @@
+import uuid
+
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, validator
@@ -15,9 +17,9 @@ router = APIRouter()
 class LabelVM(BaseModel):
     title: str
     color_hex: str
-    key: Optional[str]
-    parent_id: Optional[int]
-    position: Optional[int]
+    key: str | None
+    parent_id: uuid.UUID | None
+    position: int | None
 
     @validator('title')
     def titleIsNonEmpty(cls, title: str) -> str:
@@ -31,11 +33,11 @@ class LabelVM(BaseModel):
 
 
 class LabelInDbVM(LabelVM):
-    id: int
+    id: uuid.UUID
 
 
 def createOrUpdateLabel(
-    user: User, labelId: Optional[int], label: LabelVM, session: Session
+    user: User, labelId: Optional[uuid.UUID], label: LabelVM, session: Session
 ) -> Label:
     userRepo = UserRepository(session)
 
@@ -104,7 +106,7 @@ async def putLabels(
 @router.put('/labels/{labelId}', response_model=LabelInDbVM)
 async def putLabel(
     label: LabelInDbVM,
-    labelId: int,
+    labelId: uuid.UUID,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> Label:
@@ -117,7 +119,7 @@ async def putLabel(
 
 @router.delete('/labels/{labelId}', response_model=LabelInDbVM)
 async def deleteLabel(
-    labelId: int, user: User = Depends(get_current_user), session: Session = Depends(get_db)
+    labelId: uuid.UUID, user: User = Depends(get_current_user), session: Session = Depends(get_db)
 ) -> Label:
     """
     TODO: Handle delete subtree.

@@ -25,7 +25,6 @@
     "lodash.debounce": "^4.0.8",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.33",
-    "nanoid": "^3.1.30",
     "next": "^12.3.1",
     "node-sass": "^8.0.0",
     "nprogress": "^0.2.0",
@@ -40,10 +39,12 @@
     "recoil": "^0.7.5",
     "rrule": "^2.6.6",
     "sass": "^1.54.9",
+    "short-uuid": "^4.2.2",
     "styled-components": "^5.2.1",
     "tinycolor2": "^1.4.1",
     "universal-cookie": "^3.0.7",
     "utility-types": "^3.10.0",
+    "uuid": "^9.0.0",
     "validator": "^13.7.0"
   },
   "devDependencies": {

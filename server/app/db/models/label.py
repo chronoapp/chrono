@@ -1,6 +1,7 @@
-from typing import TYPE_CHECKING
+import uuid
+from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Integer, String, ForeignKey, BigInteger, UUID
+from sqlalchemy import Integer, String, ForeignKey, UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.db.base_class import Base
@@ -15,12 +16,14 @@ if TYPE_CHECKING:
 class Label(Base):
     __tablename__ = 'label'
 
-    id: Mapped[int] = mapped_column(
-        BigInteger, primary_key=True, autoincrement=True, nullable=False
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID, primary_key=True, nullable=False, default=uuid.uuid4
     )
 
     parent: Mapped['Label'] = relationship('Label', remote_side=[id])
-    parent_id = mapped_column(BigInteger, ForeignKey('label.id'), nullable=True)
+    parent_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID, ForeignKey('label.id'), nullable=True
+    )
 
     user_id = mapped_column(UUID, ForeignKey('user.id'), nullable=False)
     user: Mapped['User'] = relationship('User', back_populates='labels')

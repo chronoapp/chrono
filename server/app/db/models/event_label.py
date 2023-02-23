@@ -6,5 +6,5 @@ event_label_association_table = Table(
     'event_label',
     Base.metadata,
     Column('event_uid', UUID, ForeignKey('event.uid', ondelete='CASCADE')),
-    Column('label_id', Integer, ForeignKey('label.id', ondelete='CASCADE')),
+    Column('label_id', UUID, ForeignKey('label.id', ondelete='CASCADE')),
 )

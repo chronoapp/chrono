@@ -67,7 +67,9 @@ class EventRepository:
     def __init__(self, session: Session):
         self.session = session
 
-    def getRecurringEvents(self, user: User, calendarId: uuid.UUID, endDate: datetime) -> list[Event]:
+    def getRecurringEvents(
+        self, user: User, calendarId: uuid.UUID, endDate: datetime
+    ) -> list[Event]:
         stmt = (
             getCalendarEventsStmt()
             .where(User.id == user.id)
@@ -373,7 +375,9 @@ class EventRepository:
 
         return updatedEvent
 
-    def moveEvent(self, user: User, eventId: str, fromCalendarId: uuid.UUID, toCalendarId: uuid.UUID) -> Event:
+    def moveEvent(
+        self, user: User, eventId: str, fromCalendarId: uuid.UUID, toCalendarId: uuid.UUID
+    ) -> Event:
         calendarRepo = CalendarRepository(self.session)
 
         fromCalendar = calendarRepo.getCalendar(user, fromCalendarId)

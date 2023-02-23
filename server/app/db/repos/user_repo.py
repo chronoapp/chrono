@@ -33,7 +33,7 @@ class UserRepository:
 
         return user
 
-    def getLabel(self, userId: uuid.UUID, labelId: Optional[int]) -> Optional[Label]:
+    def getLabel(self, userId: uuid.UUID, labelId: Optional[uuid.UUID]) -> Optional[Label]:
         stmt = select(Label).where(Label.user_id == userId, Label.id == labelId)
         label = (self.session.execute(stmt)).scalar()
 
@@ -45,7 +45,7 @@ class UserRepository:
 
         return list(labels)
 
-    def deleteLabel(self, userId: uuid.UUID, labelId: int) -> None:
+    def deleteLabel(self, userId: uuid.UUID, labelId: uuid.UUID) -> None:
         stmt = delete(Label).where(Label.user_id == userId, Label.id == labelId)
         self.session.execute(stmt)
         self.session.commit()

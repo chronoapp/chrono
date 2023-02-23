@@ -1,4 +1,6 @@
 import jwt
+import uuid
+
 from fastapi import Depends, HTTPException, Header, status
 from sqlalchemy.orm import Session
 
@@ -24,10 +26,10 @@ def get_current_user(session: Session = Depends(get_db), authorization: str = He
             userId = tokenData.get('user_id')
 
             if userId:
-                if user := userRepo.getUser(userId):
+                if user := userRepo.getUser(uuid.UUID(userId)):
                     return user
 
-        except jwt.PyJWTError:
+        except (ValueError, jwt.PyJWTError):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials"
             )

@@ -5,7 +5,7 @@ import { LabelColor } from '@/models/LabelColors'
 
 export interface LabelState {
   loading: boolean
-  labelsById: Record<number, Label>
+  labelsById: Record<string, Label>
   editingLabel: LabelModalState
 }
 
@@ -13,7 +13,7 @@ export interface LabelModalState {
   active: boolean
   labelTitle: string
   labelColor?: LabelColor
-  labelId?: number
+  labelId?: string
 }
 
 export const labelsState = atom({

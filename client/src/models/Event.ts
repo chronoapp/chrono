@@ -1,5 +1,5 @@
 import { immerable } from 'immer'
-import makeId from '@/lib/js-lib/makeId'
+import { makeShortId } from '@/lib/js-lib/makeId'
 
 import { Label } from './Label'
 import { hexToHSL } from '../calendar/utils/Colors'
@@ -97,7 +97,7 @@ export default class Event {
   }
 
   static newDefaultEvent(calendar: Calendar, startDate: Date, endDate: Date, allDay: boolean) {
-    const tempId = makeId()
+    const tempId = makeShortId()
 
     return new Event(
       tempId,

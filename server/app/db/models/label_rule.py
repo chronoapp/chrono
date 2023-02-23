@@ -28,7 +28,7 @@ class LabelRule(Base):
         'User', backref=backref('label_rules', lazy='dynamic', cascade='all,delete')
     )
 
-    label_id = mapped_column(Integer, ForeignKey('label.id'), nullable=False)
+    label_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('label.id'), nullable=False)
     label: Mapped['Label'] = relationship('Label', back_populates='rules')
 
     def __init__(self, text: str):
