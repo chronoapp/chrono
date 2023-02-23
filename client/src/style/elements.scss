@@ -32,8 +32,8 @@
 .cal-checkmark {
   top: 0;
   left: 0;
-  height: 1.1em;
-  width: 1.1em;
+  height: 1em;
+  width: 1em;
   background-color: #eee;
   border-radius: 5px;
 }
@@ -53,13 +53,13 @@
 }
 
 .cal-checkbox-container .cal-checkmark:after {
-  height: 0.7em;
-  width: 0.35em;
+  height: 0.65em;
+  width: 0.30em;
   margin-left: 0.38em;
   margin-top: 0.15em;
 
   border: solid white;
-  border-width: 0 3px 3px 0;
+  border-width: 0 2px 2px 0;
   -webkit-transform: rotate(45deg);
   -ms-transform: rotate(45deg);
   transform: rotate(45deg);
