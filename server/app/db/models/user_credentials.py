@@ -1,5 +1,7 @@
 import enum
-from sqlalchemy import Integer, ForeignKey, String
+import uuid
+
+from sqlalchemy import Integer, ForeignKey, String, UUID
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -14,7 +16,8 @@ class ProviderType(enum.Enum):
 
 class UserCredential(Base):
     __tablename__ = 'user_credentials'
-    user_id = mapped_column(Integer, ForeignKey('user.id'), primary_key=True)
+
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('user.id'), primary_key=True)
     provider: Mapped[str] = mapped_column(
         String(30),
         unique=False,

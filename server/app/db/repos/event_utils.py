@@ -18,8 +18,8 @@ from app.db.models.event_participant import ResponseStatus
 class EventParticipantVM(BaseModel):
     """Either one of email or contact ID is required."""
 
-    id: Optional[str]
-    contact_id: Optional[str]
+    id: Optional[uuid.UUID]
+    contact_id: Optional[uuid.UUID]
     email: Optional[str]
 
     response_status: Optional[ResponseStatus] = 'needsAction'

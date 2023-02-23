@@ -70,7 +70,7 @@ class Event(Base):
     """This is the Internal primary key, used so that references to this event only
     require a single id (rather than a combination of calendar_id and id).
     """
-    uid = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
+    uid = mapped_column(UUID, primary_key=True, default=uuid.uuid4, nullable=False)
 
     """This ID could be duplicated to multiple calendars, so it's not a primary key.
     """
@@ -120,7 +120,7 @@ class Event(Base):
 
     # The calendar / user who created this Event.
     creator_id = mapped_column(
-        String(255),
+        UUID,
         ForeignKey('event_participant.id', name='event_creator_fk', use_alter=True),
         nullable=True,
     )
@@ -134,7 +134,7 @@ class Event(Base):
 
     # The calendar / user who currently owns this Event.
     organizer_id = mapped_column(
-        String(255),
+        UUID,
         ForeignKey('event_participant.id', name='event_organizer_fk', use_alter=True),
         nullable=True,
     )

@@ -1,8 +1,9 @@
-from typing import Optional, TYPE_CHECKING
-import shortuuid
+import uuid
 
-from sqlalchemy import Integer, String, ForeignKey
-from sqlalchemy.orm import relationship, backref, Mapped, mapped_column
+from typing import Optional, TYPE_CHECKING
+
+from sqlalchemy import String, ForeignKey, UUID
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.db.base_class import Base
 
@@ -13,10 +14,10 @@ if TYPE_CHECKING:
 class Contact(Base):
     __tablename__ = 'contact'
 
-    id = mapped_column(String(255), primary_key=True, default=shortuuid.uuid)
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     google_id: Mapped[Optional[str]] = mapped_column(String(255), unique=True, nullable=True)
 
-    user_id = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('user.id'), nullable=False)
     user: Mapped['User'] = relationship('User', back_populates='contacts')
 
     first_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)

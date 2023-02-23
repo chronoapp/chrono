@@ -15,16 +15,16 @@ class Webhook(Base):
     """Google webhook to track calendar updates"""
 
     __tablename__ = 'webhook'
-    id = mapped_column(String, primary_key=True, nullable=False)
+    id: Mapped[str] = mapped_column(String, primary_key=True, nullable=False)
 
     calendar_id: Mapped[uuid.UUID] = mapped_column(
         UUID, ForeignKey('user_calendar.id'), nullable=False
     )
     calendar: Mapped['UserCalendar'] = relationship('UserCalendar', back_populates='webhook')
 
-    resource_id = mapped_column(String())
-    resource_uri = mapped_column(String())
-    expiration = mapped_column(DateTime(timezone=True), nullable=False)
+    resource_id: Mapped[str] = mapped_column(String())
+    resource_uri: Mapped[str] = mapped_column(String())
+    expiration: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     def __repr__(self) -> str:
         return f'<Webhook {self.id=} {self.calendar_id=} {self.expiration=}>'

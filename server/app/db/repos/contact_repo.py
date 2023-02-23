@@ -1,3 +1,5 @@
+import uuid
+
 from typing import Optional
 from pydantic import BaseModel
 
@@ -74,7 +76,7 @@ class ContactRepository:
 
         return existingContact
 
-    def getContact(self, user: User, contactId: str) -> Optional[Contact]:
+    def getContact(self, user: User, contactId: uuid.UUID) -> Optional[Contact]:
         return (
             self.session.execute(
                 select(Contact).where(and_(Contact.user_id == user.id, Contact.id == contactId))

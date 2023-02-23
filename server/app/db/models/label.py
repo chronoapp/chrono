@@ -1,8 +1,7 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Integer, String, ForeignKey, BigInteger
-from sqlalchemy.orm import relationship, backref, Mapped, mapped_column
-from sqlalchemy.ext.orderinglist import ordering_list
+from sqlalchemy import Integer, String, ForeignKey, BigInteger, UUID
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.db.base_class import Base
 
@@ -23,7 +22,7 @@ class Label(Base):
     parent: Mapped['Label'] = relationship('Label', remote_side=[id])
     parent_id = mapped_column(BigInteger, ForeignKey('label.id'), nullable=True)
 
-    user_id = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
+    user_id = mapped_column(UUID, ForeignKey('user.id'), nullable=False)
     user: Mapped['User'] = relationship('User', back_populates='labels')
 
     title = mapped_column(String(255))

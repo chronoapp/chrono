@@ -1,3 +1,4 @@
+import uuid
 from typing import Optional
 
 from sqlalchemy import select, delete
@@ -11,7 +12,7 @@ class UserRepository:
     def __init__(self, session: Session):
         self.session = session
 
-    def getUser(self, userId: int) -> User:
+    def getUser(self, userId: uuid.UUID) -> User:
         user = (
             self.session.execute(
                 select(User).where(User.id == userId).options(selectinload(User.credentials))
@@ -32,19 +33,19 @@ class UserRepository:
 
         return user
 
-    def getLabel(self, userId: int, labelId: Optional[int]) -> Optional[Label]:
+    def getLabel(self, userId: uuid.UUID, labelId: Optional[int]) -> Optional[Label]:
         stmt = select(Label).where(Label.user_id == userId, Label.id == labelId)
         label = (self.session.execute(stmt)).scalar()
 
         return label
 
-    def getLabels(self, userId: int) -> list[Label]:
+    def getLabels(self, userId: uuid.UUID) -> list[Label]:
         stmt = select(Label).where(Label.user_id == userId)
         labels = (self.session.execute(stmt)).scalars().all()
 
         return list(labels)
 
-    def deleteLabel(self, userId: int, labelId: int) -> None:
+    def deleteLabel(self, userId: uuid.UUID, labelId: int) -> None:
         stmt = delete(Label).where(Label.user_id == userId, Label.id == labelId)
         self.session.execute(stmt)
         self.session.commit()

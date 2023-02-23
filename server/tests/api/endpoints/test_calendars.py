@@ -1,16 +1,16 @@
 from sqlalchemy import func, select
 
 from app.api.endpoints.authentication.token_utils import getAuthToken
-from app.db.models import UserCalendar
+from app.db.models import UserCalendar, User
 
 
-def test_getCalendar(user, test_client):
+def test_getCalendar(user: User, test_client):
     userCalendar = user.calendars[0]
 
     resp = test_client.get(
-        f'/api/v1/calendars/{userCalendar.id}', headers={'Authorization': getAuthToken(user)}
+        f'/api/v1/calendars/{str(userCalendar.id)}', headers={'Authorization': getAuthToken(user)}
     )
-    assert resp.json().get('id') == userCalendar.id
+    assert resp.json().get('id') == str(userCalendar.id)
 
 
 def test_getCalendars(user, test_client):

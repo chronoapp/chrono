@@ -32,7 +32,7 @@ from app.core.logger import logger
 
 @dramatiq.actor(max_retries=1)
 def syncEventToGoogleTask(
-    userId: int, userCalendarId: uuid.UUID, eventId: str, sendUpdates: SendUpdateType = 'none'
+    userId: uuid.UUID, userCalendarId: uuid.UUID, eventId: str, sendUpdates: SendUpdateType = 'none'
 ) -> None:
     """Sync Chrono's event to Google Calendar."""
 
@@ -67,7 +67,7 @@ def syncEventToGoogleTask(
 
 
 @dramatiq.actor(max_retries=1)
-def syncDeleteEventToGoogleTask(userId: int, userCalendarId: uuid.UUID, eventId: str) -> None:
+def syncDeleteEventToGoogleTask(userId: uuid.UUID, userCalendarId: uuid.UUID, eventId: str) -> None:
     """Sync Chrono's event to Google Calendar."""
 
     with scoped_session() as session:
@@ -94,7 +94,7 @@ def syncDeleteEventToGoogleTask(userId: int, userCalendarId: uuid.UUID, eventId:
 
 @dramatiq.actor(max_retries=1)
 def syncMoveGoogleEventCalendarTask(
-    userId: int, googleEventId: str, fromCalendarId: uuid.UUID, toCalendarId: uuid.UUID
+    userId: uuid.UUID, googleEventId: str, fromCalendarId: uuid.UUID, toCalendarId: uuid.UUID
 ) -> None:
     with scoped_session() as session:
         userRepo = UserRepository(session)
@@ -112,7 +112,7 @@ def syncMoveGoogleEventCalendarTask(
 
 
 @dramatiq.actor(max_retries=1)
-def syncAllCalendarsTask(userId: int, fullSync: bool) -> None:
+def syncAllCalendarsTask(userId: uuid.UUID, fullSync: bool) -> None:
     """Syncs events from google calendar."""
 
     with scoped_session() as session:
@@ -130,7 +130,7 @@ def syncAllCalendarsTask(userId: int, fullSync: bool) -> None:
 
 
 @dramatiq.actor(max_retries=1)
-def syncCalendarTask(userId: int, calendarId: uuid.UUID, fullSync: bool) -> None:
+def syncCalendarTask(userId: uuid.UUID, calendarId: uuid.UUID, fullSync: bool) -> None:
     with scoped_session() as session:
         userRepo = UserRepository(session)
         calRepo = CalendarRepository(session)
@@ -142,7 +142,7 @@ def syncCalendarTask(userId: int, calendarId: uuid.UUID, fullSync: bool) -> None
 
 
 @dramatiq.actor(max_retries=1)
-def updateCalendarTask(userId: int, calendarId: uuid.UUID) -> None:
+def updateCalendarTask(userId: uuid.UUID, calendarId: uuid.UUID) -> None:
     """Update google calendar details like summary, selected, color"""
 
     with scoped_session() as session:

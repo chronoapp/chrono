@@ -1,6 +1,7 @@
+import uuid
 from typing import Optional, List, TYPE_CHECKING
 
-from sqlalchemy import Integer, String
+from sqlalchemy import String, UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.orderinglist import ordering_list
 
@@ -17,15 +18,17 @@ if TYPE_CHECKING:
 class User(Base):
     __tablename__ = 'user'
 
-    id = mapped_column(Integer, primary_key=True, autoincrement=True, nullable=False)
-    username = mapped_column(String(255))
-    hashed_password = mapped_column(String(255))
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID, primary_key=True, nullable=False, default=uuid.uuid4
+    )
+    username: Mapped[Optional[str]] = mapped_column(String(255))
+    hashed_password: Mapped[Optional[str]] = mapped_column(String(255))
 
-    email = mapped_column(String(255))
-    name = mapped_column(String(255))  # display name
-    picture_url = mapped_column(String(255))
+    email: Mapped[Optional[str]] = mapped_column(String(255))
+    name: Mapped[Optional[str]] = mapped_column(String(255))  # display name
+    picture_url: Mapped[Optional[str]] = mapped_column(String(255))
 
-    google_oauth_state = mapped_column(String(255), nullable=True)
+    google_oauth_state: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     credentials: Mapped[UserCredential] = relationship(
         'UserCredential',
         cascade='save-update, merge, delete, delete-orphan',

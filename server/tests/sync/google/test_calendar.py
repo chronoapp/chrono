@@ -1,4 +1,4 @@
-import pytest
+import uuid
 from datetime import datetime
 
 from sqlalchemy.orm import Session
@@ -279,8 +279,9 @@ def test_syncEventsToDb_duplicateEventMultipleCalendars(user: User, session: Ses
     myCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Add another calendar
+    calendarId = uuid.uuid4()
     readOnlyCalendar = UserCalendar(
-        'calendar-id-2',
+        calendarId,
         None,
         '#ffffff',
         '#000000',
@@ -290,7 +291,7 @@ def test_syncEventsToDb_duplicateEventMultipleCalendars(user: User, session: Ses
         False,
     )
     readOnlyCalendar.calendar = Calendar(
-        'calendar-id-2', 'Another calendar', 'description', 'America/Toronto', 'test@example.com'
+        calendarId, 'Another calendar', 'description', 'America/Toronto', 'test@example.com'
     )
     user.calendars.append(readOnlyCalendar)
 

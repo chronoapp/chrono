@@ -1,4 +1,6 @@
+import uuid
 import pytest
+
 from datetime import datetime, timedelta
 from app.db.repos.exceptions import EventRepoPermissionError
 from app.db.repos.calendar_repo import CalendarRepository
@@ -540,7 +542,8 @@ def test_event_repo_moveEvent(user, session):
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Create a new calendar
-    userCalendar2 = createCalendar(user, 'calendar-id-2')
+
+    userCalendar2 = createCalendar(user, uuid.uuid4())
 
     # Create an event in the first calendar.
     start = datetime.fromisoformat('2020-01-01T12:00:00-05:00')
@@ -574,7 +577,7 @@ def test_event_repo_moveEvent_recurring(user, session):
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Create a new calendar
-    userCalendar2 = createCalendar(user, 'calendar-id-2')
+    userCalendar2 = createCalendar(user, uuid.uuid4())
 
     # Create an event in the first calendar.
     start = datetime.fromisoformat('2020-01-01T12:00:00-05:00')

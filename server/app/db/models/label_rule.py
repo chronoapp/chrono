@@ -1,6 +1,7 @@
+import uuid
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Integer, String, ForeignKey, BigInteger
+from sqlalchemy import Integer, String, ForeignKey, BigInteger, UUID
 from sqlalchemy.orm import relationship, backref, Mapped, mapped_column
 
 from app.db.base_class import Base
@@ -16,10 +17,13 @@ class LabelRule(Base):
     """
 
     __tablename__ = 'label_rule'
-    id = mapped_column(BigInteger, primary_key=True, autoincrement=True, nullable=False)
-    text = mapped_column(String(255), nullable=False)
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID, primary_key=True, nullable=False, default=uuid.uuid4
+    )
 
-    user_id = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
+    text: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('user.id'), nullable=False)
     user: Mapped['User'] = relationship(
         'User', backref=backref('label_rules', lazy='dynamic', cascade='all,delete')
     )
