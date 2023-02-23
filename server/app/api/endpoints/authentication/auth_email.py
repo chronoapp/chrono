@@ -31,7 +31,7 @@ def authenticateUser(loginUser: LoginUser, session: Session) -> User:
     userRepo = UserRepository(session)
     user = userRepo.getUserByEmail(loginUser.email)
 
-    if not user:
+    if not user or not user.hashed_password:
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED, detail='User and password combination does not exist.'
         )

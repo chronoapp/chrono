@@ -86,7 +86,7 @@ class EventRepository:
         return list(result.scalars().all())
 
     def getSingleEvents(
-        self, user: User, calendarId: str, showRecurring: bool = True, showDeleted=False
+        self, user: User, calendarId: uuid.UUID, showRecurring: bool = True, showDeleted=False
     ) -> list[Event]:
         """Gets all events for the calendar."""
         stmt = getCalendarEventsStmt().where(and_(User.id == user.id, Calendar.id == calendarId))

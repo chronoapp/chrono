@@ -1,7 +1,6 @@
-from typing import Optional, Literal, TYPE_CHECKING
-
-import shortuuid
 import uuid
+
+from typing import Optional, Literal, TYPE_CHECKING
 
 from sqlalchemy import String, ForeignKey, UUID
 from sqlalchemy.orm import relationship, mapped_column, Mapped
@@ -23,13 +22,13 @@ class EventParticipant(Base):
 
     __tablename__ = 'event_participant'
 
-    id = mapped_column(String(255), primary_key=True, default=shortuuid.uuid)
+    id = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     event_uid: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('event.uid'), nullable=True)
 
     email_: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
     display_name_: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
-    contact_id = mapped_column(String(255), ForeignKey('contact.id'), nullable=True)
+    contact_id = mapped_column(UUID, ForeignKey('contact.id'), nullable=True)
     contact: Mapped[Optional['Contact']] = relationship(
         'Contact', lazy="joined", backref="participating_events", foreign_keys=[contact_id]
     )
@@ -75,7 +74,7 @@ class EventParticipant(Base):
         type: EventParticipantType,
         email: Optional[str],
         displayName: Optional[str],
-        contactId: Optional[str],
+        contactId: Optional[uuid.UUID],
         responseStatus: Optional[ResponseStatus],
     ):
         self.type_ = type
@@ -95,7 +94,7 @@ class EventAttendee(EventParticipant):
         self,
         email: Optional[str],
         displayName: Optional[str],
-        contactId: Optional[str],
+        contactId: Optional[uuid.UUID],
         responseStatus: Optional[ResponseStatus],
     ):
         super().__init__(
@@ -113,7 +112,9 @@ class EventAttendee(EventParticipant):
 class EventCreator(EventParticipant):
     __mapper_args__ = {"polymorphic_identity": "creator"}
 
-    def __init__(self, email: Optional[str], displayName: Optional[str], contactId: Optional[str]):
+    def __init__(
+        self, email: Optional[str], displayName: Optional[str], contactId: Optional[uuid.UUID]
+    ):
         super().__init__(
             type="creator",
             email=email,
@@ -129,7 +130,9 @@ class EventCreator(EventParticipant):
 class EventOrganizer(EventParticipant):
     __mapper_args__ = {"polymorphic_identity": "organizer"}
 
-    def __init__(self, email: Optional[str], displayName: Optional[str], contactId: Optional[str]):
+    def __init__(
+        self, email: Optional[str], displayName: Optional[str], contactId: Optional[uuid.UUID]
+    ):
         super().__init__(
             type="organizer",
             email=email,

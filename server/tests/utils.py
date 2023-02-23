@@ -1,6 +1,6 @@
-from uuid import uuid4
-from typing import Optional, List
+import uuid
 
+from typing import Optional, List
 from datetime import datetime
 from app.db.models.event_participant import EventCreator, EventOrganizer
 
@@ -12,7 +12,7 @@ from app.db.models.calendar import Calendar
 
 def createCalendar(
     user: User,
-    calendarId: str,
+    calendarId: uuid.UUID,
 ):
     calendar = Calendar(calendarId, 'summary', 'description', 'America/Toronto', 'test@example.com')
     userCalendar = UserCalendar(

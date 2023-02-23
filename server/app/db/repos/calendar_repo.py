@@ -39,14 +39,14 @@ class CalendarBaseVM(BaseModel):
 
 
 class CalendarVM(CalendarBaseVM):
-    id: str
+    id: uuid.UUID
 
 
 class CalendarRepository:
     def __init__(self, session: Session):
         self.session = session
 
-    def getPrimaryCalendar(self, userId: int) -> UserCalendar:
+    def getPrimaryCalendar(self, userId: uuid.UUID) -> UserCalendar:
         userCalendar = (
             self.session.execute(
                 select(UserCalendar).where(

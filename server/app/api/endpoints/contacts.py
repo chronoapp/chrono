@@ -1,3 +1,5 @@
+import uuid
+
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
@@ -24,12 +26,12 @@ class ContactBaseVM(BaseModel):
 
 
 class ContactInDBVM(ContactBaseVM):
-    id: str
+    id: uuid.UUID
 
 
 @router.get('/contacts/{contact_id}', response_model=ContactInDBVM)
 async def getContact(
-    contact_id: str,
+    contact_id: uuid.UUID,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):

@@ -12,6 +12,8 @@ def getAuthToken(user: User) -> str:
 
     return str(
         jwt.encode(
-            {'user_id': user.id, 'iat': datetime.utcnow()}, config.TOKEN_SECRET, algorithm='HS256'
+            {'user_id': str(user.id), 'iat': datetime.utcnow()},
+            config.TOKEN_SECRET,
+            algorithm='HS256',
         )
     )

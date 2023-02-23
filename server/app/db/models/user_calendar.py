@@ -21,9 +21,7 @@ class UserCalendar(Base):
     """TODO: id should not be the same as the calendar id."""
 
     __tablename__ = 'user_calendar'
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey('calendar.id'), primary_key=True
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('calendar.id'), primary_key=True)
 
     calendar: Mapped['Calendar'] = relationship(
         "Calendar",
@@ -33,7 +31,7 @@ class UserCalendar(Base):
         lazy='joined',
     )
 
-    user_id = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('user.id'), nullable=False)
     user: Mapped['User'] = relationship('User', back_populates='calendars')
 
     # IDs for google / msft / aapl.

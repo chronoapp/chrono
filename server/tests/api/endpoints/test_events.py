@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timedelta
 
 from sqlalchemy import select, func
@@ -62,7 +63,7 @@ def test_createEvent_single(user: User, session, test_client):
         "title": "laundry",
         "start": start.isoformat(),
         "end": end.isoformat(),
-        "calendar_id": userCalendar.id,
+        "calendar_id": str(userCalendar.id),
     }
 
     resp = test_client.post(
@@ -95,7 +96,7 @@ def test_createEvent_recurring_invalid(user: User, session, test_client):
         "title": "laundry",
         "start": '20210111T050000Z',  # start.isoformat(),
         "end": end.isoformat(),
-        "calendar_id": userCalendar.id,
+        "calendar_id": str(userCalendar.id),
     }
 
     rule = """
@@ -132,7 +133,7 @@ def test_createEvent_recurring(user: User, session, test_client, eventRepo: Even
         "title": "laundry",
         "start": start.isoformat(),
         "end": end.isoformat(),
-        "calendar_id": userCalendar.id,
+        "calendar_id": str(userCalendar.id),
         "recurrences": recurrences,
     }
 
@@ -166,7 +167,7 @@ def test_createEvent_allDay(user: User, session, test_client, eventRepo: EventRe
         "end": end.isoformat(),
         "start_day": start.strftime('%Y-%m-%d'),
         "end_day": end.strftime('%Y-%m-%d'),
-        "calendar_id": userCalendar.id,
+        "calendar_id": str(userCalendar.id),
     }
 
     resp = test_client.post(
@@ -203,7 +204,7 @@ def test_createEvent_withLabels(user: User, session, test_client):
         'title': 'laundry',
         'start': start.isoformat(),
         'end': end.isoformat(),
-        'calendar_id': userCalendar.id,
+        'calendar_id': str(userCalendar.id),
         'labels': [labelInDB.dict()],
     }
 
@@ -233,7 +234,7 @@ def test_createEvent_withLabels_nonExisting(user: User, session, test_client):
         'title': 'laundry',
         'start': start.isoformat(),
         'end': end.isoformat(),
-        'calendar_id': userCalendar.id,
+        'calendar_id': str(userCalendar.id),
         'labels': [{'id': 123, 'title': 'chore', 'color_hex': '#ffffff'}],
     }
 
@@ -267,9 +268,9 @@ def test_createEvent_withParticipants(user: User, session, test_client):
         "end": end.isoformat(),
         "start_day": start.strftime('%Y-%m-%d'),
         "end_day": end.strftime('%Y-%m-%d'),
-        "calendar_id": userCalendar.id,
+        "calendar_id": str(userCalendar.id),
         "participants": [
-            {'contact_id': contact.id},
+            {'contact_id': str(contact.id)},
             {'email': 'adam@example.com'},
         ],
     }
@@ -302,7 +303,7 @@ def test_createEvent_withParticipants(user: User, session, test_client):
 
     p1 = next(p for p in participants if p['email'] == contact.email)
     assert p1['photo_url'] == contact.photo_url
-    assert p1['contact_id'] == contact.id
+    assert p1['contact_id'] == str(contact.id)
 
     p2 = next(p for p in participants if p['email'] == 'adam@example.com')
     assert p2
@@ -388,7 +389,7 @@ def test_updateEvent_recurring(user: User, session, test_client):
         "title": recurringEvent.title,
         "start": recurringEvent.start.isoformat(),
         "end": recurringEvent.end.isoformat(),
-        "calendar_id": userCalendar.id,
+        "calendar_id": str(userCalendar.id),
         "recurrences": ['RRULE:FREQ=DAILY;UNTIL=20200105T120000Z'],
     }
     resp = test_client.put(
@@ -419,17 +420,17 @@ def test_moveEvent_single(user, session, test_client):
     resp = test_client.post(
         f'/api/v1/calendars/{userCalendar.id}/events/{event.id}/move',
         headers={'Authorization': getAuthToken(user)},
-        json={'calendar_id': userCalendar.id},
+        json={'calendar_id': str(userCalendar.id)},
     )
     assert resp.status_code == 400
 
     # Move to different calendar
-    cal2 = createCalendar(user, 'calendar-id-2')
+    cal2 = createCalendar(user, uuid.uuid4())
 
     resp = test_client.post(
         f'/api/v1/calendars/{userCalendar.id}/events/{event.id}/move',
         headers={'Authorization': getAuthToken(user)},
-        json={'calendar_id': cal2.id},
+        json={'calendar_id': str(cal2.id)},
     )
 
     # Make sure it's not in the old calendar

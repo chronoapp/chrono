@@ -20,7 +20,7 @@ Every event many-1 relationship to this calendar.
 class Calendar(Base):
     __tablename__ = 'calendar'
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
 
     google_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
     summary: Mapped[Optional[str]] = mapped_column(String(255))

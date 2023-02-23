@@ -1,3 +1,4 @@
+import uuid
 import pyotp
 import logging
 
@@ -29,7 +30,7 @@ class OTPVerifyRequest(BaseModel):
     code: str
 
 
-def getPyOTP(userId: int) -> pyotp.TOTP:
+def getPyOTP(userId: uuid.UUID) -> pyotp.TOTP:
     tokenSecret = f'{userId}-{config.TOKEN_SECRET}'
     encoded = b32encode(bytearray(tokenSecret, 'ascii')).decode('utf-8')
 
@@ -44,7 +45,7 @@ def loginWithOTP(otpUser: OTPUser, session: Session = Depends(get_db)):
 
     logging.info(f'Login with OTP: {otpUser.email}')
 
-    if not user:
+    if not user or not user.email:
         raise HTTPException(status.HTTP_404_NOT_FOUND, 'Invalid email.')
 
     totp = getPyOTP(user.id)
