@@ -137,8 +137,7 @@ export default function useEventActions() {
   }
 
   /**
-   * Overrides an existing event. I.e. When the user creates an event, we write a temporary event,
-   * then override it when the server returns a successful response.
+   * Updates an existing event.
    */
   function updateEvent(calendarId: string, replaceEventId: string, event: Event) {
     setEvents((prevState) => {
@@ -161,30 +160,26 @@ export default function useEventActions() {
 
   /**
    * Overrides an existing event ID when we get a successful response from the server
-   * and sets the event to saved.
+   * and sets the event to Synced.
    */
-  function replaceEventId(calendarId: string, prevEventId: string, newEventId: string) {
+  function onSavedEventToServer(calendarId: string, eventId: string) {
     setEvents((prevState) => {
       return {
         ...prevState,
         eventsByCalendar: produce(prevState.eventsByCalendar, (eventsByCalendar) => {
-          const event = eventsByCalendar[calendarId][prevEventId]
-          delete eventsByCalendar[calendarId][prevEventId]
-
-          const updatedEvent = { ...event, syncStatus: 'SYNCED' as SyncStatus, id: newEventId }
-          eventsByCalendar[calendarId][newEventId] = updatedEvent
+          const event = eventsByCalendar[calendarId][eventId]
+          const updatedEvent = { ...event, syncStatus: 'SYNCED' as SyncStatus, id: eventId }
+          eventsByCalendar[calendarId][eventId] = updatedEvent
         }),
       }
     })
 
     setEditingEvent((editingEvent) => {
-      if (editingEvent?.id === prevEventId) {
+      if (editingEvent?.id === eventId) {
         return {
           ...editingEvent,
-          id: newEventId,
           event: {
             ...editingEvent.event,
-            id: newEventId,
             syncStatus: 'SYNCED',
           },
         }
@@ -307,7 +302,7 @@ export default function useEventActions() {
     updateEditMode,
     initNewEventAtDate,
     updateEvent,
-    replaceEventId,
+    onSavedEventToServer,
     deleteEvent,
     moveEventCalendarAction,
     showConfirmDialog,
