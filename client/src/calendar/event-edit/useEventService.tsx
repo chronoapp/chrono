@@ -38,7 +38,6 @@ export default function useEventService() {
   const eventActions = useEventActions()
 
   const toast = useToast({ duration: 2000, position: 'top-right' })
-  const createdEventIdsRef = React.useRef<Record<string, string>>({})
   const taskQueue = useTaskQueue({ shouldProcess: true })
 
   /**
@@ -81,7 +80,7 @@ export default function useEventService() {
         return {
           ...prevState,
           eventsByCalendar: produce(prevState.eventsByCalendar, (draft) => {
-            draft[calendarId][event.id] = event
+            draft[calendarId][event.id] = { ...event, syncStatus: 'SYNCING' }
           }),
         }
       })
@@ -152,8 +151,6 @@ export default function useEventService() {
    * Queues API request to create an event.
    */
   function queueCreateEvent(calendarId: string, event: Event, showToast: boolean) {
-    const tempEventId = event.id
-
     const createEventTask = () => {
       console.log(`RUN createEventTask id=${event.id} ${event.title}...`)
 
@@ -164,14 +161,7 @@ export default function useEventService() {
           if (event.recurrences) {
             document.dispatchEvent(new CustomEvent(GlobalEvent.refreshCalendar))
           } else {
-            eventActions.replaceEventId(calendarId, tempEventId, event.id)
-          }
-
-          // Maintain a map between IDs we've created client side with the
-          // stable ID from the server.
-          createdEventIdsRef.current = {
-            ...createdEventIdsRef.current,
-            [tempEventId]: event.id,
+            eventActions.onSavedEventToServer(calendarId, event.id)
           }
 
           if (showToast) {
@@ -202,15 +192,8 @@ export default function useEventService() {
   function queueUpdateEvent(calendarId: string, event: Partial<Event>, showToast: boolean) {
     const updateEventTask = () => {
       console.log(`RUN updateEventTask ${event.title}..`)
-      let serverEventId = getLatestEventId(event.id)
 
-      // Skip if this event hasn't been saved to the server.
-      // => We can't created it yet,
-      if (!serverEventId) {
-        return Promise.resolve()
-      }
-
-      return API.updateEvent(calendarId, { ...event, id: serverEventId }).then((event) => {
+      return API.updateEvent(calendarId, event).then((event) => {
         // Recurring event: TODO: Only refresh if moved calendar.
         if (Event.isParentRecurringEvent(event)) {
           document.dispatchEvent(new CustomEvent(GlobalEvent.refreshCalendar))
@@ -258,21 +241,6 @@ export default function useEventService() {
       })
 
     taskQueue.addTask(deleteEventTask)
-  }
-
-  /**
-   * Gets the mapping from the local ID to the Server ID if we've created
-   * an event in this session.
-   */
-  function getLatestEventId(eventId: string | undefined) {
-    const createdEventIds = createdEventIdsRef.current
-    let serverEventId: string | undefined = eventId
-
-    if (eventId && createdEventIds.hasOwnProperty(eventId)) {
-      serverEventId = createdEventIds[eventId]
-    }
-
-    return serverEventId
   }
 
   return {

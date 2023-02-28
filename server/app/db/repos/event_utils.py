@@ -43,6 +43,8 @@ class EventBaseVM(BaseModel):
     TODO: If we have start_day and end_day, we don't need start and end.
     """
 
+    id: Optional[str]
+
     title: Optional[str]
     title_short: Optional[str]
 

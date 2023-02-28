@@ -9,7 +9,7 @@ import Calendar from './Calendar'
 
 export const EMPTY_TITLE = '(No title)'
 
-export type SyncStatus = 'NOT_SYNCED' | 'SYNC_IN_PROGRESS' | 'SYNCED'
+export type SyncStatus = 'NOT_SYNCED' | 'SYNCING' | 'SYNCED'
 
 /**
  * Derived preperties are static because we could use the spread operator {..event, ..}

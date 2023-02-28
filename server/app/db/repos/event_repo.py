@@ -176,13 +176,16 @@ class EventRepository:
     def createEvent(self, user: User, userCalendar: UserCalendar, event: EventBaseVM) -> Event:
         self.verifyPermissions(userCalendar, None, event)
 
+        if event.id and self.getEvent(user, userCalendar, event.id):
+            raise EventRepoError('Could not create event with existing id.')
+
         # Keeps track of the "Original" time this recurrence should have started.
         if event.recurrences or event.recurring_event_id:
             event.original_start = event.start
             event.original_start_day = event.start_day
             event.original_timezone = event.timezone
 
-        eventDb = createOrUpdateEvent(userCalendar, None, event)
+        eventDb = createOrUpdateEvent(userCalendar, None, event, overrideId=event.id)
         eventDb.labels = getCombinedLabels(user, event.labels, self.session)
         self.session.commit()
 

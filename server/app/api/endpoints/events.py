@@ -1,4 +1,5 @@
 import uuid
+import shortuuid
 
 from datetime import datetime, timedelta
 from typing import List, Optional, Union, Iterable
@@ -33,6 +34,7 @@ from app.sync.google.tasks import (
     syncMoveGoogleEventCalendarTask,
     syncDeleteEventToGoogleTask,
 )
+
 
 router = APIRouter()
 
@@ -121,6 +123,12 @@ async def createCalendarEvent(
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail='Can not modify recurring event from this endpoint.',
+        )
+
+    if not isValidEventId(event.id):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail='Event id must be a valid UUID.',
         )
 
     try:
@@ -256,3 +264,13 @@ async def deleteCalendarEvent(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
     except EventRepoError as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+def isValidEventId(id: str | None) -> bool:
+    if not id:
+        return True
+    try:
+        shortuuid.decode(id)
+        return True
+    except:
+        return False
