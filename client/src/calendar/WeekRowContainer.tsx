@@ -175,14 +175,9 @@ class WeekRowContainer extends React.Component<IProps & InjectedEventActionsProp
         }
 
         const { event } = this.state.segment
-        this.props.eventActions.onInteractionEnd(event)
 
-        // Don't save if it hasn't been created yet.
-        if (event.syncStatus === 'NOT_SYNCED') {
-          this.props.eventService.updateEventLocal(event)
-        } else {
-          this.props.eventService.saveEvent(event, true)
-        }
+        this.props.eventActions.onInteractionEnd()
+        this.props.eventService.updateOrSaveEvent(event)
 
         this.reset()
       })

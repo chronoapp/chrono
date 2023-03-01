@@ -41,6 +41,25 @@ export default function useEventService() {
   const taskQueue = useTaskQueue({ shouldProcess: true })
 
   /**
+   * Handles updating or creating a new event.
+   *
+   * 1) The event is a recurring event, it will show a confirmation dialog.
+   * 2) The event is not synced to the server yet, it will update the event locally.
+   * 3) The event is synced to the server, it will save the event.
+   */
+  function updateOrSaveEvent(event: Event) {
+    if (event.recurring_event_id) {
+      eventActions.showConfirmDialog('UPDATE_RECURRING_EVENT', event)
+    } else {
+      if (event.syncStatus === 'NOT_SYNCED') {
+        updateEventLocal(event)
+      } else {
+        saveEvent(event)
+      }
+    }
+  }
+
+  /**
    * Update an existing (editing) event. Use instead of saveEvent when
    * the event hasn't been synced to server yet so we don't make an API
    * request yet.
@@ -53,7 +72,6 @@ export default function useEventService() {
     const calendarId = event.calendar_id!
 
     // Update the the editing event copy.
-    console.log(`Editing ${event.id} ${editingEvent?.id}`)
     if (event.id === editingEvent?.id) {
       eventActions.updateEditingEvent(event)
     } else {
@@ -246,7 +264,7 @@ export default function useEventService() {
 
   return {
     saveEvent,
-    updateEventLocal,
+    updateOrSaveEvent,
     deleteEvent,
     deleteThisAndFollowingEvents,
     deleteAllRecurringEvents,
