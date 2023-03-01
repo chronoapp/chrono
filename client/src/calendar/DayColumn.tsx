@@ -390,17 +390,7 @@ class DayColumn extends React.Component<IProps & InjectedEventActionsProps, ISta
         ))}
 
         <ResizeEventContainer
-          onEventUpdated={(event) => {
-            if (event.recurring_event_id) {
-              this.props.eventActions.showConfirmDialog('UPDATE_RECURRING_EVENT', event)
-            } else {
-              if (event.syncStatus === 'NOT_SYNCED') {
-                this.props.eventService.updateEventLocal(event)
-              } else {
-                this.props.eventService.saveEvent(event)
-              }
-            }
-          }}
+          onEventUpdated={this.props.eventService.updateOrSaveEvent}
           slotMetrics={this.slotMetrics}
         >
           <div className="cal-events-container">{this.renderEvents(this.slotMetrics)}</div>

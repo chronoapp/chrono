@@ -81,7 +81,10 @@ export function EventItem(props: {
   }
 
   const isDragging = dndAction && dndAction.interacting && dndAction.event.id === event.id
-  const isEditing = editingEvent?.id === event.id && editingEvent?.editMode !== 'FULL_EDIT'
+  const isEditing =
+    editingEvent?.id === event.id &&
+    editingEvent?.event?.calendar_id === event.calendar_id &&
+    (editingEvent?.editMode === 'READ' || editingEvent?.editMode === 'EDIT')
 
   if (isEditing && !isDragging) {
     return (
