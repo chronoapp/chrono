@@ -176,10 +176,18 @@ function Layout(props: Props) {
         {props.includeLeftPanel && (
           <Box className="left-section">
             {props.canCreateEvent && <NewEventButton />}
-            <Flex overflowY="scroll" pr="1" height="100%" flexDirection="column" pb="2">
+            <Flex height="100%" flexDirection="column" pb="2">
               <MiniCalendar />
-              <LabelPanel />
-              <CalendarsPanel />
+
+              <Flex
+                className="left-section-scrollable"
+                overflowY={'scroll'}
+                flexDirection={'column'}
+                height="100%"
+              >
+                <LabelPanel />
+                <CalendarsPanel />
+              </Flex>
             </Flex>
           </Box>
         )}
