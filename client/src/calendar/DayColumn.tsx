@@ -390,7 +390,7 @@ class DayColumn extends React.Component<IProps & InjectedEventActionsProps, ISta
         ))}
 
         <ResizeEventContainer
-          onEventUpdated={this.props.eventService.updateOrSaveEvent}
+          onEventUpdated={this.props.eventService.moveOrResizeEvent}
           slotMetrics={this.slotMetrics}
         >
           <div className="cal-events-container">{this.renderEvents(this.slotMetrics)}</div>

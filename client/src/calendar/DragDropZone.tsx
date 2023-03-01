@@ -145,7 +145,7 @@ export default function DragDropZone(props: IProps) {
           end: dates.add(dropDateStart, eventMins, 'minutes'),
         }
 
-        props.eventService.updateOrSaveEvent(updatedEvent)
+        props.eventService.moveOrResizeEvent(updatedEvent)
 
         resetDrag()
       }}

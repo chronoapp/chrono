@@ -113,13 +113,18 @@ export default function useEventActions() {
    * To update a recurring event, we need to show a confirmation dialog
    * to ask the user if they want to update this / all / all future events.
    */
-  function showConfirmDialog(action: ConfirmAction | undefined, updatedEvent: Event) {
+  function showConfirmDialog(
+    action: ConfirmAction | undefined,
+    updatedEvent: Event,
+    editMode?: EditMode
+  ) {
     setEditingEvent((prevEditingEvent) => {
       if (prevEditingEvent) {
         return {
           ...prevEditingEvent,
           confirmAction: action,
           event: updatedEvent,
+          editMode: editMode || prevEditingEvent.editMode,
         }
       } else {
         return {
