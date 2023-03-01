@@ -64,11 +64,12 @@ function EventPopover(props: IProps) {
   const eventActions = useEventActions()
   const editingEvent = useRecoilValue(editingEventState)
   const setDisplay = useSetRecoilState(displayState)
+  const toast = useToast({ duration: 2000, position: 'top-right' })
 
   const labelState = useRecoilValue(labelsState)
   const calendarsById = useRecoilValue(calendarsState).calendarsById
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
-  const toast = useToast({ duration: 2000, position: 'top-right' })
+  const selectedCalendar = getSelectedCalendar(props.event.calendar_id)
 
   const [eventFields, setEventFields] = useState(
     new EventFields(
@@ -77,7 +78,7 @@ function EventPopover(props: IProps) {
       props.event.start,
       props.event.end,
       props.event.labels,
-      getSelectedCalendar(props.event.calendar_id)?.id,
+      selectedCalendar?.id,
       props.event.all_day,
       props.event.start_day,
       props.event.end_day,
@@ -90,7 +91,10 @@ function EventPopover(props: IProps) {
   )
   const [participants, setParticipants] = useState<EventParticipant[]>(props.event.participants)
   const thisUser = useRecoilValue(userState)
-  const myself = participants.find((p) => p.email === thisUser?.email)
+
+  const myself = participants.find(
+    (p) => p.email === thisUser?.email || p.email === selectedCalendar.email
+  )
 
   const defaultDays = eventFields.allDay
     ? Math.max(dates.diff(eventFields.end, eventFields.start, 'day'), 1)
@@ -130,7 +134,7 @@ function EventPopover(props: IProps) {
 
   function onDeleteEvent() {
     if (props.event.recurring_event_id) {
-      eventActions.showConfirmDialog('DELETE_RECURRING_EVENT')
+      eventActions.showConfirmDialog('DELETE_RECURRING_EVENT', props.event)
     } else {
       props.eventService.deleteEvent(props.event.calendar_id, props.event.id)
     }
@@ -296,6 +300,14 @@ function EventPopover(props: IProps) {
                       responseText = 'Tentatively accepted'
                     }
 
+                    const updatedEvent = getUpdatedEvent(
+                      props.event,
+                      eventFields,
+                      updatedParticipants
+                    )
+                    eventActions.updateEditingEvent(updatedEvent)
+                    props.eventService.saveEvent(updatedEvent, false, false)
+
                     if (responseText) {
                       toast({
                         render: (p) => {
@@ -308,14 +320,6 @@ function EventPopover(props: IProps) {
                         },
                       })
                     }
-
-                    const updatedEvent = getUpdatedEvent(
-                      props.event,
-                      eventFields,
-                      updatedParticipants
-                    )
-                    eventActions.updateEditingEvent(updatedEvent)
-                    props.eventService.saveEvent(updatedEvent, false, false)
                   }}
                 />
               )}

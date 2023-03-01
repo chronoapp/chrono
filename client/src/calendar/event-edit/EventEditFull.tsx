@@ -116,7 +116,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
       }
 
       eventActions.updateEditingEvent(updatedEvent)
-      eventActions.showConfirmDialog('UPDATE_RECURRING_EVENT')
+      eventActions.showConfirmDialog('UPDATE_RECURRING_EVENT', updatedEvent)
     } else {
       // Update the individual event
       return await props.eventService.saveEvent(updatedEvent)

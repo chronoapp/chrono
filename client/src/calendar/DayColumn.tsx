@@ -161,13 +161,13 @@ class DayColumn extends React.Component<IProps & InjectedEventActionsProps, ISta
         (editingEvent?.selectTailSegment && isTailSegment) ||
         (!editingEvent?.selectTailSegment && !isTailSegment)
 
-      const isEditing =
+      const showEditingPopover =
         editingEvent?.id === event.id &&
         editingEvent?.event?.calendar_id === event.calendar_id &&
-        editingEvent?.editMode !== 'FULL_EDIT' &&
+        (editingEvent?.editMode == 'READ' || editingEvent?.editMode == 'EDIT') &&
         isSegmentSelected
 
-      if (isEditing && !isInteracting) {
+      if (showEditingPopover && !isInteracting) {
         // TODO: Update the placement depending on the event's location.
         return (
           <Popover key={`evt_${idx}`} isOpen={true} isLazy={true} placement={'auto'}>
@@ -391,10 +391,14 @@ class DayColumn extends React.Component<IProps & InjectedEventActionsProps, ISta
 
         <ResizeEventContainer
           onEventUpdated={(event) => {
-            if (event.syncStatus === 'NOT_SYNCED') {
-              this.props.eventService.updateEventLocal(event)
+            if (event.recurring_event_id) {
+              this.props.eventActions.showConfirmDialog('UPDATE_RECURRING_EVENT', event)
             } else {
-              this.props.eventService.saveEvent(event)
+              if (event.syncStatus === 'NOT_SYNCED') {
+                this.props.eventService.updateEventLocal(event)
+              } else {
+                this.props.eventService.saveEvent(event)
+              }
             }
           }}
           slotMetrics={this.slotMetrics}

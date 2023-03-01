@@ -169,8 +169,8 @@ class ResizeEventContainer extends React.Component<IProps & InjectedEventActions
         }
 
         this.reset()
+        this.props.eventActions.onInteractionEnd()
         this.props.onEventUpdated(event)
-        this.props.eventActions.onInteractionEnd(event)
 
         if (event.start < this.props.slotMetrics.start && event.syncStatus === 'NOT_SYNCED') {
           document.dispatchEvent(
