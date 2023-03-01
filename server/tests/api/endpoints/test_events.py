@@ -1,4 +1,5 @@
 import uuid
+import shortuuid
 import json
 
 from datetime import datetime, timedelta
@@ -87,6 +88,51 @@ def test_createEvent_single(user: User, session, test_client):
     assert eventDb.start == start
     assert eventDb.end == end
     assert not eventDb.all_day
+
+
+def test_createEvent_withId(user: User, session, test_client):
+    """Makes sure the event is created with the given id."""
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
+    start = datetime.fromisoformat("2021-01-11T05:00:00+00:00")
+    end = start + timedelta(hours=1)
+    event = {
+        'id': shortuuid.uuid(),
+        "title": "workout",
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "calendar_id": str(userCalendar.id),
+    }
+
+    resp = test_client.post(
+        f'/api/v1/calendars/{userCalendar.id}/events/',
+        headers={'Authorization': getAuthToken(user)},
+        json=event,
+    )
+    eventResp = resp.json()
+
+    assert eventResp['id'] == event['id']
+
+
+def test_createEvent_withId_invalid(user: User, session, test_client):
+    """Makes sure the event is created with the given id."""
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
+    start = datetime.fromisoformat("2021-01-11T05:00:00+00:00")
+    end = start + timedelta(hours=1)
+    event = {
+        'id': f'{shortuuid.uuid()}-bad',
+        "title": "workout",
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "calendar_id": str(userCalendar.id),
+    }
+
+    resp = test_client.post(
+        f'/api/v1/calendars/{userCalendar.id}/events/',
+        headers={'Authorization': getAuthToken(user)},
+        json=event,
+    )
+
+    assert not resp.ok
 
 
 def test_createEvent_recurring_invalid(user: User, session, test_client):
