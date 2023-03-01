@@ -17,6 +17,7 @@ import {
   EditMode,
   ConfirmAction,
   EventState,
+  EditingEvent,
 } from '@/state/EventsState'
 
 /**
@@ -108,16 +109,51 @@ export default function useEventActions() {
     })
   }
 
-  function showConfirmDialog(action: ConfirmAction | undefined) {
+  /**
+   * To update a recurring event, we need to show a confirmation dialog
+   * to ask the user if they want to update this / all / all future events.
+   */
+  function showConfirmDialog(action: ConfirmAction | undefined, updatedEvent: Event) {
     setEditingEvent((prevEditingEvent) => {
       if (prevEditingEvent) {
         return {
           ...prevEditingEvent,
           confirmAction: action,
+          event: updatedEvent,
         }
+      } else {
+        return {
+          id: updatedEvent.id,
+          originalCalendarId: updatedEvent.calendar_id,
+          editMode: 'MOVE_RESIZE' as EditMode,
+          selectTailSegment: false,
+          editRecurringAction: 'SINGLE' as EditRecurringAction,
+          confirmAction: action,
+          event: updatedEvent,
+        } as EditingEvent
       }
-      return null
     })
+  }
+
+  /**
+   * 1) If the event had been resized or drag & dropped, we revert back to the original event.
+   * 2) Otherwise, if we editing the event from a form, we close the confirm dialog so that
+   * other fields could still be edited.
+   */
+  function hideConfirmDialog() {
+    if (editingEvent?.editMode === 'MOVE_RESIZE') {
+      setEditingEvent(null)
+    } else {
+      setEditingEvent((prevEditingEvent) => {
+        if (prevEditingEvent) {
+          return {
+            ...prevEditingEvent,
+            confirmAction: undefined,
+          }
+        }
+        return null
+      })
+    }
   }
 
   /**
@@ -186,6 +222,10 @@ export default function useEventActions() {
       }
       return editingEvent
     })
+  }
+
+  function getEvent(calendarId: string, eventId: string) {
+    return events.eventsByCalendar[calendarId]?.[eventId]
   }
 
   function deleteEvent(calendarId: string, eventId: string, deleteMethod?: EditRecurringAction) {
@@ -294,6 +334,7 @@ export default function useEventActions() {
   }
 
   return {
+    getEvent,
     initEvents,
     loadEvents,
     initEmptyEvents,
@@ -306,6 +347,7 @@ export default function useEventActions() {
     deleteEvent,
     moveEventCalendarAction,
     showConfirmDialog,
+    hideConfirmDialog,
 
     cancelSelect,
     onInteractionStart,

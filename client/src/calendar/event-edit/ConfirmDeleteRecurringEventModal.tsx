@@ -24,7 +24,7 @@ function ConfirmDeleteRecurringEventModal(props: { event: Event; eventService: E
   const [radioValue, setRadioValue] = React.useState<EditRecurringAction>('SINGLE')
 
   const onClose = () => {
-    eventActions.showConfirmDialog(undefined)
+    eventActions.hideConfirmDialog()
   }
 
   function deleteEvent() {

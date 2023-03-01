@@ -23,24 +23,42 @@ import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 
 import * as API from '@/util/Api'
 import * as dates from '@/util/dates'
+import { makeShortId } from '@/lib/js-lib/makeId'
 
-function ConfirmUpdateRecurringEventModal(props: { event: Event; eventService: EventService }) {
+interface IProps {
+  event: Event
+  eventService: EventService
+}
+
+function ConfirmUpdateRecurringEventModal(props: IProps) {
   const eventActions = useEventActions()
   const [radioValue, setRadioValue] = React.useState<EditRecurringAction>('SINGLE')
 
   const onClose = () => {
-    eventActions.showConfirmDialog(undefined)
+    eventActions.hideConfirmDialog()
   }
 
   /**
    * Overrides the existing parent recurring event.
    */
-  function getUpdatedParentEvent(parent: Event, child: Event) {
-    // FIXME: Update event start / end based on the offsets.
+  function getUpdatedParentEvent(parent: Event, child: Event, originalChild: Event) {
+    const startOffset = dates.diff(child.start, originalChild.start, 'minutes')
+    const endOffset = dates.diff(child.end, originalChild.end, 'minutes')
+
+    const updatedStart = dates.gte(child.start, originalChild.start)
+      ? dates.add(parent.start, startOffset, 'minutes')
+      : dates.subtract(parent.start, startOffset, 'minutes')
+
+    const updatedEnd = dates.gte(child.end, originalChild.end)
+      ? dates.add(parent.end, endOffset, 'minutes')
+      : dates.subtract(parent.end, endOffset, 'minutes')
+
     return produce(parent, (event) => {
       event.title = child.title
       event.description = child.description
       event.labels = child.labels
+      event.start = updatedStart
+      event.end = updatedEnd
     })
   }
 
@@ -48,7 +66,8 @@ function ConfirmUpdateRecurringEventModal(props: { event: Event; eventService: E
     const parent =
       parentEvent || (await API.getEvent(props.event.calendar_id, props.event.recurring_event_id!))
 
-    const updatedParent = getUpdatedParentEvent(parent, props.event)
+    const originalChild = eventActions.getEvent(props.event.calendar_id, props.event.id)
+    const updatedParent = getUpdatedParentEvent(parent, props.event, originalChild)
 
     // Delete all to refresh from the server.
     // TODO: Handle optimistic updates on the client to prevent flickering.
@@ -81,13 +100,14 @@ function ConfirmUpdateRecurringEventModal(props: { event: Event; eventService: E
       // 2) Create a new recurring event for the the rest of the events
       const thisAndFollowingEvent: Event = {
         ...props.event,
+        id: makeShortId(),
         recurrences: [rules.end.toString()],
         recurring_event_id: null,
         syncStatus: 'NOT_SYNCED',
       }
       const req2 = props.eventService.saveEvent(thisAndFollowingEvent, false)
 
-      // Clear recurring events from the client.
+      // UI: Clear recurring events from the client.
       eventActions.deleteEvent(parent.calendar_id, parent.id, 'ALL')
 
       return await Promise.all([req1, req2])

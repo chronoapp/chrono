@@ -42,7 +42,8 @@ export default function useEventService() {
 
   /**
    * Update an existing (editing) event. Use instead of saveEvent when
-   * the event hasn't been synced to server yet.
+   * the event hasn't been synced to server yet so we don't make an API
+   * request yet.
    */
   function updateEventLocal(event: Event) {
     if (!event.id) {

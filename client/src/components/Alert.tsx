@@ -25,11 +25,11 @@ const BaseAlert = (props: IProps) => {
         <Flex py="3.5" pl="4" direction="row" alignItems={'center'} justifyContent="center">
           <Icon w="6" h="6" color="green.500" as={IoIosCheckmarkCircle} />
           <Flex pl="3" direction="column">
-            <Text as="h4" fontSize="md" fontWeight="600" color={`gray.800`}>
+            <Text as="h4" fontSize="sm" fontWeight="600" color={`gray.800`}>
               {props.title}
             </Text>
             {props.details && (
-              <Text fontSize="sm" color={`gray.700`}>
+              <Text fontSize="xs" color={`gray.700`}>
                 {props.details}
               </Text>
             )}
