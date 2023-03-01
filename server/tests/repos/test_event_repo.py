@@ -417,6 +417,36 @@ def test_event_repo_getRecurringEvent(user, session):
         getRecurringEvent(userCalendar, invalidEventId2, recurringEvent)
 
 
+def test_event_repo_getRecurringEvent_all_day(user, session):
+    """Makes sure we can get fetch an all day recurring event"""
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
+
+    startDay = '2020-01-01'
+    endDay = '2020-01-02'
+    eventVM = EventBaseVM(
+        title='Foo',
+        description='Bar',
+        start=datetime.strptime(startDay, "%Y-%m-%d"),
+        end=datetime.strptime(endDay, "%Y-%m-%d"),
+        start_day=startDay,
+        end_day=endDay,
+        calendar_id=userCalendar.id,
+        timezone='America/Los_Angeles',
+        recurrences=['FREQ=WEEKLY;BYDAY=SU;INTERVAL=1;COUNT=5'],
+    )
+
+    parentEvent = createOrUpdateEvent(userCalendar, None, eventVM)
+    session.commit()
+
+    # Get the first instance of the recurring event.
+    recurringEventId = f'{parentEvent.id}_20200105'
+    event = getRecurringEvent(userCalendar, recurringEventId, parentEvent)
+
+    assert event
+    assert event.all_day
+    assert event.recurring_event_id == parentEvent.id
+
+
 def test_event_repo_getAllExpandedRecurringEvents_override(user, session):
     calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 

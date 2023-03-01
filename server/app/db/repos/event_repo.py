@@ -600,7 +600,11 @@ def getRecurringEvent(
 
     datePart = parts[-1]
     try:
-        dt = datetime.strptime(datePart, "%Y%m%dT%H%M%SZ")
+        dt = (
+            datetime.strptime(datePart, "%Y%m%d")
+            if parentEvent.all_day
+            else datetime.strptime(datePart, "%Y%m%dT%H%M%SZ")
+        )
 
         for e in getExpandedRecurringEvents(calendar.user, parentEvent, {}, dt, dt):
             if e.id == eventId:
@@ -609,7 +613,7 @@ def getRecurringEvent(
         raise InputError(f'Invalid Event ID: {eventId}')
 
     except ValueError:
-        raise InputError(f'Invalid Event ID: {eventId}')
+        raise InputError(f'Invalid Event ID {eventId}')
 
 
 def getAllExpandedRecurringEventsList(
