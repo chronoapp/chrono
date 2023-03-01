@@ -355,14 +355,13 @@ class EventRepository:
         elif curEvent and curEvent.is_parent_recurring_event:
             # Since we're modifying the recurrence, we need to remove all previous overrides.
             # TODO: Only delete the overrides that no longer exist.
-            if curEvent.recurrences != event.recurrences:
-                stmt = delete(Event).where(
-                    and_(
-                        Event.recurring_event_id == curEvent.id,
-                        Event.recurring_event_calendar_id == curEvent.calendar_id,
-                    )
+            stmt = delete(Event).where(
+                and_(
+                    Event.recurring_event_id == curEvent.id,
+                    Event.recurring_event_calendar_id == curEvent.calendar_id,
                 )
-                self.session.execute(stmt)
+            )
+            self.session.execute(stmt)
 
             updatedEvent = createOrUpdateEvent(userCalendar, curEvent, event)
 
