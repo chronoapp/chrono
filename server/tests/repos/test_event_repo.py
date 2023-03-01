@@ -336,10 +336,10 @@ def test_event_repo_deleteRecurring(user: User, session: Session):
     )
     assert eventId
 
-    event = eventRepo.getEventVM(user, userCalendar, eventId)
-    assert event
+    eventVM = eventRepo.getEventVM(user, userCalendar, eventId)
+    assert eventVM
 
-    eventRepo.deleteEvent(user, userCalendar, event.id)
+    eventRepo.deleteEvent(user, userCalendar, eventVM.id)
     session.commit()
 
     # 2) Delete Event Twice
@@ -348,11 +348,11 @@ def test_event_repo_deleteRecurring(user: User, session: Session):
     )
     assert eventId
 
-    event = eventRepo.getEventVM(user, userCalendar, eventId)
-    assert event
+    eventVM = eventRepo.getEventVM(user, userCalendar, eventId)
+    assert eventVM
 
-    eventRepo.deleteEvent(user, userCalendar, event.id)
-    eventRepo.deleteEvent(user, userCalendar, event.id)
+    eventRepo.deleteEvent(user, userCalendar, eventVM.id)
+    eventRepo.deleteEvent(user, userCalendar, eventVM.id)
     session.commit()
     event = eventRepo.getEvent(user, userCalendar, recurringEvent.id)
 
@@ -362,12 +362,12 @@ def test_event_repo_deleteRecurring(user: User, session: Session):
     )
     assert eventId
 
-    event = eventRepo.getEventVM(user, userCalendar, eventId)
-    assert event
+    eventVM = eventRepo.getEventVM(user, userCalendar, eventId)
+    assert eventVM
 
-    event.title = 'override'
-    eventRepo.updateEvent(user, userCalendar, event.id, event)
-    eventRepo.deleteEvent(user, userCalendar, event.id)
+    eventVM.title = 'override'
+    eventRepo.updateEvent(user, userCalendar, eventVM.id, eventVM)
+    eventRepo.deleteEvent(user, userCalendar, eventVM.id)
     session.commit()
 
 
@@ -509,27 +509,55 @@ def test_event_repo_updateEvent_recurring(user, session):
 
     # Create a new recurring event. 01-02 to 01-07 => 6 events
     start = datetime.fromisoformat('2020-01-02T12:00:00')
-    createEvent(
+    parentEvent = createEvent(
         calendar,
         start,
         start + timedelta(hours=1),
         recurrences=['RRULE:FREQ=DAILY;UNTIL=20200107T120000Z'],
     )
 
-    # Override the recurring event
+    # 1) Override single recurring events
+    # Makes sure expanded events have the new title.
+
     events = getAllExpandedRecurringEventsList(
         user, calendar, start, start + timedelta(days=1), session
     )
+    assert len(events) == 2
+    assert [e.title for e in events] == [parentEvent.title, parentEvent.title]
+
     eventRepo = EventRepository(session)
+    overrideEvent = events[0]
+    overrideEvent.title = 'foo'
+
+    event = eventRepo.updateEvent(user, calendar, overrideEvent.id, overrideEvent)
+    assert event.title == overrideEvent.title
+
     overrideEvent = events[1]
-    overrideEvent.title = 'Override'
-
+    overrideEvent.title = 'bar'
     event = eventRepo.updateEvent(user, calendar, overrideEvent.id, overrideEvent)
     assert event.title == overrideEvent.title
 
-    overrideEvent.title = 'Override 2'
-    event = eventRepo.updateEvent(user, calendar, overrideEvent.id, overrideEvent)
-    assert event.title == overrideEvent.title
+    events = getAllExpandedRecurringEventsList(
+        user, calendar, start, start + timedelta(days=1), session
+    )
+    assert len(events) == 2
+    assert [e.title for e in events] == ['foo', 'bar']
+
+    for e in events:
+        print(e.title, e.start, e.end)
+
+    # 2) Override the parent recurring event. Moves the end date forward by 1h.
+    # Makes sure all overrides are deleted.
+
+    parentEvent = eventRepo.getEventVM(user, calendar, parentEvent.id)
+    parentEvent.end = parentEvent.end + timedelta(hours=1)
+
+    event = eventRepo.updateEvent(user, calendar, parentEvent.id, parentEvent)
+    events = getAllExpandedRecurringEventsList(
+        user, calendar, start, start + timedelta(days=1), session
+    )
+    assert len(events) == 2
+    assert [e.title for e in events] == [parentEvent.title, parentEvent.title]
 
 
 """Test Move Events"""
