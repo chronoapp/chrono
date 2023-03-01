@@ -2,7 +2,8 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Route, Routes, Outlet, Navigate } from 'react-router-dom'
 
 import { RecoilRoot } from 'recoil'
-import { ChakraProvider, extendTheme } from '@chakra-ui/react'
+import { ChakraProvider, extendTheme, defineStyleConfig } from '@chakra-ui/react'
+
 import { getAuthToken } from '@/util/Api'
 
 import Home from './routes/home'
@@ -17,6 +18,12 @@ import './style/index.scss'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/500.css'
 import '@fontsource/inter/700.css'
+
+export const defaultButton = defineStyleConfig({
+  defaultProps: {
+    size: 'sm',
+  },
+})
 
 const theme = extendTheme({
   fonts: {
@@ -38,6 +45,7 @@ const theme = extendTheme({
       1000: '#04091a',
     },
   },
+  components: { Button: defaultButton },
 })
 
 /**
@@ -64,7 +72,7 @@ export const LoggedOutRoute = () => {
 }
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <ChakraProvider theme={theme}>
+  <ChakraProvider theme={theme} toastOptions={{ defaultOptions: { position: 'bottom-right' } }}>
     <RecoilRoot>
       <BrowserRouter>
         <Routes>

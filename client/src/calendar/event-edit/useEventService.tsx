@@ -37,7 +37,7 @@ export default function useEventService() {
   const [editingEvent, setEditingEvent] = useRecoilState(editingEventState)
   const eventActions = useEventActions()
 
-  const toast = useToast({ duration: 2000, position: 'top-right' })
+  const toast = useToast()
   const taskQueue = useTaskQueue({ shouldProcess: true })
 
   /**

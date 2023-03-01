@@ -1,13 +1,14 @@
 import React from 'react'
 
-import { RenderProps, Text, Flex, Tag, TagLabel, TagCloseButton } from '@chakra-ui/react'
+import { Text, Flex, Tag, TagLabel, TagCloseButton } from '@chakra-ui/react'
 
 import CircularProgress from '@material-ui/core/CircularProgress'
 
-interface IProps extends RenderProps {
+interface IProps {
   title: string
   showSpinner: boolean
   Icon?: any
+  onClose: () => void
 }
 
 /**

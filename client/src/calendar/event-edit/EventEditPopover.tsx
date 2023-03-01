@@ -64,7 +64,7 @@ function EventPopover(props: IProps) {
   const eventActions = useEventActions()
   const editingEvent = useRecoilValue(editingEventState)
   const setDisplay = useSetRecoilState(displayState)
-  const toast = useToast({ duration: 2000, position: 'top-right' })
+  const toast = useToast()
 
   const labelState = useRecoilValue(labelsState)
   const calendarsById = useRecoilValue(calendarsState).calendarsById

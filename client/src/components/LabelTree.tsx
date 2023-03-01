@@ -54,7 +54,7 @@ function usePrevious(value) {
 
 function LabelTree(props: IProps) {
   const [labelState, setLabelState] = useRecoilState(labelsState)
-  const toast = useToast({ duration: 2000, position: 'top-right' })
+  const toast = useToast()
 
   const [expandedKeys, setExpandedKeys] = useState([])
   const [autoExpandParent, setAutoExpandParent] = useState(false)

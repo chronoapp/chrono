@@ -33,7 +33,7 @@ function TimeGridEvent(props: IProps) {
   const eventActions = useEventActions()
   const editingEvent = useRecoilValue(editingEventState)
   const dnd = useRecoilValue(dragDropActionState)
-  const toast = useToast({ duration: 2000, position: 'bottom' })
+  const toast = useToast()
 
   // Tiny gap to separate events.
   const eventHeight = props.style.height - 0.15
@@ -242,8 +242,14 @@ function TimeGridEvent(props: IProps) {
           evt.preventDefault()
           toast({
             render: (props) => (
-              <ToastTag title={'Cannot rechedule event.'} showSpinner={false} {...props} />
+              <ToastTag
+                title={'Cannot rechedule event.'}
+                showSpinner={false}
+                Icon={props.icon}
+                onClose={props.onClose}
+              />
             ),
+            position: 'bottom',
           })
         }
       }}
