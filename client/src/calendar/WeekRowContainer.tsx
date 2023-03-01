@@ -177,7 +177,7 @@ class WeekRowContainer extends React.Component<IProps & InjectedEventActionsProp
         const { event } = this.state.segment
 
         this.props.eventActions.onInteractionEnd()
-        this.props.eventService.updateOrSaveEvent(event)
+        this.props.eventService.moveOrResizeEvent(event)
 
         this.reset()
       })

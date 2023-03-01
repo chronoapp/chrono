@@ -47,9 +47,9 @@ export default function useEventService() {
    * 2) The event is not synced to the server yet, it will update the event locally.
    * 3) The event is synced to the server, it will save the event.
    */
-  function updateOrSaveEvent(event: Event) {
+  function moveOrResizeEvent(event: Event) {
     if (event.recurring_event_id) {
-      eventActions.showConfirmDialog('UPDATE_RECURRING_EVENT', event)
+      eventActions.showConfirmDialog('UPDATE_RECURRING_EVENT', event, 'MOVE_RESIZE')
     } else {
       if (event.syncStatus === 'NOT_SYNCED') {
         updateEventLocal(event)
@@ -264,7 +264,7 @@ export default function useEventService() {
 
   return {
     saveEvent,
-    updateOrSaveEvent,
+    moveOrResizeEvent,
     deleteEvent,
     deleteThisAndFollowingEvents,
     deleteAllRecurringEvents,

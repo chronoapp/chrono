@@ -16,13 +16,7 @@ interface IProps {
  */
 export function ToastTag(props: IProps) {
   return (
-    <Tag
-      size={'lg'}
-      pr="3"
-      pl="3"
-      variant="solid"
-      className="has-background-grey has-text-white-bis"
-    >
+    <Tag pr="3" pl="3" variant="solid" className="has-background-grey has-text-white-bis">
       <TagLabel>
         <Flex alignItems="center">
           {props.showSpinner && (
