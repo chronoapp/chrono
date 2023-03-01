@@ -275,8 +275,8 @@ class EventRepository:
             canModifyEvent = isOrganizer or event.guests_can_modify
 
             hasModifiedMainEventFields = (
-                event.title != newEvent.title
-                or event.description != newEvent.description
+                (event.title or '') != (newEvent.title or '')
+                or (event.description or '') != (newEvent.description or '')
                 or event.start != newEvent.start
                 or event.end != newEvent.end
                 or event.recurrences != newEvent.recurrences
