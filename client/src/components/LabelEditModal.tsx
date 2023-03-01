@@ -28,7 +28,7 @@ import { useRecoilState } from 'recoil'
 import { labelsState, LabelModalState } from '@/state/LabelsState'
 
 function EditLabelModal() {
-  const toast = useToast({ duration: 2000, position: 'top-right' })
+  const toast = useToast()
   const [labelState, setLabelState] = useRecoilState(labelsState)
 
   const allColors = getSortedLabelColors()

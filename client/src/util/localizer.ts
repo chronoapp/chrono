@@ -25,7 +25,7 @@ export function monthTitleFormat(date: Date): string {
 
 export function weekRangeFormat(start: Date, end: Date) {
   return (
-    moment(start).format('YYYY, MMMM DD') +
+    moment(start).format('MMMM DD') +
     ' – ' +
     moment(end).format(dates.eq(start, end, 'month') ? 'DD' : 'MMMM DD')
   )

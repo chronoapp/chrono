@@ -58,7 +58,7 @@ function NewEventButton() {
         eventActions.initNewEventAtDate(primaryCalendar!, false, roundNext15Min(new Date()))
       }}
     >
-      Create Event
+      New Event
     </Button>
   )
 }
@@ -100,10 +100,13 @@ function Settings(props: { refreshCalendar: () => void }) {
         <Avatar size="sm" />
       </MenuButton>
       <MenuList zIndex="2">
-        <MenuItem onClick={props.refreshCalendar}>Refresh Events</MenuItem>
+        <MenuItem fontSize={'sm'} onClick={props.refreshCalendar}>
+          Refresh Events
+        </MenuItem>
         <MenuDivider m="0" />
         <MenuItem
           icon={<FiSettings />}
+          fontSize={'sm'}
           onClick={() => {
             navigate('/settings')
           }}
@@ -111,7 +114,7 @@ function Settings(props: { refreshCalendar: () => void }) {
           Settings
         </MenuItem>
         <MenuDivider m="0" />
-        <MenuItem icon={<FiLogOut />} onClick={logout}>
+        <MenuItem fontSize={'sm'} icon={<FiLogOut />} onClick={logout}>
           Sign Out
         </MenuItem>
       </MenuList>
@@ -123,7 +126,7 @@ function Settings(props: { refreshCalendar: () => void }) {
  * Top Level Layout for the navigation and body.
  */
 function Layout(props: Props) {
-  const toast = useToast({ duration: 2000, position: 'top' })
+  const toast = useToast()
 
   const params = useParams()
   const searchQuery = (params.search as string) || ''
@@ -140,7 +143,14 @@ function Layout(props: Props) {
 
   async function refreshCalendar() {
     const toastId = toast({
-      render: (props) => <ToastTag title={'Updating calendar..'} showSpinner={false} {...props} />,
+      render: (props) => (
+        <ToastTag
+          title={'Updating calendar..'}
+          showSpinner={false}
+          Icon={props.icon}
+          onClose={props.onClose}
+        />
+      ),
     })
 
     await API.syncCalendar()
@@ -149,7 +159,14 @@ function Layout(props: Props) {
 
     toastId && toast.close(toastId)
     toast({
-      render: (props) => <ToastTag title={'Calendar updated.'} showSpinner={false} {...props} />,
+      render: (props) => (
+        <ToastTag
+          title={'Calendar updated.'}
+          showSpinner={false}
+          Icon={props.icon}
+          onClose={props.onClose}
+        />
+      ),
     })
   }
 
