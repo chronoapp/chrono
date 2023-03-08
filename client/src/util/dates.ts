@@ -179,3 +179,7 @@ export function yesterday() {
 export function tomorrow() {
   return dates.add(dates.startOf(new Date(), 'day'), 1, 'day')
 }
+
+export function round(date: Date) {
+  return new Date(Math.round(date.getTime() / 60000) * 60000)
+}
