@@ -353,17 +353,15 @@ class EventRepository:
 
         # We are overriding a parent recurring event.
         elif curEvent and curEvent.is_parent_recurring_event:
-            # Since we're modifying the recurrence, we need to remove all previous overrides.
-            # TODO: Only delete the overrides that no longer exist.
-            stmt = delete(Event).where(
-                and_(
-                    Event.recurring_event_id == curEvent.id,
-                    Event.recurring_event_calendar_id == curEvent.calendar_id,
-                )
-            )
-            self.session.execute(stmt)
 
+            changedFields = getChangedEventKVs(EventBaseVM.from_orm(curEvent), event)
             updatedEvent = createOrUpdateEvent(userCalendar, curEvent, event)
+
+            recurrenceUpdateOnly = len(changedFields) == 1 and 'recurrences' in changedFields
+            if recurrenceUpdateOnly and event.recurrences:
+                self._updateRecurringEventOverrides(user, userCalendar, event)
+            else:
+                self._deleteRecurringEventOverrides(curEvent)
 
         # Update normal event.
         else:
@@ -525,6 +523,44 @@ class EventRepository:
         eventInDbVM = getRecurringEvent(calendar, eventId, parentEvent)
 
         return eventInDbVM, parentEvent
+
+    def _deleteRecurringEventOverrides(self, event: Event):
+        deleteStmt = delete(Event).where(
+            and_(
+                Event.recurring_event_id == event.id,
+                Event.recurring_event_calendar_id == event.calendar_id,
+            )
+        )
+        self.session.execute(deleteStmt)
+
+    def _updateRecurringEventOverrides(
+        self, user: User, userCalendar: UserCalendar, event: EventBaseVM
+    ):
+        """Since we're modifying the recurrence, we need to delete the overrides that no longer exist
+        as part of the new recurrence.
+        """
+        if not event.recurrences:
+            return
+
+        stmt = BASE_EVENT_STATEMENT.where(
+            and_(
+                Event.recurring_event_id == event.id,
+                Event.recurring_event_calendar_id == event.calendar_id,
+            )
+        )
+
+        overrides = self.session.execute(stmt).scalars().all()
+        timezone = event.timezone or userCalendar.timezone or user.timezone
+        ruleSet = recurrenceToRuleSet(
+            '\n'.join(event.recurrences), timezone, event.start, event.start_day
+        )
+
+        for override in overrides:
+            date = ruleSet.after(override.original_start, inc=True)
+            isInRecurrence = date == override.original_start
+            if not isInRecurrence:
+                print('delete', override.title)
+                self.session.delete(override)
 
 
 def getCombinedLabels(user: User, labelVMs: List[LabelInDbVM], session: Session) -> List[Label]:
@@ -812,3 +848,15 @@ def eventMatchesQuery(event: Event, query: Optional[str]) -> bool:
     haystack = event.title.lower()
 
     return any(needle in haystack for needle in needles)
+
+
+def getChangedEventKVs(fromEvent: EventBaseVM, toEvent: EventBaseVM):
+    fromEventDict = fromEvent.dict()
+    toEventDict = toEvent.dict()
+
+    diffKeys = set(fromEventDict.keys())
+    return {
+        key: (fromEventDict.get(key), toEventDict.get(key))
+        for key in diffKeys
+        if fromEventDict.get(key) != toEventDict.get(key)
+    }
