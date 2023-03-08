@@ -533,17 +533,17 @@ def test_event_repo_getAllExpandedRecurringEvents_withTimezone(user, session):
     ]
 
 
-def test_event_repo_updateEvent_recurring(user, session):
+def test_event_repo_updateEvent_recurring(user: User, session):
     """Move recurring event to outside a range."""
     calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Create a new recurring event. 01-02 to 01-07 => 6 events
-    start = datetime.fromisoformat('2020-01-02T12:00:00')
+    start = datetime.fromisoformat('2022-01-02T12:00:00')
     parentEvent = createEvent(
         calendar,
         start,
         start + timedelta(hours=1),
-        recurrences=['RRULE:FREQ=DAILY;UNTIL=20200107T120000Z'],
+        recurrences=['RRULE:FREQ=DAILY;UNTIL=20220107T120000Z'],
     )
 
     # 1) Override single recurring events
@@ -588,6 +588,62 @@ def test_event_repo_updateEvent_recurring(user, session):
     )
     assert len(events) == 2
     assert [e.title for e in events] == [parentEvent.title, parentEvent.title]
+
+
+def test_event_repo_updateEvent_this_and_following(user, session):
+    """Updates this & following events.
+
+    This creates two new parent events.
+    We make sure the override is kept for the first parent event.
+    """
+    calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
+
+    """1) Create a new recurring event. 01-02 to 01-07 => 6 events"""
+
+    start = datetime.fromisoformat('2022-01-02T12:00:00')
+    parentEvent = createEvent(
+        calendar,
+        start,
+        start + timedelta(hours=1),
+        recurrences=['RRULE:FREQ=DAILY;UNTIL=20220107T120000Z'],
+        timezone='America/Los_Angeles',
+    )
+
+    """2) Override recurring events."""
+
+    events = getAllExpandedRecurringEventsList(
+        user, calendar, start, start + timedelta(days=10), session
+    )
+    eventRepo = EventRepository(session)
+
+    # This event should be kept by the update.
+    overrideEvent = events[0]
+    overrideEvent.title = 'foo'
+    eventRepo.updateEvent(user, calendar, overrideEvent.id, overrideEvent)
+
+    # This event should be removed by the update.
+    overrideEvent2 = events[4]
+    overrideEvent2.title = 'bar'
+    eventRepo.updateEvent(user, calendar, overrideEvent2.id, overrideEvent2)
+
+    """3) Update the parent event's recurrence.
+    It will be cut off at 01-03 (two events)
+    """
+
+    parentEventVM = eventRepo.getEventVM(user, calendar, parentEvent.id)
+    parentEventVM.recurrences = ['RRULE:FREQ=DAILY;UNTIL=20220103T120000Z']
+    eventRepo.updateEvent(user, calendar, parentEventVM.id, parentEventVM)
+
+    events = getAllExpandedRecurringEventsList(
+        user, calendar, start, start + timedelta(days=10), session
+    )
+    assert len(events) == 2
+    # Make sure the override is kept.
+    assert events[0].title == 'foo'
+
+    # Make sure the override is deleted.
+    with pytest.raises(InputError):
+        eventRepo.getEventVM(user, calendar, overrideEvent2.id)
 
 
 """Test Move Events"""
