@@ -97,7 +97,7 @@ class ResizeEventContainer extends React.Component<IProps & InjectedEventActions
     }
 
     const range = slotMetrics.getRange(start, end)
-    this.updateEvent(event, start, range.endDate, range.top, range.height)
+    this.updateEvent(event, start, dates.round(range.endDate), range.top, range.height)
   }
 
   private reset() {

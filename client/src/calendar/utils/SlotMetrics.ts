@@ -158,8 +158,12 @@ export default class SlotMetrics {
     ignoreMin: boolean = false,
     ignoreMax: boolean = false
   ) {
-    if (!ignoreMin) rangeStart = dates.min(this.end, dates.max(this.start, rangeStart))
-    if (!ignoreMax) rangeEnd = dates.min(this.end, dates.max(this.start, rangeEnd))
+    if (!ignoreMin) {
+      rangeStart = dates.min(this.end, dates.max(this.start, rangeStart))
+    }
+    if (!ignoreMax) {
+      rangeEnd = dates.min(this.end, dates.max(this.start, rangeEnd))
+    }
 
     const rangeStartMin = this.positionFromDate(rangeStart)
     const rangeEndMin = this.positionFromDate(rangeEnd)
