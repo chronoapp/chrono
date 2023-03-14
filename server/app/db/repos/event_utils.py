@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Dict, Optional, Literal, Any, Union
 from dateutil.rrule import rrule, rruleset, rrulestr
 from zoneinfo import ZoneInfo
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, Field
 
 from app.api.endpoints.labels import LabelInDbVM
 from app.db.models import Event, UserCalendar, EventCreator, EventOrganizer
@@ -58,7 +58,7 @@ class EventBaseVM(BaseModel):
     labels: List[LabelInDbVM] = []
     all_day: Optional[bool]
     background_color: Optional[str]
-    timezone: Optional[str]
+    timezone: Optional[str] = Field(alias='time_zone')
     calendar_id: Optional[uuid.UUID]
     recurrences: Optional[List[str]]
     recurring_event_id: Optional[str]

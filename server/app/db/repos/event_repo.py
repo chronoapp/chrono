@@ -240,9 +240,7 @@ class EventRepository:
                     if not eventVM.original_start:
                         raise EventRepoError('No original start for recurring event.')
 
-                    eventOverride = createOverrideDeletedEvent(
-                        parentEvent, eventVM.original_start, eventVM.id
-                    )
+                    eventOverride = createOverrideDeletedEvent(parentEvent, eventVM)
                     userCalendar.calendar.events.append(eventOverride)
                     self.session.add(eventOverride)
 
@@ -581,35 +579,36 @@ def getCombinedLabels(user: User, labelVMs: List[LabelInDbVM], session: Session)
 
 def createOverrideDeletedEvent(
     parentEvent: Event,
-    originalStart: datetime,
-    eventId: str,
+    eventVM: EventBaseVM,
 ) -> Event:
     """Overrides a recurring event as a deleted event."""
+    assert eventVM.original_start
+
     googleId = None
     if parentEvent.recurring_event_gId:
         googleId = getRecurringEventId(
-            parentEvent.recurring_event_gId, originalStart, parentEvent.all_day
+            parentEvent.recurring_event_gId, eventVM.original_start, parentEvent.all_day
         )
 
     event = Event(
         googleId,
         None,
         None,
+        eventVM.start,
+        eventVM.end,
         None,
         None,
         None,
         None,
-        None,
-        None,
-        originalStart,
-        originalStart.strftime('%Y-%m-%d') if parentEvent.all_day else None,
+        eventVM.original_start,
+        eventVM.original_start.strftime('%Y-%m-%d') if parentEvent.all_day else None,
         parentEvent.time_zone,
         None,
         None,
         None,
         None,
         None,
-        overrideId=eventId,
+        overrideId=eventVM.id,
         recurringEventId=parentEvent.id,
         recurringEventCalendarId=parentEvent.calendar_id,
         status='deleted',
