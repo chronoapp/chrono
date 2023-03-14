@@ -2,7 +2,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Route, Routes, Outlet, Navigate } from 'react-router-dom'
 
 import { RecoilRoot } from 'recoil'
-import { ChakraProvider, extendTheme, defineStyleConfig } from '@chakra-ui/react'
+import { ChakraProvider, extendTheme, defineStyle, defineStyleConfig } from '@chakra-ui/react'
 
 import { getAuthToken } from '@/util/Api'
 
@@ -19,7 +19,30 @@ import '@fontsource/inter/400.css'
 import '@fontsource/inter/500.css'
 import '@fontsource/inter/700.css'
 
-export const defaultButton = defineStyleConfig({
+const outlineButton = defineStyle({
+  size: 'sm',
+  border: '1px solid rgb(223, 225, 228)',
+  boxShadow: 'rgb(0 0 0 / 9%) 0px 1px 1px',
+  backgroundColor: 'rgb(255, 255, 255)',
+  color: 'rgb(60, 65, 75)',
+  _hover: {
+    border: '1px solid rgb(200, 205, 208)',
+  },
+})
+
+const sm = defineStyle({
+  fontSize: 'xs',
+  fontWeight: '500',
+  px: '3',
+  h: '7',
+  borderRadius: 'sm',
+})
+
+export const buttonTheme = defineStyleConfig({
+  sizes: { sm },
+  variants: {
+    outline: outlineButton,
+  },
   defaultProps: {
     size: 'sm',
   },
@@ -30,6 +53,9 @@ const theme = extendTheme({
     body: `Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Ubuntu', 'Cantarell',
     'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;`,
     heading: 'Inter',
+  },
+  fontSizes: {
+    sm: '0.8rem',
   },
   colors: {
     primary: {
@@ -45,7 +71,7 @@ const theme = extendTheme({
       1000: '#04091a',
     },
   },
-  components: { Button: defaultButton },
+  components: { Button: buttonTheme },
 })
 
 /**

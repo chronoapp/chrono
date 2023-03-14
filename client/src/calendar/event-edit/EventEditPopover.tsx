@@ -483,6 +483,7 @@ function EventPopover(props: IProps) {
 
             <Checkbox
               ml="1"
+              size="sm"
               checked={eventFields.allDay}
               colorScheme="primary"
               onChange={(e) => {
@@ -592,8 +593,6 @@ function EventPopover(props: IProps) {
             <Flex>
               <Button
                 size="sm"
-                borderRadius="md"
-                fontWeight="normal"
                 colorScheme="primary"
                 onClick={() =>
                   props.eventService.saveEvent(
@@ -604,13 +603,7 @@ function EventPopover(props: IProps) {
                 Save
               </Button>
 
-              <Button
-                ml="2"
-                size="sm"
-                borderRadius="md"
-                fontWeight="normal"
-                onClick={eventActions.cancelSelect}
-              >
+              <Button ml="2" size="sm" fontWeight="normal" onClick={eventActions.cancelSelect}>
                 Cancel
               </Button>
             </Flex>
@@ -619,7 +612,6 @@ function EventPopover(props: IProps) {
               mt="2"
               mb="1"
               size="sm"
-              borderRadius="md"
               fontWeight="normal"
               variant="ghost"
               onClick={() => {

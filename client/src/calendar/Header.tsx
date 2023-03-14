@@ -58,7 +58,7 @@ function DateHeaderSearch(props: { disableSearchMode: () => void; defaultSearchQ
   return (
     <Flex alignItems="center" width={{ sm: '20em', md: '25em', lg: '30em' }}>
       <InputGroup mr="1" w="xl">
-        <InputLeftElement>
+        <InputLeftElement h="100%">
           <IconButton
             _hover={{}}
             variant="ghost"
@@ -70,7 +70,7 @@ function DateHeaderSearch(props: { disableSearchMode: () => void; defaultSearchQ
 
         <Input
           ref={inputRef}
-          size="md"
+          size="sm"
           placeholder="Search"
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
@@ -80,7 +80,7 @@ function DateHeaderSearch(props: { disableSearchMode: () => void; defaultSearchQ
             }
           }}
         />
-        <InputRightElement>
+        <InputRightElement h="100%">
           {searchValue && (
             <Button variant="link" onClick={() => setSearchValue('')}>
               <FiX />
@@ -91,7 +91,7 @@ function DateHeaderSearch(props: { disableSearchMode: () => void; defaultSearchQ
 
       <IconButton
         mr="1"
-        variant="solid"
+        variant="outline"
         aria-label="search"
         icon={<FiSearch />}
         onClick={() => {
@@ -116,18 +116,11 @@ function DropdownMenu(props: { display: DisplayView; selectDisplay: (d: DisplayV
 
   return (
     <Menu>
-      <MenuButton
-        color="gray.600"
-        borderRadius="xs"
-        size="sm"
-        as={Button}
-        rightIcon={<FiChevronDown />}
-        fontWeight="normal"
-      >
+      <MenuButton variant="outline" as={Button} rightIcon={<FiChevronDown />}>
         {titleForDisplay(props.display)}
       </MenuButton>
 
-      <MenuList zIndex={2}>
+      <MenuList zIndex={2} fontSize="sm">
         <MenuItem
           onClick={() => props.selectDisplay('Day')}
           display="flex"
@@ -179,13 +172,7 @@ function DateHeaderNonSearch(props: {
 }) {
   return (
     <Flex alignItems="center">
-      <Button
-        color="gray.600"
-        size="sm"
-        fontWeight="normal"
-        borderRadius="xs"
-        onClick={props.onSelectToday}
-      >
+      <Button color="gray.600" size="sm" onClick={props.onSelectToday} variant="outline">
         Today
       </Button>
 
@@ -388,7 +375,7 @@ export default function Header(props: { search: string }) {
             mr="2"
             ml="1"
             aria-label="search"
-            h="8"
+            variant={'outline'}
             icon={<FiSearch />}
             onClick={() => setIsSearchMode(true)}
           />
