@@ -129,7 +129,9 @@ export default function EventEditFull(props: { event: Event; eventService: Event
     <Modal size="3xl" isOpen={true} onClose={eventActions.cancelSelect}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader pb="2">Edit Event</ModalHeader>
+        <ModalHeader pb="2" fontSize={'md'}>
+          Edit Event
+        </ModalHeader>
         <ModalCloseButton />
 
         <ModalBody maxHeight="3xl">
@@ -148,7 +150,6 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                   eventFields.labels,
                   labelIds
                 )
-
                 setEventFields({ ...eventFields, title, labels: updatedLabels })
               }}
               onBlur={() => {
@@ -262,6 +263,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
 
             <Checkbox
               ml="1"
+              fontSize={'sm'}
               defaultChecked={eventFields.allDay}
               onChange={(e) => {
                 const isAllDay = e.target.checked

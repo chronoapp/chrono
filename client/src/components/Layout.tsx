@@ -72,13 +72,13 @@ function TopNavigationBar(props: {
     <Flex
       height="3.25rem"
       borderBottom="1px solid #dfdfdf"
-      alignItems="stretch"
+      alignItems="center"
       className="navbar-menu"
     >
       {props.canCreateEvent && <Header search={props.searchQuery} />}
 
       <Flex justifyContent="flex-end" align="flex-end">
-        <Flex alignItems="center" justifyContent="center" padding="2">
+        <Flex alignItems="center" justifyContent="center">
           <Settings refreshCalendar={props.refreshCalendar} />
         </Flex>
       </Flex>
@@ -95,10 +95,11 @@ function Settings(props: { refreshCalendar: () => void }) {
   }
 
   return (
-    <Menu>
-      <MenuButton ml="2" mr="2">
-        <Avatar size="sm" />
+    <Menu size={'sm'}>
+      <MenuButton ml="2" mr="2" p="1" as={Button} bgColor="transparent" borderRadius={'md'}>
+        <Avatar size="xs" />
       </MenuButton>
+
       <MenuList zIndex="2">
         <MenuItem fontSize={'sm'} onClick={props.refreshCalendar}>
           Refresh Events
