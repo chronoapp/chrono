@@ -30,59 +30,32 @@ Perhaps separate a common interface, ie.
 - CreateCalendar: (Calendar) -> Result
 """
 
-OLD_COLORS = [
-    '#ac725e',
-    '#d06b64',
-    '#f83a22',
-    '#fa573c',
-    '#ff7537',
-    '#ffad46',
-    '#42d692',
-    '#16a765',
-    '#7bd148',
-    '#b3dc6c',
-    '#fbe983',
-    '#fad165',
-    '#92e1c0',
-    '#9fe1e7',
-    '#9fc6e7',
-    '#4986e7',
-    '#9a9cff',
-    '#b99aff',
-    '#c2c2c2',
-    '#cabdbf',
-    '#cca6ac',
-    '#f691b2',
-    '#cd74e6',
-    '#a47ae2',
-]
-
-NEW_COLORS = [
-    '#795548',
-    '#e67c73',
-    '#d50000',
-    '#f4511e',
-    '#ef6c00',
-    '#f09300',
-    '#009688',
-    '#0b8043',
-    '#7cb342',
-    '#c0ca33',
-    '#e4c441',
-    '#f6bf26',
-    '#33b679',
-    '#039be5',
-    '#4285f4',
-    '#3f51b5',
-    '#7986cb',
-    '#b39ddb',
-    '#616161',
-    '#a79b8e',
-    '#ad1457',
-    '#d81b60',
-    '#8e24aa',
-    '#9e69af',
-]
+GOOGLE_COLOR_MAPPING = {
+    '#ac725e': '#795548',
+    '#d06b64': '#e67c73',
+    '#f83a22': '#d50000',
+    '#fa573c': '#f4511e',
+    '#ff7537': '#ef6c00',
+    '#ffad46': '#f09300',
+    '#42d692': '#009688',
+    '#16a765': '#0b8043',
+    '#7bd148': '#7cb342',
+    '#b3dc6c': '#c0ca33',
+    '#fbe983': '#e4c441',
+    '#fad165': '#f6bf26',
+    '#92e1c0': '#33b679',
+    '#9fe1e7': '#039be5',
+    '#9fc6e7': '#4285f4',
+    '#4986e7': '#3f51b5',
+    '#9a9cff': '#7986cb',
+    '#b99aff': '#b39ddb',
+    '#c2c2c2': '#616161',
+    '#cabdbf': '#a79b8e',
+    '#cca6ac': '#ad1457',
+    '#f691b2': '#d81b60',
+    '#cd74e6': '#8e24aa',
+    '#a47ae2': '#9e69af',
+}
 
 PAGE_SIZE = 1000
 
@@ -101,10 +74,9 @@ def convertToLocalTime(dateTime: datetime, timeZone: Optional[str]):
 
 
 def mapGoogleColor(color: str) -> str:
-    # Google maps to their material colors. TODO: combine map.
-
-    if color in OLD_COLORS:
-        return NEW_COLORS[OLD_COLORS.index(color)]
+    # Google maps to their material colors.
+    if color in GOOGLE_COLOR_MAPPING:
+        return GOOGLE_COLOR_MAPPING[color]
     else:
         return color
 
