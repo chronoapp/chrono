@@ -153,8 +153,8 @@ function TrendChart(props: IProps) {
     return (
       <Center width="80%">
         <Box>
-          <Text fontSize="xl">No labels</Text>
-          <Text>Add labels to your events to view your trends.</Text>
+          <Text fontWeight="medium">No labels</Text>
+          <Text fontSize="sm">Add labels to your events to view your trends.</Text>
         </Box>
       </Center>
     )
