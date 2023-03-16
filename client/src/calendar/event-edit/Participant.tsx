@@ -78,7 +78,7 @@ export default function Participant(props: { calendar?: Calendar; participant: E
           <Text fontSize="sm">{props.participant.display_name}</Text>
         </Flex>
         <Text mt="-1" fontSize="xs" textColor="GrayText" maxW="15em" noOfLines={1}>
-          {props.participant.email || 'no email'}
+          {props.participant.email}
         </Text>
         {isOptionalText}
       </>

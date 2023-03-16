@@ -78,8 +78,10 @@ function ParticipantInput(props: IProps) {
         <Tooltip label={error} isOpen={hasError}>
           <Input
             size={'sm'}
-            variant="filled"
+            variant="ghost"
             placeholder="Add guest"
+            className="input-bg"
+            padding={1}
             isInvalid={hasError}
             {...getInputProps()}
           ></Input>
@@ -95,6 +97,7 @@ function ParticipantInput(props: IProps) {
         borderRadius="md"
         width={'100%'}
         boxShadow="md"
+        zIndex="10"
       >
         {isOpen &&
           contacts.map((item, index) => (

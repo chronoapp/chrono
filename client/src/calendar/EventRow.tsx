@@ -91,7 +91,7 @@ export function EventItem(props: {
       <Popover isOpen={true}>
         <PopoverTrigger>{eventDisplay}</PopoverTrigger>
         <Portal>
-          <PopoverContent w="25em">
+          <PopoverContent>
             <PopoverArrow />
             <EventPopover event={event} eventService={props.eventService} />
           </PopoverContent>

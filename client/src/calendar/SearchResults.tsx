@@ -95,7 +95,7 @@ function EventItem(props: { event: Event; eventService: EventService }) {
       <Popover isOpen={true}>
         <PopoverTrigger>{renderEvent()}</PopoverTrigger>
         <Portal>
-          <PopoverContent w="25em">
+          <PopoverContent>
             <PopoverArrow />
             <EventPopover event={props.event} eventService={props.eventService} />
           </PopoverContent>

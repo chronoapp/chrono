@@ -8,16 +8,8 @@
   overflow: visible !important;
 }
 
-.cal-event-modal {
-  padding-left: 1rem;
-  padding-right: 1rem;
-  max-height: 35rem;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
 .cal-event-modal-header {
-  height: 32px;
+  height: 24px;
   width: 100%;
   display: flex;
   align-items: center;
@@ -25,27 +17,44 @@
 }
 
 .cal-event-edit-description {
-  background-color: $white-ter;
   padding: 0.25rem;
-  border-radius: $event-border-radius;
   width: 100%;
-  line-height: 1.1;
+  line-height: 1.25;
+  max-height: 25em;
+  overflow-y: auto;
+  background-color: $text-background;
 }
 
 .cal-event-edit-description[contenteditable]:focus {
   outline: 0px solid transparent;
-  border: 1px solid $link;
 }
 
 // Taggable Input
 
+.input-bg {
+  background-color: $text-background !important;
+}
+
+.input {
+  width: 100%;
+  padding-bottom: 0.5em;
+  padding-top: 0.5em;
+}
+
 .input__input {
-  @extend %input;
+  height: 2.5em;
+  display: block;
+  position: absolute;
+
+  &:focus,:active {
+    outline: none;
+    border: none;
+    box-shadow: none;
+  }
 }
 
 .input-heading {
   .input {
-    font-size: $size-5; // title
     border: none;
     box-shadow: none;
     padding-left: 0;

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import clsx from 'clsx'
-import { Avatar, Flex, Text } from '@chakra-ui/react'
+import { Avatar, Flex, Text, Box } from '@chakra-ui/react'
 import { MentionsInput, Mention } from 'react-mentions'
 
 import * as API from '@/util/Api'
@@ -58,6 +58,10 @@ function getIdAndType(idTxt: string) {
 const defaultStyle = {
   '&singleLine': {
     display: 'inline-block',
+    border: 'none',
+    '&focused': {
+      border: 'none',
+    },
   },
   suggestions: {
     zIndex: 10,
@@ -65,8 +69,9 @@ const defaultStyle = {
     list: {
       backgroundColor: 'white',
       border: '1px solid rgba(0,0,0,0.15)',
+      boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
       borderRadius: '3px',
-      fontSize: 14,
+      fontSize: '0.95rem',
     },
     item: {
       color: 'gray.100',
@@ -186,7 +191,7 @@ function TaggableInput(props: IProps) {
   }
 
   return (
-    <div className={clsx(props.wrapperCls, props.isHeading && 'input-heading')}>
+    <Box fontSize="md" className={clsx(props.wrapperCls, props.isHeading && 'input-heading')}>
       <MentionsInput
         inputRef={titleInputRef}
         singleLine={true}
@@ -215,7 +220,7 @@ function TaggableInput(props: IProps) {
           renderSuggestion={renderContactSuggestion}
         />
       </MentionsInput>
-    </div>
+    </Box>
   )
 }
 
