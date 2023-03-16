@@ -50,13 +50,17 @@ export default function CalendarEditModal(props: IProps) {
     <Modal isOpen={props.isActive} onClose={props.onCancel}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>{props.editingCalendar ? 'Edit Calendar' : 'New Calendar'}</ModalHeader>
+        <ModalHeader fontSize={'md'}>
+          {props.editingCalendar ? 'Edit Calendar' : 'New Calendar'}
+        </ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           <FormControl id="calendar-title" isRequired>
-            <FormLabel>Title</FormLabel>
+            <FormLabel fontSize={'sm'}>Title</FormLabel>
             <Input
               type="text"
+              size="sm"
+              fontSize={'sm'}
               value={editableFields.summary}
               onChange={(e) => {
                 setEditableFields({ ...editableFields, summary: e.target.value })
@@ -65,10 +69,11 @@ export default function CalendarEditModal(props: IProps) {
           </FormControl>
 
           <FormControl id="calendar-description" mt="2">
-            <FormLabel>Description</FormLabel>
+            <FormLabel fontSize={'sm'}>Description</FormLabel>
             <Input
-              className="input"
               type="text"
+              size-="sm"
+              fontSize={'sm'}
               placeholder=""
               value={editableFields.description}
               onChange={(e) => {

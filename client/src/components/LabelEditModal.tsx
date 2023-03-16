@@ -99,14 +99,16 @@ function EditLabelModal() {
     <Modal isOpen={true} onClose={onCloseModal}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Add Tag</ModalHeader>
+        <ModalHeader fontSize={'md'}>Add Tag</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           <FormControl id="tag-name" isRequired>
-            <FormLabel>Tag Name</FormLabel>
+            <FormLabel fontSize={'sm'}>Tag Name</FormLabel>
             <Input
               type="text"
               placeholder=""
+              size="sm"
+              fontSize={'sm'}
               value={newLabelModal.labelTitle}
               onChange={(e) => {
                 setLabelState((prevState) => {
@@ -123,7 +125,7 @@ function EditLabelModal() {
           </FormControl>
 
           <FormControl id="tag-color" mt="2">
-            <FormLabel>Tag Color</FormLabel>
+            <FormLabel fontSize={'sm'}>Tag Color</FormLabel>
 
             <Menu>
               <MenuButton as={Button} size="sm" rightIcon={<FiChevronDown />} variant="ghost">

@@ -56,6 +56,7 @@ const theme = extendTheme({
   },
   fontSizes: {
     sm: '0.8rem',
+    md: '0.95rem',
   },
   colors: {
     primary: {
