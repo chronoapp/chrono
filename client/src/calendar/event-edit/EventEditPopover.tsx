@@ -275,6 +275,8 @@ function EventPopover(props: IProps) {
               <Box
                 fontSize={'sm'}
                 maxW="100%"
+                maxHeight={'25em'}
+                overflowY="auto"
                 pr="4"
                 dangerouslySetInnerHTML={{ __html: linkifyHtml(props.event.description) }}
               ></Box>
@@ -535,7 +537,6 @@ function EventPopover(props: IProps) {
                       }
                     }
 
-                    console.log(updatedFields)
                     setEventFields(updatedFields)
                     eventActions.updateEditingEvent(
                       getUpdatedEvent(props.event, updatedFields, participants)
