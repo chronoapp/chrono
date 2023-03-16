@@ -110,7 +110,8 @@ function EventPopover(props: IProps) {
   }, [eventFields])
 
   const isReadOnly = editingEvent?.editMode == 'READ'
-  return <Box boxShadow="2xl">{isReadOnly ? renderReadOnlyView() : renderEditView()}</Box>
+
+  return <Box boxShadow="xl">{isReadOnly ? renderReadOnlyView() : renderEditView()}</Box>
 
   function keyboardEvents(e: KeyboardEvent) {
     if (e.key === 'Enter') {
@@ -156,7 +157,6 @@ function EventPopover(props: IProps) {
           <>
             <MenuButton
               mb="2"
-              mt="1"
               borderRadius="xs"
               size="sm"
               fontWeight="normal"
@@ -196,7 +196,7 @@ function EventPopover(props: IProps) {
     const calendar = getSelectedCalendar(eventFields.calendarId)
 
     return (
-      <Box>
+      <Box mt="1" pl="4">
         <Box className="cal-event-modal-header" mt="1">
           {calendar.isWritable() && (
             <IconButton
@@ -210,8 +210,8 @@ function EventPopover(props: IProps) {
 
           <IconButton
             variant="ghost"
-            ml="2"
-            mr="2"
+            ml="1"
+            mr="1"
             size="sm"
             aria-label="close modal"
             color="gray.600"
@@ -221,7 +221,9 @@ function EventPopover(props: IProps) {
         </Box>
 
         <Flex direction={'column'} mb="3" className="cal-event-modal">
-          <div className="has-text-grey-darker is-size-5">{props.event.title_short}</div>
+          <Text fontSize={'md'} color="gray.900">
+            {props.event.title_short}
+          </Text>
 
           {props.event.labels && (
             <Flex>
@@ -232,17 +234,21 @@ function EventPopover(props: IProps) {
           )}
 
           <Flex mt="2" alignItems={'center'}>
-            <FiClock className="mr-2 is-flex-shrink-0" />
-            <span>
+            <Box mr="2" color="gray.600">
+              <FiClock />
+            </Box>
+            <Text fontSize={'sm'}>
               {format(eventFields.start, 'YYYY-MM-DD')} {format(eventFields.start, 'hh:mm')} -{' '}
               {format(eventFields.end, 'hh:mm')}
               {format(eventFields.end, 'A')}
-            </span>
+            </Text>
           </Flex>
 
           <Flex mt="2" alignItems={'center'}>
-            <FiCalendar className="mr-2 is-flex-shrink-0" />
-            <Text>{calendar.summary}</Text>
+            <Box mr="2" color="gray.600">
+              <FiCalendar />
+            </Box>
+            <Text fontSize={'sm'}>{calendar.summary}</Text>
           </Flex>
 
           {participants.length > 0 && (
@@ -267,6 +273,7 @@ function EventPopover(props: IProps) {
             <Flex mt="2" alignItems={'flex-start'}>
               <FiAlignLeft className="mr-2 is-flex-shrink-0" />
               <Box
+                fontSize={'sm'}
                 maxW="100%"
                 pr="4"
                 dangerouslySetInnerHTML={{ __html: linkifyHtml(props.event.description) }}
@@ -324,9 +331,10 @@ function EventPopover(props: IProps) {
                 />
               )}
               <Button
+                variant="outline"
                 size="sm"
                 fontWeight="normal"
-                marginLeft={'auto'}
+                marginLeft="auto"
                 onClick={() => {
                   eventActions.updateEditingEvent(
                     getUpdatedEvent(props.event, eventFields, participants)
@@ -361,9 +369,19 @@ function EventPopover(props: IProps) {
           ></IconButton>
         </Box>
 
-        <Flex className="cal-event-modal" direction={'column'} mt="1">
+        <Flex
+          mt="1"
+          pl="4"
+          pr="4"
+          maxHeight={'35em'}
+          overflowX="hidden"
+          overflowY="auto"
+          direction={'column'}
+          fontSize="sm"
+        >
           <TaggableInput
             labels={labels}
+            placeholder={'Event title'}
             title={eventFields.title}
             portalCls={'.cal-event-modal-container'}
             isHeading={false}
@@ -390,7 +408,7 @@ function EventPopover(props: IProps) {
             }}
           />
 
-          <Flex mt="2" alignItems="center" flexWrap="wrap" justifyContent="left">
+          <Flex mt="0.5" alignItems="center" flexWrap="wrap" justifyContent="left">
             {eventFields.labels.map((label) => (
               <Box mb="1" key={label.id}>
                 <LabelTag
@@ -408,127 +426,131 @@ function EventPopover(props: IProps) {
             {renderAddTagDropdown()}
           </Flex>
 
-          <Flex mt="2" alignItems="center">
-            <FiClock className="mr-2" size={'1.2em'} />
-            <Input
-              ml="1"
-              type="date"
-              size="sm"
-              maxWidth="15em"
-              border="0"
-              variant="flushed"
-              value={format(eventFields.start, 'YYYY-MM-DD')}
-              onChange={(e) => {
-                const m = moment(e.target.value, 'YYYY-MM-DD')
-                const duration = dates.diff(eventFields.end, eventFields.start, 'minutes')
-                const start = dates.merge(m.toDate(), eventFields.start)
-                const end = dates.add(start, duration, 'minutes')
+          <Flex mt="1" alignItems="top">
+            <Box mt="2.5" mr="2" color="gray.600">
+              <FiClock />
+            </Box>
 
-                const updatedFields = eventFields.allDay
-                  ? {
-                      ...eventFields,
-                      start,
-                      end,
-                      startDay: fullDayFormat(start),
-                      endDay: fullDayFormat(end),
-                    }
-                  : { ...eventFields, start, end }
+            <Flex direction="column">
+              <Input
+                type="date"
+                size="sm"
+                width="fit-content"
+                border="0"
+                variant="flushed"
+                value={format(eventFields.start, 'YYYY-MM-DD')}
+                onChange={(e) => {
+                  const m = moment(e.target.value, 'YYYY-MM-DD')
+                  const duration = dates.diff(eventFields.end, eventFields.start, 'minutes')
+                  const start = dates.merge(m.toDate(), eventFields.start)
+                  const end = dates.add(start, duration, 'minutes')
 
-                setEventFields(updatedFields)
-                setDisplay((prevState) => {
-                  return { ...prevState, selectedDate: start }
-                })
-                eventActions.updateEditingEvent(
-                  getUpdatedEvent(props.event, updatedFields, participants)
-                )
-              }}
-            />
-          </Flex>
+                  const updatedFields = eventFields.allDay
+                    ? {
+                        ...eventFields,
+                        start,
+                        end,
+                        startDay: fullDayFormat(start),
+                        endDay: fullDayFormat(end),
+                      }
+                    : { ...eventFields, start, end }
 
-          <Flex mt="2">
-            <Box w="1.7em" />
-            {eventFields.allDay && (
-              <TimeSelectFullDay
-                days={defaultDays}
-                startDate={eventFields.start}
-                onSelectNumDays={(days) => {
-                  const endDate = dates.add(eventFields.start, days, 'day')
-                  const updatedEventFields = {
-                    ...eventFields,
-                    end: endDate,
-                    endDay: fullDayFormat(endDate),
-                  }
-                  setEventFields(updatedEventFields)
+                  setEventFields(updatedFields)
+                  setDisplay((prevState) => {
+                    return { ...prevState, selectedDate: start }
+                  })
                   eventActions.updateEditingEvent(
-                    getUpdatedEvent(props.event, updatedEventFields, participants)
+                    getUpdatedEvent(props.event, updatedFields, participants)
                   )
                 }}
               />
-            )}
-            {!eventFields.allDay && (
-              <TimeSelect
-                start={eventFields.start}
-                end={eventFields.end}
-                onSelectStartDate={(date) => {
-                  setEventFields({ ...eventFields, start: date })
 
-                  eventActions.updateEditingEvent({ ...props.event, start: date })
-                }}
-                onSelectEndDate={(date) => {
-                  setEventFields({ ...eventFields, end: date })
-                  eventActions.updateEditingEvent({ ...props.event, end: date })
-                }}
-              />
-            )}
+              <Flex mt="1">
+                {eventFields.allDay && (
+                  <TimeSelectFullDay
+                    days={defaultDays}
+                    startDate={eventFields.start}
+                    onSelectNumDays={(days) => {
+                      const endDate = dates.add(eventFields.start, days, 'day')
+                      const updatedEventFields = {
+                        ...eventFields,
+                        end: endDate,
+                        endDay: fullDayFormat(endDate),
+                      }
+                      setEventFields(updatedEventFields)
+                      eventActions.updateEditingEvent(
+                        getUpdatedEvent(props.event, updatedEventFields, participants)
+                      )
+                    }}
+                  />
+                )}
+                {!eventFields.allDay && (
+                  <TimeSelect
+                    start={eventFields.start}
+                    end={eventFields.end}
+                    onSelectStartDate={(date) => {
+                      setEventFields({ ...eventFields, start: date })
 
-            <Checkbox
-              ml="1"
-              size="sm"
-              checked={eventFields.allDay}
-              colorScheme="primary"
-              onChange={(e) => {
-                let updatedFields
-                const isAllDay = e.target.checked
+                      eventActions.updateEditingEvent({ ...props.event, start: date })
+                    }}
+                    onSelectEndDate={(date) => {
+                      setEventFields({ ...eventFields, end: date })
+                      eventActions.updateEditingEvent({ ...props.event, end: date })
+                    }}
+                  />
+                )}
 
-                if (isAllDay) {
-                  const start = dates.startOf(eventFields.start, 'day')
-                  const end = dates.endOf(eventFields.start, 'day')
+                <Checkbox
+                  ml="1"
+                  size="sm"
+                  isChecked={eventFields.allDay}
+                  colorScheme="primary"
+                  onChange={(e) => {
+                    let updatedFields
+                    const isAllDay = e.target.checked
 
-                  updatedFields = {
-                    ...eventFields,
-                    allDay: isAllDay,
-                    start,
-                    end,
-                    startDay: fullDayFormat(start),
-                    endDay: fullDayFormat(end),
-                  }
-                } else {
-                  const start = dates.startOf(eventFields.start, 'day')
-                  const end = dates.add(start, 1, 'hours')
+                    if (isAllDay) {
+                      const start = dates.startOf(eventFields.start, 'day')
+                      const end = dates.endOf(eventFields.start, 'day')
 
-                  updatedFields = {
-                    ...eventFields,
-                    allDay: isAllDay,
-                    start,
-                    end,
-                    startDay: null,
-                    endDay: null,
-                  }
-                }
+                      updatedFields = {
+                        ...eventFields,
+                        allDay: isAllDay,
+                        start,
+                        end,
+                        startDay: fullDayFormat(start),
+                        endDay: fullDayFormat(end),
+                      }
+                    } else {
+                      const start = dates.startOf(eventFields.start, 'day')
+                      const end = dates.add(start, 1, 'hours')
 
-                setEventFields(updatedFields)
-                eventActions.updateEditingEvent(
-                  getUpdatedEvent(props.event, updatedFields, participants)
-                )
-              }}
-            >
-              All Day
-            </Checkbox>
+                      updatedFields = {
+                        ...eventFields,
+                        allDay: isAllDay,
+                        start,
+                        end,
+                        startDay: null,
+                        endDay: null,
+                      }
+                    }
+
+                    console.log(updatedFields)
+                    setEventFields(updatedFields)
+                    eventActions.updateEditingEvent(
+                      getUpdatedEvent(props.event, updatedFields, participants)
+                    )
+                  }}
+                >
+                  All Day
+                </Checkbox>
+              </Flex>
+            </Flex>
           </Flex>
 
           <Flex mt="2" alignItems={'center'}>
-            <Box mr="2">
-              <FiCalendar size={'1.2em'} />
+            <Box mr="2" color="gray.600">
+              <FiCalendar size="1em" />
             </Box>
             <SelectCalendar
               defaultCalendarId={eventFields.calendarId}
@@ -556,11 +578,11 @@ function EventPopover(props: IProps) {
             />
           </Flex>
 
-          <Flex mt="2">
-            <Flex mt="4">
-              <FiMail />
-            </Flex>
-            <Box ml="2.5" w="100%">
+          <Flex mt="2" alignItems={'top'}>
+            <Box color="gray.600" mr="2" mt="1">
+              <FiMail size="1em" />
+            </Box>
+            <Box w="100%">
               <ParticipantList
                 readonly={false}
                 calendar={getSelectedCalendar(eventFields.calendarId)}
@@ -572,7 +594,9 @@ function EventPopover(props: IProps) {
           </Flex>
 
           <Flex mt="2" alignItems={'top'}>
-            <FiAlignLeft className="mr-2" size={'1.2em'} />
+            <Box color="gray.700" mr="2" mt="1">
+              <FiAlignLeft />
+            </Box>
             <ContentEditable
               innerRef={contentEditableRef}
               className="cal-event-edit-description"
@@ -603,7 +627,13 @@ function EventPopover(props: IProps) {
                 Save
               </Button>
 
-              <Button ml="2" size="sm" fontWeight="normal" onClick={eventActions.cancelSelect}>
+              <Button
+                ml="2"
+                size="sm"
+                variant="ghost"
+                fontWeight="normal"
+                onClick={eventActions.cancelSelect}
+              >
                 Cancel
               </Button>
             </Flex>

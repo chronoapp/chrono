@@ -136,14 +136,14 @@ export default function EventEditFull(props: { event: Event; eventService: Event
 
         <ModalBody maxHeight="3xl">
           <Flex alignItems="center">
-            <span className="mr-2" style={{ width: '1.25em' }} />
+            <span className="mr-2" style={{ width: '1em' }} />
             <TaggableInput
               labels={labels}
               title={eventFields.title}
               wrapperCls={'has-width-100'}
               portalCls={'.cal-event-modal-container'}
               isHeading={false}
-              placeholder={Event.getDefaultTitle(eventFields.title)}
+              placeholder={'Event title'}
               handleChange={(title, labelIds: string[]) => {
                 const updatedLabels = addNewLabels(
                   labelState.labelsById,
@@ -167,7 +167,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
           </Flex>
 
           <Flex alignItems="center" flexWrap="wrap">
-            <Box w="1.25em" mr="2" />
+            <Box w="1em" mr="2" />
             {eventFields.labels.map((label) => (
               <div key={label.id} className="mt-2">
                 <LabelTag
@@ -184,11 +184,15 @@ export default function EventEditFull(props: { event: Event; eventService: Event
             ))}
           </Flex>
 
-          <Flex alignItems="center" mt="3" justifyContent="left">
-            <FiClock className="mr-2" size={'1.2em'} />
+          <Flex alignItems="center" mt="3" justifyContent="left" color="gray.700">
+            <FiClock className="mr-2" size={'1em'} />
             <Input
-              size="sm"
               type="date"
+              size="sm"
+              width="fit-content"
+              border="0"
+              variant="flushed"
+              mr="2"
               value={format(eventFields.start, 'YYYY-MM-DD')}
               onChange={(e) => {
                 const m = moment(e.target.value, 'YYYY-MM-DD')
@@ -325,8 +329,8 @@ export default function EventEditFull(props: { event: Event; eventService: Event
 
           <Flex mt="3">
             <Flex justifyContent="left">
-              <Box mt="1" mr="2">
-                <FiMail size={'1.25em'} />
+              <Box mt="1" mr="2" color="gray.700">
+                <FiMail size={'1em'} />
               </Box>
               <Box w="28em">
                 <ParticipantList
@@ -394,8 +398,8 @@ export default function EventEditFull(props: { event: Event; eventService: Event
           </Flex>
 
           <Flex alignItems="center" mt="3">
-            <Box mr="2">
-              <FiCalendar size={'1.25em'} />
+            <Box mr="2" color="gray.700">
+              <FiCalendar size={'1em'} />
             </Box>
             <SelectCalendar
               defaultCalendarId={eventFields.calendarId}
@@ -420,12 +424,13 @@ export default function EventEditFull(props: { event: Event; eventService: Event
             />
           </Flex>
 
-          <Flex alignItems="top" mt="3">
-            <FiAlignLeft className="mr-2" size={'1.25em'} />
+          <Flex alignItems="top" mt="3" color="gray.700">
+            <FiAlignLeft className="mr-2" size={'1em'} />
 
             <ContentEditable
               className="cal-event-edit-description"
-              html={eventFields.description || ''}
+              placeholder="Event description"
+              html={eventFields.description}
               onChange={(e) => setEventFields({ ...eventFields, description: e.target.value })}
               style={{ minHeight: '4em' }}
             />
