@@ -21,9 +21,13 @@ import {
   MenuList,
   MenuItem,
   MenuDivider,
+  RadioGroup,
+  Stack,
+  Radio,
+  Input,
+  Divider,
 } from '@chakra-ui/react'
 
-import clsx from 'clsx'
 import produce from 'immer'
 import { BsArrowRepeat } from 'react-icons/bs'
 import { FiChevronDown } from 'react-icons/fi'
@@ -69,7 +73,8 @@ export function getRecurrenceRules(rulestr: string, initialDate: Date): Partial<
 }
 
 /**
- * Cleans up options (cannot set both until and count) and returns a valid RRule.
+ * Cleans up options (cannot set both until and count) and returns a valid RRule
+ * depending on the end condition.
  */
 function getRRule(
   recurringOptions: Partial<Options>,
@@ -119,7 +124,6 @@ function getInitialEndCondition(recurrence: Partial<Options>): EndCondition {
  */
 function RecurringEventEditor(props: IProps) {
   const [modalEnabled, setModalEnabled] = useState<boolean>(false)
-  const [repeatingDropdownActive, setRepeatingDropdownActive] = useState<boolean>(false)
   const [recurringOptions, setRecurringOptions] = useState<Partial<Options>>(
     props.initialRulestr
       ? getRecurrenceRules(props.initialRulestr, props.initialDate)
@@ -142,25 +146,31 @@ function RecurringEventEditor(props: IProps) {
       if (recurringOptions?.freq == RRuleFreq.DAILY) {
         setRecurringOptions({
           ...recurringOptions,
-          until: dates.add(props.initialDate, 1, 'day'),
-          count: 1,
+          until: dates.add(props.initialDate, 30, 'day'),
+          count: 30,
           byweekday: [],
         })
       } else if (recurringOptions?.freq == RRuleFreq.WEEKLY) {
         const dayNo = parseInt(format(props.initialDate, 'd'))
         const rruleDay = new Weekday(dayNo)
-
         setRecurringOptions({
           ...recurringOptions,
-          until: dates.add(props.initialDate, 1, 'week'),
-          count: 1,
+          until: dates.add(props.initialDate, 13, 'week'),
+          count: 13,
           byweekday: [rruleDay],
         })
       } else if (recurringOptions?.freq == RRuleFreq.MONTHLY) {
         setRecurringOptions({
           ...recurringOptions,
-          until: dates.add(props.initialDate, 1, 'month'),
-          count: 1,
+          until: dates.add(props.initialDate, 12, 'month'),
+          count: 12,
+          byweekday: [],
+        })
+      } else if (recurringOptions?.freq == RRuleFreq.YEARLY) {
+        setRecurringOptions({
+          ...recurringOptions,
+          until: dates.add(props.initialDate, 5, 'year'),
+          count: 5,
           byweekday: [],
         })
       }
@@ -191,90 +201,56 @@ function RecurringEventEditor(props: IProps) {
     }
   }
 
-  function onEndConditionChange(e) {
-    const condition = e.target.value as EndCondition
-    setEndCondition(condition)
-  }
-
   /**
-   * Select when the recurring event ends. Could be a date or after a number of occurences.
+   * Renders the dropdown that allows the user to select the frequency of the recurring event.
    */
-  function renderEndSelection() {
+  function renderFrequencySelection() {
     return (
-      <Box mt="3" mb="2">
-        Ends on
-        <div className="control mt-2 is-flex is-flex-direction-column">
-          <label className="radio is-flex is-align-items-center">
-            <input
-              type="radio"
-              name="date"
-              checked={endCondition == EndCondition.Never}
-              onChange={onEndConditionChange}
-              value={EndCondition.Never}
-            />
-            <div className="ml-1">Never</div>
-          </label>
+      <Flex alignItems="center" className="control">
+        <Text size="sm" mr="1">
+          Repeat every
+        </Text>
 
-          <label className="radio is-flex is-align-items-center mt-1 ml-0">
-            <input
-              type="radio"
-              name="date"
-              checked={endCondition == EndCondition.ByEndDate}
-              onChange={onEndConditionChange}
-              value={EndCondition.ByEndDate}
-            />
-            <div className="ml-1">Date</div>
-            <input
-              className="input is-small ml-1"
-              type="date"
-              disabled={endCondition != EndCondition.ByEndDate}
-              value={recurringOptions?.until ? format(recurringOptions.until, 'YYYY-MM-DD') : ''}
-              onChange={(e) => {
-                setRecurringOptions({
-                  ...recurringOptions,
-                  until: localFullDate(e.target.value),
-                })
-              }}
-            ></input>
-          </label>
+        <NumberInput
+          size="xs"
+          min={1}
+          max={99}
+          value={recurringOptions?.interval}
+          w="20"
+          onChange={(val) => {
+            setRecurringOptions({ ...recurringOptions, interval: parseInt(val) })
+          }}
+        >
+          <NumberInputField />
+          <NumberInputStepper>
+            <NumberIncrementStepper />
+            <NumberDecrementStepper />
+          </NumberInputStepper>
+        </NumberInput>
 
-          <label className="radio is-flex is-align-items-center mt-1 ml-0">
-            <input
-              type="radio"
-              name="occurrences"
-              checked={endCondition == EndCondition.ByCount}
-              value={EndCondition.ByCount}
-              onChange={onEndConditionChange}
-            />
-            <div className="ml-1">After</div>
-
-            <Flex alignItems="center">
-              <NumberInput
-                size="sm"
-                ml="1"
-                min={1}
-                max={99}
-                value={recurringOptions?.count || ''}
-                isDisabled={endCondition != EndCondition.ByCount}
-                w="20"
-                onChange={(val) => {
-                  setRecurringOptions({
-                    ...recurringOptions,
-                    count: parseInt(val),
-                  })
-                }}
-              >
-                <NumberInputField />
-                <NumberInputStepper>
-                  <NumberIncrementStepper />
-                  <NumberDecrementStepper />
-                </NumberInputStepper>
-              </NumberInput>
-              <span className="ml-1">Occurrences</span>
-            </Flex>
-          </label>
-        </div>
-      </Box>
+        <Select
+          size="xs"
+          w="30"
+          ml="1"
+          defaultValue={recurringOptions?.freq?.toString()}
+          onChange={(e) => {
+            setRecurringOptions({
+              ...recurringOptions,
+              freq: parseInt(e.target.value) as RRuleFreq,
+            })
+          }}
+        >
+          {[RRuleFreq.DAILY, RRuleFreq.WEEKLY, RRuleFreq.MONTHLY, RRuleFreq.YEARLY].map(
+            (val, idx) => {
+              return (
+                <option key={idx} value={val}>
+                  {frequencyName(val)}
+                </option>
+              )
+            }
+          )}
+        </Select>
+      </Flex>
     )
   }
 
@@ -286,44 +262,141 @@ function RecurringEventEditor(props: IProps) {
       }
 
       return (
-        <Box mt="3" className="recurring-days">
-          {weekRange.map((day, idx) => {
-            const dayNumber = (parseInt(format(day, 'd')) + 6) % 7
-            const isSelected = weekdays.includes(dayNumber)
+        <Box mt="4">
+          <Text size="sm">On</Text>
 
-            return (
-              <span
-                key={idx}
-                className={clsx('recurring-day ml-1', isSelected && 'selected')}
-                onClick={() => {
-                  if (isSelected) {
-                    setRecurringOptions((options) =>
-                      produce(options, (draft) => {
-                        if (draft.byweekday && Array.isArray(draft.byweekday)) {
-                          draft.byweekday = draft.byweekday.filter(
-                            (day) => day['weekday'] !== dayNumber
-                          )
-                        }
-                      })
-                    )
-                  } else {
-                    setRecurringOptions((options) =>
-                      produce(options, (draft) => {
-                        if (draft.byweekday && Array.isArray(draft.byweekday)) {
-                          draft.byweekday.push(new Weekday(dayNumber))
-                        }
-                      })
-                    )
-                  }
-                }}
-              >
-                <span>{format(day, 'dd')[0]}</span>
-              </span>
-            )
-          })}
+          <Flex mt="1">
+            {weekRange.map((day, idx) => {
+              const dayNumber = (parseInt(format(day, 'd')) + 6) % 7
+              const isSelected = weekdays.includes(dayNumber)
+
+              return (
+                <Flex
+                  key={idx}
+                  justifyContent="center"
+                  alignItems={'center'}
+                  mt="1"
+                  ml="1"
+                  w="2em"
+                  h="2em"
+                  p="0.25em"
+                  cursor="pointer"
+                  borderRadius={'xl'}
+                  border="1px"
+                  borderStyle={'solid'}
+                  borderColor={'gray.200'}
+                  backgroundColor={isSelected ? 'blue.500' : 'white'}
+                  boxShadow="sm"
+                  onClick={() => {
+                    if (isSelected) {
+                      setRecurringOptions((options) =>
+                        produce(options, (draft) => {
+                          if (draft.byweekday && Array.isArray(draft.byweekday)) {
+                            draft.byweekday = draft.byweekday.filter(
+                              (day) => day['weekday'] !== dayNumber
+                            )
+                          }
+                        })
+                      )
+                    } else {
+                      setRecurringOptions((options) =>
+                        produce(options, (draft) => {
+                          if (draft.byweekday && Array.isArray(draft.byweekday)) {
+                            draft.byweekday.push(new Weekday(dayNumber))
+                          }
+                        })
+                      )
+                    }
+                  }}
+                >
+                  <Text fontSize="2xs" color={isSelected ? 'white' : 'gray.700'}>
+                    {format(day, 'dd')}
+                  </Text>
+                </Flex>
+              )
+            })}
+          </Flex>
         </Box>
       )
     }
+  }
+
+  /**
+   * Select when the recurring event ends. Could be a date or after a number of occurences.
+   */
+  function renderEndSelection() {
+    return (
+      <Box mt="4">
+        <Text size="sm">Ends</Text>
+
+        <RadioGroup
+          mt="1"
+          fontSize={'sm'}
+          onChange={(val) => {
+            setEndCondition(parseInt(val) as EndCondition)
+          }}
+          value={endCondition.toString()}
+        >
+          <Stack direction="column">
+            <Radio value={EndCondition.Never.toString()}>
+              <Text fontSize={'sm'}>Never</Text>
+            </Radio>
+
+            <Radio value={EndCondition.ByEndDate.toString()}>
+              <Flex alignItems={'center'}>
+                <Text fontSize={'sm'} mr="1">
+                  On
+                </Text>
+                <Input
+                  size="xs"
+                  type="date"
+                  isDisabled={endCondition != EndCondition.ByEndDate}
+                  value={format(recurringOptions?.until, 'YYYY-MM-DD')}
+                  onChange={(e) => {
+                    setRecurringOptions({
+                      ...recurringOptions,
+                      until: localFullDate(e.target.value),
+                    })
+                  }}
+                />
+              </Flex>
+            </Radio>
+
+            <Radio value={EndCondition.ByCount.toString()}>
+              <Flex alignItems="center">
+                <Text fontSize={'sm'} mr="1">
+                  After
+                </Text>
+                <NumberInput
+                  size="xs"
+                  ml="1"
+                  min={1}
+                  max={99}
+                  value={recurringOptions?.count || ''}
+                  isDisabled={endCondition != EndCondition.ByCount}
+                  w="20"
+                  onChange={(val) => {
+                    setRecurringOptions({
+                      ...recurringOptions,
+                      count: parseInt(val),
+                    })
+                  }}
+                >
+                  <NumberInputField />
+                  <NumberInputStepper>
+                    <NumberIncrementStepper />
+                    <NumberDecrementStepper />
+                  </NumberInputStepper>
+                </NumberInput>
+                <Text ml="1" size={'sm'}>
+                  times
+                </Text>
+              </Flex>
+            </Radio>
+          </Stack>
+        </RadioGroup>
+      </Box>
+    )
   }
 
   function renderRecurringEventModal() {
@@ -336,9 +409,10 @@ function RecurringEventEditor(props: IProps) {
         isOpen={modalEnabled}
         onClose={() => setModalEnabled(false)}
         blockScrollOnMount={false}
+        size="xs"
       >
         <ModalOverlay />
-        <ModalContent pt="4">
+        <ModalContent pt="4" fontSize={'sm'}>
           <ModalCloseButton />
           <ModalBody>
             {renderEditor()}
@@ -367,54 +441,13 @@ function RecurringEventEditor(props: IProps) {
   function renderEditor() {
     return (
       <Box>
-        <Flex alignItems="center" className="control">
-          <Text mr="1">Repeat every</Text>
-
-          <NumberInput
-            size="sm"
-            min={1}
-            max={99}
-            value={recurringOptions?.interval}
-            w="20"
-            onChange={(val) => {
-              setRecurringOptions({ ...recurringOptions, interval: parseInt(val) })
-            }}
-          >
-            <NumberInputField />
-            <NumberInputStepper>
-              <NumberIncrementStepper />
-              <NumberDecrementStepper />
-            </NumberInputStepper>
-          </NumberInput>
-
-          <Select
-            size="sm"
-            w="30"
-            ml="1"
-            defaultValue={recurringOptions?.freq?.toString()}
-            onChange={(e) => {
-              setRecurringOptions({
-                ...recurringOptions,
-                freq: parseInt(e.target.value) as RRuleFreq,
-              })
-            }}
-          >
-            {[RRuleFreq.DAILY, RRuleFreq.WEEKLY, RRuleFreq.MONTHLY, RRuleFreq.YEARLY].map(
-              (val, idx) => {
-                return (
-                  <option key={idx} value={val}>
-                    {frequencyName(val)}
-                  </option>
-                )
-              }
-            )}
-          </Select>
-        </Flex>
+        {renderFrequencySelection()}
         {renderRangeSelection()}
         {renderEndSelection()}
-
-        <hr />
-        <Box mt="3">{rule ? `Repeats ${rule.toText()}` : 'Does not repeat'}</Box>
+        <Divider mt="4" />
+        <Text mt="3" color={'gray.700'}>
+          {rule ? `Repeats ${rule.toText()}` : 'Does not repeat'}
+        </Text>
       </Box>
     )
   }
@@ -432,6 +465,7 @@ function RecurringEventEditor(props: IProps) {
           as={Button}
           rightIcon={<FiChevronDown />}
           fontWeight="normal"
+          variant="ghost"
         >
           {selectedRule ? `Repeats ${selectedRule.toText()}` : 'Does not repeat'}{' '}
         </MenuButton>
@@ -441,7 +475,6 @@ function RecurringEventEditor(props: IProps) {
             fontSize="sm"
             onClick={() => {
               setIsRecurring(false)
-              setRepeatingDropdownActive(false)
             }}
           >
             Never
@@ -454,7 +487,6 @@ function RecurringEventEditor(props: IProps) {
                 freq: RRuleFreq.DAILY,
                 interval: 1,
               })
-              setRepeatingDropdownActive(false)
             }}
           >
             Daily
@@ -468,7 +500,6 @@ function RecurringEventEditor(props: IProps) {
                 freq: RRuleFreq.WEEKLY,
                 interval: 1,
               })
-              setRepeatingDropdownActive(false)
             }}
           >
             Weekly
@@ -482,7 +513,6 @@ function RecurringEventEditor(props: IProps) {
                 freq: RRuleFreq.MONTHLY,
                 interval: 1,
               })
-              setRepeatingDropdownActive(false)
             }}
           >
             Monthly
@@ -492,7 +522,6 @@ function RecurringEventEditor(props: IProps) {
             fontSize="sm"
             onClick={() => {
               setIsRecurring(true)
-              setRepeatingDropdownActive(false)
               setModalEnabled(true)
             }}
           >
@@ -506,7 +535,7 @@ function RecurringEventEditor(props: IProps) {
   return (
     <>
       <div className="mt-2 is-flex is-align-items-center">
-        <BsArrowRepeat className="mr-2" size={'1.25em'} />
+        <BsArrowRepeat className="mr-2" size={'1em'} />
         {renderDropdownMenu()}
       </div>
       {renderRecurringEventModal()}

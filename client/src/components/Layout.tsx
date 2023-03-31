@@ -52,6 +52,7 @@ function NewEventButton() {
       mt="2"
       mb="2"
       size="sm"
+      flexShrink={0}
       onClick={() => {
         // TODO: Create the event on the current view if current day is not in view.
         document.dispatchEvent(new Event(GlobalEvent.scrollToEvent))
