@@ -114,11 +114,10 @@ function LabelTree(props: IProps) {
 
     if (!info.dropToGap) {
       // Dropped onto a TreeItem.
-      console.log(`dropped`)
       findLabelData(labelItems, dropKey, (item, idx, arr) => {
         const updatedLabel = {
           ...draggedFrom.label,
-          parent_id: parseInt(dropKey),
+          parent_id: dropKey,
           position: item.children.length,
         }
         tagUpdates[updatedLabel.id] = updatedLabel
