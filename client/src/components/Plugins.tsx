@@ -33,7 +33,7 @@ export default function Plugins() {
         onClose={() => {
           setViewPlugin(null)
         }}
-        size="5xl"
+        size="4xl"
       >
         <ModalOverlay />
 
