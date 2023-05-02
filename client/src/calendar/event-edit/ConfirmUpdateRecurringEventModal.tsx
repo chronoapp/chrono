@@ -32,6 +32,7 @@ interface IProps {
 
 function ConfirmUpdateRecurringEventModal(props: IProps) {
   const eventActions = useEventActions()
+  const initialFocusRef = React.useRef(null)
   const [radioValue, setRadioValue] = React.useState<EditRecurringAction>('SINGLE')
 
   const onClose = () => {
@@ -131,7 +132,13 @@ function ConfirmUpdateRecurringEventModal(props: IProps) {
   const updateThenClose = () => updateEvent().then(() => onClose())
 
   return (
-    <Modal size="sm" isOpen={true} onClose={onClose} blockScrollOnMount={false}>
+    <Modal
+      size="sm"
+      isOpen={true}
+      onClose={onClose}
+      blockScrollOnMount={false}
+      initialFocusRef={initialFocusRef}
+    >
       <ModalOverlay />
       <ModalContent top="20%">
         <ModalHeader pb="2" fontSize="md">
@@ -164,7 +171,7 @@ function ConfirmUpdateRecurringEventModal(props: IProps) {
           <Button colorScheme="gray" variant="ghost" size="sm" mr={4} onClick={onClose}>
             Cancel
           </Button>
-          <Button size="sm" onClick={updateThenClose}>
+          <Button size="sm" onClick={updateThenClose} ref={initialFocusRef}>
             Update
           </Button>
         </ModalFooter>
