@@ -25,7 +25,7 @@ import linkifyHtml from 'linkifyjs/html'
 import * as dates from '@/util/dates'
 import { MdClose } from 'react-icons/md'
 
-import { format, fullDayFormat } from '@/util/localizer'
+import { format, fullDayFormat, formatDuration } from '@/util/localizer'
 import { addNewLabels } from '@/calendar/utils/LabelUtils'
 
 import Event from '@/models/Event'
@@ -242,6 +242,11 @@ function EventPopover(props: IProps) {
               {format(eventFields.end, 'hh:mm')}
               {format(eventFields.end, 'A')}
             </Text>
+            {!props.event.all_day && (
+              <Text fontSize="xs" color="gray.500" pl="1">
+                {formatDuration(dates.diff(eventFields.end, eventFields.start, 'minutes'))}
+              </Text>
+            )}
           </Flex>
 
           <Flex mt="2" alignItems={'center'}>
