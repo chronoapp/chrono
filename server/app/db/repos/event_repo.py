@@ -351,7 +351,6 @@ class EventRepository:
 
         # We are overriding a parent recurring event.
         elif curEvent and curEvent.is_parent_recurring_event:
-
             changedFields = getChangedEventKVs(EventBaseVM.from_orm(curEvent), event)
             updatedEvent = createOrUpdateEvent(userCalendar, curEvent, event)
 

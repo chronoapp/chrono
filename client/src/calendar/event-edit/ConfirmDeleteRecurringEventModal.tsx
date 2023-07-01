@@ -22,6 +22,7 @@ import { EditRecurringAction } from '@/state/EventsState'
 function ConfirmDeleteRecurringEventModal(props: { event: Event; eventService: EventService }) {
   const eventActions = useEventActions()
   const [radioValue, setRadioValue] = React.useState<EditRecurringAction>('SINGLE')
+  const initialFocusRef = React.useRef(null)
 
   const onClose = () => {
     eventActions.hideConfirmDialog()
@@ -44,7 +45,13 @@ function ConfirmDeleteRecurringEventModal(props: { event: Event; eventService: E
   }
 
   return (
-    <Modal size="sm" isOpen={true} onClose={onClose} blockScrollOnMount={false}>
+    <Modal
+      size="sm"
+      isOpen={true}
+      onClose={onClose}
+      blockScrollOnMount={false}
+      initialFocusRef={initialFocusRef}
+    >
       <ModalOverlay />
       <ModalContent top="20%">
         <ModalHeader pb="2" fontSize="md">
@@ -77,7 +84,7 @@ function ConfirmDeleteRecurringEventModal(props: { event: Event; eventService: E
           <Button colorScheme="gray" variant="ghost" size="sm" mr={4} onClick={onClose}>
             Cancel
           </Button>
-          <Button size="sm" colorScheme={'red'} onClick={deleteEvent}>
+          <Button size="sm" colorScheme={'red'} onClick={deleteEvent} ref={initialFocusRef}>
             Delete
           </Button>
         </ModalFooter>
