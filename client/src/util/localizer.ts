@@ -52,6 +52,21 @@ export function formatDateTime(value: any) {
   return moment(value).format()
 }
 
+export function formatDuration(durationInMinutes: number) {
+  if (durationInMinutes < 60) {
+    return `${durationInMinutes}m`
+  }
+
+  const hours = Math.floor(durationInMinutes / 60)
+  const minutes = durationInMinutes % 60
+
+  if (minutes === 0) {
+    return `${hours}h`
+  }
+
+  return `${hours}h ${minutes}m`
+}
+
 /**
  * Date into a full day string (YYYY-MM-DD)
  */
