@@ -19,7 +19,7 @@ TOKEN_SECRET = os.environ.get('TOKEN_SECRET', '')
 DEBUG = os.environ.get('DEBUG', True)
 
 if uri := os.environ.get('DATABASE_URL'):
-    SQLALCHEMY_DATABASE_URI = uri
+    SQLALCHEMY_DATABASE_URI = uri.replace('postgres://', 'postgresql://')
 else:
     raise Exception('Database URI not found.')
 

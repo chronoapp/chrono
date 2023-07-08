@@ -70,7 +70,7 @@ def sync_cal_all(email: str, full: bool):
 @click.argument('email', type=click.STRING)
 @click.argument('cal', type=click.STRING)
 @click.option('--full', is_flag=True, default=False)
-def sync_cal_id(email: str, cal: str, full: bool):
+def sync_cal(email: str, cal: str, full: bool):
     from app.sync.google.calendar import syncCalendarEvents
     from sqlalchemy.orm import selectinload
 
