@@ -36,6 +36,8 @@ from app.sync.google.tasks import (
 )
 
 
+START_OF_TIME = datetime(1970, 1, 1, 0, 0, 0)
+
 router = APIRouter()
 
 
@@ -55,11 +57,7 @@ async def searchEvents(
     """
     try:
         eventRepo = EventRepository(session)
-        start = (
-            datetime.fromisoformat(start_date)
-            if start_date
-            else datetime.now() - timedelta(days=365)
-        )
+        start = datetime.fromisoformat(start_date) if start_date else START_OF_TIME
         end = datetime.fromisoformat(end_date) if end_date else datetime.now() + timedelta(days=365)
 
         if query:
