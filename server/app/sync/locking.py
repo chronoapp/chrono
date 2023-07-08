@@ -12,11 +12,11 @@ https://redislabs.com/ebook/part-2-core-concepts/chapter-6-application-component
 """
 
 
-redis_host = os.getenv('REDIS_URL', 'redis')
+redisUrl = os.getenv('REDIS_URL', 'redis://redis:6379')
 
 
 def getRedisConnection():
-    return redis.Redis(host=redis_host, port=6379, db=0)
+    return redis.Redis.from_url(redisUrl)
 
 
 def _lockkey(lockId: str):
