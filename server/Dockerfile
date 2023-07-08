@@ -20,4 +20,4 @@ COPY . /app
 
 ENV PYTHONPATH=/app
 
-CMD supervisord -n -c /etc/supervisord/supervisord.conf
+CMD [ "/var/scripts/entrypoint.sh" ] 
