@@ -1,6 +1,6 @@
 import moment from 'moment-timezone'
 
-import { getStartTimeOptions, getEndTimeOptions } from './TimeSelect'
+import { getStartTimeOptions, getEndTimeOptions } from './TimeRangeSelect'
 import * as dates from '../../util/dates'
 
 // DST transitions at 2:00 AM
