@@ -328,7 +328,7 @@ function EventPopover(props: IProps) {
                           return (
                             <InfoAlert
                               onClose={p.onClose}
-                              title={`${responseText} invite to ${props.event.title}`}
+                              title={`${responseText} invite to ${props.event.title_short}`}
                             />
                           )
                         },

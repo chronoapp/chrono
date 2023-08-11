@@ -67,12 +67,30 @@ function Calendar() {
   function onKeyPress(e) {
     e.preventDefault()
 
-    if (e.key === 'ArrowLeft') {
-      const prevWeek = dates.subtract(display.selectedDate, 1, 'week')
-      setDisplay((state) => ({ ...state, selectedDate: prevWeek }))
-    } else if (e.key === 'ArrowRight') {
-      const nextWeek = dates.add(display.selectedDate, 1, 'week')
-      setDisplay((state) => ({ ...state, selectedDate: nextWeek }))
+    if (display.view == 'Day') {
+      if (e.key === 'ArrowLeft') {
+        const prevDay = dates.subtract(display.selectedDate, 1, 'day')
+        setDisplay((state) => ({ ...state, selectedDate: prevDay }))
+      } else if (e.key === 'ArrowRight') {
+        const nextDay = dates.add(display.selectedDate, 1, 'day')
+        setDisplay((state) => ({ ...state, selectedDate: nextDay }))
+      }
+    } else if (display.view == 'Week' || display.view == 'WorkWeek') {
+      if (e.key === 'ArrowLeft') {
+        const prevWeek = dates.subtract(display.selectedDate, 1, 'week')
+        setDisplay((state) => ({ ...state, selectedDate: prevWeek }))
+      } else if (e.key === 'ArrowRight') {
+        const nextWeek = dates.add(display.selectedDate, 1, 'week')
+        setDisplay((state) => ({ ...state, selectedDate: nextWeek }))
+      }
+    } else if (display.view == 'Month') {
+      if (e.key === 'ArrowLeft') {
+        const prevMonth = dates.subtract(display.selectedDate, 1, 'month')
+        setDisplay((state) => ({ ...state, selectedDate: prevMonth }))
+      } else if (e.key === 'ArrowRight') {
+        const nextMonth = dates.add(display.selectedDate, 1, 'month')
+        setDisplay((state) => ({ ...state, selectedDate: nextMonth }))
+      }
     }
   }
 

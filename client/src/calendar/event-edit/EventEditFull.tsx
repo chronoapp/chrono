@@ -42,7 +42,7 @@ import { mergeParticipants } from './EventEditUtils'
 import SelectCalendar from './SelectCalendar'
 import RecurringEventEditor from './RecurringEventEditor'
 import TaggableInput from './TaggableInput'
-import TimeSelect from './TimeSelect'
+import TimeRangeSelect from './TimeRangeSelect'
 import TimeSelectFullDay from './TimeSelectFullDay'
 import { EventService } from './useEventService'
 import EventFields from './EventFields'
@@ -239,7 +239,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
             )}
 
             {!eventFields.allDay && (
-              <TimeSelect
+              <TimeRangeSelect
                 start={eventFields.start}
                 end={eventFields.end}
                 onSelectStartDate={(date) => {
