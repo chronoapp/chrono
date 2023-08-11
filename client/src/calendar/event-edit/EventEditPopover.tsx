@@ -45,7 +45,7 @@ import { displayState, editingEventState } from '@/state/EventsState'
 import { userState } from '@/state/UserState'
 
 import { mergeParticipants } from './EventEditUtils'
-import TimeSelect from './TimeSelect'
+import TimeRangeSelect from './TimeRangeSelect'
 import TimeSelectFullDay from './TimeSelectFullDay'
 import SelectCalendar from './SelectCalendar'
 import ContentEditable from '@/lib/ContentEditable'
@@ -492,7 +492,7 @@ function EventPopover(props: IProps) {
                   />
                 )}
                 {!eventFields.allDay && (
-                  <TimeSelect
+                  <TimeRangeSelect
                     start={eventFields.start}
                     end={eventFields.end}
                     onSelectStartDate={(date) => {

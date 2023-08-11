@@ -33,15 +33,24 @@ export default function MiniCalendar() {
   function renderHeader() {
     const range = getWeekRange(viewDate)
     return range.map((day, idx) => (
-      <Text key={idx} className="cal-mini-month-day" size="xs">
+      <Text key={idx} className="cal-mini-month-day" fontSize={'xs'} size="xs">
         {format(day, 'dd')}
       </Text>
     ))
   }
 
   function renderWeek(week: Date[], idx: number) {
+    const highlightWeek =
+      display.view === 'Week' && week.find((day) => dates.eq(day, display.selectedDate, 'day'))
+
     return (
-      <Flex key={idx} width={'100%'}>
+      <Flex
+        key={idx}
+        width={'100%'}
+        mt="1"
+        mb="1"
+        className={clsx(highlightWeek && 'cal-mini-week-selected')}
+      >
         {week.map((day: Date, idx) => {
           const label = format(day, 'D')
           const isToday = dates.eq(day, today, 'day')
@@ -56,10 +65,14 @@ export default function MiniCalendar() {
                   return { ...prev, selectedDate: day }
                 })
               }
+              mt="1px"
+              mb="1px"
+              fontSize={'xs'}
+              _hover={{ cursor: 'pointer', bg: 'gray.100' }}
+              backgroundColor={!isToday && isSelected ? 'gray.100' : undefined}
               className={clsx(
                 'cal-mini-month-day',
                 !isToday && isOffRange && 'has-text-grey',
-                !isToday && isSelected && 'cal-mini-month-day-selected',
                 isToday && 'cal-mini-month-today-bg'
               )}
             >
@@ -72,7 +85,7 @@ export default function MiniCalendar() {
   }
 
   return (
-    <Box mt="1" pr="1">
+    <Box mt="1" pr="2">
       <Flex pl="1" justifyContent="space-between">
         <Text>{format(viewDate, 'MMMM YYYY')}</Text>
         <Flex>
@@ -98,14 +111,14 @@ export default function MiniCalendar() {
         </Flex>
       </Flex>
       <Flex>{renderHeader()}</Flex>
-      <div
+      <Box
         className={clsx(
           animateDirection === 'FROM_BOTTOM' && 'animate-bottom',
           animateDirection === 'FROM_TOP' && 'animate-top'
         )}
       >
         {weeks.map(renderWeek)}
-      </div>
+      </Box>
     </Box>
   )
 }
