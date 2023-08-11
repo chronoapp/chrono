@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 EventStatus = Literal['deleted', 'tentative', 'active']
 
 # Title that has extra entities like Contact.
-TAGGED_INPUT_PATTERN = r'@\[([\w\d\.\-\_ \@]+)\]\(\[id:([\w]+)\]\[type:([\w]+)\]\)'
+TAGGED_INPUT_PATTERN = r'@\[([\w\d.\-\_\@ ]+)\]\(\[id:([\w-]+)\]\[type:([\w]+)\]\)'
 
 
 def stripParticipants(title: Optional[str]) -> Optional[str]:
