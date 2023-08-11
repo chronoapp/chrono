@@ -178,7 +178,7 @@ function Layout(props: Props) {
         {props.includeLeftPanel && (
           <Box className="left-section">
             {props.canCreateEvent && <NewEventButton />}
-            <Flex height="100%" flexDirection="column" pb="2">
+            <Flex height="100%" flexDirection="column" pb="2" overflowY={'auto'}>
               <MiniCalendar />
 
               <Flex
