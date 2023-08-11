@@ -65,6 +65,14 @@ function Calendar() {
   }, [handleRefreshEvent])
 
   function onKeyPress(e) {
+    if (
+      e.target.tagName === 'INPUT' ||
+      e.target.tagName === 'TEXTAREA' ||
+      e.target.tagName === 'DIV'
+    ) {
+      return
+    }
+
     e.preventDefault()
 
     if (display.view == 'Day') {
