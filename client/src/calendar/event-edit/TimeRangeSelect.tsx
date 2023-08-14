@@ -106,7 +106,13 @@ function DateSelector(props: DateSelectorProps) {
 
   return (
     <Box minW="16">
-      <Box {...getToggleButtonProps()} _hover={{ bg: 'gray.100' }} borderRadius={'sm'} p="0.5">
+      <Box
+        {...getToggleButtonProps()}
+        _hover={{ bg: 'gray.100' }}
+        borderRadius={'sm'}
+        p="0.5"
+        fontSize={'sm'}
+      >
         {format(props.date, 'h:mm A')}
       </Box>
       <Box
