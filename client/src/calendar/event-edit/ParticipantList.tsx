@@ -1,18 +1,18 @@
 import React from 'react'
 import produce from 'immer'
 
-import { FiX } from 'react-icons/fi'
+import { FiX, FiMoreHorizontal } from 'react-icons/fi'
 import {
   Accordion,
   AccordionIcon,
   AccordionItem,
   AccordionButton,
   AccordionPanel,
-  Button,
   Flex,
   Text,
   IconButton,
 } from '@chakra-ui/react'
+import { Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react'
 
 import Hoverable from '@/lib/Hoverable'
 
@@ -132,26 +132,29 @@ export default function ParticipantList(props: IProps) {
               >
                 <Participant calendar={props.calendar} participant={participant} />
 
-                {!props.readonly && isMouseInside && (
+                {!props.readonly && (
                   <Flex align="center">
-                    <Flex ml="2">
-                      <Button
-                        variant={'link'}
-                        size="xs"
-                        onClick={() => {
-                          const updatedParticipants = produce(props.participants, (draft) => {
-                            for (let p of draft) {
-                              if (p.equals(participant)) {
-                                p.is_optional = !p.is_optional
+                    <Menu>
+                      <MenuButton>
+                        <FiMoreHorizontal />
+                      </MenuButton>
+                      <MenuList pt={1} pb={1} maxWidth={10}>
+                        <MenuItem
+                          onClick={() => {
+                            const updatedParticipants = produce(props.participants, (draft) => {
+                              for (let p of draft) {
+                                if (p.equals(participant)) {
+                                  p.is_optional = !p.is_optional
+                                }
                               }
-                            }
-                          })
-                          props.onUpdateParticipants(updatedParticipants)
-                        }}
-                      >
-                        mark optional
-                      </Button>
-                    </Flex>
+                            })
+                            props.onUpdateParticipants(updatedParticipants)
+                          }}
+                        >
+                          {participant.is_optional ? 'Mark Required' : 'Mark Optional'}
+                        </MenuItem>
+                      </MenuList>
+                    </Menu>
 
                     <IconButton
                       alignSelf="right"
