@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from .calendar import Calendar
     from .label import Label
     from .event_participant import EventAttendee, EventCreator, EventOrganizer
+    from .conference_data import ConferenceData
 
 
 EventStatus = Literal['deleted', 'tentative', 'active']
@@ -162,6 +163,15 @@ class Event(Base):
     guests_can_modify: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     guests_can_invite_others: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     guests_can_see_other_guests: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    # Conferencing
+    conference_data: Mapped[Optional['ConferenceData']] = relationship(
+        "ConferenceData",
+        lazy='joined',
+        uselist=False,
+        back_populates="event",
+        cascade="all,delete",
+    )
 
     @property
     def title_short(self) -> Optional[str]:

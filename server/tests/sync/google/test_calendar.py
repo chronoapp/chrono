@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 
 from app.db.models import User, Event, Calendar, UserCalendar
+from app.db.models.conference_data import CommunicationMethod, ConferenceKeyType
+
 from app.sync.google.calendar import (
     syncEventsToDb,
     syncCreatedOrUpdatedGoogleEvent,
@@ -172,6 +174,9 @@ def test_syncEventsToDb_deleted(user, session: Session):
 
     events = eventRepo.getRecurringEvents(user, calendar.id, datetime.fromisoformat('2021-01-01'))
     assert len(events) == 0
+
+
+# ==================== Recurring Events ====================
 
 
 def test_syncEventsToDb_recurring(user, session: Session):
@@ -348,3 +353,95 @@ def test_syncEventsToDb_changedRecurringEvent(user: User, session: Session):
 
     assert recurringEvent2['id'] in googleEventIds
     assert parentEvent2['id'] in googleEventIds
+
+
+# ==================== Conferencing ====================
+
+
+def test_syncCreatedOrUpdatedGoogleEvent_conferenceGoogleHangout(
+    user, session: Session, eventRepo: EventRepository
+):
+    calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
+
+    eventItem = EVENT_ITEM_RECURRING.copy()
+    del eventItem['recurrence']
+
+    logoIconUri = "https://fonts.gstatic.com/s/i/productlogos/logo.png"
+    eventItem['conferenceData'] = {
+        "createRequest": {
+            "requestId": "cllb95m1t299q496ao2jbqwu3",
+            "conferenceSolutionKey": {"type": "hangoutsMeet"},
+            "status": {"statusCode": "success"},
+        },
+        "entryPoints": [
+            {
+                "entryPointType": "video",
+                "uri": "https://meet.google.com/orw-shac-hgg",
+                "label": "meet.google.com/orw-shac-hgg",
+            }
+        ],
+        "conferenceSolution": {
+            "key": {"type": "hangoutsMeet"},
+            "name": "Google Meet",
+            "iconUri": logoIconUri,
+        },
+        "conferenceId": "orw-shac-hgg",
+    }
+
+    event = syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
+    assert event.conference_data is not None
+    assert event.conference_data.conference_id == 'orw-shac-hgg'
+    assert event.conference_data.conference_solution_name == 'Google Meet'
+    assert event.conference_data.key_type == ConferenceKeyType.HANGOUTS_MEET
+    assert event.conference_data.icon_uri == logoIconUri
+
+    assert len(event.conference_data.entry_points) == 1
+    entrypoint = event.conference_data.entry_points[0]
+    assert entrypoint.entry_point_type == CommunicationMethod.VIDEO
+    assert entrypoint.uri == 'https://meet.google.com/orw-shac-hgg'
+    assert entrypoint.label == 'meet.google.com/orw-shac-hgg'
+
+
+def test_syncCreatedOrUpdatedGoogleEvent_zoom(user, session: Session, eventRepo: EventRepository):
+    calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
+
+    eventItem = EVENT_ITEM_RECURRING.copy()
+    del eventItem['recurrence']
+
+    logoIconUri = "https://lh3.googleusercontent.com/abcabc"
+    videoLabel = 'us04web.zoom.us/j/123123?pwd=txD665'
+    videoUri = f'https://{videoLabel}'
+
+    eventItem["conferenceData"] = {
+        "entryPoints": [
+            {
+                "entryPointType": "video",
+                "uri": videoUri,
+                "label": videoLabel,
+                "meetingCode": "123123",
+                "password": "txD665",
+            }
+        ],
+        "conferenceSolution": {
+            "key": {"type": "addOn"},
+            "name": "Zoom meeting",
+            "iconUri": logoIconUri,
+        },
+        "conferenceId": "123123",
+    }
+
+    event = syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
+
+    assert event.conference_data is not None
+    assert event.conference_data.conference_id == '123123'
+    assert event.conference_data.conference_solution_name == 'Zoom meeting'
+    assert event.conference_data.key_type == ConferenceKeyType.ADD_ON
+    assert event.conference_data.icon_uri == logoIconUri
+
+    assert len(event.conference_data.entry_points) == 1
+    entrypoint = event.conference_data.entry_points[0]
+    assert entrypoint.entry_point_type == CommunicationMethod.VIDEO
+    assert entrypoint.uri == videoUri
+    assert entrypoint.label == videoLabel
+    assert entrypoint.meeting_code == '123123'
+    assert entrypoint.password == 'txD665'
