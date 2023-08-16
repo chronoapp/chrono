@@ -12,6 +12,7 @@ from app.db.models.event import EventStatus
 from app.db.models.event_participant import ResponseStatus
 from app.db.models.conference_data import (
     ConferenceData,
+    ConferenceSolution,
     EntryPoint,
     CommunicationMethod,
     ConferenceKeyType,
@@ -44,7 +45,7 @@ class EventParticipantVM(BaseModel):
         orm_mode = True
 
 
-class EntryPointBase(BaseModel):
+class EntryPointBaseVM(BaseModel):
     entry_point_type: CommunicationMethod
     uri: str
     label: str | None
@@ -55,24 +56,38 @@ class EntryPointBase(BaseModel):
         orm_mode = True
 
 
-class ConferenceDataBase(BaseModel):
-    conference_id: str
-    conference_solution_name: str
+class CreateConferenceRequestVM(BaseModel):
+    conference_solution_key: ConferenceKeyType
+
+
+class ConferenceSolutionVM(BaseModel):
+    name: str
     key_type: ConferenceKeyType
     icon_uri: str
-
-    # Linking EntryPoint
-    entry_points: List[EntryPointBase]
 
     class Config:
         orm_mode = True
 
 
-class EntryPointVM(EntryPointBase):
+class ConferenceDataBaseVM(BaseModel):
+    conference_id: str | None
+    conference_solution: ConferenceSolutionVM | None
+
+    # request to create conference
+    create_request: CreateConferenceRequestVM | None
+
+    # Linking EntryPoint
+    entry_points: List[EntryPointBaseVM]
+
+    class Config:
+        orm_mode = True
+
+
+class EntryPointVM(EntryPointBaseVM):
     id: uuid.UUID
 
 
-class ConferenceDataVM(ConferenceDataBase):
+class ConferenceDataVM(ConferenceDataBaseVM):
     id: uuid.UUID
 
 
@@ -109,7 +124,7 @@ class EventBaseVM(BaseModel):
     guests_can_invite_others: bool = True
     guests_can_see_other_guests: bool = True
 
-    conference_data: ConferenceDataBase | None
+    conference_data: ConferenceDataBaseVM | None
 
     # Read only fields.
     original_start: Optional[datetime]
@@ -223,12 +238,18 @@ def createOrUpdateEvent(
         organizer = EventOrganizer(userCalendar.email, userCalendar.summary, None)
 
     conferenceData = None
-    if conferenceDataVM := eventVM.conference_data:
+
+    conferenceDataVM = eventVM.conference_data
+    if conferenceDataVM and conferenceDataVM.conference_id:
         conferenceData = ConferenceData(
-            conferenceDataVM.conference_solution_name,
-            conferenceDataVM.key_type,
-            conferenceDataVM.icon_uri,
             conferenceDataVM.conference_id,
+            ConferenceSolution(
+                conferenceDataVM.conference_solution.name,
+                conferenceDataVM.conference_solution.key_type,
+                conferenceDataVM.conference_solution.icon_uri,
+            )
+            if conferenceDataVM.conference_solution
+            else None,
         )
         conferenceData.entry_points = [
             EntryPoint(

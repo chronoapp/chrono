@@ -17,8 +17,9 @@ from app.db.repos.contact_repo import ContactRepository
 from app.db.repos.event_repo import EventRepository
 from app.db.repos.event_utils import (
     EventBaseVM,
-    EntryPointBase,
-    ConferenceDataBase,
+    EntryPointBaseVM,
+    ConferenceDataBaseVM,
+    ConferenceSolutionVM,
     EventParticipantVM,
     createOrUpdateEvent,
     getRecurringEventId,
@@ -472,7 +473,7 @@ def convertStatus(status: str):
         return 'active'
 
 
-def conferenceDataToVM(conferenceData: Any) -> ConferenceDataBase | None:
+def conferenceDataToVM(conferenceData: Any) -> ConferenceDataBaseVM | None:
     """Parses conference data from Google to our ViewModel."""
     if not conferenceData:
         return None
@@ -484,7 +485,7 @@ def conferenceDataToVM(conferenceData: Any) -> ConferenceDataBase | None:
         entrypoints = conferenceData.get('entryPoints')
         if entrypoints:
             entryPoints = [
-                EntryPointBase(
+                EntryPointBaseVM(
                     id=entrypoint.get('id'),
                     entry_point_type=CommunicationMethod(entrypoint.get('entryPointType')),
                     uri=entrypoint.get('uri'),
@@ -495,15 +496,19 @@ def conferenceDataToVM(conferenceData: Any) -> ConferenceDataBase | None:
                 for entrypoint in entrypoints
             ]
 
+        conferenceSolutionVM = None
         if conferenceSolution:
             conferenceType = conferenceSolution.get('key', {}).get('type')
             conferenceName = conferenceSolution.get('name')
             conferenceIconUri = conferenceSolution.get('iconUri')
+            conferenceSolutionVM = ConferenceSolutionVM(
+                name=conferenceName,
+                key_type=ConferenceKeyType(conferenceType),
+                icon_uri=conferenceIconUri,
+            )
 
-        conferenceDataVM = ConferenceDataBase(
-            conference_solution_name=conferenceName,
-            key_type=ConferenceKeyType(conferenceType),
-            icon_uri=conferenceIconUri,
+        conferenceDataVM = ConferenceDataBaseVM(
+            conference_solution=conferenceSolutionVM,
             conference_id=conferenceId,
             entry_points=entryPoints,
         )
