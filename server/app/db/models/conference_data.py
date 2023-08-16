@@ -1,17 +1,28 @@
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
+from enum import Enum
 
-from sqlalchemy import (
-    String,
-    ForeignKey,
-    UUID,
-)
+from sqlalchemy import String, ForeignKey, UUID, Enum as SQLAlchemyEnum
 from sqlalchemy.orm import relationship, mapped_column, backref, Mapped
 
 from app.db.base_class import Base
 
 if TYPE_CHECKING:
     from .event import Event
+
+
+class CommunicationMethod(Enum):
+    VIDEO = "video"
+    PHONE = "phone"
+    SIP = "sip"
+    MORE = "more"
+
+
+class ConferenceKeyType(Enum):
+    EVENT_HANGOUT = "eventHangout"
+    EVENT_NAMED_HANGOUT = "eventNamedHangout"
+    HANGOUTS_MEET = "hangoutsMeet"
+    ADD_ON = "addOn"
 
 
 class ConferenceData(Base):
@@ -22,12 +33,6 @@ class ConferenceData(Base):
     __tablename__ = "conference_data"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
-    conference_solution_name: Mapped[str] = mapped_column(String)
-
-    key_type: Mapped[str] = mapped_column(
-        String
-    )  # eventHangout / eventNamedHangout / hangoutsMeet / addOn
-    icon_uri: Mapped[str] = mapped_column(String)
     conference_id: Mapped[str] = mapped_column(String)
 
     # One-to-one relationship fields
@@ -42,14 +47,45 @@ class ConferenceData(Base):
         backref=backref('conference_data', lazy='joined'),
     )
 
-    def __init__(self, conferenceSolutionName: str, keyType: str, iconUri: str, conferenceId: str):
-        self.conference_solution_name = conferenceSolutionName
-        self.key_type = keyType
-        self.icon_uri = iconUri
+    conference_solution: Mapped[Optional['ConferenceSolution']] = relationship(
+        "ConferenceSolution",
+        lazy='joined',
+        uselist=False,
+        cascade="all,delete",
+        backref=backref('conference_data', lazy='joined'),
+    )
+
+    def __init__(
+        self,
+        conferenceId: str,
+        conferenceSolution: Optional['ConferenceSolution'],
+    ):
         self.conference_id = conferenceId
+        self.conference_solution = conferenceSolution
 
     def __repr__(self) -> str:
-        return f"<ConferenceData {self.conference_solution_name} entrypoints=[{self.entry_points}]>"
+        return f"<ConferenceData {self.conference_id} entrypoints=[{self.entry_points}]>"
+
+
+class ConferenceSolution(Base):
+    """Conference solution like Google Meet or Zoom."""
+
+    __tablename__ = "conference_solutions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
+    conference_data_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('conference_data.id'))
+
+    name: Mapped[str] = mapped_column(String)
+    key_type: Mapped[ConferenceKeyType] = mapped_column(SQLAlchemyEnum(ConferenceKeyType))
+    icon_uri: Mapped[str] = mapped_column(String)
+
+    def __init__(self, name: str, keyType: ConferenceKeyType, iconUri: str):
+        self.name = name
+        self.key_type = keyType
+        self.icon_uri = iconUri
+
+    def __repr__(self) -> str:
+        return f"<ConferenceSolution {self.name}>"
 
 
 class EntryPoint(Base):
@@ -59,9 +95,11 @@ class EntryPoint(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
 
-    entry_point_type: Mapped[str] = mapped_column(String)
+    entry_point_type: Mapped[CommunicationMethod] = mapped_column(
+        SQLAlchemyEnum(CommunicationMethod)
+    )
     uri: Mapped[str] = mapped_column(String)
-    label: Mapped[str] = mapped_column(String)
+    label: Mapped[str | None] = mapped_column(String, nullable=True)
     meeting_code: Mapped[str | None] = mapped_column(String, nullable=True)
     password: Mapped[str | None] = mapped_column(String, nullable=True)
 
@@ -70,9 +108,9 @@ class EntryPoint(Base):
 
     def __init__(
         self,
-        entryPointType: str,
+        entryPointType: CommunicationMethod,
         uri: str,
-        label: str,
+        label: str | None,
         meetingCode: str | None,
         password: str | None,
     ):

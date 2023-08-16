@@ -391,9 +391,9 @@ def test_syncCreatedOrUpdatedGoogleEvent_conferenceGoogleHangout(
     event = syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
     assert event.conference_data is not None
     assert event.conference_data.conference_id == 'orw-shac-hgg'
-    assert event.conference_data.conference_solution_name == 'Google Meet'
-    assert event.conference_data.key_type == ConferenceKeyType.HANGOUTS_MEET
-    assert event.conference_data.icon_uri == logoIconUri
+    assert event.conference_data.conference_solution.name == 'Google Meet'
+    assert event.conference_data.conference_solution.key_type == ConferenceKeyType.HANGOUTS_MEET
+    assert event.conference_data.conference_solution.icon_uri == logoIconUri
 
     assert len(event.conference_data.entry_points) == 1
     entrypoint = event.conference_data.entry_points[0]
@@ -434,9 +434,9 @@ def test_syncCreatedOrUpdatedGoogleEvent_zoom(user, session: Session, eventRepo:
 
     assert event.conference_data is not None
     assert event.conference_data.conference_id == '123123'
-    assert event.conference_data.conference_solution_name == 'Zoom meeting'
-    assert event.conference_data.key_type == ConferenceKeyType.ADD_ON
-    assert event.conference_data.icon_uri == logoIconUri
+    assert event.conference_data.conference_solution.name == 'Zoom meeting'
+    assert event.conference_data.conference_solution.key_type == ConferenceKeyType.ADD_ON
+    assert event.conference_data.conference_solution.icon_uri == logoIconUri
 
     assert len(event.conference_data.entry_points) == 1
     entrypoint = event.conference_data.entry_points[0]

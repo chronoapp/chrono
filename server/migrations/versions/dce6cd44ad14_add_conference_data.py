@@ -1,8 +1,8 @@
 """add conference data
 
-Revision ID: bc3480144b47
+Revision ID: dce6cd44ad14
 Revises: 089567d0f920
-Create Date: 2023-08-16 03:09:33.936651
+Create Date: 2023-08-16 23:17:29.982528
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'bc3480144b47'
+revision = 'dce6cd44ad14'
 down_revision = '089567d0f920'
 branch_labels = None
 depends_on = None
@@ -20,7 +20,19 @@ def upgrade():
     op.create_table(
         'conference_data',
         sa.Column('id', sa.UUID(), nullable=False),
-        sa.Column('conference_solution_name', sa.String(), nullable=False),
+        sa.Column('conference_id', sa.String(), nullable=False),
+        sa.Column('event_uid', sa.UUID(), nullable=True),
+        sa.ForeignKeyConstraint(
+            ['event_uid'],
+            ['event.uid'],
+        ),
+        sa.PrimaryKeyConstraint('id'),
+    )
+    op.create_table(
+        'conference_solutions',
+        sa.Column('id', sa.UUID(), nullable=False),
+        sa.Column('conference_data_id', sa.UUID(), nullable=False),
+        sa.Column('name', sa.String(), nullable=False),
         sa.Column(
             'key_type',
             sa.Enum(
@@ -33,11 +45,9 @@ def upgrade():
             nullable=False,
         ),
         sa.Column('icon_uri', sa.String(), nullable=False),
-        sa.Column('conference_id', sa.String(), nullable=False),
-        sa.Column('event_uid', sa.UUID(), nullable=True),
         sa.ForeignKeyConstraint(
-            ['event_uid'],
-            ['event.uid'],
+            ['conference_data_id'],
+            ['conference_data.id'],
         ),
         sa.PrimaryKeyConstraint('id'),
     )
@@ -61,17 +71,18 @@ def upgrade():
         sa.PrimaryKeyConstraint('id'),
     )
     op.create_foreign_key(
-        'event_creator_fk', 'event', 'event_participant', ['creator_id'], ['id'], use_alter=True
+        'event_organizer_fk', 'event', 'event_participant', ['organizer_id'], ['id'], use_alter=True
     )
     op.create_foreign_key(
-        'event_organizer_fk', 'event', 'event_participant', ['organizer_id'], ['id'], use_alter=True
+        'event_creator_fk', 'event', 'event_participant', ['creator_id'], ['id'], use_alter=True
     )
 
 
 def downgrade():
-    op.drop_constraint('event_organizer_fk', 'event', type_='foreignkey')
     op.drop_constraint('event_creator_fk', 'event', type_='foreignkey')
+    op.drop_constraint('event_organizer_fk', 'event', type_='foreignkey')
     op.drop_table('entry_points')
+    op.drop_table('conference_solutions')
     op.drop_table('conference_data')
     op.execute('DROP TYPE conferencekeytype')
     op.execute('DROP TYPE communicationmethod')
