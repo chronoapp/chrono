@@ -48,6 +48,7 @@ BASE_EVENT_STATEMENT = (
     .options(selectinload(Event.creator))
     .options(selectinload(Event.organizer))
     .options(selectinload(Event.labels))
+    .options(selectinload(Event.conference_data))
 )
 
 

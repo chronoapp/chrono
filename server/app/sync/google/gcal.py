@@ -93,6 +93,7 @@ def createGoogleEvent(
             calendarId=googleCalendarId,
             body=eventBody,
             sendUpdates=sendUpdates,
+            conferenceDataVersion=1,
         )
         .execute()
     )

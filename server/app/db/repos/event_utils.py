@@ -10,6 +10,12 @@ from app.api.endpoints.labels import LabelInDbVM
 from app.db.models import Event, UserCalendar, EventCreator, EventOrganizer
 from app.db.models.event import EventStatus
 from app.db.models.event_participant import ResponseStatus
+from app.db.models.conference_data import (
+    ConferenceData,
+    EntryPoint,
+    CommunicationMethod,
+    ConferenceKeyType,
+)
 
 """Event models and helpers to manage Recurring Events.
 """
@@ -36,6 +42,38 @@ class EventParticipantVM(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class EntryPointBase(BaseModel):
+    entry_point_type: CommunicationMethod
+    uri: str
+    label: str | None
+    meeting_code: str | None
+    password: str | None
+
+    class Config:
+        orm_mode = True
+
+
+class ConferenceDataBase(BaseModel):
+    conference_id: str
+    conference_solution_name: str
+    key_type: ConferenceKeyType
+    icon_uri: str
+
+    # Linking EntryPoint
+    entry_points: List[EntryPointBase]
+
+    class Config:
+        orm_mode = True
+
+
+class EntryPointVM(EntryPointBase):
+    id: uuid.UUID
+
+
+class ConferenceDataVM(ConferenceDataBase):
+    id: uuid.UUID
 
 
 class EventBaseVM(BaseModel):
@@ -70,6 +108,8 @@ class EventBaseVM(BaseModel):
     guests_can_modify: bool = False
     guests_can_invite_others: bool = True
     guests_can_see_other_guests: bool = True
+
+    conference_data: ConferenceDataBase | None
 
     # Read only fields.
     original_start: Optional[datetime]
@@ -182,6 +222,25 @@ def createOrUpdateEvent(
     else:
         organizer = EventOrganizer(userCalendar.email, userCalendar.summary, None)
 
+    conferenceData = None
+    if conferenceDataVM := eventVM.conference_data:
+        conferenceData = ConferenceData(
+            conferenceDataVM.conference_solution_name,
+            conferenceDataVM.key_type,
+            conferenceDataVM.icon_uri,
+            conferenceDataVM.conference_id,
+        )
+        conferenceData.entry_points = [
+            EntryPoint(
+                entryPointVM.entry_point_type,
+                entryPointVM.uri,
+                entryPointVM.label,
+                entryPointVM.meeting_code,
+                entryPointVM.password,
+            )
+            for entryPointVM in conferenceDataVM.entry_points
+        ]
+
     if not eventDb:
         event = Event(
             googleId,
@@ -201,11 +260,13 @@ def createOrUpdateEvent(
             eventVM.guests_can_modify,
             eventVM.guests_can_invite_others,
             eventVM.guests_can_see_other_guests,
+            conferenceData,
             status=eventVM.status,
             recurringEventId=eventVM.recurring_event_id,
             recurringEventCalendarId=userCalendar.id,
             overrideId=overrideId,
         )
+
         userCalendar.calendar.events.append(event)
 
         return event
@@ -224,6 +285,7 @@ def createOrUpdateEvent(
         eventDb.guests_can_modify = eventVM.guests_can_modify
         eventDb.guests_can_invite_others = eventVM.guests_can_invite_others
         eventDb.guests_can_see_other_guests = eventVM.guests_can_see_other_guests
+        eventDb.conference_data = conferenceData
 
         if not eventDb.creator:
             eventDb.creator = creator

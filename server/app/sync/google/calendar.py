@@ -9,13 +9,16 @@ from zoneinfo import ZoneInfo
 from dateutil.rrule import rrulestr
 from googleapiclient.errors import HttpError
 from app.db.models.access_control import AccessControlRule
-
+from app.db.models.conference_data import CommunicationMethod, ConferenceKeyType
 from app.db.models import User, Event, LabelRule, UserCalendar, Calendar, Webhook, EventAttendee
+
 from app.core.logger import logger
 from app.db.repos.contact_repo import ContactRepository
 from app.db.repos.event_repo import EventRepository
 from app.db.repos.event_utils import (
     EventBaseVM,
+    EntryPointBase,
+    ConferenceDataBase,
     EventParticipantVM,
     createOrUpdateEvent,
     getRecurringEventId,
@@ -323,6 +326,7 @@ def syncDeletedEvent(
             None,
             None,
             None,
+            None,
             status=convertStatus(eventItem['status']),
         )
         event.id = recurringEventId
@@ -347,6 +351,7 @@ def getOrCreateBaseRecurringEvent(
     if not baseRecurringEvent:
         baseRecurringEvent = Event(
             googleRecurringEventId,
+            None,
             None,
             None,
             None,
@@ -467,8 +472,49 @@ def convertStatus(status: str):
         return 'active'
 
 
+def conferenceDataToVM(conferenceData: Any) -> ConferenceDataBase | None:
+    """Parses conference data from Google to our ViewModel."""
+    if not conferenceData:
+        return None
+
+    conferenceDataVM = None
+    if conferenceData:
+        conferenceSolution = conferenceData.get('conferenceSolution')
+        conferenceId = conferenceData.get('conferenceId')
+        entrypoints = conferenceData.get('entryPoints')
+        if entrypoints:
+            entryPoints = [
+                EntryPointBase(
+                    id=entrypoint.get('id'),
+                    entry_point_type=CommunicationMethod(entrypoint.get('entryPointType')),
+                    uri=entrypoint.get('uri'),
+                    label=entrypoint.get('label'),
+                    meeting_code=entrypoint.get('meetingCode'),
+                    password=entrypoint.get('password'),
+                )
+                for entrypoint in entrypoints
+            ]
+
+        if conferenceSolution:
+            conferenceType = conferenceSolution.get('key', {}).get('type')
+            conferenceName = conferenceSolution.get('name')
+            conferenceIconUri = conferenceSolution.get('iconUri')
+
+        conferenceDataVM = ConferenceDataBase(
+            conference_solution_name=conferenceName,
+            key_type=ConferenceKeyType(conferenceType),
+            icon_uri=conferenceIconUri,
+            conference_id=conferenceId,
+            entry_points=entryPoints,
+        )
+
+    return conferenceDataVM
+
+
 def googleEventToEventVM(calendarId: uuid.UUID, eventItem: Dict[str, Any]) -> GoogleEventVM:
-    """Converts the google event to our ViewModel."""
+    """Parses the google event to our ViewModel.
+    TODO: Use Pydantic to validate and structure the data from google.
+    """
 
     eventId = eventItem.get('id')
 
@@ -486,6 +532,9 @@ def googleEventToEventVM(calendarId: uuid.UUID, eventItem: Dict[str, Any]) -> Go
     guestsCanModify = eventItem.get('guestsCanModify', False)
     guestsCanInviteOthers = eventItem.get('guestsCanInviteOthers', True)
     guestsCanSeeOtherGuests = eventItem.get('guestsCanSeeOtherGuests', True)
+
+    # Conferencing data
+    conferenceDataVM = conferenceDataToVM(eventItem.get('conferenceData'))
 
     originalStartTime = eventItem.get('originalStartTime')
     originalStartDateTime = None
@@ -543,5 +592,6 @@ def googleEventToEventVM(calendarId: uuid.UUID, eventItem: Dict[str, Any]) -> Go
         guests_can_modify=guestsCanModify,
         guests_can_invite_others=guestsCanInviteOthers,
         guests_can_see_other_guests=guestsCanSeeOtherGuests,
+        conference_data=conferenceDataVM,
     )
     return eventVM
