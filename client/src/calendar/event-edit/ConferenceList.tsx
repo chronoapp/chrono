@@ -34,7 +34,8 @@ export interface ConferenceItem {
 interface IProps {
   originalConferenceData: ConferenceData | null
   conferenceData: ConferenceData | null
-  onSelectConference: (conferenceData: ConferenceData | null) => void
+  readonly: boolean
+  onSelectConference?: (conferenceData: ConferenceData | null) => void
 }
 
 const defaultConferenceItem: ConferenceItem = {
@@ -88,54 +89,56 @@ function conferenceList(props: IProps) {
 
   return (
     <Flex direction={'column'}>
-      <Box>
-        <Menu>
-          {selectedConference ? (
-            <MenuButton as={Button}>
-              <Flex>
-                <Image boxSize="1em" src={selectedConference.logo} mr="0.5em" />
-                <span>{selectedConference.title}</span>
-              </Flex>
-            </MenuButton>
-          ) : (
-            <MenuButton as={Button} rightIcon={<FiChevronDown />}>
-              add conferencing
-            </MenuButton>
+      {!props.readonly && (
+        <Box>
+          <Menu>
+            {selectedConference ? (
+              <MenuButton as={Button}>
+                <Flex>
+                  <Image boxSize="1em" src={selectedConference.logo} mr="0.5em" />
+                  <span>{selectedConference.title}</span>
+                </Flex>
+              </MenuButton>
+            ) : (
+              <MenuButton as={Button} rightIcon={<FiChevronDown />}>
+                add conferencing
+              </MenuButton>
+            )}
+
+            <MenuList>
+              {conferenceList.map((conference, idx) => (
+                <MenuItem
+                  fontSize="sm"
+                  key={idx}
+                  onClick={() => {
+                    if (conference.conferenceData) {
+                      props.onSelectConference!(conference.conferenceData)
+                    } else if (conference.type === 'hangoutsMeet') {
+                      props.onSelectConference!(ConferenceData.newHangoutsMeet())
+                    }
+                  }}
+                >
+                  <Image boxSize="1em" src={conference.logo} mr="0.5em" />
+                  <span>{conference.title}</span>
+                </MenuItem>
+              ))}
+            </MenuList>
+          </Menu>
+
+          {selectedConference && (
+            <IconButton
+              variant={'ghost'}
+              ml="0.5"
+              size="sm"
+              aria-label="Remove video conferencing"
+              onClick={() => {
+                props.onSelectConference!(null)
+              }}
+              icon={<FiX />}
+            />
           )}
-
-          <MenuList>
-            {conferenceList.map((conference, idx) => (
-              <MenuItem
-                fontSize="sm"
-                key={idx}
-                onClick={() => {
-                  if (conference.conferenceData) {
-                    props.onSelectConference(conference.conferenceData)
-                  } else if (conference.type === 'hangoutsMeet') {
-                    props.onSelectConference(ConferenceData.newHangoutsMeet())
-                  }
-                }}
-              >
-                <Image boxSize="1em" src={conference.logo} mr="0.5em" />
-                <span>{conference.title}</span>
-              </MenuItem>
-            ))}
-          </MenuList>
-        </Menu>
-
-        {selectedConference && (
-          <IconButton
-            variant={'ghost'}
-            ml="0.5"
-            size="sm"
-            aria-label="Remove video conferencing"
-            onClick={() => {
-              props.onSelectConference(null)
-            }}
-            icon={<FiX />}
-          />
-        )}
-      </Box>
+        </Box>
+      )}
 
       {selectedConference && <ConferenceDetails selectedVideoConference={selectedConference} />}
     </Flex>

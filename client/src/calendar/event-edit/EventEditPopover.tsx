@@ -16,8 +16,7 @@ import {
   IconButton,
 } from '@chakra-ui/react'
 
-import { FiCalendar, FiClock, FiAlignLeft, FiTrash, FiPlus, FiMail } from 'react-icons/fi'
-
+import { FiCalendar, FiClock, FiAlignLeft, FiTrash, FiPlus, FiMail, FiVideo } from 'react-icons/fi'
 import produce from 'immer'
 import moment from 'moment'
 import linkifyHtml from 'linkifyjs/html'
@@ -43,18 +42,18 @@ import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
 import { displayState, editingEventState } from '@/state/EventsState'
 import { userState } from '@/state/UserState'
+import ContentEditable from '@/lib/ContentEditable'
 
 import { mergeParticipants } from './EventEditUtils'
 import TimeRangeSelect from './TimeRangeSelect'
 import TimeSelectFullDay from './TimeSelectFullDay'
 import SelectCalendar from './SelectCalendar'
-import ContentEditable from '@/lib/ContentEditable'
 import TaggableInput from './TaggableInput'
 import { EventService } from './useEventService'
 import EventFields from './EventFields'
 import ParticipantList from './ParticipantList'
 import EventResponseToggle from './EventResponseToggle'
-
+import ConferenceList from './ConferenceList'
 interface IProps {
   event: Event
   eventService: EventService
@@ -249,6 +248,12 @@ function EventPopover(props: IProps) {
               </Text>
             )}
           </Flex>
+
+          <ConferenceList
+            originalConferenceData={props.event.conference_data}
+            conferenceData={eventFields.conferenceData}
+            readonly={true}
+          />
 
           <Flex mt="2" alignItems={'center'}>
             <Box mr="2" color="gray.600">
@@ -598,6 +603,24 @@ function EventPopover(props: IProps) {
                 maxRecommendations={2}
               />
             </Box>
+          </Flex>
+
+          <Flex mt="2">
+            <Box mt="1" mr="2" color="gray.700">
+              <FiVideo size={'1em'} />
+            </Box>
+            <ConferenceList
+              originalConferenceData={props.event.conference_data}
+              conferenceData={eventFields.conferenceData}
+              onSelectConference={(conferenceData) => {
+                const updatedFields = {
+                  ...eventFields,
+                  conferenceData: conferenceData,
+                }
+                setEventFields(updatedFields)
+              }}
+              readonly={false}
+            />
           </Flex>
 
           <Flex mt="2" alignItems={'top'}>
