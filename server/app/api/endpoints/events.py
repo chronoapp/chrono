@@ -113,6 +113,7 @@ async def getCalendarEvents(
 async def createCalendarEvent(
     calendarId: uuid.UUID,
     event: EventBaseVM,
+    sendUpdateType: SendUpdateType = 'all',
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> Event:
@@ -138,7 +139,10 @@ async def createCalendarEvent(
 
         # Sync with google calendar.
         if userCalendar.source == 'google':
-            syncEventToGoogleTask.send(user.id, userCalendar.id, eventDb.id, 'none')
+            createHangoutLink = event.conference_data and event.conference_data.create_request
+            syncEventToGoogleTask.send(
+                user.id, userCalendar.id, eventDb.id, sendUpdateType, createHangoutLink
+            )
 
         return eventDb
 
@@ -180,13 +184,12 @@ async def updateCalendarEvent(
     event: EventBaseVM,
     calendarId: uuid.UUID,
     eventId: str,
+    sendUpdateType: SendUpdateType = 'all',
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> Event:
     """Update an existing event. For recurring events, create the "override" event
     in the DB with the composite id of {baseId}_{date}.
-
-    TODO: Send Updates parameter.
     """
     try:
         eventRepo = EventRepository(session)
@@ -196,7 +199,10 @@ async def updateCalendarEvent(
         updatedEvent = eventRepo.updateEvent(user, userCalendar, eventId, event)
 
         if userCalendar.source == 'google' and updatedEvent.isGoogleEvent():
-            syncEventToGoogleTask.send(user.id, userCalendar.id, updatedEvent.id, 'none')
+            createHangoutLink = event.conference_data and event.conference_data.create_request
+            syncEventToGoogleTask.send(
+                user.id, userCalendar.id, updatedEvent.id, sendUpdateType, createHangoutLink
+            )
 
         return updatedEvent
 

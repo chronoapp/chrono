@@ -32,7 +32,11 @@ from app.core.logger import logger
 
 @dramatiq.actor(max_retries=1)
 def syncEventToGoogleTask(
-    userId: uuid.UUID, userCalendarId: uuid.UUID, eventId: str, sendUpdates: SendUpdateType = 'none'
+    userId: uuid.UUID,
+    userCalendarId: uuid.UUID,
+    eventId: str,
+    sendUpdates: SendUpdateType = 'none',
+    createHangoutLink: bool = False,
 ) -> None:
     """Sync Chrono's event to Google Calendar."""
 
@@ -52,7 +56,7 @@ def syncEventToGoogleTask(
             logger.warning(f'Event {eventId} not found')
             return
 
-        eventBody = getEventBody(event, userCalendar.timezone)
+        eventBody = getEventBody(event, userCalendar.timezone, createHangoutLink)
 
         if event.google_id:
             eventResp = updateGoogleEvent(
