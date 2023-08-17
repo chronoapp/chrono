@@ -36,7 +36,6 @@ def syncEventToGoogleTask(
     userCalendarId: uuid.UUID,
     eventId: str,
     sendUpdates: SendUpdateType = 'none',
-    createHangoutLink: bool = False,
 ) -> None:
     """Sync Chrono's event to Google Calendar."""
 
@@ -56,7 +55,7 @@ def syncEventToGoogleTask(
             logger.warning(f'Event {eventId} not found')
             return
 
-        eventBody = getEventBody(event, userCalendar.timezone, createHangoutLink)
+        eventBody = getEventBody(event, userCalendar.timezone)
 
         if event.google_id:
             eventResp = updateGoogleEvent(

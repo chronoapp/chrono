@@ -3,10 +3,19 @@ import ConferenceEntryPoint from './ConferenceEntrypoint'
 
 export type ConferenceKeyType = 'eventHangout' | 'eventNamedHangout' | 'hangoutsMeet' | 'addOn'
 
+export type ConferenceCreateStatus = 'pending' | 'success' | 'failure'
+
 export class CreateRequest {
   [immerable] = true
 
-  constructor(readonly conference_solution_key: ConferenceKeyType) {}
+  static fromJson(json): CreateRequest {
+    return new CreateRequest(json.conference_solution_key_type, json.status)
+  }
+
+  constructor(
+    readonly conference_solution_key_type: ConferenceKeyType,
+    readonly status: ConferenceCreateStatus
+  ) {}
 }
 
 export class ConferenceSolution {
@@ -31,12 +40,12 @@ export default class ConferenceData {
       json.conference_id,
       json.conference_solution ? ConferenceSolution.fromJson(json.conference_solution) : null,
       json.entry_points.map((entryPointJson) => ConferenceEntryPoint.fromJson(entryPointJson)),
-      null
+      json.create_request ? CreateRequest.fromJson(json.create_request) : null
     )
   }
 
   static newHangoutsMeet(): ConferenceData {
-    return new ConferenceData(null, null, [], new CreateRequest('hangoutsMeet'))
+    return new ConferenceData(null, null, [], new CreateRequest('hangoutsMeet', 'pending'))
   }
 
   constructor(
