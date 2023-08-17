@@ -9,6 +9,7 @@ from googleapiclient.discovery import build
 from app.core import config
 from app.sync.locking import acquireLock, releaseLock
 from app.db.models import Event, User, UserCalendar
+from app.db.models.conference_data import ConferenceCreateStatus
 
 
 """Interfaces with Google Calendar API.
@@ -31,7 +32,7 @@ def convertToLocalTime(dateTime: datetime, timeZone: Optional[str]):
     return localAware
 
 
-def getEventBody(event: Event, timeZone: str, createHangoutLink: bool):
+def getEventBody(event: Event, timeZone: str):
     if event.organizer is None or event.start is None or event.end is None:
         raise ValueError('Event missing required fields')
 
@@ -53,37 +54,41 @@ def getEventBody(event: Event, timeZone: str, createHangoutLink: bool):
         "guestsCanSeeOtherGuests": event.guests_can_see_other_guests,
     }
 
-    if createHangoutLink:
-        eventBody['conferenceData'] = {
-            'createRequest': {
-                'requestId': uuid4().hex,
-                'conferenceSolutionKey': {'type': 'hangoutsMeet'},
+    if event.conference_data is not None:
+        if (
+            event.conference_data.create_request
+            and event.conference_data.create_request.status == ConferenceCreateStatus.PENDING
+        ):
+            eventBody['conferenceData'] = {
+                'createRequest': {
+                    'requestId': event.conference_data.create_request.request_id,
+                    'conferenceSolutionKey': {
+                        'type': event.conference_data.create_request.conference_solution_key_type.value
+                    },
+                }
             }
-        }
-
-    elif event.conference_data is not None:
-        eventBody['conferenceData'] = {
-            'conferenceId': event.conference_data.conference_id,
-        }
-
-        if event.conference_data.conference_solution:
-            eventBody['conferenceData']['conferenceSolution'] = {
-                'key': {'type': event.conference_data.conference_solution.key_type.value},
-                'name': event.conference_data.conference_solution.name,
-                'iconUri': event.conference_data.conference_solution.icon_uri,
+        else:
+            eventBody['conferenceData'] = {
+                'conferenceId': event.conference_data.conference_id,
             }
 
-        eventBody['conferenceData']['entryPoints'] = [
-            {
-                'entryPointType': entrypoint.entry_point_type.value,
-                'uri': entrypoint.uri,
-                'label': entrypoint.label,
-                'meetingCode': entrypoint.meeting_code,
-                'password': entrypoint.password,
-            }
-            for entrypoint in event.conference_data.entry_points
-        ]
+            if event.conference_data.conference_solution:
+                eventBody['conferenceData']['conferenceSolution'] = {
+                    'key': {'type': event.conference_data.conference_solution.key_type.value},
+                    'name': event.conference_data.conference_solution.name,
+                    'iconUri': event.conference_data.conference_solution.icon_uri,
+                }
 
+            eventBody['conferenceData']['entryPoints'] = [
+                {
+                    'entryPointType': entrypoint.entry_point_type.value,
+                    'uri': entrypoint.uri,
+                    'label': entrypoint.label,
+                    'meetingCode': entrypoint.meeting_code,
+                    'password': entrypoint.password,
+                }
+                for entrypoint in event.conference_data.entry_points
+            ]
     else:
         eventBody['conferenceData'] = None
 

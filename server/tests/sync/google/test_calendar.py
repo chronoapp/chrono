@@ -5,7 +5,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 
 from app.db.models import User, Event, Calendar, UserCalendar
-from app.db.models.conference_data import CommunicationMethod, ConferenceKeyType
+from app.db.models.conference_data import (
+    CommunicationMethod,
+    ConferenceKeyType,
+    ConferenceCreateStatus,
+)
 
 from app.sync.google.calendar import (
     syncEventsToDb,
@@ -391,6 +395,8 @@ def test_syncCreatedOrUpdatedGoogleEvent_conferenceGoogleHangout(
     event = syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
     assert event.conference_data is not None
     assert event.conference_data.conference_id == 'orw-shac-hgg'
+
+    assert event.conference_data.conference_solution is not None
     assert event.conference_data.conference_solution.name == 'Google Meet'
     assert event.conference_data.conference_solution.key_type == ConferenceKeyType.HANGOUTS_MEET
     assert event.conference_data.conference_solution.icon_uri == logoIconUri
@@ -400,6 +406,14 @@ def test_syncCreatedOrUpdatedGoogleEvent_conferenceGoogleHangout(
     assert entrypoint.entry_point_type == CommunicationMethod.VIDEO
     assert entrypoint.uri == 'https://meet.google.com/orw-shac-hgg'
     assert entrypoint.label == 'meet.google.com/orw-shac-hgg'
+
+    assert event.conference_data.create_request is not None
+    assert event.conference_data.create_request.status == ConferenceCreateStatus.SUCCESS
+    assert event.conference_data.create_request.request_id == 'cllb95m1t299q496ao2jbqwu3'
+    assert (
+        event.conference_data.create_request.conference_solution_key_type
+        == ConferenceKeyType.HANGOUTS_MEET
+    )
 
 
 def test_syncCreatedOrUpdatedGoogleEvent_zoom(user, session: Session, eventRepo: EventRepository):
@@ -434,6 +448,8 @@ def test_syncCreatedOrUpdatedGoogleEvent_zoom(user, session: Session, eventRepo:
 
     assert event.conference_data is not None
     assert event.conference_data.conference_id == '123123'
+
+    assert event.conference_data.conference_solution is not None
     assert event.conference_data.conference_solution.name == 'Zoom meeting'
     assert event.conference_data.conference_solution.key_type == ConferenceKeyType.ADD_ON
     assert event.conference_data.conference_solution.icon_uri == logoIconUri

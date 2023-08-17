@@ -9,7 +9,11 @@ from zoneinfo import ZoneInfo
 from dateutil.rrule import rrulestr
 from googleapiclient.errors import HttpError
 from app.db.models.access_control import AccessControlRule
-from app.db.models.conference_data import CommunicationMethod, ConferenceKeyType
+from app.db.models.conference_data import (
+    CommunicationMethod,
+    ConferenceKeyType,
+    ConferenceCreateStatus,
+)
 from app.db.models import User, Event, LabelRule, UserCalendar, Calendar, Webhook, EventAttendee
 
 from app.core.logger import logger
@@ -20,6 +24,7 @@ from app.db.repos.event_utils import (
     EntryPointBaseVM,
     ConferenceDataBaseVM,
     ConferenceSolutionVM,
+    CreateConferenceRequestVM,
     EventParticipantVM,
     createOrUpdateEvent,
     getRecurringEventId,
@@ -480,6 +485,18 @@ def conferenceDataToVM(conferenceData: Any) -> ConferenceDataBaseVM | None:
 
     conferenceDataVM = None
     if conferenceData:
+        createRequest = conferenceData.get('createRequest')
+
+        createRequestVM = None
+        if createRequest:
+            createRequestVM = CreateConferenceRequestVM(
+                request_id=createRequest.get('requestId'),
+                conference_solution_key_type=ConferenceKeyType(
+                    createRequest.get('conferenceSolutionKey', {}).get('type')
+                ),
+                status=ConferenceCreateStatus(createRequest.get('status', {}).get('statusCode')),
+            )
+
         conferenceSolution = conferenceData.get('conferenceSolution')
         conferenceId = conferenceData.get('conferenceId')
         entrypoints = conferenceData.get('entryPoints')
@@ -511,6 +528,7 @@ def conferenceDataToVM(conferenceData: Any) -> ConferenceDataBaseVM | None:
             conference_solution=conferenceSolutionVM,
             conference_id=conferenceId,
             entry_points=entryPoints,
+            create_request=createRequestVM,
         )
 
     return conferenceDataVM

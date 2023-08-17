@@ -47,7 +47,11 @@ const defaultConferenceItem: ConferenceItem = {
 function getConferenceList(conferenceData: ConferenceData | null): ConferenceItem[] {
   const ConferenceList: ConferenceItem[] = []
 
-  if (!conferenceData || conferenceData.conference_solution?.key_type === 'addOn') {
+  if (
+    !conferenceData ||
+    conferenceData.conference_solution?.key_type === 'addOn' ||
+    conferenceData.create_request?.status === 'pending'
+  ) {
     ConferenceList.push(defaultConferenceItem)
   }
 
@@ -67,7 +71,7 @@ function getSelectedConference(
   conferenceList: ConferenceItem[],
   conferenceData: ConferenceData | null
 ): ConferenceItem | null {
-  if (conferenceData?.create_request?.conference_solution_key === defaultConferenceItem.type) {
+  if (conferenceData?.create_request?.conference_solution_key_type === defaultConferenceItem.type) {
     return conferenceList.find((conference) => conference.type === defaultConferenceItem.type)!
   } else {
     return conferenceList.find(

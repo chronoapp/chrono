@@ -608,6 +608,7 @@ def createOverrideDeletedEvent(
         None,
         None,
         None,
+        None,
         overrideId=eventVM.id,
         recurringEventId=parentEvent.id,
         recurringEventCalendarId=parentEvent.calendar_id,

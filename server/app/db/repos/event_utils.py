@@ -13,9 +13,11 @@ from app.db.models.event_participant import ResponseStatus
 from app.db.models.conference_data import (
     ConferenceData,
     ConferenceSolution,
+    CreateRequest,
     EntryPoint,
     CommunicationMethod,
     ConferenceKeyType,
+    ConferenceCreateStatus,
 )
 
 """Event models and helpers to manage Recurring Events.
@@ -57,7 +59,12 @@ class EntryPointBaseVM(BaseModel):
 
 
 class CreateConferenceRequestVM(BaseModel):
-    conference_solution_key: ConferenceKeyType
+    request_id: str = uuid.uuid4().hex
+    status: ConferenceCreateStatus = ConferenceCreateStatus.PENDING
+    conference_solution_key_type: ConferenceKeyType
+
+    class Config:
+        orm_mode = True
 
 
 class ConferenceSolutionVM(BaseModel):
@@ -240,7 +247,7 @@ def createOrUpdateEvent(
     conferenceData = None
 
     conferenceDataVM = eventVM.conference_data
-    if conferenceDataVM and conferenceDataVM.conference_id:
+    if conferenceDataVM:
         conferenceData = ConferenceData(
             conferenceDataVM.conference_id,
             ConferenceSolution(
@@ -261,6 +268,13 @@ def createOrUpdateEvent(
             )
             for entryPointVM in conferenceDataVM.entry_points
         ]
+
+        if conferenceDataVM.create_request:
+            conferenceData.create_request = CreateRequest(
+                conferenceDataVM.create_request.status,
+                conferenceDataVM.create_request.request_id,
+                conferenceDataVM.create_request.conference_solution_key_type,
+            )
 
     if not eventDb:
         event = Event(

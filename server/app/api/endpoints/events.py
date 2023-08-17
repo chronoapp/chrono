@@ -139,10 +139,7 @@ async def createCalendarEvent(
 
         # Sync with google calendar.
         if userCalendar.source == 'google':
-            createHangoutLink = event.conference_data and event.conference_data.create_request
-            syncEventToGoogleTask.send(
-                user.id, userCalendar.id, eventDb.id, sendUpdateType, createHangoutLink
-            )
+            syncEventToGoogleTask.send(user.id, userCalendar.id, eventDb.id, sendUpdateType)
 
         return eventDb
 
@@ -199,10 +196,7 @@ async def updateCalendarEvent(
         updatedEvent = eventRepo.updateEvent(user, userCalendar, eventId, event)
 
         if userCalendar.source == 'google' and updatedEvent.isGoogleEvent():
-            createHangoutLink = event.conference_data and event.conference_data.create_request
-            syncEventToGoogleTask.send(
-                user.id, userCalendar.id, updatedEvent.id, sendUpdateType, createHangoutLink
-            )
+            syncEventToGoogleTask.send(user.id, userCalendar.id, updatedEvent.id, sendUpdateType)
 
         return updatedEvent
 
