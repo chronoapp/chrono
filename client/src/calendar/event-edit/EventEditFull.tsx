@@ -414,19 +414,18 @@ export default function EventEditFull(props: { event: Event; eventService: Event
             <Box mt="1" mr="2" color="gray.700">
               <FiVideo size={'1em'} />
             </Box>
-            <Box w="28em">
-              <ConferenceList
-                originalConferenceData={props.event.conference_data}
-                conferenceData={eventFields.conferenceData}
-                onSelectConference={(conferenceData) => {
-                  const updatedFields = {
-                    ...eventFields,
-                    conferenceData: conferenceData,
-                  }
-                  setEventFields(updatedFields)
-                }}
-              />
-            </Box>
+            <ConferenceList
+              originalConferenceData={props.event.conference_data}
+              conferenceData={eventFields.conferenceData}
+              onSelectConference={(conferenceData) => {
+                const updatedFields = {
+                  ...eventFields,
+                  conferenceData: conferenceData,
+                }
+                setEventFields(updatedFields)
+              }}
+              readonly={false}
+            />
           </Flex>
 
           <Flex alignItems="center" mt="3">
