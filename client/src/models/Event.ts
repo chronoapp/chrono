@@ -5,7 +5,9 @@ import { Label } from './Label'
 import { hexToHSL } from '../calendar/utils/Colors'
 import { localFullDate, fullDayFormat } from '../util/localizer'
 import EventParticipant, { ResponseStatus } from './EventParticipant'
+
 import Calendar from './Calendar'
+import ConferenceData from './ConferenceData'
 
 export const EMPTY_TITLE = '(No title)'
 
@@ -42,6 +44,7 @@ export default class Event {
     readonly guests_can_modify: boolean,
     readonly guests_can_invite_others: boolean,
     readonly guests_can_see_other_guests: boolean,
+    readonly conference_data: ConferenceData | null,
 
     // For UI only.
     readonly calendar_id: string,
@@ -76,7 +79,7 @@ export default class Event {
       eventJson.guests_can_modify,
       eventJson.guests_can_invite_others,
       eventJson.guests_can_see_other_guests,
-
+      eventJson.conference_data && ConferenceData.fromJson(eventJson.conference_data),
       calendarId,
       'SYNCED'
     )
@@ -123,6 +126,7 @@ export default class Event {
       false,
       true,
       true,
+      null,
       calendar.id,
       'NOT_SYNCED'
     )

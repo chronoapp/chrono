@@ -31,7 +31,7 @@ def convertToLocalTime(dateTime: datetime, timeZone: Optional[str]):
     return localAware
 
 
-def getEventBody(event: Event, timeZone: str):
+def getEventBody(event: Event, timeZone: str, createHangoutLink: bool):
     if event.organizer is None or event.start is None or event.end is None:
         raise ValueError('Event missing required fields')
 
@@ -42,7 +42,7 @@ def getEventBody(event: Event, timeZone: str):
         if p.email
     ]
 
-    eventBody = {
+    eventBody: dict[str, Any] = {
         'summary': event.title_short,
         'description': event.description,
         'recurrence': event.recurrences,
@@ -52,6 +52,40 @@ def getEventBody(event: Event, timeZone: str):
         "guestsCanInviteOthers": event.guests_can_invite_others,
         "guestsCanSeeOtherGuests": event.guests_can_see_other_guests,
     }
+
+    if createHangoutLink:
+        eventBody['conferenceData'] = {
+            'createRequest': {
+                'requestId': uuid4().hex,
+                'conferenceSolutionKey': {'type': 'hangoutsMeet'},
+            }
+        }
+
+    elif event.conference_data is not None:
+        eventBody['conferenceData'] = {
+            'conferenceId': event.conference_data.conference_id,
+        }
+
+        if event.conference_data.conference_solution:
+            eventBody['conferenceData']['conferenceSolution'] = {
+                'key': {'type': event.conference_data.conference_solution.key_type.value},
+                'name': event.conference_data.conference_solution.name,
+                'iconUri': event.conference_data.conference_solution.icon_uri,
+            }
+
+        eventBody['conferenceData']['entryPoints'] = [
+            {
+                'entryPointType': entrypoint.entry_point_type.value,
+                'uri': entrypoint.uri,
+                'label': entrypoint.label,
+                'meetingCode': entrypoint.meeting_code,
+                'password': entrypoint.password,
+            }
+            for entrypoint in event.conference_data.entry_points
+        ]
+
+    else:
+        eventBody['conferenceData'] = None
 
     if event.all_day:
         eventBody['start'] = {'date': event.start_day, 'timeZone': timeZone, 'dateTime': None}
@@ -129,6 +163,7 @@ def updateGoogleEvent(
             eventId=eventId,
             body=eventBody,
             sendUpdates=sendUpdates,
+            conferenceDataVersion=1,
         )
         .execute()
     )

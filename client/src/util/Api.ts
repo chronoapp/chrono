@@ -8,6 +8,8 @@ import Calendar, { CalendarSource } from '@/models/Calendar'
 import Contact from '@/models/Contact'
 import User from '@/models/User'
 
+type SendUpdateType = 'none' | 'all' | 'external'
+
 const API_URL = 'http://localhost:8888/api/v1'
 
 function handleErrors(response: any) {
@@ -198,12 +200,19 @@ export async function createEvent(calendarId: string, event: Event): Promise<Eve
     .then((resp) => Event.fromJson(calendarId, resp))
 }
 
-export async function updateEvent(calendarId: string, event: Partial<Event>): Promise<Event> {
-  return fetch(`${API_URL}/calendars/${calendarId}/events/${event.id}`, {
-    method: 'PUT',
-    headers: getHeaders(),
-    body: JSON.stringify(event),
-  })
+export async function updateEvent(
+  calendarId: string,
+  event: Partial<Event>,
+  sendUpdateType: SendUpdateType = 'none'
+): Promise<Event> {
+  return fetch(
+    `${API_URL}/calendars/${calendarId}/events/${event.id}?sendUpdateType=${sendUpdateType}`,
+    {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(event),
+    }
+  )
     .then(handleErrors)
     .then((resp) => Event.fromJson(calendarId, resp))
 }

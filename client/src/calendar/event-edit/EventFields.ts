@@ -1,6 +1,7 @@
 import { Label } from '@/models/Label'
 import Event from '@/models/Event'
 import EventParticipant from '@/models/EventParticipant'
+import ConferenceData from '@/models/ConferenceData'
 
 const TitleRegex = /@\[([\wd.-_ @]+)\]\(\[id:\w+\]\[type:\w+\]\)/
 
@@ -26,9 +27,13 @@ export default class EventFields {
     readonly recurrences: string | null,
     readonly guestsCanModify: boolean,
     readonly guestsCanInviteOthers: boolean,
-    readonly guestsCanSeeOtherGuests: boolean
+    readonly guestsCanSeeOtherGuests: boolean,
+    readonly conferenceData: ConferenceData | null
   ) {}
 
+  /**
+   * Mutable fields we can update in the event.
+   */
   static getMutableEventFields(eventFields: EventFields): Partial<Event> {
     return {
       title: eventFields.title,

@@ -19,7 +19,7 @@ import {
 
 import produce from 'immer'
 import moment from 'moment'
-import { FiMail } from 'react-icons/fi'
+import { FiMail, FiVideo } from 'react-icons/fi'
 import { FiCalendar, FiAlignLeft, FiClock } from 'react-icons/fi'
 
 import * as dates from '@/util/dates'
@@ -47,6 +47,7 @@ import TimeSelectFullDay from './TimeSelectFullDay'
 import { EventService } from './useEventService'
 import EventFields from './EventFields'
 import ParticipantList from './ParticipantList'
+import ConferenceList from './ConferenceList'
 
 /**
  * Full view for event editing.
@@ -75,7 +76,8 @@ export default function EventEditFull(props: { event: Event; eventService: Event
       props.event.recurrences ? props.event.recurrences.join('\n') : null,
       props.event.guests_can_modify,
       props.event.guests_can_invite_others,
-      props.event.guests_can_see_other_guests
+      props.event.guests_can_see_other_guests,
+      props.event.conference_data
     )
   )
   const [participants, setParticipants] = useState<EventParticipant[]>(props.event.participants)
@@ -97,6 +99,17 @@ export default function EventEditFull(props: { event: Event; eventService: Event
     }
   }
 
+  /**
+   * Include event conferencing separately, since we need to maintain
+   * the original conferencing solution so the user can switch back to it.
+   */
+  function getUpdatedEventWithConferencing(): Event {
+    return {
+      ...getUpdatedEvent(),
+      conference_data: eventFields.conferenceData,
+    }
+  }
+
   function getSelectedCalendar(calendarId: string): Calendar {
     const calendar = calendarsById[calendarId]
     if (calendar) {
@@ -107,7 +120,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
   }
 
   async function onSaveEvent() {
-    const updatedEvent = getUpdatedEvent()
+    const updatedEvent = getUpdatedEventWithConferencing()
 
     if (isExistingRecurringEvent) {
       // Update a recurring event.
@@ -395,6 +408,25 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                 </Checkbox>
               </Flex>
             )}
+          </Flex>
+
+          <Flex mt="3">
+            <Box mt="1" mr="2" color="gray.700">
+              <FiVideo size={'1em'} />
+            </Box>
+            <Box w="28em">
+              <ConferenceList
+                originalConferenceData={props.event.conference_data}
+                conferenceData={eventFields.conferenceData}
+                onSelectConference={(conferenceData) => {
+                  const updatedFields = {
+                    ...eventFields,
+                    conferenceData: conferenceData,
+                  }
+                  setEventFields(updatedFields)
+                }}
+              />
+            </Box>
           </Flex>
 
           <Flex alignItems="center" mt="3">
