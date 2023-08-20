@@ -649,9 +649,10 @@ function EventPopover(props: IProps) {
                 size="sm"
                 colorScheme="primary"
                 onClick={() =>
-                  props.eventService.saveEvent(
-                    getUpdatedEvent(props.event, eventFields, participants)
-                  )
+                  props.eventService.saveEvent({
+                    ...getUpdatedEvent(props.event, eventFields, participants),
+                    conference_data: eventFields.conferenceData,
+                  })
                 }
               >
                 Save
@@ -675,9 +676,10 @@ function EventPopover(props: IProps) {
               fontWeight="normal"
               variant="ghost"
               onClick={() => {
-                eventActions.updateEditingEvent(
-                  getUpdatedEvent(props.event, eventFields, participants)
-                )
+                eventActions.updateEditingEvent({
+                  ...getUpdatedEvent(props.event, eventFields, participants),
+                  conference_data: eventFields.conferenceData,
+                })
                 eventActions.updateEditMode('FULL_EDIT', 'SINGLE')
               }}
             >
