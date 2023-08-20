@@ -547,7 +547,7 @@ def test_deleteEvent_overrides(user: User, session, test_client):
     result = session.execute(
         select(Event).options(selectinload(Event.labels)).options(selectinload(Event.participants))
     )
-    events = result.scalars().all()
+    events = result.scalars().unique().all()
 
     assert resp.status_code == 200
     assert len(events) == 1
