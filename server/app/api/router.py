@@ -3,7 +3,6 @@ from fastapi import APIRouter
 from app.api.endpoints import (
     healthcheck,
     authentication,
-    trends,
     events,
     labels,
     label_rules,
@@ -13,6 +12,7 @@ from app.api.endpoints import (
     contacts,
     user,
 )
+from app.api.endpoints.plugins import trends
 
 api_router = APIRouter()
 api_router.include_router(healthcheck.router)

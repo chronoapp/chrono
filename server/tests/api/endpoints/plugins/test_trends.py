@@ -1,5 +1,5 @@
 from app.db.models import Label
-from app.api.endpoints.trends import getSubtreeLabelIds
+from app.api.endpoints.plugins.trends import getSubtreeLabelIds
 
 
 def test_getSubtreeLabelIds(user, session):
