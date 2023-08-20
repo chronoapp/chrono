@@ -1,7 +1,7 @@
 import uuid
 
 from typing import Optional
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from sqlalchemy import and_, update, delete, select
 from sqlalchemy.orm import Session
@@ -15,17 +15,17 @@ from app.db.repos.exceptions import CalendarNotFoundError
 
 class CalendarBaseVM(BaseModel):
     summary: str
-    description: Optional[str]
+    description: Optional[str] = None
     background_color: str = Field(alias='backgroundColor')
     foreground_color: str = Field(alias='foregroundColor')
-    selected: Optional[bool]
-    primary: Optional[bool]
-    timezone: Optional[str]
-    access_role: Optional[str] = Field(alias='accessRole')
+    selected: Optional[bool] = None
+    primary: Optional[bool] = None
+    timezone: Optional[str] = None
+    access_role: Optional[str] = Field(default=None, alias='accessRole')
     source: CalendarSource
-    email: Optional[str]
+    email: Optional[str] = None
 
-    @validator('timezone')
+    @field_validator('timezone')
     def validateTimezone(cls, timezone: Optional[str]) -> Optional[str]:
         if timezone:
             if not isValidTimezone(timezone):
@@ -34,8 +34,8 @@ class CalendarBaseVM(BaseModel):
         return timezone
 
     class Config:
-        orm_mode = True
-        allow_population_by_field_name = True
+        from_attributes = True
+        populate_by_name = True
 
 
 class CalendarVM(CalendarBaseVM):

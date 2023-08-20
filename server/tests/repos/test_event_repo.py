@@ -145,7 +145,7 @@ def test_event_repo_CRUD(user, session):
     assert event.title == eventVM.title
     assert event.calendar.id == userCalendar.id
 
-    eventVM = EventBaseVM.from_orm(event)
+    eventVM = EventBaseVM.model_validate(event)
     eventVM.organizer = EventParticipantVM(email='new-email@chrono.so')
     eventVM.description = "new description"
 
@@ -172,19 +172,19 @@ def test_event_repo_edit_permissions(user, session):
     eventVM = eventRepo.getEventVM(user, userCalendar, event.id)
 
     # Try to update the event. Should fail if modifying main event fields.
-    eventVMUpdated = eventVM.copy(update={'title': "new summary"})
+    eventVMUpdated = eventVM.model_copy(update={'title': "new summary"})
     with pytest.raises(EventRepoPermissionError):
         eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
 
-    eventVMUpdated = eventVM.copy(update={'description': "new description"})
+    eventVMUpdated = eventVM.model_copy(update={'description': "new description"})
     with pytest.raises(EventRepoPermissionError):
         eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
 
-    eventVMUpdated = eventVM.copy(update={'start': eventVM.start + timedelta(hours=1)})
+    eventVMUpdated = eventVM.model_copy(update={'start': eventVM.start + timedelta(hours=1)})
     with pytest.raises(EventRepoPermissionError):
         eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
 
-    eventVMUpdated = eventVM.copy(update={'end': eventVM.end + timedelta(hours=1)})
+    eventVMUpdated = eventVM.model_copy(update={'end': eventVM.end + timedelta(hours=1)})
     with pytest.raises(EventRepoPermissionError):
         eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
 
@@ -209,17 +209,17 @@ def test_event_repo_edit_attendee_permissions_as_guest(user, session):
 
     # Make sure this user can update their own responseStatus.
     newParticipants = [
-        p.copy(update={'response_status': 'accepted'}) if p.email == user.email else p
+        p.model_copy(update={'response_status': 'accepted'}) if p.email == user.email else p
         for p in eventVM.participants
     ]
-    eventVMUpdated = eventVM.copy(update={'participants': newParticipants})
+    eventVMUpdated = eventVM.model_copy(update={'participants': newParticipants})
     event = eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
     participant = next(p for p in event.participants if p.email == user.email)
     assert participant.response_status == 'accepted'
 
     # Make sure this user doesn't have the permissions to update the guest list.
-    newParticipants = [p.copy(update={'response_status': 'accepted'}) for p in eventVM.participants]
-    eventVMUpdated = eventVM.copy(update={'participants': newParticipants})
+    newParticipants = [p.model_copy(update={'response_status': 'accepted'}) for p in eventVM.participants]
+    eventVMUpdated = eventVM.model_copy(update={'participants': newParticipants})
     event = eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
     participantsMap = {p.email: p for p in event.participants}
 
@@ -231,7 +231,10 @@ def test_event_repo_edit_attendee_permissions_as_guest(user, session):
     newParticipants.append(EventParticipantVM(email='p3@chrono.so'))
     with pytest.raises(EventRepoPermissionError):
         eventRepo.updateEvent(
-            user, userCalendar, event.id, eventVM.copy(update={'participants': newParticipants})
+            user,
+            userCalendar,
+            event.id,
+            eventVM.model_copy(update={'participants': newParticipants}),
         )
 
     # Make sure we can add a new participant if guests_can_invite_others is True.
@@ -241,7 +244,7 @@ def test_event_repo_edit_attendee_permissions_as_guest(user, session):
 
     eventVM = eventRepo.getEventVM(user, userCalendar, event.id)
     event = eventRepo.updateEvent(
-        user, userCalendar, event.id, eventVM.copy(update={'participants': newParticipants})
+        user, userCalendar, event.id, eventVM.model_copy(update={'participants': newParticipants})
     )
     assert len(event.participants) == 4
     participantsMap = {p.email: p for p in event.participants}
@@ -251,7 +254,10 @@ def test_event_repo_edit_attendee_permissions_as_guest(user, session):
     del participantsMap['p1@chrono.so']
     removedParticipants = [p for p in participantsMap.values()]
     event = eventRepo.updateEvent(
-        user, userCalendar, event.id, eventVM.copy(update={'participants': removedParticipants})
+        user,
+        userCalendar,
+        event.id,
+        eventVM.model_copy(update={'participants': removedParticipants}),
     )
     assert len(event.participants) == 4
 
@@ -276,7 +282,7 @@ def test_event_repo_edit_attendee_permissions_as_organizer(user, session):
     # We can add a new participant
     newParticipants = eventVM.participants
     newParticipants.append(EventParticipantVM(email='p3@chrono.so', response_status='tentative'))
-    eventVMUpdated = eventVM.copy(update={'participants': newParticipants})
+    eventVMUpdated = eventVM.model_copy(update={'participants': newParticipants})
 
     event = eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
     participantsMap = {p.email: p for p in event.participants}
@@ -289,7 +295,10 @@ def test_event_repo_edit_attendee_permissions_as_organizer(user, session):
 
     removedParticipants = [p for p in participantsMap.values()]
     event = eventRepo.updateEvent(
-        user, userCalendar, event.id, eventVM.copy(update={'participants': removedParticipants})
+        user,
+        userCalendar,
+        event.id,
+        eventVM.model_copy(update={'participants': removedParticipants}),
     )
     assert len(event.participants) == 2
     participantsMap = {p.email: p for p in event.participants}

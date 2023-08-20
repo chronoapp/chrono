@@ -1,10 +1,11 @@
 import uuid
 
 from datetime import datetime
-from typing import List, Dict, Optional, Literal, Any, Union
+from typing import List, Optional, Literal, Union
 from dateutil.rrule import rrule, rruleset, rrulestr
 from zoneinfo import ZoneInfo
-from pydantic import BaseModel, validator, Field
+from pydantic import BaseModel, field_validator, Field
+from pydantic_core.core_schema import FieldValidationInfo
 
 from app.api.endpoints.labels import LabelInDbVM
 from app.db.models import Event, UserCalendar, EventCreator, EventOrganizer
@@ -27,35 +28,38 @@ from app.db.models.conference_data import (
 class EventParticipantVM(BaseModel):
     """Either one of email or contact ID is required."""
 
-    id: Optional[uuid.UUID]
-    contact_id: Optional[uuid.UUID]
-    email: Optional[str]
+    id: Optional[uuid.UUID] = None
+    contact_id: Optional[uuid.UUID] = None
+    email: Optional[str] = None
 
     response_status: Optional[ResponseStatus] = 'needsAction'
-    display_name: Optional[str]
-    photo_url: Optional[str]
-    is_self: Optional[bool]
+    display_name: Optional[str] = None
+    photo_url: Optional[str] = None
+    is_self: Optional[bool] = None
 
-    @validator("email")
-    def validateContactAndEmail(cls, email: Optional[str], values: Dict[str, Any]) -> Optional[str]:
-        if email is None and values.get("contact_id") is None:
+    @field_validator("email")
+    def validateContactAndEmail(
+        cls, email: Optional[str], info: FieldValidationInfo
+    ) -> Optional[str]:
+        print(email, info.data.get("contact_id"))
+        if email is None and info.data.get("contact_id") is None:
             raise ValueError("Either email or contact_id is required.")
 
         return email
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class EntryPointBaseVM(BaseModel):
     entry_point_type: CommunicationMethod
     uri: str
-    label: str | None
-    meeting_code: str | None
-    password: str | None
+    label: str | None = None
+    meeting_code: str | None = None
+    password: str | None = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class CreateConferenceRequestVM(BaseModel):
@@ -64,7 +68,7 @@ class CreateConferenceRequestVM(BaseModel):
     conference_solution_key_type: ConferenceKeyType
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ConferenceSolutionVM(BaseModel):
@@ -73,7 +77,7 @@ class ConferenceSolutionVM(BaseModel):
     icon_uri: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ConferenceDataBaseVM(BaseModel):
@@ -87,7 +91,7 @@ class ConferenceDataBaseVM(BaseModel):
     entry_points: List[EntryPointBaseVM]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class EntryPointVM(EntryPointBaseVM):
@@ -103,55 +107,57 @@ class EventBaseVM(BaseModel):
     TODO: If we have start_day and end_day, we don't need start and end.
     """
 
-    id: Optional[str]
+    id: Optional[str] = None
 
-    title: Optional[str]
-    title_short: Optional[str]
+    title: Optional[str] = None
+    title_short: Optional[str] = None
 
     description: Optional[str] = None
     status: EventStatus = 'active'
     start: datetime
     end: datetime
-    start_day: Optional[str]
-    end_day: Optional[str]
+    start_day: Optional[str] = None
+    end_day: Optional[str] = None
 
     labels: List[LabelInDbVM] = []
-    all_day: Optional[bool]
-    background_color: Optional[str]
-    timezone: Optional[str] = Field(alias='time_zone')
-    calendar_id: Optional[uuid.UUID]
-    recurrences: Optional[List[str]]
-    recurring_event_id: Optional[str]
+    all_day: Optional[bool] = None
+    timezone: Optional[str] = Field(alias='time_zone', default=None)
+    calendar_id: Optional[uuid.UUID] = None
+    recurrences: Optional[List[str]] = None
+    recurring_event_id: Optional[str] = None
 
     participants: List[EventParticipantVM] = []
-    creator: Optional[EventParticipantVM]
-    organizer: Optional[EventParticipantVM]
+    creator: Optional[EventParticipantVM] = None
+    organizer: Optional[EventParticipantVM] = None
 
     guests_can_modify: bool = False
     guests_can_invite_others: bool = True
     guests_can_see_other_guests: bool = True
 
-    conference_data: ConferenceDataBaseVM | None
+    conference_data: ConferenceDataBaseVM | None = None
 
     # Read only fields.
-    original_start: Optional[datetime]
-    original_start_day: Optional[str]
-    original_timezone: Optional[str]
+    original_start: Optional[datetime] = None
+    original_start_day: Optional[str] = None
+    original_timezone: Optional[str] = None
 
-    @validator('recurrences')
+    @field_validator('recurrences')
     def isValidRecurrence(
-        cls, recurrences: Optional[List[str]], values: Dict[str, Any]
+        cls, recurrences: Optional[List[str]], info: FieldValidationInfo
     ) -> Optional[List[str]]:
         """Makes sure the start and end dates aren't included in the recurrence, since they
         the event itself has these fields.
         """
-        if recurrences and len(recurrences) > 0 and 'start' in values:
+        if recurrences and len(recurrences) > 0 and 'start' in info.data:
             recurrenceString = '\n'.join(recurrences)
             if 'DTSTART' in recurrenceString or 'DTEND' in recurrenceString:
                 raise ValueError('Recurrence should not have DTSTART or DTEND')
 
             recurrenceToRuleSet(
-                recurrenceString, values['timezone'] or 'UTC', values['start'], values['start_day']
+                recurrenceString,
+                info.data['timezone'] or 'UTC',
+                info.data['start'],
+                info.data['start_day'],
             )
 
         return recurrences
@@ -160,7 +166,8 @@ class EventBaseVM(BaseModel):
         return self.start_day is not None and self.end_day is not None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+        populate_by_name = True
 
 
 class EventInDBVM(EventBaseVM):
