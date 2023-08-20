@@ -13,7 +13,7 @@ from app.db.models.calendar import Calendar
 def createCalendar(
     user: User,
     calendarId: uuid.UUID,
-):
+) -> UserCalendar:
     calendar = Calendar(calendarId, 'summary', 'description', 'America/Toronto', 'test@example.com')
     userCalendar = UserCalendar(
         calendarId,
@@ -39,7 +39,7 @@ def createEvent(
     timezone: Optional[str] = None,
     recurrences: Optional[List[str]] = None,
     title: Optional[str] = 'Event',
-):
+) -> Event:
     originalStart = None
     if recurrences:
         originalStart = start
@@ -62,6 +62,7 @@ def createEvent(
         False,
         True,
         True,
+        None,
     )
     userCalendar.calendar.events.append(event)
 
