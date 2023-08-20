@@ -167,7 +167,7 @@ class EventRepository:
         eventInDB = self.getEvent(user, calendar, eventId)
 
         if eventInDB:
-            return GoogleEventInDBVM.from_orm(eventInDB)
+            return GoogleEventInDBVM.model_validate(eventInDB)
         else:
             # Check if it's a virtual event within a recurrence.
             event, _ = self.getRecurringEventWithParent(calendar, eventId, self.session)
@@ -352,7 +352,7 @@ class EventRepository:
 
         # We are overriding a parent recurring event.
         elif curEvent and curEvent.is_parent_recurring_event:
-            changedFields = getChangedEventKVs(EventBaseVM.from_orm(curEvent), event)
+            changedFields = getChangedEventKVs(EventBaseVM.model_validate(curEvent), event)
             updatedEvent = createOrUpdateEvent(userCalendar, curEvent, event)
 
             recurrenceUpdateOnly = len(changedFields) == 1 and 'recurrences' in changedFields
@@ -727,7 +727,7 @@ def getAllExpandedRecurringEvents(
     result = session.execute(movedFromOutsideOverridesStmt)
 
     for eventOverride in result.scalars():
-        yield EventInDBVM.from_orm(eventOverride)
+        yield EventInDBVM.model_validate(eventOverride)
 
     # Overrides from within this time range.
     movedFromInsideOverrides = overridesStmt.where(
@@ -767,7 +767,7 @@ def getExpandedRecurringEvents(
 
     duration = baseRecurringEvent.end - baseRecurringEvent.start
     isAllDay = baseRecurringEvent.all_day
-    baseEventVM = GoogleEventInDBVM.from_orm(baseRecurringEvent)
+    baseEventVM = GoogleEventInDBVM.model_validate(baseRecurringEvent)
     userCalendar = baseRecurringEvent.calendar
     timezone = baseRecurringEvent.time_zone or userCalendar.timezone or user.timezone
 
@@ -811,12 +811,12 @@ def getExpandedRecurringEvents(
                     ):
                         eventOverride.recurrences = baseRecurringEvent.recurrences
 
-                        eventVM = GoogleEventInDBVM.from_orm(eventOverride)
+                        eventVM = GoogleEventInDBVM.model_validate(eventOverride)
                         eventVM.calendar_id = userCalendar.id  # TODO: Remove this
 
                         yield eventVM
                 else:
-                    eventVM = baseEventVM.copy(
+                    eventVM = baseEventVM.model_copy(
                         update={
                             'id': eventId,
                             'google_id': getRecurringEventId(
@@ -851,8 +851,8 @@ def eventMatchesQuery(event: Event, query: Optional[str]) -> bool:
 
 
 def getChangedEventKVs(fromEvent: EventBaseVM, toEvent: EventBaseVM):
-    fromEventDict = fromEvent.dict()
-    toEventDict = toEvent.dict()
+    fromEventDict = fromEvent.model_dump()
+    toEventDict = toEvent.model_dump()
 
     diffKeys = set(fromEventDict.keys())
     return {

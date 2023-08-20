@@ -6,7 +6,7 @@ authors = ["winxton <winxton@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4"
-fastapi = "^0.85.1"
+fastapi = {version = "^0.101.1", extras = ["all"]}
 alembic = "^1.9.3"
 requests = "^2.28.1"
 psycopg2-binary = "^2.9.5"
@@ -51,7 +51,8 @@ build-backend = "poetry.core.masonry.api"
 [virtualenvs]
 create = true
 in-project = true
-prefer-active-python = true
+prefer-active-python = false
+path = ".venv"
 
 [tool.poetry.scripts]
 start = "app.main:start"

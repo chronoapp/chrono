@@ -132,7 +132,7 @@ def test_createEvent_withId_invalid(user: User, session, test_client):
         json=event,
     )
 
-    assert not resp.ok
+    assert resp.status_code == 400
 
 
 def test_createEvent_recurring_invalid(user: User, session, test_client):
@@ -242,7 +242,7 @@ def test_createEvent_withLabels(user: User, session, test_client):
     labelVM = LabelVM(title='label-1', color_hex='#ffffff')
     label = createOrUpdateLabel(user, None, labelVM, session)
     session.commit()
-    labelInDB = LabelInDbVM.from_orm(label)
+    labelInDB = LabelInDbVM.model_validate(label)
 
     # Create an event with the existing label
     start = datetime.fromisoformat("2021-01-11T05:00:00+00:00")

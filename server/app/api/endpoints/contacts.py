@@ -1,32 +1,15 @@
 import uuid
 
-from typing import Optional, List
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_user
-from app.db.repos.contact_repo import ContactRepository
+from app.db.repos.contact_repo import ContactRepository, ContactInDBVM
 from app.db.models import User
 
 router = APIRouter()
-
-
-class ContactBaseVM(BaseModel):
-    first_name: Optional[str] = Field(alias='firstName')
-    last_name: Optional[str] = Field(alias='lastName')
-    email: Optional[str] = Field(alias='email')
-    photo_url: Optional[str] = Field(alias='photoUrl')
-    display_name: Optional[str] = Field(alias='displayName')
-
-    class Config:
-        orm_mode = True
-        allow_population_by_field_name = True
-
-
-class ContactInDBVM(ContactBaseVM):
-    id: uuid.UUID
 
 
 @router.get('/contacts/{contact_id}', response_model=ContactInDBVM)

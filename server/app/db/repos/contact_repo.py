@@ -1,13 +1,16 @@
 import uuid
 
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, computed_field
+from functools import cached_property
+from datetime import datetime
 
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from app.db.models import User, Contact
+
 from app.db.sql.contact_search import CONTACT_SEARCH_QUERY
 from app.db.repos.event_utils import EventParticipantVM
 
@@ -19,11 +22,32 @@ class ContactRepoError(Exception):
 
 
 class ContactVM(BaseModel):
-    first_name: Optional[str]
-    last_name: Optional[str]
-    email: str
-    photo_url: Optional[str]
-    google_id: Optional[str]
+    first_name: Optional[str] = Field(alias="firstName", default=None)
+    last_name: Optional[str] = Field(alias="lastName", default=None)
+    email: Optional[str] = None
+    photo_url: Optional[str] = Field(alias="photoUrl", default=None)
+    google_id: Optional[str] = Field(alias="googleId", default=None)
+
+    @computed_field(alias='displayName', repr=False)  # type: ignore[misc]
+    @cached_property
+    def display_name(self) -> str | None:
+        if self.first_name and self.last_name:
+            return f'{self.first_name} {self.last_name}'
+        elif self.first_name:
+            return self.first_name
+        elif self.last_name:
+            return self.last_name
+        else:
+            return self.email
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
+
+
+class ContactInDBVM(ContactVM):
+    id: uuid.UUID
+
 
 
 class ContactRepository:
