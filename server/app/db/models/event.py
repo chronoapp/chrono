@@ -89,6 +89,7 @@ class Event(Base):
     title: Mapped[str] = mapped_column(String(255), index=True)
     description: Mapped[Optional[str]] = mapped_column(Text())
     status: Mapped[str] = mapped_column(String(20), server_default='active')
+    location: Mapped[Optional[str]] = mapped_column(Text())
 
     start: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     end: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
