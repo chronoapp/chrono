@@ -1,5 +1,7 @@
-import React from 'react'
-import scrollbarSize from 'dom-helpers/scrollbarSize'
+import { useRef, useState, useEffect } from 'react'
+import { useRecoilValue } from 'recoil'
+
+import getScrollbarSize from 'dom-helpers/scrollbarSize'
 import { Box } from '@chakra-ui/react'
 
 import * as dates from '../util/dates'
@@ -13,6 +15,8 @@ import { inRange, sortEvents } from './utils/eventLevels'
 import { GlobalEvent } from '../util/global'
 import { EventService } from '@/calendar/event-edit/useEventService'
 import Calendar from '@/models/Calendar'
+
+import { editingEventState } from '@/state/EventsState'
 
 function remToPixels(rem) {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
@@ -30,74 +34,86 @@ interface IProps {
   primaryCalendar: Calendar
 }
 
-interface IState {
-  gutterWidth: number
-  scrollbarSize: number
-}
-
 const GUTTER_LINE_WIDTH = 0.5
 
-class TimeGrid extends React.Component<IProps, IState> {
-  private slotMetrics: SlotMetrics
-  private gutterRef
-  private contentRef
-  private scrollTopRatio?: number = undefined
+function preventScroll(e) {
+  e.preventDefault()
+}
 
-  static defaultProps = {
-    step: 15,
-    timeslots: 4,
-    min: dates.startOf(new Date(), 'day'),
-    max: dates.endOf(new Date(), 'day'),
-  }
+function TimeGrid(props: IProps) {
+  const [gutterWidth, setGutterWidth] = useState(0)
+  const [scrollbarSize, setScrollbarSize] = useState(0)
 
-  constructor(props: IProps) {
-    super(props)
+  const slotMetrics = useRef<SlotMetrics>(
+    new SlotMetrics(props.min, props.max, props.step, props.timeslots)
+  )
+  const gutterRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLInputElement>(null)
+  const scrollTopRatio = useRef<number | undefined>(undefined)
 
-    this.slotMetrics = new SlotMetrics(props.min, props.max, props.step, props.timeslots)
-    this.gutterRef = React.createRef()
-    this.contentRef = React.createRef()
+  const editingEvent = useRecoilValue(editingEventState)
 
-    this.state = {
-      gutterWidth: 0,
-      scrollbarSize: 0,
+  useEffect(() => {
+    const scrollbarSize = getScrollbarSize()
+
+    // Adjust gutter width to account for scrollbar.
+    if (gutterRef.current) {
+      const width = remToPixels(GUTTER_LINE_WIDTH) + gutterRef.current.getBoundingClientRect().width
+      setGutterWidth(width)
+      setScrollbarSize(scrollbarSize)
     }
 
-    this.scrollToEvent = this.scrollToEvent.bind(this)
-    this.calculateTopScroll(props.events)
-  }
+    // Scroll such that the screen is centered where most events are positioned.
+    calculateTopScroll(props.events)
+    applyTopScroll()
 
-  componentDidMount() {
-    if (this.gutterRef) {
-      const { current } = this.gutterRef
-      const width = remToPixels(GUTTER_LINE_WIDTH) + current.getBoundingClientRect().width
-      this.setState({ gutterWidth: width, scrollbarSize: scrollbarSize() })
+    document.addEventListener(GlobalEvent.scrollToEvent, scrollToEvent)
+
+    return () => {
+      document.removeEventListener(GlobalEvent.scrollToEvent, scrollToEvent)
+    }
+  }, [])
+
+  /**
+   * Disable scrolling when editing an event.
+   */
+  useEffect(() => {
+    if (contentRef.current) {
+      if (editingEvent) {
+        // Disable scrolling
+        contentRef.current.addEventListener('wheel', preventScroll, { passive: false })
+      } else {
+        // Enable scrolling
+        contentRef.current.removeEventListener('wheel', preventScroll)
+      }
     }
 
-    this.applyTopScroll()
+    // Cleanup function to re-enable scrolling when the component unmounts
+    return () => {
+      if (contentRef.current) {
+        contentRef.current.removeEventListener('wheel', preventScroll)
+      }
+    }
+  }, [editingEvent])
 
-    document.addEventListener(GlobalEvent.scrollToEvent, this.scrollToEvent)
-  }
+  useEffect(() => {
+    applyTopScroll()
+  })
 
-  componentDidUpdate() {
-    this.applyTopScroll()
-  }
-
-  componentWillUnmount() {
-    document.removeEventListener(GlobalEvent.scrollToEvent, this.scrollToEvent)
-  }
+  useEffect(() => {}, [contentRef])
 
   /**
    * Scrolls to time, defaults to now if date in event.detail is unspecified.
    */
-  private scrollToEvent(event) {
-    const { min, max, now } = this.props
+  function scrollToEvent(event) {
+    const { min, max, now } = props
     const scrollToDate = event.detail ? event.detail : now
 
     const totalMillis = dates.diff(max, min)
     const diffMillis = scrollToDate.getTime() - dates.startOf(scrollToDate, 'day').getTime()
     const scrollTopRatio = diffMillis / totalMillis
 
-    const content = this.contentRef.current
+    const content = contentRef.current!
     const padding = content.scrollHeight * 0.2
 
     const scrollTop = Math.max(0, content.scrollHeight * scrollTopRatio - padding)
@@ -107,13 +123,13 @@ class TimeGrid extends React.Component<IProps, IState> {
   /**
    * Makes sure the content is centered at a reasonable place.
    */
-  private calculateTopScroll(events: Event[]) {
-    const { min, max, now, range } = this.props
+  function calculateTopScroll(events: Event[]) {
+    const { min, max, now, range } = props
     const totalMillis = dates.diff(max, min)
 
     if (now >= range[0] && now <= range[range.length - 1]) {
       const diffMillis = (now.getTime() - dates.startOf(now, 'day').getTime()) / 1.1
-      this.scrollTopRatio = diffMillis / totalMillis
+      scrollTopRatio.current = diffMillis / totalMillis
     }
 
     if (!events || !events.length) {
@@ -129,25 +145,25 @@ class TimeGrid extends React.Component<IProps, IState> {
       avgFromTop += scrollTop
     }
 
-    this.scrollTopRatio = avgFromTop
+    scrollTopRatio.current = avgFromTop
   }
 
   /**
    * Only adjust scroll once so it doesn't jump around.
    */
-  private applyTopScroll() {
-    if (this.scrollTopRatio) {
-      const content = this.contentRef.current
-      const scrollTop = content.scrollHeight * this.scrollTopRatio
+  function applyTopScroll() {
+    if (scrollTopRatio.current) {
+      const content = contentRef.current!
+      const scrollTop = content.scrollHeight * scrollTopRatio.current
       content.scrollTop = scrollTop
-      this.scrollTopRatio = undefined
+      scrollTopRatio.current = undefined
     }
   }
 
-  private renderDays(range: Date[]) {
+  function renderDays(range: Date[]) {
     return range.map((date, jj) => {
-      const startOfDay = dates.merge(date, this.props.min)
-      const dayEvents = this.props.events.filter(
+      const startOfDay = dates.merge(date, props.min)
+      const dayEvents = props.events.filter(
         (event) =>
           dates.inRange(date, event.start, event.end, 'day') &&
           !event.all_day &&
@@ -159,20 +175,20 @@ class TimeGrid extends React.Component<IProps, IState> {
           key={jj}
           events={dayEvents}
           date={date}
-          step={this.props.step}
-          timeslots={this.props.timeslots}
+          step={props.step}
+          timeslots={props.timeslots}
           min={startOfDay}
-          max={dates.merge(date, this.props.max)}
-          isCurrentDay={dates.eq(date, this.props.now, 'day')}
-          now={this.props.now}
-          eventService={this.props.eventService}
-          primaryCalendar={this.props.primaryCalendar}
+          max={dates.merge(date, props.max)}
+          isCurrentDay={dates.eq(date, props.now, 'day')}
+          now={props.now}
+          eventService={props.eventService}
+          primaryCalendar={props.primaryCalendar}
         />
       )
     })
   }
 
-  private renderDateTick(idx: number) {
+  function renderDateTick(idx: number) {
     return (
       <div
         className="cal-timeslot-group"
@@ -185,7 +201,7 @@ class TimeGrid extends React.Component<IProps, IState> {
     )
   }
 
-  private renderDateLabel(group: Date[], idx: number) {
+  function renderDateLabel(group: Date[], idx: number) {
     const timeRange = timeFormatShort(group[0], true).toUpperCase()
 
     return (
@@ -199,49 +215,52 @@ class TimeGrid extends React.Component<IProps, IState> {
     )
   }
 
-  public render() {
-    const { gutterWidth, scrollbarSize } = this.state
+  const start = props.range[0]
+  const end = props.range[props.range.length - 1]
+  const allDayEvents = props.events
+    .filter((event) => event.all_day && inRange(event, start, end))
+    .sort((a, b) => sortEvents(a, b))
 
-    const start = this.props.range[0]
-    const end = this.props.range[this.props.range.length - 1]
-    const allDayEvents = this.props.events
-      .filter((event) => event.all_day && inRange(event, start, end))
-      .sort((a, b) => sortEvents(a, b))
+  return (
+    <div className="cal-time-view">
+      <TimeGridHeader
+        events={allDayEvents}
+        range={props.range}
+        leftPad={gutterWidth}
+        marginRight={scrollbarSize}
+        eventService={props.eventService}
+      />
 
-    return (
-      <div className="cal-time-view">
-        <TimeGridHeader
-          events={allDayEvents}
-          range={this.props.range}
-          leftPad={gutterWidth}
-          marginRight={scrollbarSize}
-          eventService={this.props.eventService}
-        />
-
-        <div ref={this.contentRef} className="cal-time-content">
-          <div ref={this.gutterRef} className="cal-time-gutter">
-            {this.slotMetrics.groups.map((group, idx) => {
-              return this.renderDateLabel(group, idx)
-            })}
-          </div>
-
-          <div className="cal-time-gutter">
-            {this.slotMetrics.groups.map((_group, idx) => {
-              return this.renderDateTick(idx)
-            })}
-          </div>
-
-          <DragDropZone
-            scrollContainerRef={this.contentRef}
-            range={this.props.range}
-            eventService={this.props.eventService}
-          >
-            {this.renderDays(this.props.range)}
-          </DragDropZone>
+      <div ref={contentRef} className="cal-time-content">
+        <div ref={gutterRef} className="cal-time-gutter">
+          {slotMetrics.current.groups.map((group, idx) => {
+            return renderDateLabel(group, idx)
+          })}
         </div>
+
+        <div className="cal-time-gutter">
+          {slotMetrics.current.groups.map((_group, idx) => {
+            return renderDateTick(idx)
+          })}
+        </div>
+
+        <DragDropZone
+          scrollContainerRef={contentRef}
+          range={props.range}
+          eventService={props.eventService}
+        >
+          {renderDays(props.range)}
+        </DragDropZone>
       </div>
-    )
-  }
+    </div>
+  )
+}
+
+TimeGrid.defaultProps = {
+  step: 15,
+  timeslots: 4,
+  min: dates.startOf(new Date(), 'day'),
+  max: dates.endOf(new Date(), 'day'),
 }
 
 export default TimeGrid
