@@ -57,6 +57,10 @@ function Calendar() {
   }, [])
 
   useEffect(() => {
+    loadCurrentViewEvents()
+  }, [display, calendars.calendarsById, update])
+
+  useEffect(() => {
     document.addEventListener(GlobalEvent.refreshCalendar, handleRefreshEvent)
 
     return function cleanup() {
@@ -64,6 +68,9 @@ function Calendar() {
     }
   }, [handleRefreshEvent])
 
+  /**
+   * Keyboard shortcuts.
+   */
   function onKeyPress(e) {
     if (
       e.target.tagName === 'INPUT' ||
@@ -101,10 +108,6 @@ function Calendar() {
       }
     }
   }
-
-  useEffect(() => {
-    loadCurrentViewEvents()
-  }, [display, calendars.calendarsById, update])
 
   async function loadCurrentViewEvents() {
     if (display.view == 'Day') {
