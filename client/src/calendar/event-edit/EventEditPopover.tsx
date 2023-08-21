@@ -250,6 +250,7 @@ function EventPopover(props: IProps) {
           </Flex>
 
           <ConferenceList
+            mb="1"
             originalConferenceData={props.event.conference_data}
             conferenceData={eventFields.conferenceData}
             readonly={true}
