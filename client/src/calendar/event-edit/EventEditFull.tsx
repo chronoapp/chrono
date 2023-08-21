@@ -348,6 +348,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
               <Box w="28em">
                 <ParticipantList
                   calendar={getSelectedCalendar(eventFields.calendarId)}
+                  organizer={eventFields.organizer}
                   readonly={false}
                   participants={participants}
                   onUpdateParticipants={(updatedParticipants) =>

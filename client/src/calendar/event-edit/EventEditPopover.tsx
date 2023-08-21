@@ -271,6 +271,7 @@ function EventPopover(props: IProps) {
               <Box w="100%">
                 <ParticipantList
                   readonly={true}
+                  organizer={eventFields.organizer}
                   calendar={getSelectedCalendar(eventFields.calendarId)}
                   participants={participants}
                   onUpdateParticipants={(updatedParticipants) =>
@@ -598,6 +599,7 @@ function EventPopover(props: IProps) {
             <Box w="100%">
               <ParticipantList
                 readonly={false}
+                organizer={eventFields.organizer}
                 calendar={getSelectedCalendar(eventFields.calendarId)}
                 participants={participants}
                 onUpdateParticipants={(updatedParticipants) => setParticipants(updatedParticipants)}

@@ -110,7 +110,7 @@ function ParticipantInput(props: IProps) {
               bg={highlightedIndex === index ? 'blue.100' : 'white'}
               borderRadius="md"
             >
-              <Participant participant={item} />
+              <Participant participant={item} isOrganizer={false} />
             </Box>
           ))}
       </Flex>
