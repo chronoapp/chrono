@@ -1,4 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
+import { useRecoilValue } from 'recoil'
+
 import getScrollbarSize from 'dom-helpers/scrollbarSize'
 import { Box } from '@chakra-ui/react'
 
@@ -13,6 +15,8 @@ import { inRange, sortEvents } from './utils/eventLevels'
 import { GlobalEvent } from '../util/global'
 import { EventService } from '@/calendar/event-edit/useEventService'
 import Calendar from '@/models/Calendar'
+
+import { editingEventState } from '@/state/EventsState'
 
 function remToPixels(rem) {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
@@ -32,6 +36,10 @@ interface IProps {
 
 const GUTTER_LINE_WIDTH = 0.5
 
+function preventScroll(e) {
+  e.preventDefault()
+}
+
 function TimeGrid(props: IProps) {
   const [gutterWidth, setGutterWidth] = useState(0)
   const [scrollbarSize, setScrollbarSize] = useState(0)
@@ -42,6 +50,8 @@ function TimeGrid(props: IProps) {
   const gutterRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLInputElement>(null)
   const scrollTopRatio = useRef<number | undefined>(undefined)
+
+  const editingEvent = useRecoilValue(editingEventState)
 
   useEffect(() => {
     const scrollbarSize = getScrollbarSize()
@@ -63,6 +73,28 @@ function TimeGrid(props: IProps) {
       document.removeEventListener(GlobalEvent.scrollToEvent, scrollToEvent)
     }
   }, [])
+
+  /**
+   * Disable scrolling when editing an event.
+   */
+  useEffect(() => {
+    if (contentRef.current) {
+      if (editingEvent) {
+        // Disable scrolling
+        contentRef.current.addEventListener('wheel', preventScroll, { passive: false })
+      } else {
+        // Enable scrolling
+        contentRef.current.removeEventListener('wheel', preventScroll)
+      }
+    }
+
+    // Cleanup function to re-enable scrolling when the component unmounts
+    return () => {
+      if (contentRef.current) {
+        contentRef.current.removeEventListener('wheel', preventScroll)
+      }
+    }
+  }, [editingEvent])
 
   useEffect(() => {
     applyTopScroll()
