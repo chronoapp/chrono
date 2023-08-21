@@ -22,7 +22,7 @@ router = APIRouter()
 TimePeriod = Literal['DAY', 'WEEK', 'MONTH']
 
 
-@router.get('/trends/{labelId}')
+@router.get('/plugins/trends/{labelId}')
 async def getUserTrends(
     labelId: uuid.UUID,
     start: str,

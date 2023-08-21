@@ -12,6 +12,7 @@ from app.db.models import User, Contact
 
 from app.db.sql.contact_search import CONTACT_SEARCH_QUERY
 from app.db.repos.event_repo.view_models import EventParticipantVM
+from app.db.sql.contacts_in_events import CONTACT_IN_EVENTS_QUERY
 
 
 class ContactRepoError(Exception):
@@ -44,6 +45,14 @@ class ContactVM(BaseModel):
 
 class ContactInDBVM(ContactVM):
     id: uuid.UUID
+
+
+class ContactInEventVM(BaseModel):
+    """Represents a contact that has been in an event with the user."""
+
+    total_time_spent_in_seconds: int
+    last_seen: datetime
+    contact: ContactInDBVM
 
 
 class ContactRepository:
@@ -109,3 +118,25 @@ class ContactRepository:
                 select(Contact).where(and_(Contact.user_id == user.id, Contact.email == email))
             )
         ).scalar()
+
+    def getContactsInEvents(self, user: User, startTime: datetime) -> list[ContactInEventVM]:
+        rows = self.session.execute(
+            text(CONTACT_IN_EVENTS_QUERY), {'userId': user.id, 'startDateTime': startTime}
+        )
+
+        return [
+            ContactInEventVM(
+                total_time_spent_in_seconds=row.total_time_spent_in_seconds,
+                last_seen=row.last_seen,
+                contact=ContactInDBVM(
+                    id=row.id,
+                    first_name=row.first_name,
+                    last_name=row.last_name,
+                    display_name=f'{row.first_name} {row.last_name}',
+                    email=row.email,
+                    photo_url=row.photo_url,
+                    google_id=row.google_id,
+                ),
+            )
+            for row in rows
+        ]

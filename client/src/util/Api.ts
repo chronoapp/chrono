@@ -7,6 +7,7 @@ import { LabelRule } from '@/models/LabelRule'
 import Calendar, { CalendarSource } from '@/models/Calendar'
 import Contact from '@/models/Contact'
 import User from '@/models/User'
+import ContactInEvent from '@/models/ContactInEvent'
 
 type SendUpdateType = 'none' | 'all' | 'external'
 
@@ -250,25 +251,7 @@ export async function searchEvents(query: string): Promise<Event[]> {
     })
 }
 
-// ================== Trends and Stats ==================
-
-export async function getTrends(labelId: string, timePeriod: TimePeriod, start: Date, end: Date) {
-  const params = {
-    start: formatDateTime(start),
-    end: formatDateTime(end),
-    time_period: timePeriod,
-  }
-  const queryString = Object.keys(params)
-    .filter((key) => params[key])
-    .map((key) => key + '=' + encodeURIComponent(params[key]))
-    .join('&')
-
-  return fetch(`${API_URL}/trends/${labelId}?${queryString}`, {
-    headers: getHeaders(),
-  }).then(handleErrors)
-}
-
-// Labels
+// ================== Labels ==================
 
 export async function getLabels(title: string = ''): Promise<Label[]> {
   return fetch(`${API_URL}/labels/?title=${title}`, {
@@ -368,4 +351,41 @@ export async function getContact(contactId: string): Promise<Contact> {
   })
     .then(handleErrors)
     .then((resp) => Contact.fromJson(resp))
+}
+
+// ================== Plugins: Trends ==================
+
+export async function getTrends(labelId: string, timePeriod: TimePeriod, start: Date, end: Date) {
+  const params = {
+    start: formatDateTime(start),
+    end: formatDateTime(end),
+    time_period: timePeriod,
+  }
+  const queryString = Object.keys(params)
+    .filter((key) => params[key])
+    .map((key) => key + '=' + encodeURIComponent(params[key]))
+    .join('&')
+
+  return fetch(`${API_URL}/plugins/trends/${labelId}?${queryString}`, {
+    headers: getHeaders(),
+  }).then(handleErrors)
+}
+
+// ================== Plugins: Contacts In Event ==================
+
+export async function getContactsInEvent(): Promise<ContactInEvent[]> {
+  return fetch(`${API_URL}/plugins/people/`, {
+    headers: getHeaders(),
+  })
+    .then(handleErrors)
+    .then((resp) =>
+      resp.map(
+        (contactInEventJSON) =>
+          new ContactInEvent(
+            Contact.fromJson(contactInEventJSON.contact),
+            contactInEventJSON.total_time_spent_in_seconds,
+            contactInEventJSON.last_seen
+          )
+      )
+    )
 }
