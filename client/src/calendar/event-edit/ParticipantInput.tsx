@@ -79,9 +79,8 @@ function ParticipantInput(props: IProps) {
           <Input
             size={'sm'}
             variant="ghost"
-            placeholder="Add guest"
+            placeholder="Add guests"
             className="input-bg"
-            padding={1}
             isInvalid={hasError}
             {...getInputProps()}
           ></Input>

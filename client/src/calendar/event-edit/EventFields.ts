@@ -28,7 +28,8 @@ export default class EventFields {
     readonly guestsCanModify: boolean,
     readonly guestsCanInviteOthers: boolean,
     readonly guestsCanSeeOtherGuests: boolean,
-    readonly conferenceData: ConferenceData | null
+    readonly conferenceData: ConferenceData | null,
+    readonly location: string | null
   ) {}
 
   /**
@@ -51,6 +52,7 @@ export default class EventFields {
       guests_can_modify: eventFields.guestsCanModify,
       guests_can_invite_others: eventFields.guestsCanInviteOthers,
       guests_can_see_other_guests: eventFields.guestsCanSeeOtherGuests,
+      location: eventFields.location,
     }
   }
 }
