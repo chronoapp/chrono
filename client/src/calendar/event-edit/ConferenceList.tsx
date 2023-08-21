@@ -1,5 +1,5 @@
-import React from 'react'
-import { FiChevronDown, FiX } from 'react-icons/fi'
+import { FiChevronDown, FiX, FiExternalLink, FiPhone } from 'react-icons/fi'
+
 import {
   Box,
   IconButton,
@@ -12,6 +12,7 @@ import {
   Flex,
   Text,
   Link,
+  BoxProps,
 } from '@chakra-ui/react'
 
 import GoogleMeetLogo from '@/assets/google-meet.svg'
@@ -31,7 +32,7 @@ export interface ConferenceItem {
   conferenceData: ConferenceData | null
 }
 
-interface IProps {
+interface IProps extends BoxProps {
   originalConferenceData: ConferenceData | null
   conferenceData: ConferenceData | null
   readonly: boolean
@@ -83,13 +84,16 @@ function getSelectedConference(
   }
 }
 
-function conferenceList(props: IProps) {
-  const conferenceList = getConferenceList(props.originalConferenceData)
-  const selectedConference = getSelectedConference(conferenceList, props.conferenceData)
+function ConferenceList(props: IProps) {
+  const { originalConferenceData, conferenceData, readonly, onSelectConference, ...boxProps } =
+    props
+
+  const conferenceList = getConferenceList(originalConferenceData)
+  const selectedConference = getSelectedConference(conferenceList, conferenceData)
 
   return (
-    <Flex direction={'column'}>
-      {!props.readonly && (
+    <Flex direction={'column'} {...boxProps}>
+      {!readonly && (
         <Box>
           <Menu>
             {selectedConference ? (
@@ -112,9 +116,9 @@ function conferenceList(props: IProps) {
                   key={idx}
                   onClick={() => {
                     if (conference.conferenceData) {
-                      props.onSelectConference!(conference.conferenceData)
+                      onSelectConference!(conference.conferenceData)
                     } else if (conference.type === 'hangoutsMeet') {
-                      props.onSelectConference!(ConferenceData.newHangoutsMeet())
+                      onSelectConference!(ConferenceData.newHangoutsMeet())
                     }
                   }}
                 >
@@ -132,7 +136,7 @@ function conferenceList(props: IProps) {
               size="sm"
               aria-label="Remove video conferencing"
               onClick={() => {
-                props.onSelectConference!(null)
+                onSelectConference!(null)
               }}
               icon={<FiX />}
             />
@@ -155,12 +159,66 @@ function ConferenceDetails(props: { selectedVideoConference: ConferenceItem }) {
     return null
   }
 
+  const entryPoints = conferenceData.entry_points
+    .filter((x) => x.entry_point_type !== 'sip')
+    .sort((a, b) => {
+      const order = ['video', 'phone', 'more']
+      const typeAIndex = order.indexOf(a.entry_point_type)
+      const typeBIndex = order.indexOf(b.entry_point_type)
+
+      if (typeAIndex < typeBIndex) {
+        return -1
+      } else if (typeAIndex > typeBIndex) {
+        return 1
+      } else {
+        return 0
+      }
+    })
+
+  return (
+    <Box mt="1">
+      {entryPoints.map((entryPoint, idx) => (
+        <Flex key={idx} mt="2">
+          {renderMeetingEntryPoints(conferenceData, entryPoint)}
+        </Flex>
+      ))}
+    </Box>
+  )
+
   function renderMeetingEntryPoints(
     conferenceData: ConferenceData,
     entryPoint: ConferenceEntryPoint
   ) {
-    if (conferenceData.conference_solution!.key_type === 'hangoutsMeet') {
-      return (
+    if (entryPoint.entry_point_type === 'phone') {
+      return <PhoneEntryPoint entryPoint={entryPoint} />
+    } else if (entryPoint.entry_point_type === 'more') {
+      return <MoreEntryPoint entryPoint={entryPoint} />
+    } else if (entryPoint.entry_point_type === 'video') {
+      return <VideoEntryPoint conferenceData={conferenceData} entryPoint={entryPoint} />
+    }
+  }
+}
+
+function VideoEntryPoint(props: {
+  conferenceData: ConferenceData
+  entryPoint: ConferenceEntryPoint
+}) {
+  const { conferenceData, entryPoint } = props
+  const isHangoutMeet = props.conferenceData.conference_solution!.key_type === 'hangoutsMeet'
+
+  return (
+    <Flex alignItems={'flex-start'} direction={'column'}>
+      <Button
+        colorScheme="primary"
+        fontSize="sm"
+        onClick={() => {
+          window.open(entryPoint.uri, '_blank')
+        }}
+      >
+        {`Join ${conferenceData.conference_solution!.name}`}
+      </Button>
+
+      {isHangoutMeet ? (
         <Box mt="1">
           <Text fontSize="xs" color="gray.700">
             Url: <Link href={entryPoint.uri}>{entryPoint.uri}</Link>
@@ -169,9 +227,7 @@ function ConferenceDetails(props: { selectedVideoConference: ConferenceItem }) {
             Code: {conferenceData.conference_id}
           </Text>
         </Box>
-      )
-    } else {
-      return (
+      ) : (
         <Box mt="1">
           {entryPoint.meeting_code && (
             <Text fontSize="xs" color="gray.700">
@@ -185,31 +241,50 @@ function ConferenceDetails(props: { selectedVideoConference: ConferenceItem }) {
             </Text>
           )}
         </Box>
-      )
-    }
-  }
-
+      )}
+    </Flex>
+  )
+}
+function PhoneEntryPoint(props: { entryPoint: ConferenceEntryPoint }) {
   return (
-    <Box mt="1">
-      {conferenceData.entry_points.map((entryPoint, idx) => (
-        <Flex key={idx} mt="2">
-          <Flex alignItems={'flex-start'} direction={'column'} ml="1">
-            <Button
-              colorScheme="primary"
-              fontSize="sm"
-              onClick={() => {
-                window.open(entryPoint.uri, '_blank')
-              }}
-            >
-              {`Join ${conferenceData.conference_solution!.name}`}
-            </Button>
+    <Flex alignItems={'flex-start'} direction={'column'}>
+      <Button
+        pl="0"
+        leftIcon={<FiPhone />}
+        variant={'ghost'}
+        colorScheme="primary"
+        fontSize="sm"
+        onClick={() => {
+          window.open(props.entryPoint.uri, '_blank')
+        }}
+      >
+        {`Join by Phone`}
+      </Button>
 
-            {renderMeetingEntryPoints(conferenceData, entryPoint)}
-          </Flex>
-        </Flex>
-      ))}
-    </Box>
+      <Box>
+        <Text fontSize="xs" color="gray.700">
+          Phone: {props.entryPoint.label}
+        </Text>
+      </Box>
+    </Flex>
   )
 }
 
-export default conferenceList
+function MoreEntryPoint(props: { entryPoint: ConferenceEntryPoint }) {
+  return (
+    <Button
+      leftIcon={<FiExternalLink />}
+      variant={'link'}
+      colorScheme="primary"
+      fontSize="sm"
+      onClick={() => {
+        window.open(props.entryPoint.uri, '_blank')
+      }}
+      mt="1"
+    >
+      {`More Phone Numbers`}
+    </Button>
+  )
+}
+
+export default ConferenceList
