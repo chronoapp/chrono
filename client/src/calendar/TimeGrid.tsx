@@ -17,6 +17,7 @@ import { EventService } from '@/calendar/event-edit/useEventService'
 import Calendar from '@/models/Calendar'
 
 import { editingEventState } from '@/state/EventsState'
+import { dragDropActionState } from '@/state/EventsState'
 
 function remToPixels(rem) {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
@@ -52,6 +53,7 @@ function TimeGrid(props: IProps) {
   const scrollTopRatio = useRef<number | undefined>(undefined)
 
   const editingEvent = useRecoilValue(editingEventState)
+  const dragAndDropAction = useRecoilValue(dragDropActionState)
 
   useEffect(() => {
     const scrollbarSize = getScrollbarSize()
@@ -79,7 +81,8 @@ function TimeGrid(props: IProps) {
    */
   useEffect(() => {
     if (contentRef.current) {
-      if (editingEvent) {
+      const disableScroll = editingEvent !== null && !dragAndDropAction
+      if (disableScroll) {
         // Disable scrolling
         contentRef.current.addEventListener('wheel', preventScroll, { passive: false })
       } else {
