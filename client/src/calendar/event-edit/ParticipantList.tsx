@@ -26,6 +26,7 @@ import ParticipantInput from './ParticipantInput'
 interface IProps {
   readonly: boolean
   calendar: Calendar
+  organizer: Partial<EventParticipant> | null
   participants: EventParticipant[]
   onUpdateParticipants: (participants: EventParticipant[]) => void
   maxRecommendations: number
@@ -130,7 +131,10 @@ export default function ParticipantList(props: IProps) {
                 bgColor={isMouseInside && 'gray.100'}
                 borderRadius="md"
               >
-                <Participant calendar={props.calendar} participant={participant} />
+                <Participant
+                  participant={participant}
+                  isOrganizer={props.organizer?.email === participant.email}
+                />
 
                 {!props.readonly && (
                   <Flex align="center">
