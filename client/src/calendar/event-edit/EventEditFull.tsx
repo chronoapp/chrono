@@ -77,7 +77,8 @@ export default function EventEditFull(props: { event: Event; eventService: Event
       props.event.guests_can_modify,
       props.event.guests_can_invite_others,
       props.event.guests_can_see_other_guests,
-      props.event.conference_data
+      props.event.conference_data,
+      props.event.location
     )
   )
   const [participants, setParticipants] = useState<EventParticipant[]>(props.event.participants)
