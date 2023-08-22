@@ -333,6 +333,7 @@ def syncDeletedEvent(
             None,
             None,
             None,
+            None,
             status=convertStatus(eventItem['status']),
         )
         event.id = recurringEventId
@@ -357,6 +358,7 @@ def getOrCreateBaseRecurringEvent(
     if not baseRecurringEvent:
         baseRecurringEvent = Event(
             googleRecurringEventId,
+            None,
             None,
             None,
             None,
@@ -556,8 +558,8 @@ def googleEventToEventVM(calendarId: uuid.UUID, eventItem: Dict[str, Any]) -> Go
     guestsCanInviteOthers = eventItem.get('guestsCanInviteOthers', True)
     guestsCanSeeOtherGuests = eventItem.get('guestsCanSeeOtherGuests', True)
 
-    # Conferencing data
     conferenceDataVM = conferenceDataToVM(eventItem.get('conferenceData'))
+    location = eventItem.get('location')
 
     originalStartTime = eventItem.get('originalStartTime')
     originalStartDateTime = None
@@ -616,5 +618,6 @@ def googleEventToEventVM(calendarId: uuid.UUID, eventItem: Dict[str, Any]) -> Go
         guests_can_invite_others=guestsCanInviteOthers,
         guests_can_see_other_guests=guestsCanSeeOtherGuests,
         conference_data=conferenceDataVM,
+        location=location,
     )
     return eventVM

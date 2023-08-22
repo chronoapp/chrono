@@ -135,6 +135,7 @@ class EventBaseVM(BaseModel):
     guests_can_see_other_guests: bool = True
 
     conference_data: ConferenceDataBaseVM | None = None
+    location: Optional[str] = None
 
     # Read only fields.
     original_start: Optional[datetime] = None
@@ -303,6 +304,7 @@ def createOrUpdateEvent(
             eventVM.guests_can_invite_others,
             eventVM.guests_can_see_other_guests,
             conferenceData,
+            eventVM.location,
             status=eventVM.status,
             recurringEventId=eventVM.recurring_event_id,
             recurringEventCalendarId=userCalendar.id,
@@ -313,6 +315,7 @@ def createOrUpdateEvent(
 
         return event
     else:
+        # Patch request. Updates only the fields that are set.
         eventDb.google_id = googleId or eventDb.google_id
         eventDb.title = eventVM.title or eventDb.title
         eventDb.description = eventVM.description or eventDb.description
@@ -320,14 +323,19 @@ def createOrUpdateEvent(
         eventDb.end = eventVM.end or eventDb.end
         eventDb.start_day = eventVM.start_day or eventDb.start_day
         eventDb.end_day = eventVM.end_day or eventDb.end_day
-        eventDb.time_zone = eventVM.timezone
+        eventDb.time_zone = eventVM.timezone or eventDb.time_zone
         eventDb.recurring_event_id = eventVM.recurring_event_id or eventDb.recurring_event_id
         eventDb.recurring_event_calendar_id = userCalendar.id
         eventDb.recurrences = recurrences or eventDb.recurrences
-        eventDb.guests_can_modify = eventVM.guests_can_modify
-        eventDb.guests_can_invite_others = eventVM.guests_can_invite_others
-        eventDb.guests_can_see_other_guests = eventVM.guests_can_see_other_guests
-        eventDb.conference_data = conferenceData
+        eventDb.guests_can_modify = eventVM.guests_can_modify or eventDb.guests_can_modify
+        eventDb.guests_can_invite_others = (
+            eventVM.guests_can_invite_others or eventDb.guests_can_invite_others
+        )
+        eventDb.guests_can_see_other_guests = (
+            eventVM.guests_can_see_other_guests or eventDb.guests_can_see_other_guests
+        )
+        eventDb.conference_data = conferenceData or eventDb.conference_data
+        eventDb.location = eventVM.location or eventDb.location
 
         if not eventDb.creator:
             eventDb.creator = creator

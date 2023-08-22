@@ -214,6 +214,7 @@ class Event(Base):
         guestsCanInviteOthers: Optional[bool],
         guestsCanSeeOtherGuests: Optional[bool],
         conferenceData: Optional['ConferenceData'],
+        location: Optional[str],
         overrideId: Optional[str] = None,
         status: EventStatus = 'active',
         recurringEventId: Optional[str] = None,
@@ -237,6 +238,7 @@ class Event(Base):
         self.creator = creator
         self.organizer = organizer
         self.conference_data = conferenceData
+        self.location = location
 
         if guestsCanModify is not None:
             self.guests_can_modify = guestsCanModify
