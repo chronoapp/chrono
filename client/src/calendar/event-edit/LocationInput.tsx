@@ -1,15 +1,13 @@
 import { FiMap } from 'react-icons/fi'
 
-import { Flex, Input, IconButton } from '@chakra-ui/react'
-
-interface IProps {
-  location: string
-  onUpdateLocation: (location: string) => void
-}
+import { Link, Flex, Input, IconButton } from '@chakra-ui/react'
 
 const GOOGLE_MAPS_API = 'https://www.google.com/maps/search/'
 
-export default function LocationInput(props: IProps) {
+export function LocationInput(props: {
+  location: string
+  onUpdateLocation: (location: string) => void
+}) {
   const { location, onUpdateLocation } = props
 
   return (
@@ -38,6 +36,19 @@ export default function LocationInput(props: IProps) {
           aria-label="search location"
         />
       )}
+    </Flex>
+  )
+}
+
+export function LocationReadOnly(props: { location: string }) {
+  const { location } = props
+  const searchUrl = `${GOOGLE_MAPS_API}${location}`
+
+  return (
+    <Flex w="100%" alignItems={'center'}>
+      <Link size="sm" href={searchUrl} isExternal fontSize={'sm'}>
+        {location}
+      </Link>
     </Flex>
   )
 }

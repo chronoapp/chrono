@@ -19,7 +19,7 @@ import {
 
 import produce from 'immer'
 import moment from 'moment'
-import { FiMail, FiVideo } from 'react-icons/fi'
+import { FiMail, FiVideo, FiMapPin } from 'react-icons/fi'
 import { FiCalendar, FiAlignLeft, FiClock } from 'react-icons/fi'
 
 import * as dates from '@/util/dates'
@@ -27,6 +27,7 @@ import Event from '@/models/Event'
 import Contact from '@/models/Contact'
 import Calendar from '@/models/Calendar'
 import { Label } from '@/models/Label'
+import EventParticipant from '@/models/EventParticipant'
 
 import { labelsState } from '@/state/LabelsState'
 import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
@@ -34,10 +35,10 @@ import useEventActions from '@/state/useEventActions'
 import { displayState, editingEventState } from '@/state/EventsState'
 
 import { format, fullDayFormat } from '@/util/localizer'
+import { addNewLabels } from '@/calendar/utils/LabelUtils'
 import ContentEditable from '@/lib/ContentEditable'
 import { LabelTag } from '@/components/LabelTag'
-import { addNewLabels } from '@/calendar/utils/LabelUtils'
-import EventParticipant from '@/models/EventParticipant'
+
 import { mergeParticipants } from './EventEditUtils'
 import SelectCalendar from './SelectCalendar'
 import RecurringEventEditor from './RecurringEventEditor'
@@ -48,6 +49,7 @@ import { EventService } from './useEventService'
 import EventFields from './EventFields'
 import ParticipantList from './ParticipantList'
 import ConferenceList from './ConferenceList'
+import { LocationInput } from './LocationInput'
 
 /**
  * Full view for event editing.
@@ -428,6 +430,21 @@ export default function EventEditFull(props: { event: Event; eventService: Event
               }}
               readonly={false}
             />
+          </Flex>
+
+          <Flex mt="3" alignItems={'center'}>
+            <Box mr="2" color="gray.600">
+              <FiMapPin size="1em" />
+            </Box>
+
+            <Box w="28em">
+              <LocationInput
+                location={eventFields.location || ''}
+                onUpdateLocation={(location) => {
+                  setEventFields({ ...eventFields, location: location })
+                }}
+              />
+            </Box>
           </Flex>
 
           <Flex alignItems="center" mt="3">
