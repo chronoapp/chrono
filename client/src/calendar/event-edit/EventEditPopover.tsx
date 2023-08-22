@@ -412,7 +412,6 @@ function EventPopover(props: IProps) {
           pr="4"
           maxHeight={'35em'}
           overflowX="hidden"
-          overflowY="auto"
           direction={'column'}
           fontSize="sm"
         >
@@ -615,7 +614,7 @@ function EventPopover(props: IProps) {
           </Flex>
 
           <Flex mt="2" alignItems={'top'}>
-            <Box color="gray.600" mr="2" mt="1">
+            <Box color="gray.600" mr="2" mt="2">
               <FiMail size="1em" />
             </Box>
 
@@ -631,8 +630,8 @@ function EventPopover(props: IProps) {
             </Box>
           </Flex>
 
-          <Flex mt="2">
-            <Box mt="1" mr="2" color="gray.600">
+          <Flex mt="2" alignItems={'center'}>
+            <Box mr="2" color="gray.600">
               <FiVideo size={'1em'} />
             </Box>
 
@@ -682,50 +681,50 @@ function EventPopover(props: IProps) {
               style={{ minHeight: '3em' }}
             />
           </Flex>
+        </Flex>
 
-          <Flex mt="4" mb="2" justifyContent="space-between" alignItems="center">
-            <Flex>
-              <Button
-                size="sm"
-                colorScheme="primary"
-                onClick={() =>
-                  props.eventService.saveEvent({
-                    ...getUpdatedEvent(props.event, eventFields, participants),
-                    conference_data: eventFields.conferenceData,
-                  })
-                }
-              >
-                Save
-              </Button>
-
-              <Button
-                ml="2"
-                size="sm"
-                variant="ghost"
-                fontWeight="normal"
-                onClick={eventActions.cancelSelect}
-              >
-                Cancel
-              </Button>
-            </Flex>
-
+        <Flex mt="4" mb="2" ml="4" mr="4" justifyContent="space-between" alignItems="center">
+          <Flex>
             <Button
-              mt="2"
-              mb="1"
               size="sm"
-              fontWeight="normal"
-              variant="ghost"
-              onClick={() => {
-                eventActions.updateEditingEvent({
+              colorScheme="primary"
+              onClick={() =>
+                props.eventService.saveEvent({
                   ...getUpdatedEvent(props.event, eventFields, participants),
                   conference_data: eventFields.conferenceData,
                 })
-                eventActions.updateEditMode('FULL_EDIT', 'SINGLE')
-              }}
+              }
             >
-              More Options
+              Save
+            </Button>
+
+            <Button
+              ml="2"
+              size="sm"
+              variant="ghost"
+              fontWeight="normal"
+              onClick={eventActions.cancelSelect}
+            >
+              Cancel
             </Button>
           </Flex>
+
+          <Button
+            mt="2"
+            mb="1"
+            size="sm"
+            fontWeight="normal"
+            variant="ghost"
+            onClick={() => {
+              eventActions.updateEditingEvent({
+                ...getUpdatedEvent(props.event, eventFields, participants),
+                conference_data: eventFields.conferenceData,
+              })
+              eventActions.updateEditMode('FULL_EDIT', 'SINGLE')
+            }}
+          >
+            More Options
+          </Button>
         </Flex>
       </>
     )
