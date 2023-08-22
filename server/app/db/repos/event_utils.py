@@ -41,7 +41,6 @@ class EventParticipantVM(BaseModel):
     def validateContactAndEmail(
         cls, email: Optional[str], info: FieldValidationInfo
     ) -> Optional[str]:
-        print(email, info.data.get("contact_id"))
         if email is None and info.data.get("contact_id") is None:
             raise ValueError("Either email or contact_id is required.")
 
