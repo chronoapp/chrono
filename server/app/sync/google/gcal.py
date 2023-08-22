@@ -49,9 +49,10 @@ def getEventBody(event: Event, timeZone: str):
         'recurrence': event.recurrences,
         'organizer': organizer,
         'attendees': participants,
-        "guestsCanModify": event.guests_can_modify,
-        "guestsCanInviteOthers": event.guests_can_invite_others,
-        "guestsCanSeeOtherGuests": event.guests_can_see_other_guests,
+        'guestsCanModify': event.guests_can_modify,
+        'guestsCanInviteOthers': event.guests_can_invite_others,
+        'guestsCanSeeOtherGuests': event.guests_can_see_other_guests,
+        'location': event.location,
     }
 
     if event.conference_data is not None:
