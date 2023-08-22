@@ -16,7 +16,16 @@ import {
   IconButton,
 } from '@chakra-ui/react'
 
-import { FiCalendar, FiClock, FiAlignLeft, FiTrash, FiPlus, FiMail, FiVideo } from 'react-icons/fi'
+import {
+  FiCalendar,
+  FiClock,
+  FiAlignLeft,
+  FiTrash,
+  FiPlus,
+  FiMail,
+  FiVideo,
+  FiMapPin,
+} from 'react-icons/fi'
 import produce from 'immer'
 import moment from 'moment'
 import linkifyHtml from 'linkifyjs/html'
@@ -54,6 +63,8 @@ import EventFields from './EventFields'
 import ParticipantList from './ParticipantList'
 import EventResponseToggle from './EventResponseToggle'
 import ConferenceList from './ConferenceList'
+import { LocationInput, LocationReadOnly } from './LocationInput'
+
 interface IProps {
   event: Event
   eventService: EventService
@@ -86,7 +97,8 @@ function EventPopover(props: IProps) {
       props.event.guests_can_modify,
       props.event.guests_can_invite_others,
       props.event.guests_can_see_other_guests,
-      props.event.conference_data
+      props.event.conference_data,
+      props.event.location
     )
   )
   const [participants, setParticipants] = useState<EventParticipant[]>(props.event.participants)
@@ -255,6 +267,16 @@ function EventPopover(props: IProps) {
             conferenceData={eventFields.conferenceData}
             readonly={true}
           />
+
+          {eventFields.location && (
+            <Flex mt="2" alignItems={'center'}>
+              <Box mr="2" color="gray.600">
+                <FiMapPin size="1em" />
+              </Box>
+
+              <LocationReadOnly location={eventFields.location} />
+            </Flex>
+          )}
 
           <Flex mt="2" alignItems={'center'}>
             <Box mr="2" color="gray.600">
@@ -596,6 +618,7 @@ function EventPopover(props: IProps) {
             <Box color="gray.600" mr="2" mt="1">
               <FiMail size="1em" />
             </Box>
+
             <Box w="100%">
               <ParticipantList
                 readonly={false}
@@ -609,9 +632,10 @@ function EventPopover(props: IProps) {
           </Flex>
 
           <Flex mt="2">
-            <Box mt="1" mr="2" color="gray.700">
+            <Box mt="1" mr="2" color="gray.600">
               <FiVideo size={'1em'} />
             </Box>
+
             <ConferenceList
               originalConferenceData={props.event.conference_data}
               conferenceData={eventFields.conferenceData}
@@ -623,6 +647,19 @@ function EventPopover(props: IProps) {
                 setEventFields(updatedFields)
               }}
               readonly={false}
+            />
+          </Flex>
+
+          <Flex mt="2" alignItems={'center'}>
+            <Box mr="2" color="gray.600">
+              <FiMapPin size="1em" />
+            </Box>
+
+            <LocationInput
+              location={eventFields.location || ''}
+              onUpdateLocation={(location) => {
+                setEventFields({ ...eventFields, location: location })
+              }}
             />
           </Flex>
 

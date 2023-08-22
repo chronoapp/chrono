@@ -45,6 +45,7 @@ export default class Event {
     readonly guests_can_invite_others: boolean,
     readonly guests_can_see_other_guests: boolean,
     readonly conference_data: ConferenceData | null,
+    readonly location: string | null,
 
     // For UI only.
     readonly calendar_id: string,
@@ -80,6 +81,7 @@ export default class Event {
       eventJson.guests_can_invite_others,
       eventJson.guests_can_see_other_guests,
       eventJson.conference_data && ConferenceData.fromJson(eventJson.conference_data),
+      eventJson.location,
       calendarId,
       'SYNCED'
     )
@@ -126,6 +128,7 @@ export default class Event {
       false,
       true,
       true,
+      null,
       null,
       calendar.id,
       'NOT_SYNCED'
