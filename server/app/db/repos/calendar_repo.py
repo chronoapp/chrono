@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
 from sqlalchemy import and_, update, delete, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.db.models.event import isValidTimezone
 from app.db.models.user_calendar import CalendarSource
@@ -75,7 +75,11 @@ class CalendarRepository:
         return userCalendar
 
     def getCalendars(self, user: User) -> list[UserCalendar]:
-        result = self.session.execute(select(UserCalendar).where(UserCalendar.user_id == user.id))
+        result = self.session.execute(
+            select(UserCalendar)
+            .where(UserCalendar.user_id == user.id)
+            .options(selectinload(UserCalendar.reminders))
+        )
         calendars = result.scalars().all()
 
         return list(calendars)

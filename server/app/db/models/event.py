@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from .label import Label
     from .event_participant import EventAttendee, EventCreator, EventOrganizer
     from .conference_data import ConferenceData
+    from .reminder import ReminderOverride
 
 
 EventStatus = Literal['deleted', 'tentative', 'active']
@@ -193,6 +194,12 @@ class Event(Base):
     )
     visibility: Mapped[Visibility] = mapped_column(
         SQLAlchemyEnum(Visibility, name='visibility_enum'), default=Visibility.DEFAULT
+    )
+
+    reminders: Mapped[list['ReminderOverride']] = relationship(
+        "ReminderOverride",
+        lazy='joined',
+        cascade="all, delete-orphan",
     )
 
     @property

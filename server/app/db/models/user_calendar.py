@@ -8,7 +8,7 @@ from app.db.base_class import Base
 from app.db.models.access_control import AccessRole
 
 if TYPE_CHECKING:
-    from app.db.models import User, Webhook, Calendar
+    from app.db.models import User, Webhook, Calendar, ReminderOverride
 
 CalendarSource = Literal['google', 'chrono']
 
@@ -49,6 +49,11 @@ class UserCalendar(Base):
 
     webhook: Mapped['Webhook'] = relationship(
         "Webhook", uselist=False, back_populates="calendar", lazy='joined'
+    )
+    reminders: Mapped[list['ReminderOverride']] = relationship(
+        "ReminderOverride",
+        lazy='joined',
+        cascade="all, delete-orphan",
     )
 
     def __repr__(self) -> str:
