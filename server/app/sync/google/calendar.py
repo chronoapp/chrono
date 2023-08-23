@@ -21,8 +21,9 @@ from app.db.models.conference_data import (
 from app.db.models import User, Event, LabelRule, UserCalendar, Calendar, Webhook, EventAttendee
 from app.db.models.event import Transparency, Visibility
 from app.db.repos.contact_repo import ContactRepository
-from app.db.repos.event_repo import EventRepository, getRecurringEventId
-from app.db.repos.event_repo import (
+from app.db.repos.event_repo.event_repo import (
+    EventRepository,
+    getRecurringEventId,
     createOrUpdateEvent,
 )
 from app.db.repos.event_repo.view_models import (
