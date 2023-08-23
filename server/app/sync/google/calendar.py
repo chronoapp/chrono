@@ -33,6 +33,7 @@ from app.db.repos.event_repo.view_models import (
     EntryPointBaseVM,
     EventBaseVM,
     EventParticipantVM,
+    ReminderOverrideVM,
 )
 
 from app.sync.google.gcal import getCalendarService, addEventsWebhook
@@ -340,6 +341,7 @@ def syncDeletedEvent(
             None,
             None,
             None,
+            [],
             status=convertStatus(eventItem['status']),
         )
         event.id = recurringEventId
@@ -382,6 +384,7 @@ def getOrCreateBaseRecurringEvent(
             None,
             None,
             None,
+            [],
             status='active',
         )
         userCalendar.calendar.events.append(baseRecurringEvent)
@@ -595,6 +598,15 @@ def googleEventToEventVM(calendarId: uuid.UUID, eventItem: Dict[str, Any]) -> Go
             email=googleEvent.organizer.email, display_name=googleEvent.organizer.displayName
         )
 
+    reminderOverrides = (
+        [
+            ReminderOverrideVM(method=r.method, minutes=r.minutes)
+            for r in googleEvent.reminders.overrides
+        ]
+        if googleEvent.reminders
+        else []
+    )
+
     eventVM = GoogleEventVM(
         google_id=googleEvent.id,
         title=googleEvent.summary,
@@ -620,5 +632,6 @@ def googleEventToEventVM(calendarId: uuid.UUID, eventItem: Dict[str, Any]) -> Go
         location=location,
         visibility=Visibility(googleEvent.visibility),
         transparency=Transparency(googleEvent.transparency),
+        reminders=reminderOverrides,
     )
     return eventVM

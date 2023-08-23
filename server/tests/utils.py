@@ -64,6 +64,7 @@ def createEvent(
         True,
         None,
         None,
+        [],
     )
     userCalendar.calendar.events.append(event)
 

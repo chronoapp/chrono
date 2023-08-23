@@ -37,6 +37,7 @@ from app.db.models import (
     UserCalendar,
     Calendar,
     EventAttendee,
+    ReminderOverride,
 )
 
 from app.db.repos.contact_repo import ContactRepository
@@ -624,6 +625,7 @@ def createOverrideDeletedEvent(
         None,
         None,
         None,
+        [],
         overrideId=eventVM.id,
         recurringEventId=parentEvent.id,
         recurringEventCalendarId=parentEvent.calendar_id,
@@ -944,6 +946,10 @@ def createOrUpdateEvent(
                 conferenceDataVM.create_request.conference_solution_key_type,
             )
 
+    reminders = [
+        ReminderOverride(reminderVM.method, reminderVM.minutes) for reminderVM in eventVM.reminders
+    ]
+
     if not eventDb:
         event = Event(
             googleId,
@@ -965,6 +971,7 @@ def createOrUpdateEvent(
             eventVM.guests_can_see_other_guests,
             conferenceData,
             eventVM.location,
+            reminders,
             visibility=eventVM.visibility,
             transparency=eventVM.transparency,
             status=eventVM.status,
@@ -1006,6 +1013,9 @@ def createOrUpdateEvent(
         eventDb.status = eventVM.status or eventDb.status
         eventDb.visibility = eventVM.visibility or eventDb.visibility
         eventDb.transparency = eventVM.transparency or eventDb.transparency
+
+        if reminders:
+            eventDb.reminders = reminders
 
         return eventDb
 

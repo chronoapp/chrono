@@ -33,6 +33,7 @@ def convertToLocalTime(dateTime: datetime, timeZone: Optional[str]):
 
 
 def getEventBody(event: Event, timeZone: str):
+    """TODO: Use the Pydantic Model for validation."""
     if event.organizer is None or event.start is None or event.end is None:
         raise ValueError('Event missing required fields')
 
