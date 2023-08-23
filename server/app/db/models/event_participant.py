@@ -22,7 +22,7 @@ class EventParticipant(Base):
 
     __tablename__ = 'event_participant'
 
-    id = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     event_uid: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('event.uid'), nullable=True)
 
     email_: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)

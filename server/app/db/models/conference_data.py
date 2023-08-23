@@ -49,8 +49,8 @@ class ConferenceData(Base):
     event_uid: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('event.uid'), nullable=True)
 
     # One-to-many relationship with EntryPoint
-    entry_points: Mapped[list['EntryPoint']] = relationship(
-        "EntryPoint",
+    entry_points: Mapped[list['ConferenceEntryPoint']] = relationship(
+        "ConferenceEntryPoint",
         lazy='joined',
         cascade="all, delete-orphan",
         backref=backref('conference_data', lazy='joined'),
@@ -64,8 +64,8 @@ class ConferenceData(Base):
         backref=backref('conference_data', lazy='joined'),
     )
 
-    create_request: Mapped[Optional['CreateRequest']] = relationship(
-        "CreateRequest",
+    create_request: Mapped[Optional['ConferenceCreateRequest']] = relationship(
+        "ConferenceCreateRequest",
         lazy='joined',
         uselist=False,
         cascade="all,delete",
@@ -105,7 +105,11 @@ class ConferenceSolution(Base):
         return f"<ConferenceSolution {self.name}>"
 
 
-class CreateRequest(Base):
+class ConferenceCreateRequest(Base):
+    """Request to create a conference."""
+
+    __tablename__ = "conference_create_request"
+
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     conference_data_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('conference_data.id'))
 
@@ -126,13 +130,13 @@ class CreateRequest(Base):
         self.conference_solution_key_type = conferenceSolutionKeyType
 
     def __repr__(self) -> str:
-        return f"<CreateRequest {self.status} {self.conference_solution_key_type}>"
+        return f"<ConferenceCreateRequest {self.status} {self.conference_solution_key_type}>"
 
 
-class EntryPoint(Base):
+class ConferenceEntryPoint(Base):
     """Ways to enter the meeting. For example, a Google Meet link or a phone number."""
 
-    __tablename__ = "entry_points"
+    __tablename__ = "conference_entry_points"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
 

@@ -14,8 +14,8 @@ from app.db.models.event_participant import ResponseStatus
 from app.db.models.conference_data import (
     ConferenceData,
     ConferenceSolution,
-    CreateRequest,
-    EntryPoint,
+    ConferenceCreateRequest,
+    ConferenceEntryPoint,
     CommunicationMethod,
     ConferenceKeyType,
     ConferenceCreateStatus,
@@ -268,7 +268,7 @@ def createOrUpdateEvent(
             else None,
         )
         conferenceData.entry_points = [
-            EntryPoint(
+            ConferenceEntryPoint(
                 entryPointVM.entry_point_type,
                 entryPointVM.uri,
                 entryPointVM.label,
@@ -279,7 +279,7 @@ def createOrUpdateEvent(
         ]
 
         if conferenceDataVM.create_request:
-            conferenceData.create_request = CreateRequest(
+            conferenceData.create_request = ConferenceCreateRequest(
                 conferenceDataVM.create_request.status,
                 conferenceDataVM.create_request.request_id,
                 conferenceDataVM.create_request.conference_solution_key_type,
