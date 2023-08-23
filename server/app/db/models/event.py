@@ -236,6 +236,8 @@ class Event(Base):
         guestsCanSeeOtherGuests: Optional[bool],
         conferenceData: Optional['ConferenceData'],
         location: Optional[str],
+        transparency: Transparency | None = None,
+        visibility: Visibility | None = None,
         overrideId: Optional[str] = None,
         status: EventStatus = 'active',
         recurringEventId: Optional[str] = None,
@@ -260,6 +262,16 @@ class Event(Base):
         self.organizer = organizer
         self.conference_data = conferenceData
         self.location = location
+
+        if transparency:
+            self.transparency = transparency
+        else:
+            self.transparency = Transparency.OPAQUE
+
+        if visibility:
+            self.visibility = visibility
+        else:
+            self.visibility = Visibility.DEFAULT
 
         if guestsCanModify is not None:
             self.guests_can_modify = guestsCanModify
