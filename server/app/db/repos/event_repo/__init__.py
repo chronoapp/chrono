@@ -19,7 +19,7 @@ from app.db.models import Event, User, UserCalendar, Calendar, EventAttendee
 
 from app.db.repos.contact_repo import ContactRepository
 from app.db.repos.calendar_repo import CalendarRepository
-from app.db.repos.event_utils import (
+from app.db.repos.event_repo.event_utils import (
     EventBaseVM,
     EventInDBVM,
     GoogleEventInDBVM,

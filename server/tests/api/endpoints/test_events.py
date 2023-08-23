@@ -15,7 +15,7 @@ from app.db.repos.event_repo import (
     getExpandedRecurringEvents,
     getAllExpandedRecurringEventsList,
 )
-from app.db.repos.event_utils import (
+from app.db.repos.event_repo.event_utils import (
     createOrUpdateEvent,
 )
 from app.db.repos.calendar_repo import CalendarRepository
@@ -253,7 +253,7 @@ def test_createEvent_withLabels(user: User, session, test_client):
         'start': start.isoformat(),
         'end': end.isoformat(),
         'calendar_id': str(userCalendar.id),
-        'labels': [json.loads(labelInDB.json())],
+        'labels': [json.loads(labelInDB.model_dump_json())],
     }
 
     resp = test_client.post(

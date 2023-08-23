@@ -2,7 +2,7 @@ import uuid
 
 from typing import List, Optional, Sequence
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
@@ -18,11 +18,10 @@ router = APIRouter()
 
 
 class LabelRuleVM(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     text: str
     label_id: uuid.UUID
-
-    class Config:
-        from_attributes = True
 
 
 class LabelRuleInDBVM(LabelRuleVM):

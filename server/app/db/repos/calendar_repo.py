@@ -1,7 +1,7 @@
 import uuid
 
 from typing import Optional
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 from sqlalchemy import and_, update, delete, select
 from sqlalchemy.orm import Session, selectinload
@@ -14,6 +14,8 @@ from app.db.repos.exceptions import CalendarNotFoundError
 
 
 class CalendarBaseVM(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
     summary: str
     description: Optional[str] = None
     background_color: str = Field(alias='backgroundColor')
@@ -32,10 +34,6 @@ class CalendarBaseVM(BaseModel):
                 raise ValueError(f'Invalid timezone {timezone}')
 
         return timezone
-
-    class Config:
-        from_attributes = True
-        populate_by_name = True
 
 
 class CalendarVM(CalendarBaseVM):

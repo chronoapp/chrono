@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.api.utils.security import get_current_user
 
@@ -8,11 +8,10 @@ router = APIRouter()
 
 
 class UserModel(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     email: str
     timezone: str
-
-    class Config:
-        from_attributes = True
 
 
 @router.get('/user/', response_model=UserModel)

@@ -2,7 +2,7 @@ import uuid
 
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict
 
 from sqlalchemy.orm import Session
 
@@ -15,20 +15,13 @@ router = APIRouter()
 
 
 class LabelVM(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     title: str
     color_hex: str
     key: str | None = None
     parent_id: uuid.UUID | None = None
     position: int | None = None
-
-    @field_validator("title")
-    def titleIsNonEmpty(cls, title: str) -> str:
-        if not title:
-            raise ValueError('Title not specified.')
-        return title
-
-    class Config:
-        from_attributes = True
 
 
 class LabelInDbVM(LabelVM):
