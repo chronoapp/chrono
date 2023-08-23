@@ -9,7 +9,7 @@ from pydantic_core.core_schema import FieldValidationInfo
 
 from app.api.endpoints.labels import LabelInDbVM
 from app.db.models import Event, UserCalendar, EventCreator, EventOrganizer
-from app.db.models.event import EventStatus
+from app.db.models.event import EventStatus, Visibility, Transparency
 from app.db.models.event_participant import ResponseStatus
 from app.db.models.conference_data import (
     ConferenceData,
@@ -135,6 +135,8 @@ class EventBaseVM(BaseModel):
 
     conference_data: ConferenceDataBaseVM | None = None
     location: Optional[str] = None
+    visibility: Visibility | None = None
+    transparency: Transparency | None = None
 
     # Read only fields.
     original_start: Optional[datetime] = None
@@ -304,6 +306,8 @@ def createOrUpdateEvent(
             eventVM.guests_can_see_other_guests,
             conferenceData,
             eventVM.location,
+            visibility=eventVM.visibility,
+            transparency=eventVM.transparency,
             status=eventVM.status,
             recurringEventId=eventVM.recurring_event_id,
             recurringEventCalendarId=userCalendar.id,
@@ -338,9 +342,11 @@ def createOrUpdateEvent(
 
         if not eventDb.creator:
             eventDb.creator = creator
-        eventDb.organizer = organizer
 
-        eventDb.status = eventVM.status
+        eventDb.organizer = organizer
+        eventDb.status = eventVM.status or eventDb.status
+        eventDb.visibility = eventVM.visibility or eventDb.visibility
+        eventDb.transparency = eventVM.transparency or eventDb.transparency
 
         return eventDb
 
