@@ -12,4 +12,5 @@ from .label import Label
 from .label_rule import LabelRule
 from .contact import Contact
 from .access_control import AccessControlRule, AccessRole
-from .conference_data import ConferenceData, EntryPoint
+from .conference_data import ConferenceData, ConferenceEntryPoint
+from .reminder import ReminderOverride, EventReminderMethod

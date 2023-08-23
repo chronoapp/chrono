@@ -20,7 +20,7 @@ from app.db.repos.event_repo import (
     EventRepoError,
     EventNotFoundError,
 )
-from app.db.repos.event_utils import (
+from app.db.repos.event_repo.event_utils import (
     EventBaseVM,
     EventParticipantVM,
     createOrUpdateEvent,
@@ -218,7 +218,9 @@ def test_event_repo_edit_attendee_permissions_as_guest(user, session):
     assert participant.response_status == 'accepted'
 
     # Make sure this user doesn't have the permissions to update the guest list.
-    newParticipants = [p.model_copy(update={'response_status': 'accepted'}) for p in eventVM.participants]
+    newParticipants = [
+        p.model_copy(update={'response_status': 'accepted'}) for p in eventVM.participants
+    ]
     eventVMUpdated = eventVM.model_copy(update={'participants': newParticipants})
     event = eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
     participantsMap = {p.email: p for p in event.participants}

@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional, Literal, Union
 from dateutil.rrule import rrule, rruleset, rrulestr
 from zoneinfo import ZoneInfo
-from pydantic import BaseModel, field_validator, Field
+from pydantic import BaseModel, field_validator, Field, ConfigDict
 from pydantic_core.core_schema import FieldValidationInfo
 
 from app.api.endpoints.labels import LabelInDbVM
@@ -28,6 +28,8 @@ from app.db.models.conference_data import (
 class EventParticipantVM(BaseModel):
     """Either one of email or contact ID is required."""
 
+    model_config = ConfigDict(from_attributes=True)
+
     id: Optional[uuid.UUID] = None
     contact_id: Optional[uuid.UUID] = None
     email: Optional[str] = None
@@ -46,40 +48,36 @@ class EventParticipantVM(BaseModel):
 
         return email
 
-    class Config:
-        from_attributes = True
-
 
 class EntryPointBaseVM(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     entry_point_type: CommunicationMethod
     uri: str
     label: str | None = None
     meeting_code: str | None = None
     password: str | None = None
 
-    class Config:
-        from_attributes = True
-
 
 class CreateConferenceRequestVM(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     request_id: str = uuid.uuid4().hex
     status: ConferenceCreateStatus = ConferenceCreateStatus.PENDING
     conference_solution_key_type: ConferenceKeyType
 
-    class Config:
-        from_attributes = True
-
 
 class ConferenceSolutionVM(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     name: str
     key_type: ConferenceKeyType
     icon_uri: str
 
-    class Config:
-        from_attributes = True
-
 
 class ConferenceDataBaseVM(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     conference_id: str | None
     conference_solution: ConferenceSolutionVM | None
 
@@ -88,9 +86,6 @@ class ConferenceDataBaseVM(BaseModel):
 
     # Linking EntryPoint
     entry_points: List[EntryPointBaseVM]
-
-    class Config:
-        from_attributes = True
 
 
 class EntryPointVM(EntryPointBaseVM):
@@ -105,6 +100,8 @@ class EventBaseVM(BaseModel):
     """Viewmodel for events.
     TODO: If we have start_day and end_day, we don't need start and end.
     """
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: Optional[str] = None
 
@@ -166,10 +163,6 @@ class EventBaseVM(BaseModel):
 
     def isAllDay(self) -> bool:
         return self.start_day is not None and self.end_day is not None
-
-    class Config:
-        from_attributes = True
-        populate_by_name = True
 
 
 class EventInDBVM(EventBaseVM):

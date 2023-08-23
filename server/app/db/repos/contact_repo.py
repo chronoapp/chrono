@@ -1,9 +1,8 @@
 import uuid
 
 from typing import Optional
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field, ConfigDict
 from functools import cached_property
-from datetime import datetime
 
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
@@ -12,7 +11,7 @@ from sqlalchemy import text
 from app.db.models import User, Contact
 
 from app.db.sql.contact_search import CONTACT_SEARCH_QUERY
-from app.db.repos.event_utils import EventParticipantVM
+from app.db.repos.event_repo.event_utils import EventParticipantVM
 
 
 class ContactRepoError(Exception):
@@ -22,6 +21,8 @@ class ContactRepoError(Exception):
 
 
 class ContactVM(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
     first_name: Optional[str] = Field(alias="firstName", default=None)
     last_name: Optional[str] = Field(alias="lastName", default=None)
     email: Optional[str] = None
@@ -40,14 +41,9 @@ class ContactVM(BaseModel):
         else:
             return self.email
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
-
 
 class ContactInDBVM(ContactVM):
     id: uuid.UUID
-
 
 
 class ContactRepository:
