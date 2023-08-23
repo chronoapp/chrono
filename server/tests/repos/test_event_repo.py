@@ -2,6 +2,7 @@ import uuid
 import pytest
 
 from datetime import datetime, timedelta
+from app.db.repos.event_repo.view_models import EventBaseVM, EventParticipantVM
 from app.db.repos.exceptions import EventRepoPermissionError
 from app.db.repos.calendar_repo import CalendarRepository
 from app.db.models.event_participant import EventAttendee, EventOrganizer
@@ -19,12 +20,10 @@ from app.db.repos.event_repo import (
     eventMatchesQuery,
     EventRepoError,
     EventNotFoundError,
-)
-from app.db.repos.event_repo.event_utils import (
-    EventBaseVM,
-    EventParticipantVM,
-    createOrUpdateEvent,
     getRecurringEventId,
+)
+from app.db.repos.event_repo import (
+    createOrUpdateEvent,
 )
 
 

@@ -15,7 +15,7 @@ from app.sync.google.calendar import (
     syncEventsToDb,
     syncCreatedOrUpdatedGoogleEvent,
 )
-from app.db.repos.event_repo.event_utils import getRecurringEventId
+from app.db.repos.event_repo import getRecurringEventId
 from app.db.repos.event_repo import EventRepository
 from app.db.repos.calendar_repo import CalendarRepository
 from app.db.repos.contact_repo import ContactRepository, ContactVM

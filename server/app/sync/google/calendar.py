@@ -21,20 +21,21 @@ from app.db.models.conference_data import (
 from app.db.models import User, Event, LabelRule, UserCalendar, Calendar, Webhook, EventAttendee
 from app.db.models.event import Transparency, Visibility
 from app.db.repos.contact_repo import ContactRepository
-from app.db.repos.event_repo import EventRepository
-from app.db.repos.event_utils import (
-    EventBaseVM,
-    EntryPointBaseVM,
+from app.db.repos.event_repo import EventRepository, getRecurringEventId
+from app.db.repos.event_repo import (
+    createOrUpdateEvent,
+)
+from app.db.repos.event_repo.view_models import (
     ConferenceDataBaseVM,
     ConferenceSolutionVM,
     CreateConferenceRequestVM,
+    EntryPointBaseVM,
+    EventBaseVM,
     EventParticipantVM,
-    createOrUpdateEvent,
-    getRecurringEventId,
 )
 
 from app.sync.google.gcal import getCalendarService, addEventsWebhook
-from .models import GoogleCalendarEvent, ConferenceData
+from .view_models import GoogleCalendarEvent, ConferenceData
 
 """
 Adapter to sync to and from google calendar.

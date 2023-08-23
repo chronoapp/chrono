@@ -11,7 +11,7 @@ from sqlalchemy import text
 from app.db.models import User, Contact
 
 from app.db.sql.contact_search import CONTACT_SEARCH_QUERY
-from app.db.repos.event_repo.event_utils import EventParticipantVM
+from app.db.repos.event_repo.view_models import EventParticipantVM
 
 
 class ContactRepoError(Exception):

@@ -7,27 +7,40 @@ from zoneinfo import ZoneInfo
 from itertools import islice
 from datetime import timedelta
 import logging
+from dateutil.rrule import rrule
 
 from sqlalchemy import asc, and_, select, delete, or_, update
 from sqlalchemy.orm import selectinload, Session
 from sqlalchemy import text, asc
 from sqlalchemy.sql.selectable import Select
+from app.db.models.conference_data import (
+    ConferenceCreateRequest,
+    ConferenceData,
+    ConferenceEntryPoint,
+    ConferenceSolution,
+)
+from app.db.repos.event_repo.view_models import (
+    EventBaseVM,
+    EventInDBVM,
+    EventParticipantVM,
+    GoogleEventInDBVM,
+    recurrenceToRuleSet,
+)
 
 from app.db.sql.event_search import EVENT_SEARCH_QUERY
 from app.db.sql.event_search_recurring import RECURRING_EVENT_SEARCH_QUERY
-from app.db.models import Event, User, UserCalendar, Calendar, EventAttendee
+from app.db.models import (
+    Event,
+    EventCreator,
+    EventOrganizer,
+    User,
+    UserCalendar,
+    Calendar,
+    EventAttendee,
+)
 
 from app.db.repos.contact_repo import ContactRepository
 from app.db.repos.calendar_repo import CalendarRepository
-from app.db.repos.event_repo.event_utils import (
-    EventBaseVM,
-    EventInDBVM,
-    GoogleEventInDBVM,
-    EventParticipantVM,
-    createOrUpdateEvent,
-    getRecurringEventId,
-    recurrenceToRuleSet,
-)
 
 from app.api.endpoints.labels import LabelInDbVM, Label, combineLabels
 from app.db.repos.exceptions import (
@@ -862,3 +875,164 @@ def getChangedEventKVs(fromEvent: EventBaseVM, toEvent: EventBaseVM):
         for key in diffKeys
         if fromEventDict.get(key) != toEventDict.get(key)
     }
+
+
+def getRecurringEventId(
+    baseEventId: Optional[str], startDate: datetime, isAllDay: bool
+) -> Optional[str]:
+    """Returns a composite ID for the recurring event, based on the original
+    event ID and the start date.
+    """
+    if not baseEventId:
+        return None
+
+    dtStr = startDate.astimezone(ZoneInfo('UTC')).strftime(
+        "%Y%m%d" if isAllDay else "%Y%m%dT%H%M%SZ"
+    )
+    return f'{baseEventId}_{dtStr}'
+
+
+def createOrUpdateEvent(
+    userCalendar: UserCalendar,
+    eventDb: Optional[Event],
+    eventVM: EventBaseVM,
+    overrideId: Optional[str] = None,
+    googleId: Optional[str] = None,
+) -> Event:
+    recurrences = None if eventVM.recurring_event_id else eventVM.recurrences
+    if creatorVM := eventVM.creator:
+        creator = EventCreator(creatorVM.email, creatorVM.display_name, creatorVM.contact_id)
+    else:
+        creator = EventCreator(userCalendar.user.email, None, None)
+
+    if organizerVM := eventVM.organizer:
+        organizer = EventOrganizer(
+            organizerVM.email, organizerVM.display_name, organizerVM.contact_id
+        )
+    else:
+        organizer = EventOrganizer(userCalendar.email, userCalendar.summary, None)
+
+    conferenceData = None
+
+    conferenceDataVM = eventVM.conference_data
+    if conferenceDataVM:
+        conferenceData = ConferenceData(
+            conferenceDataVM.conference_id,
+            ConferenceSolution(
+                conferenceDataVM.conference_solution.name,
+                conferenceDataVM.conference_solution.key_type,
+                conferenceDataVM.conference_solution.icon_uri,
+            )
+            if conferenceDataVM.conference_solution
+            else None,
+        )
+        conferenceData.entry_points = [
+            ConferenceEntryPoint(
+                entryPointVM.entry_point_type,
+                entryPointVM.uri,
+                entryPointVM.label,
+                entryPointVM.meeting_code,
+                entryPointVM.password,
+            )
+            for entryPointVM in conferenceDataVM.entry_points
+        ]
+
+        if conferenceDataVM.create_request:
+            conferenceData.create_request = ConferenceCreateRequest(
+                conferenceDataVM.create_request.status,
+                conferenceDataVM.create_request.request_id,
+                conferenceDataVM.create_request.conference_solution_key_type,
+            )
+
+    if not eventDb:
+        event = Event(
+            googleId,
+            eventVM.title,
+            eventVM.description,
+            eventVM.start,
+            eventVM.end,
+            eventVM.start_day,
+            eventVM.end_day,
+            eventVM.timezone,
+            recurrences,
+            eventVM.original_start,
+            eventVM.original_start_day,
+            eventVM.original_timezone,
+            creator,
+            organizer,
+            eventVM.guests_can_modify,
+            eventVM.guests_can_invite_others,
+            eventVM.guests_can_see_other_guests,
+            conferenceData,
+            eventVM.location,
+            visibility=eventVM.visibility,
+            transparency=eventVM.transparency,
+            status=eventVM.status,
+            recurringEventId=eventVM.recurring_event_id,
+            recurringEventCalendarId=userCalendar.id,
+            overrideId=overrideId,
+        )
+
+        userCalendar.calendar.events.append(event)
+
+        return event
+    else:
+        # Patch request. Updates only the fields that are set.
+        eventDb.google_id = googleId or eventDb.google_id
+        eventDb.title = eventVM.title or eventDb.title
+        eventDb.description = eventVM.description or eventDb.description
+        eventDb.start = eventVM.start or eventDb.start
+        eventDb.end = eventVM.end or eventDb.end
+        eventDb.start_day = eventVM.start_day or eventDb.start_day
+        eventDb.end_day = eventVM.end_day or eventDb.end_day
+        eventDb.time_zone = eventVM.timezone or eventDb.time_zone
+        eventDb.recurring_event_id = eventVM.recurring_event_id or eventDb.recurring_event_id
+        eventDb.recurring_event_calendar_id = userCalendar.id
+        eventDb.recurrences = recurrences or eventDb.recurrences
+        eventDb.guests_can_modify = eventVM.guests_can_modify or eventDb.guests_can_modify
+        eventDb.guests_can_invite_others = (
+            eventVM.guests_can_invite_others or eventDb.guests_can_invite_others
+        )
+        eventDb.guests_can_see_other_guests = (
+            eventVM.guests_can_see_other_guests or eventDb.guests_can_see_other_guests
+        )
+        eventDb.conference_data = conferenceData or eventDb.conference_data
+        eventDb.location = eventVM.location or eventDb.location
+
+        if not eventDb.creator:
+            eventDb.creator = creator
+
+        eventDb.organizer = organizer
+        eventDb.status = eventVM.status or eventDb.status
+        eventDb.visibility = eventVM.visibility or eventDb.visibility
+        eventDb.transparency = eventVM.transparency or eventDb.transparency
+
+        return eventDb
+
+
+def getRRule(
+    startDate: Optional[datetime],
+    freq: int,
+    interval: int,
+    occurrences: Optional[int],
+    until: Optional[datetime],
+) -> rrule:
+    if until and occurrences:
+        raise ValueError('Until and occurrences cannot both be set.')
+    if not until and not occurrences:
+        raise ValueError('Either until or occurrences must be set.')
+
+    count = None
+    if not until:
+        count = (
+            min(MAX_RECURRING_EVENT_COUNT, occurrences)
+            if occurrences
+            else MAX_RECURRING_EVENT_COUNT
+        )
+
+    if count:
+        rule = rrule(dtstart=startDate, freq=freq, interval=interval, count=count)
+    else:
+        rule = rrule(dtstart=startDate, freq=freq, interval=interval, until=until)
+
+    return rule
