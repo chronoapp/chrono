@@ -3,7 +3,7 @@ import uuid
 import googleapiclient
 from worker import dramatiq
 
-from app.db.repos.event_repo import EventRepository
+from app.db.repos.event_repo.event_repo import EventRepository
 from app.db.repos.user_repo import UserRepository
 from app.db.repos.calendar_repo import CalendarRepository
 from app.db.repos.webhook_repo import WebhookRepository

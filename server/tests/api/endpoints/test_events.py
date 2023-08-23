@@ -10,12 +10,12 @@ from tests.utils import createCalendar, createEvent
 
 from app.api.endpoints.authentication.token_utils import getAuthToken
 
-from app.db.repos.event_repo import (
+from app.db.repos.event_repo.event_repo import (
     EventRepository,
     getExpandedRecurringEvents,
     getAllExpandedRecurringEventsList,
 )
-from app.db.repos.event_repo import (
+from app.db.repos.event_repo.event_repo import (
     createOrUpdateEvent,
 )
 from app.db.repos.calendar_repo import CalendarRepository

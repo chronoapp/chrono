@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models import Event, User
-from app.db.repos.event_repo import (
+from app.db.repos.event_repo.event_repo import (
     EventRepository,
     getRecurringEvent,
     InputError,
@@ -22,7 +22,7 @@ from app.db.repos.event_repo import (
     EventNotFoundError,
     getRecurringEventId,
 )
-from app.db.repos.event_repo import (
+from app.db.repos.event_repo.event_repo import (
     createOrUpdateEvent,
 )
 
