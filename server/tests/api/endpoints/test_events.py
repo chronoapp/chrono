@@ -15,7 +15,7 @@ from app.db.repos.event_repo import (
     getExpandedRecurringEvents,
     getAllExpandedRecurringEventsList,
 )
-from app.db.repos.event_repo.event_utils import (
+from app.db.repos.event_repo import (
     createOrUpdateEvent,
 )
 from app.db.repos.calendar_repo import CalendarRepository

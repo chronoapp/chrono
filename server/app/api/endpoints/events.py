@@ -13,6 +13,7 @@ from app.api.utils.security import get_current_user
 from app.db.repos.event_repo import EventRepository
 
 from app.db.repos.calendar_repo import CalendarRepository
+from app.db.repos.event_repo.view_models import EventBaseVM
 from app.db.repos.exceptions import (
     RepoError,
     EventRepoError,
@@ -20,8 +21,7 @@ from app.db.repos.exceptions import (
     NotFoundError,
 )
 
-from app.db.repos.event_repo.event_utils import (
-    EventBaseVM,
+from app.db.repos.event_repo.view_models import (
     EventInDBVM,
 )
 from app.db.models import Event, User
