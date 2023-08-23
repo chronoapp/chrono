@@ -2,6 +2,7 @@ import re
 import uuid
 import shortuuid
 
+from enum import Enum
 from datetime import datetime
 from typing import Optional, List, Literal, TYPE_CHECKING, Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -16,6 +17,7 @@ from sqlalchemy import (
     UniqueConstraint,
     ForeignKeyConstraint,
     UUID,
+    Enum as SQLAlchemyEnum,
 )
 from sqlalchemy.orm import relationship, Mapped, mapped_column, backref
 
@@ -49,6 +51,18 @@ def isValidTimezone(timeZone: str) -> bool:
         return True
     except ZoneInfoNotFoundError:
         return False
+
+
+class Transparency(Enum):
+    OPAQUE = 'opaque'  # busy
+    TRANSPARENT = 'transparent'  # free
+
+
+class Visibility(Enum):
+    DEFAULT = 'default'
+    PUBLIC = 'public'
+    PRIVATE = 'private'
+    CONFIDENTIAL = 'confidential'
 
 
 class Event(Base):
@@ -172,6 +186,13 @@ class Event(Base):
         uselist=False,
         back_populates="event",
         cascade="all,delete",
+    )
+
+    transparency: Mapped[Transparency] = mapped_column(
+        SQLAlchemyEnum(Transparency, name='transparency_enum'), default=Transparency.OPAQUE
+    )
+    visibility: Mapped[Visibility] = mapped_column(
+        SQLAlchemyEnum(Visibility, name='visibility_enum'), default=Visibility.DEFAULT
     )
 
     @property
