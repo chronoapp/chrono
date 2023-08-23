@@ -1,5 +1,5 @@
 import { Label } from '@/models/Label'
-import Event from '@/models/Event'
+import Event, { Transparency, Visibility } from '@/models/Event'
 import EventParticipant from '@/models/EventParticipant'
 import ConferenceData from '@/models/ConferenceData'
 
@@ -29,7 +29,9 @@ export default class EventFields {
     readonly guestsCanInviteOthers: boolean,
     readonly guestsCanSeeOtherGuests: boolean,
     readonly conferenceData: ConferenceData | null,
-    readonly location: string | null
+    readonly location: string | null,
+    readonly visibility: Visibility,
+    readonly transparency: Transparency
   ) {}
 
   /**
@@ -53,6 +55,8 @@ export default class EventFields {
       guests_can_invite_others: eventFields.guestsCanInviteOthers,
       guests_can_see_other_guests: eventFields.guestsCanSeeOtherGuests,
       location: eventFields.location,
+      visibility: eventFields.visibility,
+      transparency: eventFields.transparency,
     }
   }
 }

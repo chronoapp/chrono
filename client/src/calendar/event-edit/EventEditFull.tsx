@@ -19,7 +19,7 @@ import {
 
 import produce from 'immer'
 import moment from 'moment'
-import { FiMail, FiVideo, FiMapPin } from 'react-icons/fi'
+import { FiMail, FiVideo, FiMapPin, FiBriefcase } from 'react-icons/fi'
 import { FiCalendar, FiAlignLeft, FiClock } from 'react-icons/fi'
 
 import * as dates from '@/util/dates'
@@ -50,6 +50,7 @@ import EventFields from './EventFields'
 import ParticipantList from './ParticipantList'
 import ConferenceList from './ConferenceList'
 import { LocationInput } from './LocationInput'
+import SelectVisibilityTransparency from './SelectVisibilityTransparency'
 
 /**
  * Full view for event editing.
@@ -80,7 +81,9 @@ export default function EventEditFull(props: { event: Event; eventService: Event
       props.event.guests_can_invite_others,
       props.event.guests_can_see_other_guests,
       props.event.conference_data,
-      props.event.location
+      props.event.location,
+      props.event.visibility,
+      props.event.transparency
     )
   )
   const [participants, setParticipants] = useState<EventParticipant[]>(props.event.participants)
@@ -472,6 +475,25 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                 eventActions.updateEditingEvent(updatedEvent)
               }}
             />
+          </Flex>
+
+          <Flex mt="3" alignItems={'center'}>
+            <Box mr="2" color="gray.600">
+              <FiBriefcase size="1em" />
+            </Box>
+
+            <Box>
+              <SelectVisibilityTransparency
+                visibility={eventFields.visibility}
+                transparency={eventFields.transparency}
+                onVisibilityChange={(visibility) => {
+                  setEventFields({ ...eventFields, visibility })
+                }}
+                onTransparencyChange={(transparency) => {
+                  setEventFields({ ...eventFields, transparency })
+                }}
+              />
+            </Box>
           </Flex>
 
           <Flex alignItems="top" mt="3" color="gray.700">
