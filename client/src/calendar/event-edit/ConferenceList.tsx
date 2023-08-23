@@ -104,8 +104,13 @@ function ConferenceList(props: IProps) {
                 </Flex>
               </MenuButton>
             ) : (
-              <MenuButton as={Button} rightIcon={<FiChevronDown />}>
-                add conferencing
+              <MenuButton
+                as={Button}
+                variant="ghost"
+                rightIcon={<FiChevronDown />}
+                fontWeight={'normal'}
+              >
+                Add conferencing
               </MenuButton>
             )}
 

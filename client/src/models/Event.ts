@@ -13,6 +13,9 @@ export const EMPTY_TITLE = '(No title)'
 
 export type SyncStatus = 'NOT_SYNCED' | 'SYNCING' | 'SYNCED'
 
+export type Visibility = 'default' | 'public' | 'private' | 'confidential'
+export type Transparency = 'opaque' | 'transparent'
+
 /**
  * Derived preperties are static because we could use the spread operator {..event, ..}
  * to copy the event for drag & drop.
@@ -46,6 +49,8 @@ export default class Event {
     readonly guests_can_see_other_guests: boolean,
     readonly conference_data: ConferenceData | null,
     readonly location: string | null,
+    readonly visibility: Visibility,
+    readonly transparency: Transparency,
 
     // For UI only.
     readonly calendar_id: string,
@@ -82,6 +87,8 @@ export default class Event {
       eventJson.guests_can_see_other_guests,
       eventJson.conference_data && ConferenceData.fromJson(eventJson.conference_data),
       eventJson.location,
+      eventJson.visibility,
+      eventJson.transparency,
       calendarId,
       'SYNCED'
     )
@@ -130,6 +137,8 @@ export default class Event {
       true,
       null,
       null,
+      'default',
+      'opaque',
       calendar.id,
       'NOT_SYNCED'
     )

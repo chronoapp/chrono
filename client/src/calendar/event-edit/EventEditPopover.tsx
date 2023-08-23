@@ -98,7 +98,9 @@ function EventPopover(props: IProps) {
       props.event.guests_can_invite_others,
       props.event.guests_can_see_other_guests,
       props.event.conference_data,
-      props.event.location
+      props.event.location,
+      props.event.visibility,
+      props.event.transparency
     )
   )
   const [participants, setParticipants] = useState<EventParticipant[]>(props.event.participants)
