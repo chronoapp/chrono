@@ -58,14 +58,7 @@ def user(session):
     calendarId = uuid.uuid4()
     calendar = Calendar(calendarId, 'summary', 'description', 'America/Toronto', 'user@chrono.so')
     userCalendar = UserCalendar(
-        calendarId,
-        None,
-        '#ffffff',
-        '#000000',
-        True,
-        'owner',
-        True,
-        False,
+        calendarId, None, '#ffffff', '#000000', True, 'owner', True, False, []
     )
     userCalendar.calendar = calendar
     user.calendars.append(userCalendar)

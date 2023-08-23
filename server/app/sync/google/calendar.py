@@ -18,7 +18,18 @@ from app.db.models.conference_data import (
     ConferenceKeyType,
     ConferenceCreateStatus,
 )
-from app.db.models import User, Event, LabelRule, UserCalendar, Calendar, Webhook, EventAttendee
+from app.db.models import (
+    User,
+    Event,
+    LabelRule,
+    UserCalendar,
+    Calendar,
+    Webhook,
+    EventAttendee,
+    ReminderOverride,
+    ReminderMethod,
+)
+
 from app.db.models.event import Transparency, Visibility
 from app.db.repos.contact_repo import ContactRepository
 from app.db.repos.event_repo.event_repo import (
@@ -41,6 +52,7 @@ from .view_models import GoogleCalendarEvent, ConferenceData
 
 """
 Adapter to sync to and from google calendar.
+
 Perhaps separate a common interface, ie.
 - PutEvent: Event -> Result
 - CreateCalendar: (Calendar) -> Result
@@ -101,9 +113,15 @@ def syncGoogleCalendars(user: User, calendarList):
     calendarsMap = {cal.google_id: cal for cal in user.getGoogleCalendars()}
 
     for calendarItem in calendarList:
+        print(calendarItem)
+
         gCalId = calendarItem.get('id')
         calSummary = calendarItem.get('summary')
         backgroundColor = mapGoogleColor(calendarItem.get('backgroundColor'))
+        defaultReminders = [
+            ReminderOverride(ReminderMethod(r.get('method')), r.get('minutes'))
+            for r in calendarItem.get('defaultReminders', [])
+        ]
 
         userCalendar = calendarsMap.get(gCalId)
         if userCalendar:
@@ -119,6 +137,7 @@ def syncGoogleCalendars(user: User, calendarList):
             userCalendar.access_role = calendarItem.get('accessRole')
             userCalendar.primary = calendarItem.get('primary', False)
             userCalendar.deleted = calendarItem.get('deleted')
+            userCalendar.reminders = defaultReminders
         else:
             calId = uuid.uuid4()
             calendar = Calendar(
@@ -139,6 +158,7 @@ def syncGoogleCalendars(user: User, calendarList):
                 calendarItem.get('accessRole'),
                 calendarItem.get('primary'),
                 calendarItem.get('deleted'),
+                defaultReminders,
             )
             userCalendar.google_id = gCalId
             userCalendar.calendar = calendar

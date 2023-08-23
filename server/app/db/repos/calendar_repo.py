@@ -103,6 +103,7 @@ class CalendarRepository:
             'owner',
             isPrimary,
             False,
+            [],
         )
         userCalendar.calendar = baseCalendar
         user.calendars.append(userCalendar)
