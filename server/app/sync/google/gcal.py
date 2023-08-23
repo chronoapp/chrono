@@ -53,6 +53,8 @@ def getEventBody(event: Event, timeZone: str):
         'guestsCanInviteOthers': event.guests_can_invite_others,
         'guestsCanSeeOtherGuests': event.guests_can_see_other_guests,
         'location': event.location,
+        'visibility': event.visibility.value,
+        'transparency': event.transparency.value,
     }
 
     if event.conference_data is not None:
