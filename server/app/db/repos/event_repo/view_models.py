@@ -9,6 +9,7 @@ from app.db.models.conference_data import (
 )
 from app.db.models.event import EventStatus, Transparency, Visibility
 from app.db.models.event_participant import ResponseStatus
+from app.db.models.reminder import EventReminderMethod
 
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -82,6 +83,15 @@ class ConferenceDataBaseVM(BaseModel):
     entry_points: List[EntryPointBaseVM]
 
 
+class ReminderOverrideVM(BaseModel):
+    """Viewmodel for reminders."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    method: EventReminderMethod
+    minutes: int
+
+
 class EventBaseVM(BaseModel):
     """Viewmodel for events.
     TODO: If we have start_day and end_day, we don't need start and end.
@@ -120,6 +130,7 @@ class EventBaseVM(BaseModel):
     location: Optional[str] = None
     visibility: Visibility | None = None
     transparency: Transparency | None = None
+    reminders: List[ReminderOverrideVM] = []
 
     # Read only fields.
     original_start: Optional[datetime] = None

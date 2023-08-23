@@ -243,6 +243,7 @@ class Event(Base):
         guestsCanSeeOtherGuests: Optional[bool],
         conferenceData: Optional['ConferenceData'],
         location: Optional[str],
+        reminders: list['ReminderOverride'],
         transparency: Transparency | None = None,
         visibility: Visibility | None = None,
         overrideId: Optional[str] = None,
@@ -269,6 +270,7 @@ class Event(Base):
         self.organizer = organizer
         self.conference_data = conferenceData
         self.location = location
+        self.reminders = reminders
 
         if transparency:
             self.transparency = transparency
