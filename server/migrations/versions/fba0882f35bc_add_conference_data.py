@@ -52,7 +52,7 @@ def upgrade():
         sa.PrimaryKeyConstraint('id'),
     )
     op.create_table(
-        'createrequest',
+        'conference_create_request',
         sa.Column('id', sa.UUID(), nullable=False),
         sa.Column('conference_data_id', sa.UUID(), nullable=False),
         sa.Column(
@@ -79,7 +79,7 @@ def upgrade():
         sa.PrimaryKeyConstraint('id'),
     )
     op.create_table(
-        'entry_points',
+        'conference_entry_points',
         sa.Column('id', sa.UUID(), nullable=False),
         sa.Column(
             'entry_point_type',
@@ -108,8 +108,8 @@ def upgrade():
 def downgrade():
     op.drop_constraint('event_organizer_fk', 'event', type_='foreignkey')
     op.drop_constraint('event_creator_fk', 'event', type_='foreignkey')
-    op.drop_table('entry_points')
-    op.drop_table('createrequest')
+    op.drop_table('conference_entry_points')
+    op.drop_table('conference_create_request')
     op.drop_table('conference_solutions')
     op.drop_table('conference_data')
     op.execute('DROP TYPE conferencekeytype')
