@@ -1,5 +1,6 @@
 import uuid
-from typing import Optional, Dict, Tuple, List, Any
+from typing import Optional, Dict, List, Any
+from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload, Session
@@ -8,6 +9,9 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from dateutil.rrule import rrulestr
 from googleapiclient.errors import HttpError
+from app.core.logger import logger
+
+
 from app.db.models.access_control import AccessControlRule
 from app.db.models.conference_data import (
     CommunicationMethod,
@@ -15,8 +19,7 @@ from app.db.models.conference_data import (
     ConferenceCreateStatus,
 )
 from app.db.models import User, Event, LabelRule, UserCalendar, Calendar, Webhook, EventAttendee
-
-from app.core.logger import logger
+from app.db.models.event import Transparency, Visibility
 from app.db.repos.contact_repo import ContactRepository
 from app.db.repos.event_repo import EventRepository
 from app.db.repos.event_utils import (
@@ -31,6 +34,7 @@ from app.db.repos.event_utils import (
 )
 
 from app.sync.google.gcal import getCalendarService, addEventsWebhook
+from .models import GoogleCalendarEvent, ConferenceData
 
 """
 Adapter to sync to and from google calendar.
@@ -480,127 +484,120 @@ def convertStatus(status: str):
         return 'active'
 
 
-def conferenceDataToVM(conferenceData: Any) -> ConferenceDataBaseVM | None:
+def conferenceDataToVM(conferenceData: ConferenceData | None) -> ConferenceDataBaseVM | None:
     """Parses conference data from Google to our ViewModel."""
     if not conferenceData:
         return None
 
     conferenceDataVM = None
-    if conferenceData:
-        createRequest = conferenceData.get('createRequest')
 
-        createRequestVM = None
-        if createRequest:
-            createRequestVM = CreateConferenceRequestVM(
-                request_id=createRequest.get('requestId'),
-                conference_solution_key_type=ConferenceKeyType(
-                    createRequest.get('conferenceSolutionKey', {}).get('type')
-                ),
-                status=ConferenceCreateStatus(createRequest.get('status', {}).get('statusCode')),
-            )
-
-        conferenceSolution = conferenceData.get('conferenceSolution')
-        conferenceId = conferenceData.get('conferenceId')
-        entrypoints = conferenceData.get('entryPoints')
-        if entrypoints:
-            entryPoints = [
-                EntryPointBaseVM(
-                    id=entrypoint.get('id'),
-                    entry_point_type=CommunicationMethod(entrypoint.get('entryPointType')),
-                    uri=entrypoint.get('uri'),
-                    label=entrypoint.get('label'),
-                    meeting_code=entrypoint.get('meetingCode'),
-                    password=entrypoint.get('password'),
-                )
-                for entrypoint in entrypoints
-            ]
-
-        conferenceSolutionVM = None
-        if conferenceSolution:
-            conferenceType = conferenceSolution.get('key', {}).get('type')
-            conferenceName = conferenceSolution.get('name')
-            conferenceIconUri = conferenceSolution.get('iconUri')
-            conferenceSolutionVM = ConferenceSolutionVM(
-                name=conferenceName,
-                key_type=ConferenceKeyType(conferenceType),
-                icon_uri=conferenceIconUri,
-            )
-
-        conferenceDataVM = ConferenceDataBaseVM(
-            conference_solution=conferenceSolutionVM,
-            conference_id=conferenceId,
-            entry_points=entryPoints,
-            create_request=createRequestVM,
+    createRequestVM = None
+    if conferenceData.createRequest:
+        createRequestVM = CreateConferenceRequestVM(
+            request_id=conferenceData.createRequest.requestId,
+            conference_solution_key_type=ConferenceKeyType(
+                conferenceData.createRequest.conferenceSolutionKey.type
+            ),
+            status=ConferenceCreateStatus(conferenceData.createRequest.status.statusCode),
         )
+
+    conferenceId = conferenceData.conferenceId
+    entrypoints = conferenceData.entryPoints
+    if entrypoints:
+        entryPoints = [
+            EntryPointBaseVM(
+                id=entrypoint.id,
+                entry_point_type=CommunicationMethod(entrypoint.entryPointType),
+                uri=entrypoint.uri,
+                label=entrypoint.label,
+                meeting_code=entrypoint.meetingCode,
+                password=entrypoint.password,
+            )
+            for entrypoint in entrypoints
+        ]
+
+    conferenceSolutionVM = None
+    if conferenceData.conferenceSolution:
+        conferenceSolutionVM = ConferenceSolutionVM(
+            name=conferenceData.conferenceSolution.name,
+            key_type=ConferenceKeyType(conferenceData.conferenceSolution.key.type),
+            icon_uri=conferenceData.conferenceSolution.iconUri,
+        )
+
+    conferenceDataVM = ConferenceDataBaseVM(
+        conference_solution=conferenceSolutionVM,
+        conference_id=conferenceId,
+        entry_points=entryPoints,
+        create_request=createRequestVM,
+    )
 
     return conferenceDataVM
 
 
 def googleEventToEventVM(calendarId: uuid.UUID, eventItem: Dict[str, Any]) -> GoogleEventVM:
-    """Parses the google event to our ViewModel.
-    TODO: Use Pydantic to validate and structure the data from google.
-    """
-
-    eventId = eventItem.get('id')
+    """Parses the google event to our internal ViewModel."""
+    googleEvent = GoogleCalendarEvent.model_validate(eventItem)
 
     # Fix: There's no timezones for all day events..
-    eventItemStart = eventItem['start'].get('dateTime', eventItem['start'].get('date'))
-    eventFullDayStart = eventItem['start'].get('date')
+    eventItemStart = googleEvent.start.dateTime or googleEvent.start.date
+    assert eventItemStart is not None
+    eventFullDayStart = googleEvent.start.date
     eventStart = datetime.fromisoformat(eventItemStart)
 
-    eventItemEnd = eventItem['end'].get('dateTime', eventItem['end'].get('date'))
-    eventFullDayEnd = eventItem['end'].get('date')
+    eventItemEnd = googleEvent.end.dateTime or googleEvent.end.date
+    assert eventItemEnd is not None
+    eventFullDayEnd = googleEvent.end.date
     eventEnd = datetime.fromisoformat(eventItemEnd)
-    eventSummary = eventItem.get('summary')
-    eventDescription = eventItem.get('description')
-    timeZone = eventItem['start'].get('timeZone')
-    guestsCanModify = eventItem.get('guestsCanModify', False)
-    guestsCanInviteOthers = eventItem.get('guestsCanInviteOthers', True)
-    guestsCanSeeOtherGuests = eventItem.get('guestsCanSeeOtherGuests', True)
 
-    conferenceDataVM = conferenceDataToVM(eventItem.get('conferenceData'))
-    location = eventItem.get('location')
+    timeZone = googleEvent.start.timeZone
+    guestsCanModify = googleEvent.guestsCanModify
+    guestsCanInviteOthers = googleEvent.guestsCanInviteOthers
+    guestsCanSeeOtherGuests = googleEvent.guestsCanSeeOtherGuests
 
-    originalStartTime = eventItem.get('originalStartTime')
+    conferenceDataVM = conferenceDataToVM(googleEvent.conferenceData)
+    location = googleEvent.location
+
+    originalStartTime = googleEvent.originalStartTime
     originalStartDateTime = None
     originalStartDay = None
     if originalStartTime:
-        if originalStartTime.get('dateTime'):
-            originalStartDateTime = datetime.fromisoformat(originalStartTime.get('dateTime'))
-        if originalStartTime.get('date'):
-            originalStartDay = originalStartTime.get('date')
+        if originalStartTime.dateTime:
+            originalStartDateTime = datetime.fromisoformat(originalStartTime.dateTime)
+        if originalStartTime.date:
+            originalStartDay = originalStartTime.date
 
-    recurrence = eventItem.get('recurrence')
-    recurringEventGId = eventItem.get('recurringEventId')
-    status = convertStatus(eventItem['status'])
+    recurrence = googleEvent.recurrence
+    recurringEventGId = googleEvent.recurringEventId
+    status = convertStatus(googleEvent.status)
 
     participants = []
-    for attendee in eventItem.get('attendees', []):
+
+    for attendee in googleEvent.attendees:
         participant = EventParticipantVM(
-            id=attendee.get('id'),
-            display_name=attendee.get('displayName'),
-            email=attendee.get('email'),
-            response_status=attendee.get('responseStatus'),
+            id=attendee.id,
+            display_name=attendee.displayName,
+            email=attendee.email,
+            response_status=attendee.responseStatus,
         )
         participants.append(participant)
 
     creatorVM = None
-    if creator := eventItem.get('creator'):
+    if googleEvent.creator:
         creatorVM = EventParticipantVM(
-            email=creator.get('email'), display_name=creator.get('displayName')
+            email=googleEvent.creator.email, display_name=googleEvent.creator.displayName
         )
 
     organizerVM = None
-    if organizer := eventItem.get('organizer'):
+    if googleEvent.organizer:
         organizerVM = EventParticipantVM(
-            email=organizer.get('email'), display_name=organizer.get('displayName')
+            email=googleEvent.organizer.email, display_name=googleEvent.organizer.displayName
         )
 
     eventVM = GoogleEventVM(
-        google_id=eventId,
-        title=eventSummary,
+        google_id=googleEvent.id,
+        title=googleEvent.summary,
         status=status,
-        description=eventDescription,
+        description=googleEvent.description,
         start=eventStart,
         end=eventEnd,
         start_day=eventFullDayStart,
@@ -619,5 +616,7 @@ def googleEventToEventVM(calendarId: uuid.UUID, eventItem: Dict[str, Any]) -> Go
         guests_can_see_other_guests=guestsCanSeeOtherGuests,
         conference_data=conferenceDataVM,
         location=location,
+        visibility=Visibility(googleEvent.visibility),
+        transparency=Transparency(googleEvent.transparency),
     )
     return eventVM
