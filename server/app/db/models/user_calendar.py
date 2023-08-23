@@ -69,6 +69,7 @@ class UserCalendar(Base):
         access_role: AccessRole,
         primary: bool,
         deleted: bool,
+        reminders: list['ReminderOverride'],
     ):
         self.id = id
         self.summary_override = summary_override
@@ -78,6 +79,7 @@ class UserCalendar(Base):
         self.access_role = str(access_role)
         self.primary = primary
         self.deleted = deleted
+        self.reminders = reminders
 
     def hasWriteAccess(self) -> bool:
         return self.access_role == 'writer' or self.access_role == 'owner'

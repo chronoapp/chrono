@@ -1,10 +1,9 @@
 import uuid
 from datetime import datetime
-
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func
 
-from app.db.models import User, Event, Calendar, UserCalendar
+from app.db.models import User, Calendar, UserCalendar
+from app.db.models.reminder import ReminderMethod
 from app.db.models.conference_data import (
     CommunicationMethod,
     ConferenceKeyType,
@@ -12,6 +11,7 @@ from app.db.models.conference_data import (
 )
 
 from app.sync.google.calendar import (
+    syncGoogleCalendars,
     syncEventsToDb,
     syncCreatedOrUpdatedGoogleEvent,
 )
@@ -36,6 +36,49 @@ EVENT_ITEM_RECURRING = {
     'sequence': 0,
     'reminders': {'useDefault': True},
 }
+
+
+# ==================== Sync Calendars ====================
+
+
+def test_syncGoogleCalendars(user, session: Session):
+    """Sync calendars from Google."""
+
+    calendarItem = {
+        'kind': 'calendar#calendarListEntry',
+        'etag': '"1692818886332000"',
+        'id': 'abcabc@group.calendar.google.com',
+        'summary': 'Sample Calendar',
+        'timeZone': 'America/Chicago',
+        'summaryOverride': 'Sample Calendar',
+        'colorId': '3',
+        'backgroundColor': '#f83a22',
+        'foregroundColor': '#000000',
+        'accessRole': 'reader',
+        'defaultReminders': [
+            {'method': 'email', 'minutes': 30},
+            {'method': 'popup', 'minutes': 15},
+        ],
+    }
+
+    syncGoogleCalendars(user, [calendarItem])
+
+    calendarRepo = CalendarRepository(session)
+    createdCalendar = next(
+        c for c in calendarRepo.getCalendars(user) if c.google_id == calendarItem['id']
+    )
+
+    assert createdCalendar is not None
+    assert createdCalendar.summary == calendarItem['summary']
+
+    assert len(createdCalendar.reminders) == 2
+    assert createdCalendar.reminders[0].method == ReminderMethod.EMAIL
+    assert createdCalendar.reminders[0].minutes == 30
+    assert createdCalendar.reminders[1].method == ReminderMethod.POPUP
+    assert createdCalendar.reminders[1].minutes == 15
+
+
+# ==================== Sync Events ====================
 
 
 def getRecurringEventItem(eventItem, datetime: datetime):
@@ -180,7 +223,7 @@ def test_syncEventsToDb_deleted(user, session: Session):
     assert len(events) == 0
 
 
-# ==================== Recurring Events ====================
+# ==================== Sync Recurring Events ====================
 
 
 def test_syncEventsToDb_recurring(user, session: Session):
@@ -290,14 +333,7 @@ def test_syncEventsToDb_duplicateEventMultipleCalendars(user: User, session: Ses
     # Add another calendar
     calendarId = uuid.uuid4()
     readOnlyCalendar = UserCalendar(
-        calendarId,
-        None,
-        '#ffffff',
-        '#000000',
-        True,
-        'owner',
-        True,
-        False,
+        calendarId, None, '#ffffff', '#000000', True, 'owner', True, False, []
     )
     readOnlyCalendar.calendar = Calendar(
         calendarId, 'Another calendar', 'description', 'America/Toronto', 'test@example.com'

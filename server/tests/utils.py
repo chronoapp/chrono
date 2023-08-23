@@ -16,14 +16,7 @@ def createCalendar(
 ) -> UserCalendar:
     calendar = Calendar(calendarId, 'summary', 'description', 'America/Toronto', 'test@example.com')
     userCalendar = UserCalendar(
-        calendarId,
-        None,
-        '#ffffff',
-        '#000000',
-        True,
-        'owner',
-        True,
-        False,
+        calendarId, None, '#ffffff', '#000000', True, 'owner', True, False, []
     )
     userCalendar.calendar = calendar
     user.calendars.append(userCalendar)

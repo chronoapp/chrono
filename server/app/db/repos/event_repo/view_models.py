@@ -9,7 +9,7 @@ from app.db.models.conference_data import (
 )
 from app.db.models.event import EventStatus, Transparency, Visibility
 from app.db.models.event_participant import ResponseStatus
-from app.db.models.reminder import EventReminderMethod
+from app.db.models.reminder import ReminderMethod
 
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -88,7 +88,7 @@ class ReminderOverrideVM(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    method: EventReminderMethod
+    method: ReminderMethod
     minutes: int
 
 

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from app.db.models import UserCalendar, Event
 
 
-class EventReminderMethod(Enum):
+class ReminderMethod(Enum):
     EMAIL = 'email'
     POPUP = 'popup'
     SMS = 'sms'
@@ -34,11 +34,14 @@ class ReminderOverride(Base):
         'UserCalendar', back_populates='reminders', foreign_keys=[user_calendar_id]
     )
 
-    method: Mapped[EventReminderMethod] = mapped_column(
-        SQLAlchemyEnum(EventReminderMethod, name='reminder_method')
+    method: Mapped[ReminderMethod] = mapped_column(
+        SQLAlchemyEnum(ReminderMethod, name='reminder_method')
     )
     minutes: Mapped[int] = mapped_column(String(255), nullable=False)
 
-    def __init__(self, method: EventReminderMethod, minutes: int):
+    def __init__(self, method: ReminderMethod, minutes: int):
         self.method = method
         self.minutes = minutes
+
+    def __repr__(self) -> str:
+        return f'<ReminderOverride method={self.method} minutes={self.minutes}/>'
