@@ -22,13 +22,15 @@ class ReminderOverride(Base):
 
     id: Mapped[UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
 
-    event_uid: Mapped[UUID] = mapped_column(UUID, ForeignKey('event.uid'), nullable=True)
+    event_uid: Mapped[UUID] = mapped_column(
+        UUID, ForeignKey('event.uid'), nullable=True, index=True
+    )
     event: Mapped[Optional['Event']] = relationship(
         'Event', back_populates='reminders', foreign_keys=[event_uid]
     )
 
     user_calendar_id: Mapped[UUID] = mapped_column(
-        UUID, ForeignKey('user_calendar.id'), nullable=True
+        UUID, ForeignKey('user_calendar.id'), nullable=True, index=True
     )
     user_calendar: Mapped[Optional['UserCalendar']] = relationship(
         'UserCalendar', back_populates='reminders', foreign_keys=[user_calendar_id]
