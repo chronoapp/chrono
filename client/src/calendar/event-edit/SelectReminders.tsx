@@ -19,7 +19,9 @@ interface IProps {
   defaultReminders: ReminderOverride[]
 
   reminders: ReminderOverride[]
-  onUpdateReminders: (reminders: ReminderOverride[]) => void
+  onUpdateReminders?: (reminders: ReminderOverride[]) => void
+
+  readonly: boolean
 }
 
 const DEFAULT_REMINDER_OPTIONS = [
@@ -29,14 +31,15 @@ const DEFAULT_REMINDER_OPTIONS = [
   new ReminderOverride('popup', 30),
 ]
 
-function reminderText(reminder: ReminderOverride) {
+function reminderText(reminder: ReminderOverride, readonly: boolean) {
   const { minutes } = reminder
+
   if (minutes === 0) {
     return <Text fontSize={'sm'}>At start of event</Text>
   } else {
     return (
       <Flex fontSize={'sm'}>
-        <Text fontWeight={'medium'}>{minutes} mins</Text>
+        <Text fontWeight={readonly ? 'normal' : 'medium'}>{minutes} mins</Text>
         <Text ml="1">before</Text>
       </Flex>
     )
@@ -44,42 +47,48 @@ function reminderText(reminder: ReminderOverride) {
 }
 
 export default function SelectReminders(props: IProps) {
-  const { reminders, useDefaultReminders, defaultReminders } = props
+  const { reminders, useDefaultReminders, defaultReminders, readonly, onUpdateReminders } = props
   const remindersList = useDefaultReminders ? defaultReminders : reminders
   const sortedReminders = [...remindersList].sort((a, b) => a.minutes - b.minutes)
 
+  if (!readonly && !onUpdateReminders) {
+    throw new Error('onUpdateReminders is required when readonly is false')
+  }
+
   return (
     <Flex direction={'column'}>
-      <Menu>
-        <MenuButton
-          as={Button}
-          variant="ghost"
-          rightIcon={<FiChevronDown />}
-          fontWeight={'normal'}
-          width={'fit-content'}
-        >
-          Add reminder
-        </MenuButton>
+      {!readonly && (
+        <Menu>
+          <MenuButton
+            as={Button}
+            variant="ghost"
+            rightIcon={<FiChevronDown />}
+            fontWeight={'normal'}
+            width={'fit-content'}
+          >
+            Add reminder
+          </MenuButton>
 
-        <MenuList>
-          {DEFAULT_REMINDER_OPTIONS.map((reminder, idx) => (
-            <MenuItem
-              fontSize="sm"
-              key={idx}
-              onClick={() => {
-                const existingReminder = sortedReminders.find(
-                  (r) => r.method === reminder.method && r.minutes === reminder.minutes
-                )
-                if (!existingReminder) {
-                  props.onUpdateReminders([...sortedReminders, reminder])
-                }
-              }}
-            >
-              <span>{reminderText(reminder)}</span>
-            </MenuItem>
-          ))}
-        </MenuList>
-      </Menu>
+          <MenuList>
+            {DEFAULT_REMINDER_OPTIONS.map((reminder, idx) => (
+              <MenuItem
+                fontSize="sm"
+                key={idx}
+                onClick={() => {
+                  const existingReminder = sortedReminders.find(
+                    (r) => r.method === reminder.method && r.minutes === reminder.minutes
+                  )
+                  if (onUpdateReminders && !existingReminder) {
+                    onUpdateReminders([...sortedReminders, reminder])
+                  }
+                }}
+              >
+                <span>{reminderText(reminder, readonly)}</span>
+              </MenuItem>
+            ))}
+          </MenuList>
+        </Menu>
+      )}
 
       <Flex direction={'column'}>
         {sortedReminders.map((reminder, idx) => (
@@ -89,8 +98,9 @@ export default function SelectReminders(props: IProps) {
             onSelect={(r) => {
               const newReminders = [...sortedReminders]
               newReminders.splice(idx, 1)
-              props.onUpdateReminders(newReminders)
+              onUpdateReminders && onUpdateReminders(newReminders)
             }}
+            readonly={readonly}
           />
         ))}
       </Flex>
@@ -101,8 +111,9 @@ export default function SelectReminders(props: IProps) {
 function Reminder(props: {
   reminder: ReminderOverride
   onSelect: (reminders: ReminderOverride) => void
+  readonly: boolean
 }) {
-  const { reminder } = props
+  const { reminder, readonly } = props
 
   return (
     <Hoverable>
@@ -112,16 +123,15 @@ function Reminder(props: {
           onMouseLeave={onMouseLeave}
           fontSize="sm"
           alignItems="center"
-          mt="1"
-          p="1"
-          pl="2"
-          pr="0"
-          bgColor={isMouseInside && 'gray.100'}
+          pt={readonly ? '0' : '1'}
+          pb={readonly ? '0' : '1'}
+          pl={readonly ? '0' : '2'}
+          bgColor={!readonly && isMouseInside && 'gray.100'}
           borderRadius="md"
         >
-          <Box width="32">{reminderText(reminder)}</Box>
+          <Box width="32">{reminderText(reminder, readonly)}</Box>
 
-          {isMouseInside && (
+          {!readonly && isMouseInside && (
             <IconButton
               alignSelf={'right'}
               variant="link"

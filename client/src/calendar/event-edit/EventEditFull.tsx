@@ -509,6 +509,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
               onUpdateReminders={(reminders) => {
                 setEventFields({ ...eventFields, reminders, useDefaultReminders: false })
               }}
+              readonly={false}
             />
           </Flex>
 
