@@ -2,6 +2,7 @@ import { Label } from '@/models/Label'
 import Event, { Transparency, Visibility } from '@/models/Event'
 import EventParticipant from '@/models/EventParticipant'
 import ConferenceData from '@/models/ConferenceData'
+import ReminderOverride from '@/models/ReminderOverride'
 
 const TitleRegex = /@\[([\wd.-_ @]+)\]\(\[id:\w+\]\[type:\w+\]\)/
 
@@ -31,7 +32,9 @@ export default class EventFields {
     readonly conferenceData: ConferenceData | null,
     readonly location: string | null,
     readonly visibility: Visibility,
-    readonly transparency: Transparency
+    readonly transparency: Transparency,
+    readonly useDefaultReminders: boolean,
+    readonly reminders: ReminderOverride[]
   ) {}
 
   /**
@@ -57,6 +60,8 @@ export default class EventFields {
       location: eventFields.location,
       visibility: eventFields.visibility,
       transparency: eventFields.transparency,
+      use_default_reminders: eventFields.useDefaultReminders,
+      reminders: eventFields.reminders,
     }
   }
 }

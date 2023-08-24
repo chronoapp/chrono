@@ -5,9 +5,9 @@ import { Label } from './Label'
 import { hexToHSL } from '../calendar/utils/Colors'
 import { localFullDate, fullDayFormat } from '../util/localizer'
 import EventParticipant, { ResponseStatus } from './EventParticipant'
-
 import Calendar from './Calendar'
 import ConferenceData from './ConferenceData'
+import ReminderOverride from './ReminderOverride'
 
 export const EMPTY_TITLE = '(No title)'
 
@@ -51,6 +51,8 @@ export default class Event {
     readonly location: string | null,
     readonly visibility: Visibility,
     readonly transparency: Transparency,
+    readonly use_default_reminders: boolean,
+    readonly reminders: ReminderOverride[],
 
     // For UI only.
     readonly calendar_id: string,
@@ -89,6 +91,8 @@ export default class Event {
       eventJson.location,
       eventJson.visibility,
       eventJson.transparency,
+      eventJson.use_default_reminders,
+      eventJson.reminders.map((reminderJson) => ReminderOverride.fromJson(reminderJson)),
       calendarId,
       'SYNCED'
     )
@@ -150,6 +154,8 @@ export default class Event {
       null,
       'default',
       'opaque',
+      true,
+      [],
       calendar.id,
       'NOT_SYNCED'
     )

@@ -140,7 +140,7 @@ export default function ParticipantList(props: IProps) {
                   isOrganizer={props.organizer?.email === participant.email}
                 />
 
-                {!props.readonly && (
+                {!props.readonly && isMouseInside && (
                   <Flex align="center">
                     <Menu>
                       <MenuButton>

@@ -51,7 +51,9 @@ function EventPopover(props: IProps) {
       props.event.conference_data,
       props.event.location,
       props.event.visibility,
-      props.event.transparency
+      props.event.transparency,
+      props.event.use_default_reminders,
+      props.event.reminders
     )
   )
   const [participants, setParticipants] = useState<EventParticipant[]>(props.event.participants)
