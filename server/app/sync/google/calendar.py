@@ -113,8 +113,6 @@ def syncGoogleCalendars(user: User, calendarList):
     calendarsMap = {cal.google_id: cal for cal in user.getGoogleCalendars()}
 
     for calendarItem in calendarList:
-        print(calendarItem)
-
         gCalId = calendarItem.get('id')
         calSummary = calendarItem.get('summary')
         backgroundColor = mapGoogleColor(calendarItem.get('backgroundColor'))
