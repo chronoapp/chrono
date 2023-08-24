@@ -196,7 +196,9 @@ class Event(Base):
         SQLAlchemyEnum(Visibility, name='visibility_enum'), default=Visibility.DEFAULT
     )
 
-    reminders: Mapped[list['ReminderOverride']] = relationship(
+    # Reminders
+    use_default_reminders: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    reminders: Mapped[Optional[list['ReminderOverride']]] = relationship(
         "ReminderOverride",
         lazy='joined',
         cascade="all, delete-orphan",
