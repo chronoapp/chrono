@@ -1021,7 +1021,10 @@ def createOrUpdateEvent(
         eventDb.visibility = eventVM.visibility or eventDb.visibility
         eventDb.transparency = eventVM.transparency or eventDb.transparency
 
-        if reminders:
+        if eventVM.use_default_reminders is not None:
+            eventDb.use_default_reminders = eventVM.use_default_reminders
+
+        if reminders is not None:
             eventDb.reminders = reminders
 
         return eventDb
