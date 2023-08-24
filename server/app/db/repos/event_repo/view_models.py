@@ -94,6 +94,8 @@ class ReminderOverrideVM(BaseModel):
 
 class EventBaseVM(BaseModel):
     """Viewmodel for events.
+    We allow None for all fields, since we want to be able to PATCH some fields.
+
     TODO: If we have start_day and end_day, we don't need start and end.
     """
 
@@ -130,7 +132,8 @@ class EventBaseVM(BaseModel):
     location: Optional[str] = None
     visibility: Visibility | None = None
     transparency: Transparency | None = None
-    reminders: List[ReminderOverrideVM] = []
+    use_default_reminders: bool | None = None
+    reminders: list[ReminderOverrideVM] | None = None
 
     # Read only fields.
     original_start: Optional[datetime] = None

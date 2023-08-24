@@ -359,6 +359,7 @@ def syncDeletedEvent(
             None,
             None,
             None,
+            True,
             [],
             status=convertStatus(eventItem['status']),
         )
@@ -402,6 +403,7 @@ def getOrCreateBaseRecurringEvent(
             None,
             None,
             None,
+            True,
             [],
             status='active',
         )
@@ -622,7 +624,7 @@ def googleEventToEventVM(calendarId: uuid.UUID, eventItem: Dict[str, Any]) -> Go
             for r in googleEvent.reminders.overrides
         ]
         if googleEvent.reminders
-        else []
+        else None
     )
 
     eventVM = GoogleEventVM(
@@ -650,6 +652,7 @@ def googleEventToEventVM(calendarId: uuid.UUID, eventItem: Dict[str, Any]) -> Go
         location=location,
         visibility=Visibility(googleEvent.visibility),
         transparency=Transparency(googleEvent.transparency),
+        use_default_reminders=googleEvent.reminders.useDefault if googleEvent.reminders else True,
         reminders=reminderOverrides,
     )
     return eventVM
