@@ -150,7 +150,11 @@ export default function DragDropZone(props: IProps) {
         resetDrag()
       }}
       onDragEnd={(e) => {
+        console.log('onDragEnd')
         resetDrag()
+      }}
+      onDragExit={(e) => {
+        console.log('onDragExit')
       }}
     >
       {dropRect && (
