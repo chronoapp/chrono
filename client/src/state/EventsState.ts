@@ -31,6 +31,7 @@ export type EditingEvent = {
   editRecurringAction: EditRecurringAction
   confirmAction: ConfirmAction | undefined
   event: Event
+  events: Event[]
 }
 
 export interface EventState {
@@ -51,6 +52,11 @@ export const eventsState = atom({
 export const editingEventState = atom({
   key: 'editing-event-state',
   default: null as EditingEvent | null,
+})
+
+export const multiSelectEventState = atom({
+  key: 'multi-select-event-state',
+  default: {} as EventDict,
 })
 
 export const displayState = atom({
