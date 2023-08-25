@@ -49,6 +49,11 @@ function TimeGridEvent(props: IProps) {
   const responseStatus = Event.getResponseStatus(event, calendar)
   const canEditEvent = calendar.canEditEvent(props.event)
 
+  // Local Drag & Drop state.
+  const dragStart = React.useRef({ x: 0, y: 0 })
+  const currentEvent = React.useRef<Element>(undefined!)
+  const otherDraggedEvents = React.useRef<Element[]>([])
+
   function handleResize(e, direction: Direction) {
     if (e.button === 0 && canEditEvent) {
       eventActions.onBeginAction(props.event, 'RESIZE', null, direction)
@@ -56,6 +61,7 @@ function TimeGridEvent(props: IProps) {
   }
 
   function handleStartDragging(e) {
+    console.log('handleStartDragging..')
     if (e.button === 0 && canEditEvent) {
       eventActions.onBeginAction(props.event, 'MOVE', null)
     }
@@ -67,7 +73,7 @@ function TimeGridEvent(props: IProps) {
     // Stop the dragging event.
     eventActions.onInteractionEnd()
 
-    if (e.shiftKey) {
+    if (e.shiftKey && canEditEvent) {
       eventActions.onMultiSelectEvent(props.event)
     } else {
       const isSelected =
@@ -155,6 +161,81 @@ function TimeGridEvent(props: IProps) {
     return dateOfDrag
   }
 
+  function onDragStart(evt: React.DragEvent) {
+    console.log('onDragStart')
+
+    if (canEditEvent) {
+      // evt.dataTransfer.setData('text/plain', 'dummyData')
+
+      // Create an image and use it for the drag image
+      // var img = document.createElement('img')
+      // img.src = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
+      // document.body.appendChild(img)
+      // evt.dataTransfer.setDragImage(img, 0, 0)
+
+      const selectedItemsQuery = Object.values(multiSelectedEvents)
+        .map((e) => `.cal-event-${e.id}`)
+        .join(',')
+
+      const thisEvent = document.querySelector(`.cal-event-${event.id}`)
+      dragStart.current = { x: evt.pageX, y: evt.pageY }
+      console.log('thisEvent', thisEvent, dragStart.current)
+
+      if (thisEvent) {
+        currentEvent.current = thisEvent
+        otherDraggedEvents.current = [thisEvent as HTMLElement]
+
+        if (selectedItemsQuery) {
+          const selectedEvents = document.querySelectorAll(selectedItemsQuery)
+          otherDraggedEvents.current = Array.from(selectedEvents)
+        }
+
+        const dateOfClick = getDateOfClick(evt)
+        eventActions.onBeginAction(props.event, 'MOVE', dateOfClick)
+      }
+    } else {
+      evt.preventDefault()
+      toast({
+        render: (props) => (
+          <ToastTag
+            title={'Cannot rechedule event.'}
+            showSpinner={false}
+            Icon={props.icon}
+            onClose={props.onClose}
+          />
+        ),
+        position: 'bottom',
+      })
+    }
+  }
+
+  function onDrag(evt: React.DragEvent) {
+    const movex = evt.pageX - dragStart.current.x
+    const movey = evt.pageY - dragStart.current.y
+    console.log('Dragging..')
+
+    const element = currentEvent.current as HTMLElement
+    element.style.transform = `translate(${movex}px, ${movey}px)`
+    element.style.opacity = '0.5'
+
+    otherDraggedEvents.current.map((item) => {
+      if (item instanceof HTMLElement) {
+        item.style.transform = `translate(${movex}px, ${movey}px)`
+        item.style.opacity = '1'
+      }
+    })
+  }
+
+  function onDragEnd(evt: React.DragEvent) {
+    console.log('onDragEnd')
+    otherDraggedEvents.current.map((item) => {
+      if (item instanceof HTMLElement) {
+        item.style.transform = 'none'
+        item.style.opacity = '1'
+      }
+    })
+  }
+
   const diffMin = getEventDurationMinutes()
   const displayTitle = Event.getDefaultTitle(event.title_short)
 
@@ -234,6 +315,7 @@ function TimeGridEvent(props: IProps) {
       ref={props.innerRef}
       className={clsx(
         'cal-event',
+        `cal-event-${event.id}`,
         isMultiSelected && 'cal-event-selected',
         responseStatus === 'tentative' && 'tentative',
         isInteracting && 'cal-dnd-interacting',
@@ -251,25 +333,9 @@ function TimeGridEvent(props: IProps) {
       color={color}
       textDecoration={textDecoration}
       draggable={true}
-      onDragStart={(evt: React.DragEvent) => {
-        if (canEditEvent) {
-          const dateOfClick = getDateOfClick(evt)
-          eventActions.onBeginAction(props.event, 'MOVE', dateOfClick)
-        } else {
-          evt.preventDefault()
-          toast({
-            render: (props) => (
-              <ToastTag
-                title={'Cannot rechedule event.'}
-                showSpinner={false}
-                Icon={props.icon}
-                onClose={props.onClose}
-              />
-            ),
-            position: 'bottom',
-          })
-        }
-      }}
+      onDragStart={onDragStart}
+      onDrag={onDrag}
+      onDragEnd={onDragEnd}
     >
       {eventContents}
       {canEditEvent && renderAnchor('DOWN', dnd?.action == 'RESIZE' && props.isPreview)}
