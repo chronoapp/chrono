@@ -18,6 +18,7 @@ import {
   ConfirmAction,
   EventState,
   EditingEvent,
+  multiSelectEventState,
 } from '@/state/EventsState'
 
 /**
@@ -29,6 +30,7 @@ export default function useEventActions() {
   const [events, setEvents] = useRecoilState(eventsState)
   const [editingEvent, setEditingEvent] = useRecoilState(editingEventState)
   const [dragDropAction, setDragDropAction] = useRecoilState(dragDropActionState)
+  const [multiSelectedEvents, setMultiSelectedEvents] = useRecoilState(multiSelectEventState)
 
   /**
    * Initializes all events.
@@ -83,6 +85,7 @@ export default function useEventActions() {
    * Starts editing an existing event.
    */
   function initEditEvent(event: Event, selectTailSegment = false) {
+    console.log('=== initEditEvent ===')
     setEditingEvent({
       id: event.id,
       originalCalendarId: event.calendar_id,
@@ -91,6 +94,7 @@ export default function useEventActions() {
       selectTailSegment: !!selectTailSegment,
       editRecurringAction: 'SINGLE' as EditRecurringAction,
       confirmAction: undefined,
+      events: [event],
     })
   }
 
@@ -98,6 +102,7 @@ export default function useEventActions() {
    * Updates a currently editing event.
    */
   function updateEditingEvent(event: Partial<Event>) {
+    console.log('=== updateEditingEvent ===')
     setEditingEvent((prevState) => {
       if (prevState) {
         return {
@@ -294,6 +299,8 @@ export default function useEventActions() {
     const end = endDate || dates.add(startDate, 1, allDay ? 'day' : 'hours')
     const event = Event.newDefaultEvent(calendar, startDate, end, allDay)
 
+    console.log('RESET')
+    setMultiSelectedEvents({})
     setEditingEvent({
       id: event.id,
       originalCalendarId: calendar.id,
@@ -302,11 +309,13 @@ export default function useEventActions() {
       selectTailSegment: false,
       editRecurringAction: 'SINGLE' as EditRecurringAction,
       confirmAction: undefined,
+      events: [event],
     })
   }
 
   function cancelSelect() {
     setEditingEvent(null)
+    setMultiSelectedEvents({})
   }
 
   function onInteractionStart() {
@@ -323,6 +332,10 @@ export default function useEventActions() {
     setDragDropAction(null)
   }
 
+  /**
+   * Starting a drag & drop or resize action.
+   * TODO: Handle multiple drag and drop.
+   */
   function onBeginAction(
     event: Event,
     action: Action,
@@ -334,8 +347,52 @@ export default function useEventActions() {
     setDragDropAction({ event, action, direction, interacting, pointerDate })
 
     if (event.id !== editingEvent?.id) {
+      console.log('onBeginAction => cancelSelect')
       cancelSelect()
     }
+  }
+
+  function onMultiSelectEvent(event: Event) {
+    console.log('=== onMultiSelectEvent ===')
+
+    setMultiSelectedEvents((prevState) => {
+      const selectedEvents = { ...prevState }
+      if (selectedEvents.hasOwnProperty(event.id)) {
+        delete selectedEvents[event.id]
+      } else {
+        selectedEvents[event.id] = event
+      }
+      console.log(selectedEvents)
+
+      return selectedEvents
+    })
+
+    // setEditingEvent((prevState) => {
+    //   console.log('prevState', prevState)
+
+    //   if (prevState) {
+    //     const multiSelectEvents = [...prevState.multiSelectEvents, event]
+    //     console.log('Existing Select', multiSelectEvents)
+    //     return {
+    //       ...prevState,
+    //       multiSelectEvents,
+    //     } as EditingEvent
+    //   } else {
+    //     const multiSelectEvents = [event]
+    //     console.log('New Select', multiSelectEvents)
+
+    //     return {
+    //       id: event.id,
+    //       originalCalendarId: event.calendar_id,
+    //       editMode: 'READ' as EditMode,
+    //       selectTailSegment: false,
+    //       editRecurringAction: 'SINGLE' as EditRecurringAction,
+    //       confirmAction: undefined,
+    //       event: event,
+    //       multiSelectEvents,
+    //     } as EditingEvent
+    //   }
+    // })
   }
 
   return {
@@ -353,6 +410,7 @@ export default function useEventActions() {
     moveEventCalendarAction,
     showConfirmDialog,
     hideConfirmDialog,
+    onMultiSelectEvent,
 
     cancelSelect,
     onInteractionStart,

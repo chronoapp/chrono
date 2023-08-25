@@ -1,10 +1,15 @@
 import React from 'react'
-import { useToast } from '@chakra-ui/react'
+import { useToast, Box } from '@chakra-ui/react'
 import clsx from 'clsx'
 
 import { useRecoilValue } from 'recoil'
 import { calendarWithDefault } from '@/state/CalendarState'
-import { dragDropActionState, editingEventState, Direction } from '@/state/EventsState'
+import {
+  dragDropActionState,
+  editingEventState,
+  Direction,
+  multiSelectEventState,
+} from '@/state/EventsState'
 import useEventActions from '@/state/useEventActions'
 
 import { ToastTag } from '@/components/Toast'
@@ -32,6 +37,7 @@ function stringifyPercent(v: number | string) {
 function TimeGridEvent(props: IProps) {
   const eventActions = useEventActions()
   const editingEvent = useRecoilValue(editingEventState)
+  const multiSelectedEvents = useRecoilValue(multiSelectEventState)
   const dnd = useRecoilValue(dragDropActionState)
   const toast = useToast()
 
@@ -55,18 +61,28 @@ function TimeGridEvent(props: IProps) {
     }
   }
 
-  function handleClickEvent(e) {
-    const isSelected =
-      props.event.id === editingEvent?.id &&
-      props.event.calendar_id === editingEvent?.event.calendar_id
-
-    const changedSelection = editingEvent?.selectTailSegment !== props.isTailSegment
+  function handleClickEvent(e: React.MouseEvent) {
+    console.log('handleClickEvent')
 
     // Stop the dragging event.
     eventActions.onInteractionEnd()
 
-    if (!isSelected || changedSelection) {
-      eventActions.initEditEvent(props.event, props.isTailSegment)
+    if (e.shiftKey) {
+      eventActions.onMultiSelectEvent(props.event)
+    } else {
+      const isSelected =
+        props.event.id === editingEvent?.id &&
+        props.event.calendar_id === editingEvent?.event.calendar_id
+
+      const changedSelection = editingEvent?.selectTailSegment !== props.isTailSegment
+
+      console.log('isSelected', isSelected)
+      console.log('changedSelection', changedSelection)
+
+      if (!isSelected || changedSelection) {
+        console.log('initEditEvent')
+        eventActions.initEditEvent(props.event, props.isTailSegment)
+      }
     }
   }
 
@@ -211,28 +227,29 @@ function TimeGridEvent(props: IProps) {
 
   const textDecoration = responseStatus === 'declined' ? 'line-through' : undefined
 
+  const isMultiSelected = multiSelectedEvents.hasOwnProperty(event.id)
+
   return (
-    <div
+    <Box
       ref={props.innerRef}
       className={clsx(
         'cal-event',
+        isMultiSelected && 'cal-event-selected',
         responseStatus === 'tentative' && 'tentative',
         isInteracting && 'cal-dnd-interacting',
         (isEditing || props.isPreview) && 'cal-has-shadow'
       )}
-      style={{
-        top: stringifyPercent(props.style.top),
-        left: stringifyPercent(props.style.xOffset),
-        width: stringifyPercent(props.style.width),
-        height: stringifyPercent(eventHeight),
-        zIndex: isEditing ? 5 : 0,
-        cursor: props.isPreview ? 'move' : 'pointer',
-        padding: 'unset',
-        backgroundColor: backgroundColorComputed,
-        border: border,
-        color: color,
-        textDecoration: textDecoration,
-      }}
+      top={stringifyPercent(props.style.top)}
+      left={stringifyPercent(props.style.xOffset)}
+      width={stringifyPercent(props.style.width)}
+      height={stringifyPercent(eventHeight)}
+      zIndex={isEditing ? 5 : 0}
+      cursor={props.isPreview ? 'move' : 'pointer'}
+      padding={'unset'}
+      backgroundColor={backgroundColorComputed}
+      border={border}
+      color={color}
+      textDecoration={textDecoration}
       draggable={true}
       onDragStart={(evt: React.DragEvent) => {
         if (canEditEvent) {
@@ -256,7 +273,7 @@ function TimeGridEvent(props: IProps) {
     >
       {eventContents}
       {canEditEvent && renderAnchor('DOWN', dnd?.action == 'RESIZE' && props.isPreview)}
-    </div>
+    </Box>
   )
 }
 
