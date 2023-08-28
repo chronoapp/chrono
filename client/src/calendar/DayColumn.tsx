@@ -49,7 +49,7 @@ class SelectRange {
  * 1) Renders the day column
  * 2) Handles click & drag to create a new event.
  */
-function DayColumnFunc(props: IProps & InjectedEventActionsProps) {
+function DayColumn(props: IProps & InjectedEventActionsProps) {
   const selectingRef = useRef(false)
   const [_selecting, _setSelecting] = useState(false)
 
@@ -430,4 +430,4 @@ function DayColumnFunc(props: IProps & InjectedEventActionsProps) {
   )
 }
 
-export default withEventActions(DayColumnFunc)
+export default withEventActions(DayColumn)
