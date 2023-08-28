@@ -28,8 +28,8 @@ interface IProps {
   calendar: Calendar
   organizer: Partial<EventParticipant> | null
   participants: EventParticipant[]
-  onUpdateParticipants: (participants: EventParticipant[]) => void
   maxRecommendations: number
+  onUpdateParticipants?: (participants: EventParticipant[]) => void
 }
 
 const MAX_PARTICIPANTS = 10
@@ -96,6 +96,10 @@ export function ParticipantsHeader(props: { participants: EventParticipant[] }) 
 }
 
 export default function ParticipantList(props: IProps) {
+  if (!props.onUpdateParticipants && !props.readonly) {
+    throw new Error('onUpdateParticipants is required if readonly is false')
+  }
+
   function renderHeading() {
     if (props.readonly) {
       return <ParticipantsHeader participants={props.participants} />
@@ -107,7 +111,7 @@ export default function ParticipantList(props: IProps) {
             const updatedParticipants = mergeParticipants(props.calendar, props.participants, [
               participant,
             ])
-            props.onUpdateParticipants(updatedParticipants)
+            props.onUpdateParticipants && props.onUpdateParticipants(updatedParticipants)
           }}
         />
       )
@@ -152,7 +156,8 @@ export default function ParticipantList(props: IProps) {
                                 }
                               }
                             })
-                            props.onUpdateParticipants(updatedParticipants)
+                            props.onUpdateParticipants &&
+                              props.onUpdateParticipants(updatedParticipants)
                           }}
                         >
                           {participant.is_optional ? 'Mark Required' : 'Mark Optional'}
@@ -172,7 +177,8 @@ export default function ParticipantList(props: IProps) {
                             return !participant.equals(p)
                           })
                         })
-                        props.onUpdateParticipants(updatedParticipants)
+                        props.onUpdateParticipants &&
+                          props.onUpdateParticipants(updatedParticipants)
                       }}
                     />
                   </Flex>
