@@ -1,5 +1,5 @@
-import { useRef, useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
+import { useRef, useState, useEffect } from 'react'
 import { usePopper } from 'react-popper'
 
 import clsx from 'clsx'
@@ -77,34 +77,6 @@ function DayColumnFunc(props: IProps & InjectedEventActionsProps) {
     placement: 'auto',
   })
 
-  function renderEventEditPopover() {
-    if (props.editingEvent && referenceElement) {
-      const { event } = props.editingEvent
-
-      const isInDay =
-        dates.gte(props.editingEvent.event.start, props.min) &&
-        dates.lte(props.editingEvent.event.start, props.max)
-
-      if (isInDay) {
-        return ReactDOM.createPortal(
-          <Box
-            ref={(node) => setPopperElement(node)}
-            style={styles.popper}
-            {...attributes.popper}
-            bg="white"
-            width="xs"
-            maxH="3xl"
-          >
-            <EventPopover event={event} eventService={props.eventService} />
-          </Box>,
-          document.querySelector('.cal-calendar')!
-        )
-      }
-    }
-
-    return <></>
-  }
-
   /**
    * State updater functions. Since we use Selection object which uses event listeners for Select events
    * our state will be stale. So we use refs to keep track of the latest state.
@@ -178,6 +150,35 @@ function DayColumnFunc(props: IProps & InjectedEventActionsProps) {
     } else {
       clearTimeIndicatorInterval()
     }
+  }
+
+  function renderEventEditPopover() {
+    if (props.editingEvent && referenceElement) {
+      const { event } = props.editingEvent
+
+      const isInDay =
+        dates.gte(props.editingEvent.event.start, props.min) &&
+        dates.lte(props.editingEvent.event.start, props.max)
+
+      if (isInDay) {
+        return ReactDOM.createPortal(
+          <Box
+            ref={(node) => setPopperElement(node)}
+            style={styles.popper}
+            {...attributes.popper}
+            bg="white"
+            width="xs"
+            maxH="3xl"
+            zIndex={10}
+          >
+            <EventPopover event={event} eventService={props.eventService} />
+          </Box>,
+          document.querySelector('.cal-calendar')!
+        )
+      }
+    }
+
+    return <></>
   }
 
   function renderEvents(slotMetrics) {
