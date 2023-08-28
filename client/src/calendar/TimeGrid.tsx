@@ -103,8 +103,6 @@ function TimeGrid(props: IProps) {
     applyTopScroll()
   })
 
-  useEffect(() => {}, [contentRef])
-
   /**
    * Scrolls to time, defaults to now if date in event.detail is unspecified.
    */
