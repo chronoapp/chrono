@@ -1,16 +1,8 @@
-import React from 'react'
+import { useRef, useState, useEffect } from 'react'
 import clsx from 'clsx'
 
-import {
-  Box,
-  Portal,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverArrow,
-} from '@chakra-ui/react'
+import { Portal, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from '@chakra-ui/react'
 import { withEventActions, InjectedEventActionsProps } from '@/state/withEventActions'
-import { Popper } from 'react-popper'
 
 import { timeRangeFormat, timeFormatShort } from '@/util/localizer'
 import * as dates from '@/util/dates'
@@ -25,7 +17,6 @@ import TimeGridEvent from './TimeGridEvent'
 import EventPopover from './event-edit/EventEditPopover'
 import ResizeEventContainer from './ResizeEventContainer'
 import { EventService } from '@/calendar/event-edit/useEventService'
-import { circIn } from 'framer-motion'
 
 interface IProps {
   date: Date
@@ -38,13 +29,6 @@ interface IProps {
   now: Date
   eventService: EventService
   primaryCalendar: Calendar
-}
-
-interface IState {
-  selecting: boolean
-  selectRange?: SelectRange
-  timeIndicatorPosition: number
-  referenceRefChange: number
 }
 
 class SelectRange {
@@ -62,127 +46,115 @@ class SelectRange {
  * 1) Renders the day column
  * 2) Handles click & drag to create a new event.
  */
-class DayColumn extends React.Component<IProps & InjectedEventActionsProps, IState> {
-  private initialSlot
-  private selection?: Selection
-  private slotMetrics: SlotMetrics
+function DayColumnFunc(props: IProps & InjectedEventActionsProps) {
+  const selectingRef = useRef(false)
+  const [_selecting, _setSelecting] = useState(false)
 
-  private timeIndicatorTimeout
-  private intervalTriggered: boolean = false
-  private hasJustCancelledEventCreate: boolean = false
+  const selectRangeRef = useRef<SelectRange | undefined>(undefined)
+  const [_selectRange, _setSelectRange] = useState<SelectRange | undefined>(undefined)
 
-  private dayRef
-  private selectedEventRef
-  private popperRef: React.RefObject<HTMLDivElement>
+  const [timeIndicatorPosition, setTimeIndicatorPosition] = useState(0)
+  const [referenceRefChange, setReferenceRefChange] = useState(0)
 
-  constructor(props: IProps & InjectedEventActionsProps) {
-    super(props)
-    this.slotMetrics = new SlotMetrics(props.min, props.max, props.step, props.timeslots)
-    this.dayRef = React.createRef()
+  const slotMetricsRef = useRef<SlotMetrics>(
+    new SlotMetrics(props.min, props.max, props.step, props.timeslots)
+  )
+  const dayRef = useRef<HTMLDivElement>(null)
+  const selectedEventRef = useRef<HTMLDivElement>(undefined!)
 
-    this.state = {
-      selecting: false,
-      selectRange: undefined,
-      timeIndicatorPosition: 0,
-      referenceRefChange: 0,
-    }
+  const initialSlotRef = useRef<Date>()
+  const selectionRef = useRef<Selection>()
+  const timeIndicatorTimeoutRef = useRef<number>()
+  const intervalTriggeredRef = useRef(false)
+  const hasJustCancelledEventCreateRef = useRef(false)
 
-    this.initSelection = this.initSelection.bind(this)
-    this.selectionState = this.selectionState.bind(this)
-    this.handleSelectProgress = this.handleSelectProgress.bind(this)
-    this.getContainerRef = this.getContainerRef.bind(this)
-    this.handleSelectedEventRef = this.handleSelectedEventRef.bind(this)
+  /**
+   * State updater functions. Since we use Selection object which uses event listeners for Select events
+   * our state will be stale. So we use refs to keep track of the latest state.
+   * */
 
-    this.selectedEventRef = React.createRef()
-    this.popperRef = React.createRef()
+  const setSelecting = (selecting: boolean) => {
+    selectingRef.current = selecting
+    _setSelecting(selecting)
   }
 
-  componentDidMount() {
-    this.initSelection()
-    if (this.props.isCurrentDay) {
-      this.setTimeIndicatorPositionUpdateInterval()
-    }
+  const setSelectRange = (selectRange: SelectRange | undefined) => {
+    selectRangeRef.current = selectRange
+    _setSelectRange(selectRange)
   }
 
-  componentWillUnmount() {
-    if (this.selection) {
-      this.selection.teardown()
+  const editingEventRef = useRef(props.editingEvent)
+
+  useEffect(() => {
+    editingEventRef.current = props.editingEvent
+  }, [props.editingEvent])
+
+  // Handle prop changes (equivalent to UNSAFE_componentWillReceiveProps)
+  useEffect(() => {
+    slotMetricsRef.current = new SlotMetrics(props.min, props.max, props.step, props.timeslots)
+  }, [props.min, props.max, props.step, props.timeslots])
+
+  useEffect(() => {
+    if (props.isCurrentDay) {
+      setTimeIndicatorPositionUpdateInterval()
     }
-    this.clearTimeIndicatorInterval()
-  }
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevProps.isCurrentDay != this.props.isCurrentDay) {
-      this.clearTimeIndicatorInterval()
+    return () => {
+      clearTimeIndicatorInterval()
+    }
+  }, [props.isCurrentDay])
 
-      if (this.props.isCurrentDay) {
-        this.setTimeIndicatorPositionUpdateInterval()
+  useEffect(() => {
+    initSelection()
+
+    return () => {
+      if (selectionRef.current) {
+        selectionRef.current.teardown()
       }
     }
+  }, [])
+
+  function getContainerRef() {
+    return dayRef
   }
 
-  UNSAFE_componentWillReceiveProps(props: IProps) {
-    this.slotMetrics = new SlotMetrics(props.min, props.max, props.step, props.timeslots)
+  function clearTimeIndicatorInterval() {
+    intervalTriggeredRef.current = false
+    window.clearTimeout(timeIndicatorTimeoutRef.current)
   }
 
-  getContainerRef() {
-    return this.dayRef
-  }
-
-  clearTimeIndicatorInterval() {
-    this.intervalTriggered = false
-    window.clearTimeout(this.timeIndicatorTimeout)
-  }
-
-  setTimeIndicatorPositionUpdateInterval() {
-    if (!this.intervalTriggered) {
-      this.updatePositionTimeIndicator()
+  function setTimeIndicatorPositionUpdateInterval() {
+    if (!intervalTriggeredRef.current) {
+      updatePositionTimeIndicator()
     }
 
-    this.timeIndicatorTimeout = window.setTimeout(() => {
-      this.intervalTriggered = true
-      this.updatePositionTimeIndicator()
-      this.setTimeIndicatorPositionUpdateInterval()
+    timeIndicatorTimeoutRef.current = window.setTimeout(() => {
+      intervalTriggeredRef.current = true
+      updatePositionTimeIndicator()
+      setTimeIndicatorPositionUpdateInterval()
     }, 60000)
   }
 
-  updatePositionTimeIndicator() {
-    const { min, max } = this.props
+  function updatePositionTimeIndicator() {
+    const { min, max } = props
     const current = new Date()
 
     if (current >= min && current <= max) {
-      const top = this.slotMetrics.getCurrentTimePosition(current)
-      this.intervalTriggered = true
-      this.setState({ timeIndicatorPosition: top })
+      const top = slotMetricsRef.current.getCurrentTimePosition(current)
+      intervalTriggeredRef.current = true
+      setTimeIndicatorPosition(top)
     } else {
-      this.clearTimeIndicatorInterval()
+      clearTimeIndicatorInterval()
     }
   }
 
-  handleSelectedEventRef(node: HTMLDivElement) {
-    if (node) {
-      if (!this.selectedEventRef.current) {
-        // First time the ref is set
-        this.selectedEventRef.current = node
-      } else {
-        // The ref has changed
-        this.selectedEventRef.current = node
-        console.log('Update referenceRefChange')
-
-        this.setState((prevState) => {
-          return { ...prevState, referenceRefChange: prevState.referenceRefChange + 1 }
-        })
-      }
-    }
-  }
-
-  renderEvents(slotMetrics) {
-    const { events, step, now } = this.props
+  function renderEvents(slotMetrics) {
+    const { events, step, now } = props
 
     const styledEvents = getStyledEvents(events, step, slotMetrics)
 
-    const dnd = this.props.dragAndDropAction
-    const editingEvent = this.props.editingEvent
+    const dnd = props.dragAndDropAction
+    const editingEvent = props.editingEvent
 
     return styledEvents.map(({ event, style }, idx) => {
       const label = timeRangeFormat(event.start, event.end)
@@ -192,7 +164,7 @@ class DayColumn extends React.Component<IProps & InjectedEventActionsProps, ISta
         dnd.event.id === event.id &&
         dnd.event.calendar_id === event.calendar_id
 
-      const isTailSegment = this.isTailEndofMultiDayEvent(event)
+      const isTailSegment = isTailEndofMultiDayEvent(event)
       const isSegmentSelected =
         (editingEvent?.selectTailSegment && isTailSegment) ||
         (!editingEvent?.selectTailSegment && !isTailSegment)
@@ -215,13 +187,13 @@ class DayColumn extends React.Component<IProps & InjectedEventActionsProps, ISta
                 style={style}
                 isPreview={false}
                 isTailSegment={isTailSegment}
-                getContainerRef={this.getContainerRef}
+                getContainerRef={getContainerRef}
               />
             </PopoverTrigger>
             <Portal>
               <PopoverContent>
                 <PopoverArrow />
-                <EventPopover event={editingEvent!.event} eventService={this.props.eventService} />
+                <EventPopover event={editingEvent!.event} eventService={props.eventService} />
               </PopoverContent>
             </Portal>
           </Popover>
@@ -236,38 +208,40 @@ class DayColumn extends React.Component<IProps & InjectedEventActionsProps, ISta
             style={style}
             isPreview={false}
             isTailSegment={isTailSegment}
-            getContainerRef={this.getContainerRef}
+            getContainerRef={getContainerRef}
           />
         )
       }
     })
   }
 
-  isTailEndofMultiDayEvent(event: Event): boolean {
-    return event.start < this.props.min && event.end >= this.props.min
+  function isTailEndofMultiDayEvent(event: Event): boolean {
+    return event.start < props.min && event.end >= props.min
   }
 
-  selectionState(rect: SelectRect): SelectRange | undefined {
-    const { current } = this.dayRef
-
+  function selectionState(rect: SelectRect): SelectRange | undefined {
+    const { current } = dayRef
     if (!current) {
       return
     }
 
-    let currentSlot = this.slotMetrics.closestSlotFromPoint(rect.y, getBoundsForNode(current))
-
-    if (!this.state.selecting) {
-      this.initialSlot = currentSlot
+    let currentSlot = slotMetricsRef.current.closestSlotFromPoint(rect.y, getBoundsForNode(current))
+    if (!selectingRef.current) {
+      initialSlotRef.current = currentSlot
     }
 
-    let initialSlot = this.initialSlot
+    let initialSlot = initialSlotRef.current
+    if (!initialSlot) {
+      return
+    }
+
     if (dates.lte(initialSlot, currentSlot)) {
-      currentSlot = this.slotMetrics.nextSlot(currentSlot)
+      currentSlot = slotMetricsRef.current.nextSlot(currentSlot)
     } else if (dates.gt(initialSlot, currentSlot)) {
-      initialSlot = this.slotMetrics.nextSlot(initialSlot)
+      initialSlot = slotMetricsRef.current.nextSlot(initialSlot)
     }
 
-    const selectRange = this.slotMetrics.getRange(
+    const selectRange = slotMetricsRef.current.getRange(
       dates.min(initialSlot, currentSlot),
       dates.max(initialSlot, currentSlot),
       true,
@@ -285,88 +259,88 @@ class DayColumn extends React.Component<IProps & InjectedEventActionsProps, ISta
     )
   }
 
-  handleSelectProgress(rect: SelectRect) {
-    const state = this.selectionState(rect)
-    const { selecting, selectRange } = this.state
+  function handleSelectProgress(rect: SelectRect) {
+    const state = selectionState(rect)
 
     if (state) {
       if (
-        !selectRange ||
-        !selecting ||
-        selectRange.start !== state.start ||
-        selectRange.end !== state.end
+        !selectRangeRef.current ||
+        !selectingRef.current ||
+        selectRangeRef.current.start !== state.start ||
+        selectRangeRef.current.end !== state.end
       ) {
-        this.setState({ selecting: true, selectRange: state })
+        setSelecting(true)
+        setSelectRange(state)
       }
     }
   }
 
-  initSelection() {
-    const { current } = this.dayRef
+  function initSelection() {
+    const dayWrapperRef = dayRef.current
 
-    if (current) {
-      const selection = (this.selection = new Selection(current))
+    if (dayWrapperRef) {
+      const selection = (selectionRef.current = new Selection(dayWrapperRef))
 
-      selection.on('selectStart', this.handleSelectProgress)
-      selection.on('selecting', this.handleSelectProgress)
+      selection.on('selectStart', handleSelectProgress)
+      selection.on('selecting', handleSelectProgress)
 
       selection.on('beforeSelect', (point: EventData) => {
-        if (this.props.dragAndDropAction) {
+        if (props.dragAndDropAction) {
           // Already handled by DragDropEventContainer.
           return false
         }
 
-        if (this.props.editingEvent?.id) {
-          this.props.eventActions.cancelSelect()
-          this.hasJustCancelledEventCreate = true
+        if (props.editingEvent?.id) {
+          props.eventActions.cancelSelect()
+          hasJustCancelledEventCreateRef.current = true
         }
 
-        return !isEvent(current, point.clientX, point.clientY)
+        return !isEvent(dayWrapperRef, point.clientX, point.clientY)
       })
 
       selection.on('select', () => {
-        if (this.state.selecting) {
-          this.setState({ selecting: false })
+        if (selectingRef.current) {
+          setSelecting(false)
 
-          if (this.state.selectRange) {
-            console.log('Handle Select Event')
-            const { startDate, endDate } = this.state.selectRange
+          if (selectRangeRef.current) {
+            const { startDate, endDate } = selectRangeRef.current
+            setSelectRange(undefined)
 
-            const calendar = this.props.primaryCalendar
-            this.props.eventActions.initNewEventAtDate(calendar, false, startDate, endDate)
+            const calendar = props.primaryCalendar
+            props.eventActions.initNewEventAtDate(calendar, false, startDate, endDate)
           }
         }
       })
 
       selection.on('click', (clickEvent: EventData) => {
-        if (this.hasJustCancelledEventCreate) {
+        if (hasJustCancelledEventCreateRef.current) {
           // Makes sure we don't create an event immediately after cancelling.
-          this.hasJustCancelledEventCreate = false
-          this.setState({ selecting: false })
+          hasJustCancelledEventCreateRef.current = false
+          setSelecting(false)
           return
         }
 
-        const { current } = this.dayRef
+        const { current } = dayRef
         if (!current) {
           return
         }
 
-        const startDate = this.slotMetrics.closestSlotFromPoint(
+        const startDate = slotMetricsRef.current.closestSlotFromPoint(
           clickEvent.y,
           getBoundsForNode(current)
         )
-        this.props.eventActions.initNewEventAtDate(this.props.primaryCalendar, false, startDate)
-        this.setState({ selecting: false })
+        props.eventActions.initNewEventAtDate(props.primaryCalendar, false, startDate)
+        setSelecting(false)
       })
 
       selection.on('reset', () => {
-        this.props.eventActions.cancelSelect()
-        this.setState({ selecting: false })
+        props.eventActions.cancelSelect()
+        setSelecting(false)
       })
     }
   }
 
-  renderSelection(selectRange: SelectRange) {
+  function renderSelection(selectRange: SelectRange) {
     const diffMin = (selectRange.endDate.getTime() - selectRange.startDate.getTime()) / 60000
     let inner
     if (diffMin <= 30) {
@@ -403,11 +377,11 @@ class DayColumn extends React.Component<IProps & InjectedEventActionsProps, ISta
         style={{
           top: `${selectRange.top}%`,
           height: `${selectRange.height}%`,
-          color: Event.getForegroundColor(selectRange.endDate, this.props.now, 'white'),
+          color: Event.getForegroundColor(selectRange.endDate, props.now, 'white'),
           backgroundColor: Event.getBackgroundColor(
             selectRange.endDate,
-            this.props.primaryCalendar.backgroundColor,
-            this.props.now
+            props.primaryCalendar.backgroundColor,
+            props.now
           ),
         }}
       >
@@ -416,71 +390,27 @@ class DayColumn extends React.Component<IProps & InjectedEventActionsProps, ISta
     )
   }
 
-  renderEventEditPopover() {
-    // return ReactDOM.createPortal(
-    //   <div ref={setPopperElement} style={styles.popper} {...attributes.popper}>
-    //     Popper
-    //   </div>,
-    //   document.querySelector('#destination')
-    // )
+  return (
+    <div ref={dayRef} className={clsx('cal-day-slot', 'cal-time-column')}>
+      {slotMetricsRef.current.groups.map((group, idx) => (
+        <TimeSlotGroup key={`timeslot-${idx}`} group={group} />
+      ))}
 
-    if (this.props.editingEvent && this.selectedEventRef.current) {
-      const isInDay =
-        dates.gte(this.props.editingEvent.event.start, this.props.min) &&
-        dates.lte(this.props.editingEvent.event.start, this.props.max)
-      if (!isInDay) {
-        return
-      }
+      <ResizeEventContainer
+        onEventUpdated={props.eventService.moveOrResizeEvent}
+        slotMetrics={slotMetricsRef.current}
+      >
+        <div className="cal-events-container">{renderEvents(slotMetricsRef.current)}</div>
+      </ResizeEventContainer>
 
-      console.log('Render Popper')
-      console.log(this.selectedEventRef.current)
-
-      return (
-        <Popper referenceElement={this.selectedEventRef.current} placement="auto">
-          {({ ref, style, placement, arrowProps }) => (
-            <Box ref={ref} style={style} data-placement={placement}>
-              <EventPopover
-                event={this.props.editingEvent!.event}
-                eventService={this.props.eventService}
-              />
-              <div ref={this.popperRef} style={arrowProps.style}></div>
-            </Box>
-          )}
-        </Popper>
-      )
-    }
-  }
-
-  render() {
-    const { selecting, selectRange } = this.state
-
-    return (
-      <div ref={this.dayRef} className={clsx('cal-day-slot', 'cal-time-column')}>
-        {this.slotMetrics.groups.map((group, idx) => (
-          <TimeSlotGroup key={`timeslot-${idx}`} group={group} />
-        ))}
-
-        <ResizeEventContainer
-          onEventUpdated={this.props.eventService.moveOrResizeEvent}
-          slotMetrics={this.slotMetrics}
-        >
-          <div className="cal-events-container">{this.renderEvents(this.slotMetrics)}</div>
-        </ResizeEventContainer>
-
-        {selecting && selectRange && this.renderSelection(selectRange)}
-        {this.props.isCurrentDay && this.intervalTriggered && (
-          <div
-            className="cal-current-time-indicator"
-            style={{ top: `${this.state.timeIndicatorPosition}%` }}
-          >
-            <div className="cal-current-time-circle" />
-          </div>
-        )}
-
-        {this.renderEventEditPopover()}
-      </div>
-    )
-  }
+      {selectingRef.current && selectRangeRef.current && renderSelection(selectRangeRef.current)}
+      {props.isCurrentDay && intervalTriggeredRef.current && (
+        <div className="cal-current-time-indicator" style={{ top: `${timeIndicatorPosition}%` }}>
+          <div className="cal-current-time-circle" />
+        </div>
+      )}
+    </div>
+  )
 }
 
-export default withEventActions(DayColumn)
+export default withEventActions(DayColumnFunc)
