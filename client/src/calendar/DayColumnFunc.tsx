@@ -1,7 +1,10 @@
 import { useRef, useState, useEffect } from 'react'
+import ReactDOM from 'react-dom'
+import { usePopper } from 'react-popper'
+
 import clsx from 'clsx'
 
-import { Portal, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from '@chakra-ui/react'
+import { Box } from '@chakra-ui/react'
 import { withEventActions, InjectedEventActionsProps } from '@/state/withEventActions'
 
 import { timeRangeFormat, timeFormatShort } from '@/util/localizer'
@@ -54,19 +57,53 @@ function DayColumnFunc(props: IProps & InjectedEventActionsProps) {
   const [_selectRange, _setSelectRange] = useState<SelectRange | undefined>(undefined)
 
   const [timeIndicatorPosition, setTimeIndicatorPosition] = useState(0)
-  const [referenceRefChange, setReferenceRefChange] = useState(0)
 
   const slotMetricsRef = useRef<SlotMetrics>(
     new SlotMetrics(props.min, props.max, props.step, props.timeslots)
   )
   const dayRef = useRef<HTMLDivElement>(null)
-  const selectedEventRef = useRef<HTMLDivElement>(undefined!)
 
   const initialSlotRef = useRef<Date>()
   const selectionRef = useRef<Selection>()
   const timeIndicatorTimeoutRef = useRef<number>()
   const intervalTriggeredRef = useRef(false)
   const hasJustCancelledEventCreateRef = useRef(false)
+
+  // Event edit popover
+  const [popperElement, setPopperElement] = useState<HTMLDivElement | null>(null)
+  const [referenceElement, setReferenceElement] = useState<HTMLDivElement | null>(null)
+
+  const { styles, attributes } = usePopper(referenceElement, popperElement, {
+    placement: 'auto',
+  })
+
+  function renderEventEditPopover() {
+    if (props.editingEvent && referenceElement) {
+      const { event } = props.editingEvent
+
+      const isInDay =
+        dates.gte(props.editingEvent.event.start, props.min) &&
+        dates.lte(props.editingEvent.event.start, props.max)
+
+      if (isInDay) {
+        return ReactDOM.createPortal(
+          <Box
+            ref={(node) => setPopperElement(node)}
+            style={styles.popper}
+            {...attributes.popper}
+            bg="white"
+            width="xs"
+            maxH="3xl"
+          >
+            <EventPopover event={event} eventService={props.eventService} />
+          </Box>,
+          document.querySelector('.cal-calendar')!
+        )
+      }
+    }
+
+    return <></>
+  }
 
   /**
    * State updater functions. Since we use Selection object which uses event listeners for Select events
@@ -83,13 +120,8 @@ function DayColumnFunc(props: IProps & InjectedEventActionsProps) {
     _setSelectRange(selectRange)
   }
 
-  const editingEventRef = useRef(props.editingEvent)
-
-  useEffect(() => {
-    editingEventRef.current = props.editingEvent
-  }, [props.editingEvent])
-
   // Handle prop changes (equivalent to UNSAFE_componentWillReceiveProps)
+
   useEffect(() => {
     slotMetricsRef.current = new SlotMetrics(props.min, props.max, props.step, props.timeslots)
   }, [props.min, props.max, props.step, props.timeslots])
@@ -105,14 +137,14 @@ function DayColumnFunc(props: IProps & InjectedEventActionsProps) {
   }, [props.isCurrentDay])
 
   useEffect(() => {
-    initSelection()
+    selectionRef.current = initSelection()
 
     return () => {
       if (selectionRef.current) {
         selectionRef.current.teardown()
       }
     }
-  }, [])
+  }, [props.editingEvent, props.dragAndDropAction])
 
   function getContainerRef() {
     return dayRef
@@ -175,43 +207,22 @@ function DayColumnFunc(props: IProps & InjectedEventActionsProps) {
         (editingEvent?.editMode == 'READ' || editingEvent?.editMode == 'EDIT') &&
         isSegmentSelected
 
-      if (showEditingPopover && !isInteracting) {
-        // TODO: Update the placement depending on the event's location.
-        return (
-          <Popover key={`evt_${idx}`} isOpen={true} isLazy={true} placement={'auto'}>
-            <PopoverTrigger>
-              <TimeGridEvent
-                now={now}
-                event={event}
-                label={label}
-                style={style}
-                isPreview={false}
-                isTailSegment={isTailSegment}
-                getContainerRef={getContainerRef}
-              />
-            </PopoverTrigger>
-            <Portal>
-              <PopoverContent>
-                <PopoverArrow />
-                <EventPopover event={editingEvent!.event} eventService={props.eventService} />
-              </PopoverContent>
-            </Portal>
-          </Popover>
-        )
-      } else {
-        return (
-          <TimeGridEvent
-            key={`evt_${idx}`}
-            now={now}
-            event={event}
-            label={label}
-            style={style}
-            isPreview={false}
-            isTailSegment={isTailSegment}
-            getContainerRef={getContainerRef}
-          />
-        )
-      }
+      // TODO: Update the placement depending on the event's location.
+      return (
+        <TimeGridEvent
+          key={`evt_${idx}`}
+          now={now}
+          event={event}
+          label={label}
+          style={style}
+          isPreview={false}
+          isTailSegment={isTailSegment}
+          getContainerRef={getContainerRef}
+          ref={
+            showEditingPopover && !isInteracting ? (node) => setReferenceElement(node) : undefined
+          }
+        />
+      )
     })
   }
 
@@ -279,7 +290,7 @@ function DayColumnFunc(props: IProps & InjectedEventActionsProps) {
     const dayWrapperRef = dayRef.current
 
     if (dayWrapperRef) {
-      const selection = (selectionRef.current = new Selection(dayWrapperRef))
+      const selection = new Selection(dayWrapperRef)
 
       selection.on('selectStart', handleSelectProgress)
       selection.on('selecting', handleSelectProgress)
@@ -290,7 +301,7 @@ function DayColumnFunc(props: IProps & InjectedEventActionsProps) {
           return false
         }
 
-        if (props.editingEvent?.id) {
+        if (props.editingEvent) {
           props.eventActions.cancelSelect()
           hasJustCancelledEventCreateRef.current = true
         }
@@ -337,6 +348,8 @@ function DayColumnFunc(props: IProps & InjectedEventActionsProps) {
         props.eventActions.cancelSelect()
         setSelecting(false)
       })
+
+      return selection
     }
   }
 
@@ -409,6 +422,8 @@ function DayColumnFunc(props: IProps & InjectedEventActionsProps) {
           <div className="cal-current-time-circle" />
         </div>
       )}
+
+      {renderEventEditPopover()}
     </div>
   )
 }
