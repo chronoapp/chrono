@@ -156,11 +156,13 @@ function DayColumnFunc(props: IProps & InjectedEventActionsProps) {
     if (props.editingEvent && referenceElement) {
       const { event } = props.editingEvent
 
-      const isInDay =
-        dates.gte(props.editingEvent.event.start, props.min) &&
-        dates.lte(props.editingEvent.event.start, props.max)
+      const isInDay = dates.gte(event.start, props.min) && dates.lte(event.start, props.max)
+      const isTailSegment = isTailEndofMultiDayEvent(event)
+      const isSegmentSelected =
+        (props.editingEvent.selectTailSegment && isTailSegment) ||
+        (!props.editingEvent.selectTailSegment && !isTailSegment && isInDay)
 
-      if (isInDay) {
+      if (isSegmentSelected) {
         return ReactDOM.createPortal(
           <Box
             ref={(node) => setPopperElement(node)}
@@ -208,7 +210,6 @@ function DayColumnFunc(props: IProps & InjectedEventActionsProps) {
         (editingEvent?.editMode == 'READ' || editingEvent?.editMode == 'EDIT') &&
         isSegmentSelected
 
-      // TODO: Update the placement depending on the event's location.
       return (
         <TimeGridEvent
           key={`evt_${idx}`}
