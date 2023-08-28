@@ -346,7 +346,9 @@ export default function useEventActions() {
 
     setDragDropAction({ event, action, direction, interacting, pointerDate })
 
-    if (event.id !== editingEvent?.id) {
+    // If we a dragging or dropping another event, we cancel the current selection.
+    const multipleEventsSelected = Object.keys(multiSelectedEvents).length > 0
+    if (event.id !== editingEvent?.id && !multipleEventsSelected) {
       console.log('onBeginAction => cancelSelect')
       cancelSelect()
     }
