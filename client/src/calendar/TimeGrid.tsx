@@ -6,7 +6,7 @@ import { Box } from '@chakra-ui/react'
 
 import * as dates from '../util/dates'
 import Event from '../models/Event'
-import DayColumnFunc from './DayColumnFunc'
+import DayColumn from './DayColumn'
 import TimeGridHeader from './TimeGridHeader'
 import DragDropZone from './DragDropZone'
 import SlotMetrics from './utils/SlotMetrics'
@@ -172,7 +172,7 @@ function TimeGrid(props: IProps) {
       )
 
       return (
-        <DayColumnFunc
+        <DayColumn
           key={jj}
           events={dayEvents}
           date={date}
