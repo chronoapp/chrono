@@ -3,7 +3,7 @@ import { useRecoilValue } from 'recoil'
 import { Box } from '@chakra-ui/react'
 
 import useEventActions from '@/state/useEventActions'
-import { dragDropActionState } from '@/state/EventsState'
+import { dragDropActionState, multiSelectEventState } from '@/state/EventsState'
 
 import { getBoundsForNode } from '@/util/Selection'
 import { EventService } from './event-edit/useEventService'
@@ -44,8 +44,9 @@ export default function DragDropZone(props: IProps) {
   const containerRef = React.useRef<HTMLInputElement>(null)
   const eventActions = useEventActions()
   const dragAndDropAction = useRecoilValue(dragDropActionState)
+  const multiSelectedEvents = useRecoilValue(multiSelectEventState)
 
-  const [dropRect, setDropRect] = React.useState<DropRect | null>(null)
+  const [dropRects, setDropRects] = React.useState<DropRect[]>([])
 
   const [isDragging, setIsDragging] = React.useState(false)
   const numColumns = props.range.length
@@ -74,7 +75,7 @@ export default function DragDropZone(props: IProps) {
   }
 
   function resetDrag() {
-    setDropRect(null)
+    setDropRects([])
     setIsDragging(false)
     eventActions.onInteractionEnd()
   }
@@ -84,6 +85,8 @@ export default function DragDropZone(props: IProps) {
       className="cal-time-content-zone"
       ref={containerRef}
       onDragEnter={() => {
+        console.log(multiSelectedEvents)
+
         if (!isDragging) {
           eventActions.onInteractionStart()
           setIsDragging(true)
@@ -95,22 +98,23 @@ export default function DragDropZone(props: IProps) {
         if (container) {
           const columnWidth = container.clientWidth / numColumns
           const bounds = getBoundsForNode(container)
-          const event = dragAndDropAction!.event
+          const draggedEvent = dragAndDropAction!.event
           const dragPointerDate = dragAndDropAction!.pointerDate!
 
           const totalHeight = container.clientHeight
           const pxPerMin = totalHeight / (dates.MILLI.day / dates.MILLI.minutes)
 
           // Event column
+          // TODO: Find offset for each event
           const offsetLeft = e.clientX - bounds.left
           const colNum = Math.floor(offsetLeft / columnWidth)
 
           // Event height
-          const eventMins = dates.diff(event.start, event.end, 'minutes')
+          const eventMins = dates.diff(draggedEvent.start, draggedEvent.end, 'minutes')
           const heightPx = eventMins * pxPerMin
 
           // Offset for the click position within the event.
-          const clickOffsetMins = dates.diff(event.start, dragPointerDate, 'minutes')
+          const clickOffsetMins = dates.diff(draggedEvent.start, dragPointerDate, 'minutes')
           const clickOffsetPx = clickOffsetMins * pxPerMin
 
           const top = e.clientY - bounds.top - clickOffsetPx
@@ -123,9 +127,13 @@ export default function DragDropZone(props: IProps) {
           const minutesFromTop = (MINUTES_IN_DAY * roundedTop) / totalHeight
           const startDate = dates.add(columnStart, minutesFromTop, 'minutes')
 
-          setDropRect(
-            new DropRect(roundedTop, colNum * columnWidth, columnWidth, heightPx, startDate)
-          )
+          const rects = Object.values(multiSelectedEvents).map((event) => {
+            return new DropRect(roundedTop, colNum * columnWidth, columnWidth, heightPx, startDate)
+          })
+
+          setDropRects([
+            new DropRect(roundedTop, colNum * columnWidth, columnWidth, heightPx, startDate),
+          ])
 
           scrollToEventIfNecessary(e.clientY)
         }
@@ -136,16 +144,16 @@ export default function DragDropZone(props: IProps) {
         scrollToEventIfNecessary(e.clientY)
       }}
       onDrop={(e) => {
-        const event = dragAndDropAction!.event
-        const dropDateStart = dropRect!.date
-        const eventMins = dates.diff(event.start, event.end, 'minutes')
-        const updatedEvent = {
-          ...event,
-          start: dropDateStart,
-          end: dates.add(dropDateStart, eventMins, 'minutes'),
-        }
+        // const event = dragAndDropAction!.event
+        // const dropDateStart = dropRect!.date
+        // const eventMins = dates.diff(event.start, event.end, 'minutes')
+        // const updatedEvent = {
+        //   ...event,
+        //   start: dropDateStart,
+        //   end: dates.add(dropDateStart, eventMins, 'minutes'),
+        // }
 
-        props.eventService.moveOrResizeEvent(updatedEvent)
+        // props.eventService.moveOrResizeEvent(updatedEvent)
 
         resetDrag()
       }}
@@ -157,18 +165,20 @@ export default function DragDropZone(props: IProps) {
         console.log('onDragExit')
       }}
     >
-      {dropRect && (
+      {dropRects.map((dropRect, i) => (
         <Box
+          key={i}
           position="absolute"
           left={`${dropRect.left + 1}px`}
           width={`${dropRect.width - 1}px`}
           height={`${dropRect.height}px`}
           top={`${dropRect.top}px`}
-          border="3px solid"
-          borderColor={'blue.300'}
+          border="2px solid"
+          borderColor={'blue.400'}
           borderRadius="sm"
+          zIndex={1}
         />
-      )}
+      ))}
       {props.children}
     </div>
   )

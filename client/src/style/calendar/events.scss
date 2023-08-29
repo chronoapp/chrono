@@ -43,7 +43,7 @@
     left: -3px;
     right: -3px;
     bottom: -3px;
-    border: #0092ff 2px solid;
+    border: var(--chakra-colors-blue-400) 2px solid;
     border-radius: 8px;
     pointer-events: none;
   }

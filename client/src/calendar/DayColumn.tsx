@@ -156,13 +156,23 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
     if (props.editingEvent && referenceElement) {
       const { event } = props.editingEvent
 
+      const dnd = props.dragAndDropAction
+      const isInteracting = dnd && dnd.interacting
+
+      if (isInteracting) {
+        return <></>
+      }
+
       const isInDay = dates.gte(event.start, props.min) && dates.lte(event.start, props.max)
       const isTailSegment = isTailEndofMultiDayEvent(event)
       const isSegmentSelected =
         (props.editingEvent.selectTailSegment && isTailSegment) ||
         (!props.editingEvent.selectTailSegment && !isTailSegment && isInDay)
 
-      if (isSegmentSelected) {
+      if (isInDay) {
+        console.log('render popover', props.min)
+        console.log(referenceElement)
+
         return ReactDOM.createPortal(
           <Box
             ref={(node) => setPopperElement(node)}

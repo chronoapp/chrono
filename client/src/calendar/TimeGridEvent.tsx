@@ -38,7 +38,7 @@ function TimeGridEvent(props: IProps) {
   const eventActions = useEventActions()
   const editingEvent = useRecoilValue(editingEventState)
   const multiSelectedEvents = useRecoilValue(multiSelectEventState)
-  const dnd = useRecoilValue(dragDropActionState)
+  const dragAndDropAction = useRecoilValue(dragDropActionState)
   const toast = useToast()
 
   // Tiny gap to separate events.
@@ -163,10 +163,10 @@ function TimeGridEvent(props: IProps) {
 
     if (canEditEvent) {
       // Create an image and use it for the drag image
-      var img = document.createElement('img')
-      img.src = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
-      document.body.appendChild(img)
-      evt.dataTransfer.setDragImage(img, 0, 0)
+      // var img = document.createElement('img')
+      // img.src = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
+      // document.body.appendChild(img)
+      // evt.dataTransfer.setDragImage(img, 0, 0)
 
       const selectedItemsQuery = Object.values(multiSelectedEvents)
         .map((e) => `.cal-event-${e.id}`)
@@ -183,6 +183,11 @@ function TimeGridEvent(props: IProps) {
         if (selectedItemsQuery) {
           const selectedEvents = document.querySelectorAll(selectedItemsQuery)
           otherDraggedEvents.current = Array.from(selectedEvents)
+          otherDraggedEvents.current.map((item) => {
+            if (item instanceof HTMLElement) {
+              item.style.opacity = '0'
+            }
+          })
         }
 
         const dateOfClick = getDateOfClick(evt)
@@ -205,23 +210,23 @@ function TimeGridEvent(props: IProps) {
   }
 
   function onDrag(evt: React.DragEvent) {
-    const movex = evt.pageX - dragStart.current.x
-    const movey = evt.pageY - dragStart.current.y
-
-    const element = currentEvent.current as HTMLElement
-    element.style.transform = `translate(${movex}px, ${movey}px)`
-    element.style.opacity = '0.5'
-
-    otherDraggedEvents.current.map((item) => {
-      if (item instanceof HTMLElement) {
-        item.style.transform = `translate(${movex}px, ${movey}px)`
-        item.style.opacity = '1'
-      }
-    })
+    // const movex = evt.pageX - dragStart.current.x
+    // const movey = evt.pageY - dragStart.current.y
+    // const element = currentEvent.current as HTMLElement
+    // element.style.transform = `translate(${movex}px, ${movey}px)`
+    // element.style.opacity = '0.5'
+    // otherDraggedEvents.current.map((item) => {
+    //   if (item instanceof HTMLElement) {
+    //     item.style.transform = `translate(${movex}px, ${movey}px)`
+    //     item.style.opacity = '0.5'
+    //   }
+    // })
   }
 
   function onDragEnd(evt: React.DragEvent) {
-    console.log('onDragEnd')
+    const element = currentEvent.current as HTMLElement
+    element.style.transform = 'none'
+    element.style.opacity = '1'
     otherDraggedEvents.current.map((item) => {
       if (item instanceof HTMLElement) {
         item.style.transform = 'none'
@@ -270,7 +275,11 @@ function TimeGridEvent(props: IProps) {
     ]
   }
 
-  const isInteracting = dnd && dnd.interacting && dnd.event.id === event.id && !props.isPreview
+  const isInteracting =
+    dragAndDropAction &&
+    dragAndDropAction.interacting &&
+    dragAndDropAction.event.id === event.id &&
+    !props.isPreview
 
   const isEditing = editingEvent?.id === event.id
   const backgroundColor = Event.getBackgroundColor(event.end, calendar.backgroundColor, props.now)
@@ -307,6 +316,7 @@ function TimeGridEvent(props: IProps) {
   return (
     <Box
       ref={props.innerRef}
+      willChange={'transform, opacity'}
       className={clsx(
         'cal-event',
         `cal-event-${event.id}`,
@@ -332,7 +342,8 @@ function TimeGridEvent(props: IProps) {
       onDragEnd={onDragEnd}
     >
       {eventContents}
-      {canEditEvent && renderAnchor('DOWN', dnd?.action == 'RESIZE' && props.isPreview)}
+      {canEditEvent &&
+        renderAnchor('DOWN', dragAndDropAction?.action == 'RESIZE' && props.isPreview)}
     </Box>
   )
 }
