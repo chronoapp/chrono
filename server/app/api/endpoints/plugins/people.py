@@ -13,12 +13,13 @@ router = APIRouter()
 @router.get('/plugins/people/')
 async def getUserTrends(
     start: datetime = datetime.now() - timedelta(days=365),
+    end: datetime = datetime.now(),
     user=Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> list[ContactInEventVM]:
     contactRepo = ContactRepository(session)
     try:
-        contactInEvents = contactRepo.getContactsInEvents(user, start)
+        contactInEvents = contactRepo.getContactsInEvents(user, start, end)
 
         return contactInEvents
 

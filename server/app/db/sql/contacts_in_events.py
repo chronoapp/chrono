@@ -18,6 +18,8 @@ WHERE
 	c.user_id = :userId
 AND
 	e.start >= :startDateTime
+AND
+    e.end <= :endDateTime
 GROUP BY
     c.id,
     c.email,

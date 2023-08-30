@@ -120,9 +120,12 @@ class ContactRepository:
             )
         ).scalar()
 
-    def getContactsInEvents(self, user: User, startTime: datetime) -> list[ContactInEventVM]:
+    def getContactsInEvents(
+        self, user: User, startTime: datetime, endDateTime: datetime
+    ) -> list[ContactInEventVM]:
         rows = self.session.execute(
-            text(CONTACT_IN_EVENTS_QUERY), {'userId': user.id, 'startDateTime': startTime}
+            text(CONTACT_IN_EVENTS_QUERY),
+            {'userId': user.id, 'startDateTime': startTime, 'endDateTime': endDateTime},
         )
 
         return [
