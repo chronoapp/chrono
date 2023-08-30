@@ -65,7 +65,7 @@ export default function Plugins() {
       >
         <ModalOverlay />
 
-        <ModalContent height="90vh" margin={0} top="5vh">
+        <ModalContent margin={0} top="5vh">
           <ModalHeader>{plugin.name}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>

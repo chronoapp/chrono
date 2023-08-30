@@ -124,3 +124,32 @@ function isWeekend(date: Date): boolean {
   const day = moment(date).day()
   return day === moment().day('Saturday').day() || day === moment().day('Sunday').day()
 }
+
+export function formatTimeAgo(seconds: number) {
+  if (seconds < 60) {
+    return '<1 minute'
+  }
+
+  // Days, hours, minutes
+  const fm = [
+    Math.floor(seconds / (3600 * 24)),
+    Math.floor((seconds % (3600 * 24)) / 3600),
+    Math.floor((seconds % 3600) / 60),
+  ]
+
+  const units = ['day', 'hour', 'minute']
+
+  // Find the first non-zero unit
+  for (let i = 0; i < fm.length; i++) {
+    if (fm[i] > 0) {
+      return plural(fm[i], units[i])
+    }
+  }
+
+  return 'just now'
+}
+
+function plural(value, unit: string) {
+  const unitStr = value === 1 ? unit : `${unit}s`
+  return `${value} ${unitStr}`
+}

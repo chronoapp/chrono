@@ -164,7 +164,7 @@ function TrendChart(props: IProps) {
     return renderEmpty()
   } else {
     return (
-      <>
+      <Box pb="2">
         <Flex justifyContent="space-between">
           <Flex ml="2" alignItems="center" justifyContent="flex-start">
             <TagDropdown
@@ -180,7 +180,7 @@ function TrendChart(props: IProps) {
         </Flex>
 
         <Box mt="2">{renderChart(labelState.labelsById)}</Box>
-      </>
+      </Box>
     )
   }
 }

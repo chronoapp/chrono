@@ -378,14 +378,5 @@ export async function getContactsInEvent(): Promise<ContactInEvent[]> {
     headers: getHeaders(),
   })
     .then(handleErrors)
-    .then((resp) =>
-      resp.map(
-        (contactInEventJSON) =>
-          new ContactInEvent(
-            Contact.fromJson(contactInEventJSON.contact),
-            contactInEventJSON.total_time_spent_in_seconds,
-            contactInEventJSON.last_seen
-          )
-      )
-    )
+    .then((resp) => resp.map((contactInEventJSON) => ContactInEvent.fromJson(contactInEventJSON)))
 }
