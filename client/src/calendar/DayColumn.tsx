@@ -392,7 +392,12 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
         style={{
           top: `${selectRange.top}%`,
           height: `${selectRange.height}%`,
-          color: Event.getForegroundColor(selectRange.endDate, props.now, 'white'),
+          color: Event.getForegroundColor(
+            selectRange.endDate,
+            props.now,
+            'white',
+            props.primaryCalendar.backgroundColor
+          ),
           backgroundColor: Event.getBackgroundColor(
             selectRange.endDate,
             props.primaryCalendar.backgroundColor,

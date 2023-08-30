@@ -49,7 +49,6 @@ function HabitGraph(props: IProps) {
       trendMap.set(trends.labels[i], trends.values[i])
     }
     const maxDuration = Math.max(...trends.values)
-    console.log(maxDuration)
     setMaxDuration(maxDuration)
     setTrendMap(trendMap)
   }

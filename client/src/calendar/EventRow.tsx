@@ -48,7 +48,12 @@ export function EventItem(props: {
         className={clsx('cal-event', props.isPreview && 'cal-event-preview-full')}
         style={{
           backgroundColor: Event.getBackgroundColor(event.end, calendar.backgroundColor, props.now),
-          color: Event.getForegroundColor(event.end, props.now, event.foregroundColor),
+          color: Event.getForegroundColor(
+            event.end,
+            props.now,
+            event.foregroundColor,
+            calendar.backgroundColor
+          ),
         }}
         onMouseDown={handleStartDragging}
         onTouchStart={handleStartDragging}
@@ -65,7 +70,12 @@ export function EventItem(props: {
         className={clsx('cal-event-row', props.isPreview && 'cal-event-preview')}
         style={{
           alignItems: 'center',
-          color: Event.getForegroundColor(event.end, props.now, event.foregroundColor),
+          color: Event.getForegroundColor(
+            event.end,
+            props.now,
+            event.foregroundColor,
+            calendar.backgroundColor
+          ),
         }}
         onMouseDown={handleStartDragging}
         onTouchStart={handleStartDragging}
