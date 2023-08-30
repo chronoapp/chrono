@@ -1,5 +1,14 @@
 import * as React from 'react'
-import { Flex, Text, Avatar, Input, InputGroup, InputRightElement, Button } from '@chakra-ui/react'
+import {
+  Flex,
+  Text,
+  Avatar,
+  Input,
+  InputGroup,
+  InputRightElement,
+  Button,
+  Center,
+} from '@chakra-ui/react'
 import { FiX } from 'react-icons/fi'
 
 import * as dates from '@/util/dates'
@@ -36,6 +45,7 @@ function ContactInEventRow(props: { contact: ContactInEvent }) {
 }
 
 export default function People() {
+  const [isLoading, setIsLoading] = React.useState<boolean>(true)
   const [contacts, setContacts] = React.useState<ContactInEvent[]>([])
   const [searchQuery, setSearchQuery] = React.useState<string>('')
 
@@ -43,6 +53,7 @@ export default function People() {
     async function getContacts() {
       const contacts = await API.getContactsInEvent()
       setContacts(contacts)
+      setIsLoading(false)
     }
     getContacts()
   }, [])
@@ -76,11 +87,17 @@ export default function People() {
         )}
       </InputGroup>
 
-      <Flex direction={'column'} mb="2" mt="4" overflowY={'scroll'} maxH={'2xl'}>
-        {filteredContacts.map((contact, idx) => {
-          return <ContactInEventRow key={idx} contact={contact} />
-        })}
-      </Flex>
+      {!isLoading && filteredContacts.length == 0 ? (
+        <Center w="100%" h="2xl" overflow="auto">
+          <Text color="gray.700">We couldn't find any contacts matching "{searchQuery}"</Text>
+        </Center>
+      ) : (
+        <Flex direction={'column'} mb="2" mt="4" overflowY={'scroll'} maxH={'2xl'}>
+          {filteredContacts.map((contact, idx) => {
+            return <ContactInEventRow key={idx} contact={contact} />
+          })}
+        </Flex>
+      )}
     </Flex>
   )
 }
