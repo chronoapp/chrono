@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react'
 import chunk from '@/lib/js-lib/chunk'
 import { Flex, Box, Text, IconButton } from '@chakra-ui/react'
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverArrow,
+  PopoverBody,
+} from '@chakra-ui/react'
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 
 import { Label } from '@/models/Label'
-import { startOfWeek, format, getWeekRange } from '@/util/localizer'
+import { startOfWeek, format, getWeekRange, formatDateTime } from '@/util/localizer'
 
 import { hexToHSL } from '@/calendar/utils/Colors'
 import * as dates from '@/util/dates'
@@ -56,9 +63,9 @@ function HabitGraph(props: IProps) {
   function renderHeader() {
     const range = getWeekRange(viewDate)
     return range.map((day, idx) => (
-      <div key={idx} style={{ flex: 1 }}>
-        {format(day, 'dd')}
-      </div>
+      <Flex key={idx} flex="1" justifyContent={'center'}>
+        <Text color="gray.600">{format(day, 'dd')}</Text>
+      </Flex>
     ))
   }
 
@@ -86,25 +93,39 @@ function HabitGraph(props: IProps) {
             }
           }
 
+          const hasValue = dayValue && dayValue > 0
+
           return (
-            <Flex
-              key={idx}
-              className="habit-chart-day"
-              backgroundColor={color}
-              height="20"
-              alignItems="flex-start"
-              justifyContent="center"
-              border="1px solid rgba(230, 230, 230)"
-              borderRadius="md"
-              flex={1}
-              m="1"
-            >
-              <Box borderRadius="sm" w="5" mt="2">
-                <Text fontSize="xs" fontWeight="medium" pointerEvents="none" color={'gray.600'}>
-                  {label}
-                </Text>
-              </Box>
-            </Flex>
+            <Popover isLazy trigger="hover">
+              <PopoverTrigger>
+                <Flex
+                  key={idx}
+                  className="habit-chart-day"
+                  backgroundColor={color}
+                  height="20"
+                  alignItems="flex-start"
+                  justifyContent="center"
+                  border="1px solid rgba(230, 230, 230)"
+                  borderRadius="md"
+                  flex={1}
+                  m="1"
+                >
+                  <Box borderRadius="sm" w="5" mt="2">
+                    <Text fontSize="xs" fontWeight="medium" pointerEvents="none" color={'gray.500'}>
+                      {label}
+                    </Text>
+                  </Box>
+                </Flex>
+              </PopoverTrigger>
+              {hasValue ? (
+                <PopoverContent width={'xs'} color="white" bg="gray.600" borderColor="gray.600">
+                  <PopoverArrow bg="gray.600" borderColor="gray.600" />
+                  <PopoverBody textAlign={'center'}>
+                    {dayValue} hours on {format(day, 'MMMM D')}
+                  </PopoverBody>
+                </PopoverContent>
+              ) : null}
+            </Popover>
           )
         })}
       </Flex>
@@ -117,10 +138,10 @@ function HabitGraph(props: IProps) {
     }
 
     return (
-      <div>
-        <Flex>{renderHeader()}</Flex>
+      <Box>
+        <Flex mb="1">{renderHeader()}</Flex>
         {weeks.map(renderWeek)}
-      </div>
+      </Box>
     )
   }
 
@@ -152,7 +173,7 @@ function HabitGraph(props: IProps) {
         <ViewSelector setSelectedView={props.setSelectedView} selectedView={'HABIT_GRAPH'} />
       </Flex>
 
-      <Box mt="2">{renderGraph()}</Box>
+      <Box mt="4">{renderGraph()}</Box>
     </>
   )
 }
