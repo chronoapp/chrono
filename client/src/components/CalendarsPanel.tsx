@@ -192,7 +192,7 @@ export default function CalendarsPanel() {
                 </label>
 
                 <Flex align="center" justifyContent="space-between" w="100%">
-                  <Text userSelect="none" fontSize="xs" color={'gray.800'} pl="2">
+                  <Text userSelect="none" fontSize="sm" color={'gray.700'} pl="2">
                     {calendar.summary}
                   </Text>
 
@@ -211,6 +211,7 @@ export default function CalendarsPanel() {
                       <Portal>
                         <MenuList>
                           <MenuItem
+                            fontSize={'sm'}
                             onClick={() => {
                               setEditModalActive(true)
                               setEditingCalendarId(calendar.id)
@@ -222,6 +223,7 @@ export default function CalendarsPanel() {
                             Edit
                           </MenuItem>
                           <MenuItem
+                            fontSize={'sm'}
                             onClick={() => {
                               setConfirmDeleteCalendarId(calendar.id)
                               onMouseLeave()

@@ -261,47 +261,57 @@ function LabelTree(props: IProps) {
               alignItems="center"
               paddingBottom="2px"
             >
-              <Text fontSize="xs" color="gray.800">
+              <Text fontSize="sm" color="gray.700">
                 {item.title}
               </Text>
-              {(isMouseInside || curMenuExpanded) && (
-                <Menu isLazy>
-                  <MenuButton
-                    variant="unstyled"
-                    color="gray.600"
-                    size="sm"
-                    pb="1"
-                    as={Button}
-                    fontWeight="normal"
-                  >
-                    <FiMoreHorizontal size={'1.25em'} />
-                  </MenuButton>
-                  <Portal>
-                    <MenuList mt="-5">
-                      <MenuItem
-                        onClick={() => {
-                          onClickEditLabel(item)
-                          onMouseLeave()
-                        }}
-                        icon={<FiEdit />}
-                        iconSpacing="1"
-                      >
-                        Edit
-                      </MenuItem>
-                      <MenuItem
-                        onClick={() => {
-                          onDeleteLabel(item)
-                          onMouseLeave()
-                        }}
-                        icon={<FiTrash />}
-                        iconSpacing="1"
-                      >
-                        Delete
-                      </MenuItem>
-                    </MenuList>
-                  </Portal>
-                </Menu>
-              )}
+
+              <Menu isLazy>
+                {({ isOpen }) => (
+                  <>
+                    <MenuButton
+                      variant="unstyled"
+                      color="gray.600"
+                      size="sm"
+                      pb="1"
+                      as={Button}
+                      fontWeight="normal"
+                      visibility={isMouseInside || curMenuExpanded || isOpen ? 'visible' : 'hidden'}
+                    >
+                      <FiMoreHorizontal size={'1.25em'} />
+                    </MenuButton>
+
+                    {curMenuExpanded ||
+                      (isOpen && (
+                        <Portal>
+                          <MenuList>
+                            <MenuItem
+                              fontSize="sm"
+                              onClick={() => {
+                                onClickEditLabel(item)
+                                onMouseLeave()
+                              }}
+                              icon={<FiEdit />}
+                              iconSpacing="1"
+                            >
+                              Edit
+                            </MenuItem>
+                            <MenuItem
+                              fontSize="sm"
+                              onClick={() => {
+                                onDeleteLabel(item)
+                                onMouseLeave()
+                              }}
+                              icon={<FiTrash />}
+                              iconSpacing="1"
+                            >
+                              Delete
+                            </MenuItem>
+                          </MenuList>
+                        </Portal>
+                      ))}
+                  </>
+                )}
+              </Menu>
             </Flex>
           )}
         </Hoverable>

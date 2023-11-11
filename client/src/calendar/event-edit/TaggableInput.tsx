@@ -70,8 +70,9 @@ const defaultStyle = {
       backgroundColor: 'white',
       border: '1px solid rgba(0,0,0,0.15)',
       boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-      borderRadius: '3px',
+      borderRadius: '8px',
       fontSize: '0.95rem',
+      padding: '0.25em ',
     },
     item: {
       color: 'gray.100',
@@ -130,10 +131,12 @@ function TaggableInput(props: IProps) {
 
   function renderLabelSuggestion(entry: LabelTagDisplay, _search, highlightedDisplay) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center' }}>
+      <Flex alignItems={'center'}>
         <LabelTagColor colorHex={entry.colorHex} />{' '}
-        <span className="ml-1">{highlightedDisplay}</span>
-      </div>
+        <Text fontSize="sm" ml="1">
+          {highlightedDisplay}
+        </Text>
+      </Flex>
     )
   }
 

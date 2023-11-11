@@ -172,6 +172,8 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
             width="xs"
             maxH="3xl"
             zIndex={10}
+            border="0.5px solid rgba(82, 82, 100, 0.3)"
+            borderRadius="md"
           >
             <EventPopover event={event} eventService={props.eventService} />
           </Box>,
