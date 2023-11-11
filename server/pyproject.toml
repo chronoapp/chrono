@@ -72,3 +72,8 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "sqlalchemy.*"
 ignore_missing_imports = true
+
+[tool.black]
+line-length = 100
+target-version = ['py36']  # Use the Python version of your project
+skip-string-normalization = true  # Skip string normalization
