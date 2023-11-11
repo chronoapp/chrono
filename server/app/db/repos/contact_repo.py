@@ -51,8 +51,8 @@ class ContactInDBVM(ContactVM):
 class ContactInEventVM(BaseModel):
     """Represents a contact that has been in an event with the user."""
 
-    total_time_spent_in_seconds: int
-    last_seen: datetime
+    total_time_spent_in_seconds: int | None
+    last_seen: datetime | None
     contact: ContactInDBVM
 
 
@@ -121,11 +121,16 @@ class ContactRepository:
         ).scalar()
 
     def getContactsInEvents(
-        self, user: User, startTime: datetime, endDateTime: datetime
+        self, user: User, startTime: datetime, endDateTime: datetime, limit: int = 50
     ) -> list[ContactInEventVM]:
         rows = self.session.execute(
             text(CONTACT_IN_EVENTS_QUERY),
-            {'userId': user.id, 'startDateTime': startTime, 'endDateTime': endDateTime},
+            {
+                'userId': user.id,
+                'startDateTime': startTime,
+                'endDateTime': endDateTime,
+                'limit': limit,
+            },
         )
 
         return [
@@ -134,12 +139,11 @@ class ContactRepository:
                 last_seen=row.last_seen,
                 contact=ContactInDBVM(
                     id=row.id,
-                    first_name=row.first_name,
-                    last_name=row.last_name,
-                    display_name=f'{row.first_name} {row.last_name}',
+                    firstName=row.first_name,
+                    lastName=row.last_name,
                     email=row.email,
-                    photo_url=row.photo_url,
-                    google_id=row.google_id,
+                    photoUrl=row.photo_url,
+                    googleId=row.google_id,
                 ),
             )
             for row in rows

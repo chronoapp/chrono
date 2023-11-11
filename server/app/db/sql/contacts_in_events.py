@@ -9,17 +9,13 @@ SELECT
     c.photo_url,
     c.google_id
 FROM
-    event_participant p
-JOIN
-    event e ON p.event_uid = e.uid
-JOIN
-	contact c on c.email = p.email_
+    contact c
+LEFT JOIN
+    event_participant p ON c.email = p.email_
+LEFT JOIN
+    event e ON p.event_uid = e.uid AND e.start >= :startDateTime AND e.end <= :endDateTime
 WHERE
-	c.user_id = :userId
-AND
-	e.start >= :startDateTime
-AND
-    e.end <= :endDateTime
+    c.user_id = :userId
 GROUP BY
     c.id,
     c.email,
@@ -28,5 +24,6 @@ GROUP BY
     c.photo_url,
     c.google_id
 ORDER BY
-    last_seen DESC;
+    (MAX(e.end) IS NULL) ASC, MAX(e.end) DESC
+LIMIT :limit;
 """

@@ -20,8 +20,8 @@ function ContactInEventRow(props: { contact: ContactInEvent }) {
   const { contact } = props
   const displayName = contact.contact.displayName || contact.contact.email
   const today = new Date()
-  const lastSeenSeconds = dates.diff(today, contact.last_seen, 'seconds')
-  const lastSeenAgo = formatTimeAgo(lastSeenSeconds)
+  const lastSeenSeconds = contact.last_seen ? dates.diff(today, contact.last_seen, 'seconds') : null
+  const lastSeenAgo = lastSeenSeconds ? formatTimeAgo(lastSeenSeconds) : null
 
   return (
     <Flex borderRadius={'sm'} direction={'row'} mb="4" alignItems={'center'}>
@@ -36,9 +36,11 @@ function ContactInEventRow(props: { contact: ContactInEvent }) {
       />
       <Flex ml="2" direction="column">
         <Text fontSize="sm">{displayName}</Text>
-        <Text fontSize="sm" color={'gray.700'}>
-          last met {lastSeenAgo} ago
-        </Text>
+        {lastSeenAgo && (
+          <Text fontSize="sm" color={'gray.700'}>
+            last met {lastSeenAgo} ago
+          </Text>
+        )}
       </Flex>
     </Flex>
   )
