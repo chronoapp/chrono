@@ -94,8 +94,6 @@ function HabitGraph(props: IProps) {
             }
           }
 
-          const hasValue = dayValue && dayValue > 0
-
           return (
             <Popover isLazy trigger="hover">
               <PopoverTrigger>
@@ -112,14 +110,14 @@ function HabitGraph(props: IProps) {
                   m="1"
                 ></Flex>
               </PopoverTrigger>
-              {hasValue ? (
-                <PopoverContent width={'xs'} color="white" bg="gray.600" borderColor="gray.600">
-                  <PopoverArrow bg="gray.600" borderColor="gray.600" />
-                  <PopoverBody textAlign={'center'}>
-                    {dayValue} hours on {format(day, 'MMMM D')}
-                  </PopoverBody>
-                </PopoverContent>
-              ) : null}
+              <PopoverContent width={'xs'} color="white" bg="gray.600" borderColor="gray.600">
+                <PopoverArrow bg="gray.600" borderColor="gray.600" />
+                <PopoverBody textAlign={'center'}>
+                  {dayValue && dayValue > 0
+                    ? `${dayValue} hours on ${format(day, 'MMMM D')}`
+                    : `No activity on ${format(day, 'MMMM D')}`}
+                </PopoverBody>
+              </PopoverContent>
             </Popover>
           )
         })}
