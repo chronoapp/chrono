@@ -11,7 +11,7 @@ import {
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 
 import { Label } from '@/models/Label'
-import { startOfWeek, format, getWeekRange, formatDateTime } from '@/util/localizer'
+import { startOfWeek, format, getWeekRange } from '@/util/localizer'
 
 import { hexToHSL } from '@/calendar/utils/Colors'
 import * as dates from '@/util/dates'
@@ -64,7 +64,7 @@ function HabitGraph(props: IProps) {
     const range = getWeekRange(viewDate)
     return range.map((day, idx) => (
       <Flex key={idx} flex="1" justifyContent={'center'}>
-        <Text color="gray.600">{format(day, 'dd')}</Text>
+        <Text color="gray.600">{format(day, 'ddd')}</Text>
       </Flex>
     ))
   }
@@ -78,6 +78,7 @@ function HabitGraph(props: IProps) {
           const label = format(day, 'D')
           const dayKey = format(day, 'YYYY-MM-DD')
           const dayValue = day > curDate ? 0 : trendMap.get(dayKey)
+          const isToday = dates.eq(day, curDate)
 
           let color
           if (dayValue) {
@@ -109,13 +110,7 @@ function HabitGraph(props: IProps) {
                   borderRadius="md"
                   flex={1}
                   m="1"
-                >
-                  <Box borderRadius="sm" w="5" mt="2">
-                    <Text fontSize="xs" fontWeight="medium" pointerEvents="none" color={'gray.500'}>
-                      {label}
-                    </Text>
-                  </Box>
-                </Flex>
+                ></Flex>
               </PopoverTrigger>
               {hasValue ? (
                 <PopoverContent width={'xs'} color="white" bg="gray.600" borderColor="gray.600">
