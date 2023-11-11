@@ -24,7 +24,7 @@ function ContactInEventRow(props: { contact: ContactInEvent }) {
   const lastSeenAgo = formatTimeAgo(lastSeenSeconds)
 
   return (
-    <Flex borderRadius={'sm'} direction={'row'} mb="4">
+    <Flex borderRadius={'sm'} direction={'row'} mb="4" alignItems={'center'}>
       <Avatar
         size={'xs'}
         bgColor="gray"

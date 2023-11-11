@@ -330,21 +330,19 @@ export default function EventEditFull(props: { event: Event; eventService: Event
             </Checkbox>
           </Flex>
 
-          {(recurringAction !== 'SINGLE' || isUnsavedEvent) && (
-            <RecurringEventEditor
-              initialDate={props.event.original_start || eventFields.start}
-              initialRulestr={eventFields.recurrences}
-              onChange={(rules) => {
-                console.log(`Rule Updated: ${rules}`)
+          <RecurringEventEditor
+            initialDate={props.event.original_start || eventFields.start}
+            initialRulestr={eventFields.recurrences}
+            onChange={(rules) => {
+              console.log(`Rule Updated: ${rules}`)
 
-                if (rules) {
-                  setEventFields({ ...eventFields, recurrences: rules.toString() })
-                } else {
-                  setEventFields({ ...eventFields, recurrences: null })
-                }
-              }}
-            />
-          )}
+              if (rules) {
+                setEventFields({ ...eventFields, recurrences: rules.toString() })
+              } else {
+                setEventFields({ ...eventFields, recurrences: null })
+              }
+            }}
+          />
 
           <Flex mt="3">
             <Flex justifyContent="left">
