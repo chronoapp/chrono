@@ -7,7 +7,6 @@ import { ChakraProvider, extendTheme, defineStyle, defineStyleConfig } from '@ch
 import { getAuthToken } from '@/util/Api'
 
 import Home from './routes/home'
-import Settings from './routes/settings'
 import Auth from './routes/auth'
 import Login from './routes/login'
 import SignUp from './routes/signup'
@@ -105,7 +104,6 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         <Routes>
           <Route path="/" element={<LoggedInRoute />}>
             <Route path="/" element={<Home />}></Route>
-            <Route path="/settings" element={<Settings />}></Route>
           </Route>
           <Route path="/" element={<LoggedOutRoute />}>
             <Route path="/login" element={<Login />}></Route>

@@ -14,6 +14,8 @@ import {
   MenuDivider,
   useToast,
 } from '@chakra-ui/react'
+import { Modal, ModalOverlay, ModalContent, ModalCloseButton } from '@chakra-ui/react'
+
 import { FiSettings, FiLogOut } from 'react-icons/fi'
 
 import { roundNext15Min } from '@/util/localizer'
@@ -24,6 +26,7 @@ import LabelPanel from './LabelPanel'
 import CalendarsPanel from './CalendarsPanel'
 import Plugins from './Plugins'
 import { ToastTag } from '@/components/Toast'
+import Settings from '@/components/Settings'
 
 import Header from '@/calendar/Header'
 import * as API from '@/util/Api'
@@ -80,15 +83,16 @@ function TopNavigationBar(props: {
 
       <Flex justifyContent="flex-end" align="flex-end">
         <Flex alignItems="center" justifyContent="center">
-          <Settings refreshCalendar={props.refreshCalendar} />
+          <SettingsMenu refreshCalendar={props.refreshCalendar} />
         </Flex>
       </Flex>
     </Flex>
   )
 }
 
-function Settings(props: { refreshCalendar: () => void }) {
+function SettingsMenu(props: { refreshCalendar: () => void }) {
   const navigate = useNavigate()
+  const [settingsActive, setSettingsActive] = React.useState<boolean>(false)
 
   const logout = () => {
     setLocalStorageItem('auth_token', undefined)
@@ -106,13 +110,7 @@ function Settings(props: { refreshCalendar: () => void }) {
           Refresh Events
         </MenuItem>
         <MenuDivider m="0" />
-        <MenuItem
-          icon={<FiSettings />}
-          fontSize={'sm'}
-          onClick={() => {
-            navigate('/settings')
-          }}
-        >
+        <MenuItem icon={<FiSettings />} fontSize={'sm'} onClick={() => setSettingsActive(true)}>
           Settings
         </MenuItem>
         <MenuDivider m="0" />
@@ -120,6 +118,14 @@ function Settings(props: { refreshCalendar: () => void }) {
           Sign Out
         </MenuItem>
       </MenuList>
+
+      <Modal size="2xl" isOpen={settingsActive} onClose={() => setSettingsActive(false)}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalCloseButton />
+          <Settings />
+        </ModalContent>
+      </Modal>
     </Menu>
   )
 }
