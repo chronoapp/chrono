@@ -1,6 +1,6 @@
 import { Box, Flex, Button, Text, Divider, IconButton } from '@chakra-ui/react'
 
-import { FiCalendar, FiClock, FiAlignLeft, FiTrash, FiMail, FiMapPin } from 'react-icons/fi'
+import { FiCalendar, FiClock, FiAlignLeft, FiTrash, FiMail, FiMapPin, FiBell } from 'react-icons/fi'
 import { MdClose } from 'react-icons/md'
 import linkifyHtml from 'linkifyjs/html'
 
@@ -17,6 +17,7 @@ import ParticipantList from './ParticipantList'
 import EventResponseToggle from './EventResponseToggle'
 import ConferenceList from './ConferenceList'
 import { LocationReadOnly } from './LocationInput'
+import SelectReminders from './SelectReminders'
 
 interface IProps {
   event: Event
@@ -42,6 +43,8 @@ export default function EventEditReadOnly(props: IProps) {
     onClose,
     onUpdateResponse,
   } = props
+
+  const showReminder = eventFields.reminders.length > 0 || selectedCalendar.reminders.length > 0
 
   return (
     <Box mt="1" pl="4">
@@ -98,11 +101,24 @@ export default function EventEditReadOnly(props: IProps) {
         </Flex>
 
         <ConferenceList
-          mb="1"
           originalConferenceData={event.conference_data}
           conferenceData={eventFields.conferenceData}
           readonly={true}
         />
+
+        {showReminder && (
+          <Flex mt="2" alignItems={'center'}>
+            <Box mr="2" color="gray.600">
+              <FiBell size="1em" />
+            </Box>
+            <SelectReminders
+              useDefaultReminders={eventFields.useDefaultReminders}
+              defaultReminders={selectedCalendar.reminders}
+              reminders={eventFields.reminders}
+              readonly={true}
+            />
+          </Flex>
+        )}
 
         {eventFields.location && (
           <Flex mt="2" alignItems={'center'}>
