@@ -113,8 +113,6 @@ def syncGoogleCalendars(user: User, calendarList):
     calendarsMap = {cal.google_id: cal for cal in user.getGoogleCalendars()}
 
     for calendarItem in calendarList:
-        print(calendarItem)
-
         gCalId = calendarItem.get('id')
         calSummary = calendarItem.get('summary')
         backgroundColor = mapGoogleColor(calendarItem.get('backgroundColor'))
@@ -361,6 +359,7 @@ def syncDeletedEvent(
             None,
             None,
             None,
+            True,
             [],
             status=convertStatus(eventItem['status']),
         )
@@ -404,6 +403,7 @@ def getOrCreateBaseRecurringEvent(
             None,
             None,
             None,
+            True,
             [],
             status='active',
         )
@@ -624,7 +624,7 @@ def googleEventToEventVM(calendarId: uuid.UUID, eventItem: Dict[str, Any]) -> Go
             for r in googleEvent.reminders.overrides
         ]
         if googleEvent.reminders
-        else []
+        else None
     )
 
     eventVM = GoogleEventVM(
@@ -652,6 +652,7 @@ def googleEventToEventVM(calendarId: uuid.UUID, eventItem: Dict[str, Any]) -> Go
         location=location,
         visibility=Visibility(googleEvent.visibility),
         transparency=Transparency(googleEvent.transparency),
+        use_default_reminders=googleEvent.reminders.useDefault if googleEvent.reminders else True,
         reminders=reminderOverrides,
     )
     return eventVM

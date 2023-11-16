@@ -19,7 +19,7 @@ import {
 
 import produce from 'immer'
 import moment from 'moment'
-import { FiMail, FiVideo, FiMapPin, FiBriefcase } from 'react-icons/fi'
+import { FiMail, FiVideo, FiMapPin, FiBriefcase, FiBell } from 'react-icons/fi'
 import { FiCalendar, FiAlignLeft, FiClock } from 'react-icons/fi'
 
 import * as dates from '@/util/dates'
@@ -51,6 +51,7 @@ import ParticipantList from './ParticipantList'
 import ConferenceList from './ConferenceList'
 import { LocationInput } from './LocationInput'
 import SelectVisibilityTransparency from './SelectVisibilityTransparency'
+import SelectReminders from './SelectReminders'
 
 /**
  * Full view for event editing.
@@ -83,7 +84,9 @@ export default function EventEditFull(props: { event: Event; eventService: Event
       props.event.conference_data,
       props.event.location,
       props.event.visibility,
-      props.event.transparency
+      props.event.transparency,
+      props.event.use_default_reminders,
+      props.event.reminders
     )
   )
   const [participants, setParticipants] = useState<EventParticipant[]>(props.event.participants)
@@ -143,6 +146,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
   }
 
   const labels: Label[] = Object.values(labelState.labelsById)
+  const selectedCalendar = getSelectedCalendar(eventFields.calendarId)
 
   return (
     <Modal size="3xl" isOpen={true} onClose={eventActions.cancelSelect}>
@@ -176,7 +180,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
               }}
               onUpdateContacts={(contacts: Contact[]) => {
                 const updatedParticipants = mergeParticipants(
-                  getSelectedCalendar(eventFields.calendarId),
+                  selectedCalendar,
                   participants,
                   contacts.map((c) => EventParticipant.fromContact(c))
                 )
@@ -494,6 +498,21 @@ export default function EventEditFull(props: { event: Event; eventService: Event
             </Box>
           </Flex>
 
+          <Flex mt="3" alignItems={'top'}>
+            <Box mt="1" mr="2" color="gray.600">
+              <FiBell size="1em" />
+            </Box>
+            <SelectReminders
+              useDefaultReminders={eventFields.useDefaultReminders}
+              defaultReminders={selectedCalendar.reminders}
+              reminders={eventFields.reminders}
+              onUpdateReminders={(reminders) => {
+                setEventFields({ ...eventFields, reminders, useDefaultReminders: false })
+              }}
+              readonly={false}
+            />
+          </Flex>
+
           <Flex alignItems="top" mt="3" color="gray.700">
             <FiAlignLeft className="mr-2" size={'1em'} />
 
@@ -508,11 +527,11 @@ export default function EventEditFull(props: { event: Event; eventService: Event
         </ModalBody>
 
         <ModalFooter>
-          <Button variant={'ghost'} mr={3} onClick={eventActions.cancelSelect}>
+          <Button variant={'ghost'} mr={3} onClick={eventActions.cancelSelect} size="md">
             Cancel
           </Button>
 
-          <Button colorScheme="primary" onClick={onSaveEvent}>
+          <Button colorScheme="primary" onClick={onSaveEvent} size="md">
             Save changes
           </Button>
         </ModalFooter>

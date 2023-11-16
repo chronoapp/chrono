@@ -58,6 +58,18 @@ def getEventBody(event: Event, timeZone: str):
         'transparency': event.transparency.value,
     }
 
+    if event.use_default_reminders:
+        eventBody['reminders'] = {'useDefault': True}
+    else:
+        if event.reminders is not None:
+            eventBody['reminders'] = {
+                'useDefault': False,
+                'overrides': [
+                    {'method': reminder.method.value, 'minutes': reminder.minutes}
+                    for reminder in event.reminders
+                ],
+            }
+
     if event.conference_data is not None:
         if (
             event.conference_data.create_request

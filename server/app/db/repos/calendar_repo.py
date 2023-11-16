@@ -11,6 +11,7 @@ from app.db.models.user_calendar import CalendarSource
 from app.db.models import User, UserCalendar, Calendar
 
 from app.db.repos.exceptions import CalendarNotFoundError
+from app.db.repos.event_repo.view_models import ReminderOverrideVM
 
 
 class CalendarBaseVM(BaseModel):
@@ -26,6 +27,7 @@ class CalendarBaseVM(BaseModel):
     access_role: Optional[str] = Field(default=None, alias='accessRole')
     source: CalendarSource
     email: Optional[str] = None
+    reminders: list[ReminderOverrideVM] = []
 
     @field_validator('timezone')
     def validateTimezone(cls, timezone: Optional[str]) -> Optional[str]:

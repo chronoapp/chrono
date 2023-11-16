@@ -1,5 +1,6 @@
 import { immerable } from 'immer'
 import Event from '@/models/Event'
+import ReminderOverride from '@/models/ReminderOverride'
 
 export type AccessRole = 'reader' | 'writer' | 'owner' | 'freeBusyReader'
 export type CalendarSource = 'google' | 'chrono'
@@ -27,7 +28,8 @@ export default class Calendar implements CalendarEditable {
       json.accessRole,
       json.source,
       json.timezone,
-      json.email
+      json.email,
+      json.reminders.map((reminderJson) => ReminderOverride.fromJson(reminderJson))
     )
   }
 
@@ -42,7 +44,8 @@ export default class Calendar implements CalendarEditable {
     readonly accessRole: AccessRole,
     readonly source: CalendarSource,
     readonly timezone: string,
-    readonly email: string
+    readonly email: string,
+    readonly reminders: ReminderOverride[]
   ) {}
 
   public isWritable(): boolean {

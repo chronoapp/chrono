@@ -625,6 +625,7 @@ def createOverrideDeletedEvent(
         None,
         None,
         None,
+        True,
         [],
         overrideId=eventVM.id,
         recurringEventId=parentEvent.id,
@@ -946,9 +947,14 @@ def createOrUpdateEvent(
                 conferenceDataVM.create_request.conference_solution_key_type,
             )
 
-    reminders = [
-        ReminderOverride(reminderVM.method, reminderVM.minutes) for reminderVM in eventVM.reminders
-    ]
+    reminders = (
+        [
+            ReminderOverride(reminderVM.method, reminderVM.minutes)
+            for reminderVM in eventVM.reminders
+        ]
+        if eventVM.reminders
+        else None
+    )
 
     if not eventDb:
         event = Event(
@@ -971,6 +977,7 @@ def createOrUpdateEvent(
             eventVM.guests_can_see_other_guests,
             conferenceData,
             eventVM.location,
+            eventVM.use_default_reminders,
             reminders,
             visibility=eventVM.visibility,
             transparency=eventVM.transparency,
@@ -1014,7 +1021,10 @@ def createOrUpdateEvent(
         eventDb.visibility = eventVM.visibility or eventDb.visibility
         eventDb.transparency = eventVM.transparency or eventDb.transparency
 
-        if reminders:
+        if eventVM.use_default_reminders is not None:
+            eventDb.use_default_reminders = eventVM.use_default_reminders
+
+        if reminders is not None:
             eventDb.reminders = reminders
 
         return eventDb
