@@ -531,7 +531,6 @@ def conferenceDataToVM(conferenceData: ConferenceData | None) -> ConferenceDataB
     if entrypoints:
         entryPoints = [
             EntryPointBaseVM(
-                id=entrypoint.id,
                 entry_point_type=CommunicationMethod(entrypoint.entryPointType),
                 uri=entrypoint.uri,
                 label=entrypoint.label,
@@ -599,7 +598,6 @@ def googleEventToEventVM(calendarId: uuid.UUID, eventItem: Dict[str, Any]) -> Go
 
     for attendee in googleEvent.attendees:
         participant = EventParticipantVM(
-            id=attendee.id,
             display_name=attendee.displayName,
             email=attendee.email,
             response_status=attendee.responseStatus,
@@ -620,7 +618,7 @@ def googleEventToEventVM(calendarId: uuid.UUID, eventItem: Dict[str, Any]) -> Go
 
     reminderOverrides = (
         [
-            ReminderOverrideVM(method=r.method, minutes=r.minutes)
+            ReminderOverrideVM(method=ReminderMethod(r.method), minutes=r.minutes)
             for r in googleEvent.reminders.overrides
         ]
         if googleEvent.reminders

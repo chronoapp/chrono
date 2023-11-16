@@ -8,6 +8,8 @@ from typing import Literal
 Defines Pydantic models for Google Calendar API data.
 """
 
+ResponseStatus = Literal['needsAction', 'accepted', 'declined', 'tentative']
+
 
 class Person(BaseModel):
     id: str | None = None
@@ -30,7 +32,7 @@ class Attendee(BaseModel):
     self: bool = False
     resource: bool = False
     optional: bool = False
-    responseStatus: str = 'needsAction'
+    responseStatus: ResponseStatus = 'needsAction'
     comment: str | None = None
     additionalGuests: int = 0
 

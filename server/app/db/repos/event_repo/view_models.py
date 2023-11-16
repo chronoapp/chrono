@@ -48,7 +48,7 @@ class EntryPointBaseVM(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     entry_point_type: CommunicationMethod
-    uri: str
+    uri: str | None = None
     label: str | None = None
     meeting_code: str | None = None
     password: str | None = None
