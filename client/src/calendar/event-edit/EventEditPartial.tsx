@@ -53,8 +53,7 @@ import TimeRangeSelect from './TimeRangeSelect'
 import TimeSelectFullDay from './TimeSelectFullDay'
 import SelectCalendar from './SelectCalendar'
 import TaggableInput from './TaggableInput'
-import { LocationInput, LocationReadOnly } from './LocationInput'
-import EventEditReadOnly from './EventEditReadOnly'
+import { LocationInput } from './LocationInput'
 
 interface IProps {
   event: Event
