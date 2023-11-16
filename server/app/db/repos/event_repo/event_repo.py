@@ -458,8 +458,9 @@ class EventRepository:
         """Create and update event participants.
         I can only modify the attendee that corresponds to this user, or if I'm the organizer.
 
-        TODO: Have option to send invites with Chrono. Currently defers to google to send invites
-        to new participants.
+        Currently defers to google to send invites to new participants.
+
+        TODO: Have option to send invites with Chrono.
         """
         # Permissions check.
         user = userCalendar.user

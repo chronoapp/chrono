@@ -484,7 +484,7 @@ def syncEventParticipants(
     """Re-create event participants on google sync."""
     contactRepo = ContactRepository(session)
     updatedParticipants = []
-    event.participants = []
+    event.participants.clear()
 
     for participantVM in participants:
         contact = contactRepo.findContact(userCalendar.user, participantVM)
@@ -637,7 +637,7 @@ def googleEventToEventVM(calendarId: uuid.UUID, eventItem: Dict[str, Any]) -> Go
         start_day=eventFullDayStart,
         end_day=eventFullDayEnd,
         calendar_id=calendarId,
-        timezone=timeZone,
+        time_zone=timeZone,
         recurrences=recurrence,
         recurring_event_g_id=recurringEventGId,
         original_start=originalStartDateTime,
