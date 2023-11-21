@@ -14,6 +14,28 @@ import {
 import Hoverable from '@/lib/Hoverable'
 import ReminderOverride from '@/models/ReminderOverride'
 
+function formatReminder(minutes) {
+  if (minutes < 60) {
+    return minutes + ' min' + (minutes !== 1 ? 's' : '')
+  } else {
+    const hours = Math.floor(minutes / 60)
+    const remainingMinutes = minutes % 60
+    let result = hours + ' hour' + (hours !== 1 ? 's' : '')
+    if (remainingMinutes > 0) {
+      result += ' ' + remainingMinutes + ' min' + (remainingMinutes !== 1 ? 's' : '')
+    }
+    if (hours >= 24) {
+      const days = Math.floor(hours / 24)
+      const remainingHours = hours % 24
+      result = days + ' day' + (days !== 1 ? 's' : '')
+      if (remainingHours > 0) {
+        result += ' ' + remainingHours + ' hour' + (remainingHours !== 1 ? 's' : '')
+      }
+    }
+    return result
+  }
+}
+
 interface IProps {
   useDefaultReminders: boolean
   defaultReminders: ReminderOverride[]
@@ -39,7 +61,7 @@ function reminderText(reminder: ReminderOverride, readonly: boolean) {
   } else {
     return (
       <Flex fontSize={'sm'}>
-        <Text fontWeight={readonly ? 'normal' : 'medium'}>{minutes} mins</Text>
+        <Text fontWeight={readonly ? 'normal' : 'medium'}>{formatReminder(minutes)}</Text>
         <Text ml="1">before</Text>
       </Flex>
     )
