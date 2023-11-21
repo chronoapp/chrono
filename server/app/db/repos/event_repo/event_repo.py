@@ -227,8 +227,11 @@ class EventRepository:
             event.status = 'deleted'
 
             # Delete the parent of a recurring event => also delete all child events.
-            stmt = delete(Event).where(Event.recurring_event_id == event.id)
-            self.session.execute(stmt)
+            # TODO: Delete all with cascade / why not working now?
+            for e in self.session.query(Event).filter(
+                Event.recurring_event_id == event.id,
+            ):
+                self.session.delete(e)
             self.session.commit()
 
             return event
@@ -558,10 +561,13 @@ class EventRepository:
         )
 
         for override in overrides:
+            if event.all_day:
+                originalStart = override.original_start.replace(tzinfo=None)
+            else:
+                originalStart = override.original_start
+
             isInNewRecurrence = (
-                False
-                if not ruleSet
-                else ruleSet.after(override.original_start, inc=True) == override.original_start
+                False if not ruleSet else ruleSet.after(originalStart, inc=True) == originalStart
             )
             if not isInNewRecurrence:
                 logging.info(f'DELETE {override} ')
