@@ -7,12 +7,24 @@ import { RRule } from 'rrule'
 /**
  * Gets the recurrence for this and following events.
  *
+ * originalStartDt is the start date of the recurring event.
+ *
+ * splitDateOriginalStart is the original start date of the event that we are splitting.
+ *
+ * splitDateNewStart is the this & following date. It is used to set the until date
+ * so that we can extend the original recurrence.
+ *
  * Note that we don't use DTSTART or DTEND in the recurrence. Instead, we
  * use the property in the event.
  */
-export function getSplitRRules(recurrenceStr: string, originalStartDt: Date, splitDt: Date) {
-  if (!dates.lte(originalStartDt, splitDt)) {
-    throw new Error('splitDt must be after originalStartDt')
+export function getSplitRRules(
+  recurrenceStr: string,
+  originalStartDt: Date,
+  splitDateOriginalStart: Date,
+  splitDateNewStart: Date
+) {
+  if (!dates.lte(originalStartDt, splitDateOriginalStart)) {
+    throw new Error('splitDateOriginalStart must be after originalStartDt')
   }
 
   const ruleOptions = getRecurrenceRules(recurrenceStr, originalStartDt)
@@ -20,7 +32,7 @@ export function getSplitRRules(recurrenceStr: string, originalStartDt: Date, spl
   if (ruleOptions.count) {
     const upToThisEventRules = produce(ruleOptions, (draft) => {
       delete draft['count']
-      draft.until = dates.subtract(splitDt, 1, 'seconds')
+      draft.until = dates.subtract(splitDateOriginalStart, 1, 'seconds')
       draft.dtstart = originalStartDt
     })
 
@@ -46,13 +58,15 @@ export function getSplitRRules(recurrenceStr: string, originalStartDt: Date, spl
     // Set an until date for the recurrence
     const upToThisEventRules = produce(ruleOptions, (draft) => {
       delete draft['count']
-      draft.until = dates.subtract(splitDt, 1, 'seconds')
+      draft.until = dates.subtract(splitDateOriginalStart, 1, 'seconds')
     })
 
     const startRule = new RRule(upToThisEventRules)
     const endRule = new RRule({
       ...ruleOptions,
-      until: ruleOptions.until,
+      until: ruleOptions.until
+        ? dates.max(ruleOptions.until, splitDateNewStart)
+        : ruleOptions.until,
     })
 
     return { start: startRule, end: endRule }

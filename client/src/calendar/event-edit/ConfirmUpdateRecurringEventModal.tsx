@@ -92,7 +92,8 @@ function ConfirmUpdateRecurringEventModal(props: IProps) {
       const rules = getSplitRRules(
         props.event.recurrences!.join('\n'),
         parent.start,
-        props.event.original_start!
+        props.event.original_start!,
+        props.event.start
       )
 
       const updatedParentOriginal = { ...parent, recurrences: [rules.start.toString()] }

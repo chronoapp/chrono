@@ -148,7 +148,8 @@ export default function useEventService() {
     const rules = getSplitRRules(
       event.recurrences!.join('\n'),
       parentEvent.start,
-      event.original_start
+      event.original_start,
+      event.start
     )
     const updatedParentEvent = { ...parentEvent, recurrences: [rules.start.toString()] }
 
