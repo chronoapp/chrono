@@ -95,10 +95,9 @@ function HabitGraph(props: IProps) {
           }
 
           return (
-            <Popover isLazy trigger="hover">
+            <Popover isLazy trigger="hover" key={idx}>
               <PopoverTrigger>
                 <Flex
-                  key={idx}
                   className="habit-chart-day"
                   backgroundColor={color}
                   height="20"
