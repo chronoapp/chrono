@@ -2,7 +2,7 @@ import * as dates from '@/util/dates'
 import { produce } from 'immer'
 
 import { getRecurrenceRules } from '@/calendar/event-edit/RecurringEventEditor'
-import { RRule } from 'rrule'
+import { RRule, datetime } from 'rrule'
 
 /**
  * Gets the recurrence for this and following events.
@@ -21,13 +21,24 @@ export function getSplitRRules(
   recurrenceStr: string,
   originalStartDt: Date,
   splitDateOriginalStart: Date,
-  splitDateNewStart: Date
+  splitDateNewStart: Date,
+  isAllDay: boolean
 ) {
   if (!dates.lte(originalStartDt, splitDateOriginalStart)) {
     throw new Error('splitDateOriginalStart must be after originalStartDt')
   }
 
   const ruleOptions = getRecurrenceRules(recurrenceStr, originalStartDt)
+
+  let untilDate
+  if (isAllDay) {
+    const year = splitDateNewStart.getUTCFullYear()
+    const month = splitDateNewStart.getUTCMonth() + 1
+    const day = splitDateNewStart.getUTCDate() - 1 // stop one day before
+    untilDate = datetime(year, month, day)
+  } else {
+    untilDate = dates.subtract(splitDateNewStart, 1, 'seconds')
+  }
 
   if (ruleOptions.count) {
     const upToThisEventRules = produce(ruleOptions, (draft) => {

@@ -145,12 +145,19 @@ export default function useEventService() {
     const calendarId = event.calendar_id
     const parentEvent = await API.getEvent(calendarId, event.recurring_event_id)
 
+    console.log(parentEvent)
+    console.log(event.original_start)
+
     const rules = getSplitRRules(
       event.recurrences!.join('\n'),
       parentEvent.start,
       event.original_start,
-      event.start
+      event.start,
+      parentEvent.all_day
     )
+
+    console.log(rules.start)
+    console.log(rules.start.toString())
     const updatedParentEvent = { ...parentEvent, recurrences: [rules.start.toString()] }
 
     // Optimistic UI Update.
