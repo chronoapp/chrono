@@ -38,7 +38,7 @@
     "react-popper": "^2.3.0",
     "react-router-dom": "^6.6.2",
     "recoil": "^0.7.5",
-    "rrule": "^2.6.6",
+    "rrule": "^2.8.1",
     "sass": "^1.54.9",
     "short-uuid": "^4.2.2",
     "styled-components": "^5.2.1",
