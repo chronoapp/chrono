@@ -63,7 +63,6 @@ def getEventBody(event: Event, timeZone: str):
     else:
         if event.reminders is not None:
             eventBody['reminders'] = {
-                'useDefault': False,
                 'overrides': [
                     {'method': reminder.method.value, 'minutes': reminder.minutes}
                     for reminder in event.reminders

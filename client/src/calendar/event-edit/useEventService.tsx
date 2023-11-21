@@ -134,6 +134,10 @@ export default function useEventService() {
     queueDeleteEvent(calendarId, eventId)
   }
 
+  /**
+   * This changes the parent event's recurrences
+   * to cut off at the current event's original start date.
+   */
   async function deleteThisAndFollowingEvents(event: Event) {
     if (!event.recurrences || !event.recurring_event_id || !event.original_start) {
       throw Error('Invalid Recurring Event')

@@ -583,21 +583,35 @@ def test_event_repo_updateEvent_recurring(user: User, session):
     assert len(events) == 2
     assert [e.title for e in events] == ['foo', 'bar']
 
-    for e in events:
-        print(e.title, e.start, e.end)
-
     # 2) Override the parent recurring event. Moves the end date forward by 1h.
-    # Makes sure all overrides are deleted.
+    # Makes sure all overrides are kept, since the new range includes these events.
 
-    parentEvent = eventRepo.getEventVM(user, calendar, parentEvent.id)
-    parentEvent.end = parentEvent.end + timedelta(hours=1)
+    parentEventVM = eventRepo.getEventVM(user, calendar, parentEvent.id)
+    assert parentEventVM is not None
 
-    event = eventRepo.updateEvent(user, calendar, parentEvent.id, parentEvent)
+    parentEvent.end = parentEventVM.end + timedelta(hours=1)
+
+    event = eventRepo.updateEvent(user, calendar, parentEventVM.id, parentEventVM)
     events = getAllExpandedRecurringEventsList(
         user, calendar, start, start + timedelta(days=1), session
     )
+
     assert len(events) == 2
-    assert [e.title for e in events] == [parentEvent.title, parentEvent.title]
+    assert [e.title for e in events] == ['foo', 'bar']
+
+    # 3) Remove the recurrence rule from the parent event.
+    # Makes sure all overrides are deleted, since the new range excludes these events.
+
+    updatedParentVM = parentEventVM.model_copy(update={'recurrences': []})
+    event = eventRepo.updateEvent(user, calendar, parentEventVM.id, updatedParentVM)
+    session.commit()
+
+    eventResult = list(
+        eventRepo.getEventsInRange(user, calendar.id, start, start + timedelta(days=1), 10)
+    )
+
+    assert len(eventResult) == 1
+    assert eventResult[0].id == parentEvent.id
 
 
 def test_event_repo_updateEvent_this_and_following(user, session):
@@ -629,6 +643,7 @@ def test_event_repo_updateEvent_this_and_following(user, session):
     # This event should be kept by the update.
     overrideEvent = events[0]
     overrideEvent.title = 'foo'
+    overrideEvent.start = overrideEvent.start + timedelta(hours=1)
     eventRepo.updateEvent(user, calendar, overrideEvent.id, overrideEvent)
 
     # This event should be removed by the update.
@@ -647,6 +662,7 @@ def test_event_repo_updateEvent_this_and_following(user, session):
     events = getAllExpandedRecurringEventsList(
         user, calendar, start, start + timedelta(days=10), session
     )
+
     assert len(events) == 2
     # Make sure the override is kept.
     assert events[0].title == 'foo'
