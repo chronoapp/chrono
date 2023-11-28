@@ -44,7 +44,9 @@ export default function EventEditReadOnly(props: IProps) {
     onUpdateResponse,
   } = props
 
-  const showReminder = eventFields.reminders.length > 0 || selectedCalendar.reminders.length > 0
+  const showReminder =
+    (!props.eventFields.useDefaultReminders && eventFields.reminders.length > 0) ||
+    (props.eventFields.useDefaultReminders && selectedCalendar.reminders.length > 0)
 
   return (
     <Box mt="1" pl="4">
