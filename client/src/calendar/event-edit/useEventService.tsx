@@ -135,8 +135,7 @@ export default function useEventService() {
   }
 
   /**
-   * This changes the parent event's recurrences
-   * to cut off at the current event's original start date.
+   * This changes the parent event's recurrences to cut off at the current event's original start date.
    */
   async function deleteThisAndFollowingEvents(event: Event) {
     if (!event.recurrences || !event.recurring_event_id || !event.original_start) {
@@ -149,8 +148,10 @@ export default function useEventService() {
       event.recurrences!.join('\n'),
       parentEvent.start,
       event.original_start,
-      event.start
+      event.start,
+      parentEvent.all_day
     )
+
     const updatedParentEvent = { ...parentEvent, recurrences: [rules.start.toString()] }
 
     // Optimistic UI Update.

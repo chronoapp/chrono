@@ -2,7 +2,7 @@ import * as dates from '@/util/dates'
 import { produce } from 'immer'
 
 import { getRecurrenceRules } from '@/calendar/event-edit/RecurringEventEditor'
-import { RRule } from 'rrule'
+import { RRule, datetime } from 'rrule'
 
 /**
  * Gets the recurrence for this and following events.
@@ -21,7 +21,8 @@ export function getSplitRRules(
   recurrenceStr: string,
   originalStartDt: Date,
   splitDateOriginalStart: Date,
-  splitDateNewStart: Date
+  splitDateNewStart: Date,
+  isAllDay: boolean
 ) {
   if (!dates.lte(originalStartDt, splitDateOriginalStart)) {
     throw new Error('splitDateOriginalStart must be after originalStartDt')
@@ -29,10 +30,20 @@ export function getSplitRRules(
 
   const ruleOptions = getRecurrenceRules(recurrenceStr, originalStartDt)
 
+  let splitDate
+  if (isAllDay) {
+    const year = splitDateNewStart.getUTCFullYear()
+    const month = splitDateNewStart.getUTCMonth() + 1
+    const day = splitDateNewStart.getUTCDate() - 1 // stop one day before
+    splitDate = datetime(year, month, day)
+  } else {
+    splitDate = dates.subtract(splitDateOriginalStart, 1, 'seconds')
+  }
+
   if (ruleOptions.count) {
     const upToThisEventRules = produce(ruleOptions, (draft) => {
       delete draft['count']
-      draft.until = dates.subtract(splitDateOriginalStart, 1, 'seconds')
+      draft.until = splitDate
       draft.dtstart = originalStartDt
     })
 
@@ -58,7 +69,7 @@ export function getSplitRRules(
     // Set an until date for the recurrence
     const upToThisEventRules = produce(ruleOptions, (draft) => {
       delete draft['count']
-      draft.until = dates.subtract(splitDateOriginalStart, 1, 'seconds')
+      draft.until = splitDate
     })
 
     const startRule = new RRule(upToThisEventRules)

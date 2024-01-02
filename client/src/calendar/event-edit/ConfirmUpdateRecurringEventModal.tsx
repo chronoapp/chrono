@@ -93,7 +93,8 @@ function ConfirmUpdateRecurringEventModal(props: IProps) {
         props.event.recurrences!.join('\n'),
         parent.start,
         props.event.original_start!,
-        props.event.start
+        props.event.start,
+        parent.all_day
       )
 
       const updatedParentOriginal = { ...parent, recurrences: [rules.start.toString()] }
