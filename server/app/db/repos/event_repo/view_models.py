@@ -130,8 +130,8 @@ class EventBaseVM(BaseModel):
 
     conference_data: ConferenceDataBaseVM | None = None
     location: Optional[str] = None
-    visibility: Visibility | None = None
-    transparency: Transparency | None = None
+    visibility: Visibility = Visibility.DEFAULT
+    transparency: Transparency = Transparency.OPAQUE
     use_default_reminders: bool | None = None
     reminders: list[ReminderOverrideVM] | None = None
 
