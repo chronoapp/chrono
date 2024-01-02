@@ -8,6 +8,7 @@ import Calendar, { CalendarSource } from '@/models/Calendar'
 import Contact from '@/models/Contact'
 import User from '@/models/User'
 import ContactInEvent from '@/models/ContactInEvent'
+import Flags from '@/models/Flags'
 
 type SendUpdateType = 'none' | 'all' | 'external'
 
@@ -96,6 +97,14 @@ export async function getUser(): Promise<User> {
   return fetch(`${API_URL}/user/`, {
     method: 'GET',
     headers: getHeaders(),
+  }).then(handleErrors)
+}
+
+export async function updateUserFlags(flags: Flags): Promise<User> {
+  return fetch(`${API_URL}/user/flags`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(flags),
   }).then(handleErrors)
 }
 
