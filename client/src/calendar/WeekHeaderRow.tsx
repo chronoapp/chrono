@@ -9,13 +9,13 @@ import EventEndingRow from './EventEndingRow'
 import { EventService } from './event-edit/useEventService'
 
 import { primaryCalendarSelector } from '@/state/CalendarState'
-import { uiState } from '@/state/UIState'
 
 interface IProps {
   range: Date[]
   events: Event[]
   eventService: EventService
   expandRows: boolean
+  onShowMore: () => void
 }
 
 const CELL_WRAPPER_CLS = 'cal-allday-cell'
@@ -29,7 +29,6 @@ function WeekHeaderRow(props: IProps) {
   const maxRows = props.expandRows ? Infinity : 2
   const dayMetrics = new DateSlotMetrics(props.range, props.events, maxRows, 1)
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
-  const setUiState = useSetRecoilState(uiState)
 
   function renderBackgroundCells() {
     return (
@@ -69,7 +68,7 @@ function WeekHeaderRow(props: IProps) {
               slots={dayMetrics.slots}
               now={new Date()}
               eventService={props.eventService}
-              onShowMore={() => setUiState((state) => ({ ...state, expandWeeklyRows: true }))}
+              onShowMore={() => props.onShowMore()}
             />
           )}
         </WeekRowContainer>

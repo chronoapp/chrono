@@ -10,8 +10,11 @@ import { EventService } from './event-edit/useEventService'
 
 import { IconButton, Flex } from '@chakra-ui/react'
 import { FiChevronUp, FiChevronDown } from 'react-icons/fi'
-import { uiState } from '@/state/UIState'
-import { useRecoilValue, useSetRecoilState } from 'recoil'
+import { userState } from '@/state/UserState'
+import { useRecoilState } from 'recoil'
+import User from '@/models/User'
+
+import * as API from '@/util/Api'
 
 interface IProps {
   range: Date[]
@@ -22,7 +25,7 @@ interface IProps {
 }
 
 function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
-  const setUiState = useSetRecoilState(uiState)
+  const { updateExpandAllDayEvents } = useUserFlags()
 
   if (props.expanded) {
     return (
@@ -31,7 +34,7 @@ function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
         variant="ghost"
         aria-label="collapse events"
         icon={<FiChevronUp />}
-        onClick={() => setUiState((state) => ({ ...state, expandWeeklyRows: false }))}
+        onClick={() => updateExpandAllDayEvents(false)}
         width="4"
         mt="8"
       />
@@ -43,7 +46,7 @@ function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
         variant="ghost"
         aria-label="expand events"
         icon={<FiChevronDown />}
-        onClick={() => setUiState((state) => ({ ...state, expandWeeklyRows: true }))}
+        onClick={() => updateExpandAllDayEvents(true)}
         width="4"
         mt="8"
       />
@@ -52,7 +55,7 @@ function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
 }
 
 function TimeGridHeader(props: IProps) {
-  const { expandWeeklyRows } = useRecoilValue(uiState)
+  const { expandAllDayEvents, updateExpandAllDayEvents } = useUserFlags()
 
   function renderHeaderCells() {
     const today = new Date() // TODO: pass via props.
@@ -91,7 +94,7 @@ function TimeGridHeader(props: IProps) {
         alignItems={'center'}
         className="rbc-label cal-time-header-gutter"
       >
-        <ToggleExpandWeeklyRows expanded={expandWeeklyRows} />
+        <ToggleExpandWeeklyRows expanded={expandAllDayEvents} />
       </Flex>
       <div className="cal-time-header-content">
         <div className="cal-row">{renderHeaderCells()}</div>
@@ -99,11 +102,34 @@ function TimeGridHeader(props: IProps) {
           range={props.range}
           events={props.events}
           eventService={props.eventService}
-          expandRows={expandWeeklyRows}
+          expandRows={expandAllDayEvents}
+          onShowMore={() => updateExpandAllDayEvents(true)}
         />
       </div>
     </div>
   )
+}
+
+function useUserFlags() {
+  const [user, setUser] = useRecoilState(userState)
+  const expandAllDayEvents = user?.flags.EXPAND_ALL_DAY_EVENTS || false
+
+  function updateExpandAllDayEvents(expand: boolean) {
+    const updatedFlags = { ...user?.flags, EXPAND_ALL_DAY_EVENTS: expand }
+
+    setUser((state) =>
+      state
+        ? ({
+            ...state,
+            flags: updatedFlags,
+          } as User)
+        : state
+    )
+
+    user && API.updateUserFlags(updatedFlags)
+  }
+
+  return { expandAllDayEvents, updateExpandAllDayEvents }
 }
 
 export default TimeGridHeader

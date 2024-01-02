@@ -6,17 +6,12 @@ import logging
 
 from typing import Optional
 
+from app.utils.redis import getRedisConnection
+
 
 """
 https://redislabs.com/ebook/part-2-core-concepts/chapter-6-application-components-in-redis/6-2-distributed-locking/
 """
-
-
-redisUrl = os.getenv('REDIS_URL', 'redis://redis:6379')
-
-
-def getRedisConnection():
-    return redis.Redis.from_url(redisUrl)
 
 
 def _lockkey(lockId: str):
