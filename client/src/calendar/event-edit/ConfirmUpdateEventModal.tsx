@@ -2,6 +2,7 @@ import React from 'react'
 import produce from 'immer'
 
 import {
+  Box,
   Button,
   Modal,
   ModalOverlay,
@@ -11,14 +12,19 @@ import {
   ModalBody,
   ModalCloseButton,
   Stack,
+  Text,
   Radio,
   RadioGroup,
 } from '@chakra-ui/react'
 
+import { Menu, MenuButton, MenuList, MenuItem, IconButton } from '@chakra-ui/react'
+
+import { FiChevronDown } from 'react-icons/fi'
+
 import { EventService } from './useEventService'
 import Event from '@/models/Event'
 import useEventActions from '@/state/useEventActions'
-import { EditRecurringAction } from '@/state/EventsState'
+import { EditRecurringAction, EventUpdateContext } from '@/state/EventsState'
 import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 
 import * as API from '@/util/Api'
@@ -26,11 +32,17 @@ import * as dates from '@/util/dates'
 import { makeShortId } from '@/lib/js-lib/makeId'
 
 interface IProps {
-  event: Event
+  event: Event // Event we are about to save.
+  updateContext: EventUpdateContext
   eventService: EventService
 }
 
-function ConfirmUpdateRecurringEventModal(props: IProps) {
+/**
+ * Modal that confirms the user wants to:
+ * 1) Update a recurring event (single, all, this and following)
+ * 2) Notify participants of the update.
+ */
+function ConfirmUpdateEventModal(props: IProps) {
   const eventActions = useEventActions()
   const initialFocusRef = React.useRef(null)
   const [radioValue, setRadioValue] = React.useState<EditRecurringAction>('SINGLE')
@@ -63,7 +75,7 @@ function ConfirmUpdateRecurringEventModal(props: IProps) {
     })
   }
 
-  async function updateAllRecurringEvents(parentEvent?: Event) {
+  async function updateAllRecurringEvents(parentEvent: Event | null, sendUpdates: boolean) {
     const parent =
       parentEvent || (await API.getEvent(props.event.calendar_id, props.event.recurring_event_id!))
 
@@ -74,7 +86,7 @@ function ConfirmUpdateRecurringEventModal(props: IProps) {
     // TODO: Handle optimistic updates on the client to prevent flickering.
     eventActions.deleteEvent(updatedParent.calendar_id, updatedParent.id, 'ALL')
 
-    return await props.eventService.saveEvent(updatedParent)
+    return await props.eventService.saveEvent(updatedParent, sendUpdates)
   }
 
   /**
@@ -82,11 +94,11 @@ function ConfirmUpdateRecurringEventModal(props: IProps) {
    * 1) The recurrence up to this event. We then use the recurrence to update the parent event.
    * 2) The recurrence from this event onwards, to create a new series of events.
    */
-  async function updateThisAndFutureRecurringEvents() {
+  async function updateThisAndFutureRecurringEvents(sendUpdates: boolean) {
     const parent = await API.getEvent(props.event.calendar_id, props.event.recurring_event_id!)
 
     if (dates.eq(parent.start, props.event.original_start)) {
-      return await updateAllRecurringEvents(parent)
+      return await updateAllRecurringEvents(parent, sendUpdates)
     } else {
       // 1) Update the base event's recurrence, cut off at the current event's original start date.
       const rules = getSplitRRules(
@@ -117,21 +129,107 @@ function ConfirmUpdateRecurringEventModal(props: IProps) {
     }
   }
 
-  async function updateEvent() {
-    if (!props.event.recurring_event_id || !props.event.original_start) {
-      throw Error('Could not find recurring event')
-    }
+  async function updateEvent(sendUpdates: boolean) {
+    const isRecurringEvent = props.event.recurring_event_id != null
+    if (isRecurringEvent) {
+      if (!props.event.original_start) {
+        throw Error('Recurring event does not have original_start')
+      }
 
-    if (radioValue === 'SINGLE') {
-      return await props.eventService.saveEvent(props.event)
-    } else if (radioValue === 'ALL') {
-      return await updateAllRecurringEvents()
-    } else if (radioValue === 'THIS_AND_FOLLOWING') {
-      return await updateThisAndFutureRecurringEvents()
+      if (radioValue === 'SINGLE') {
+        return await props.eventService.saveEvent(props.event, sendUpdates)
+      } else if (radioValue === 'ALL') {
+        return await updateAllRecurringEvents(null, sendUpdates)
+      } else if (radioValue === 'THIS_AND_FOLLOWING') {
+        return await updateThisAndFutureRecurringEvents(sendUpdates)
+      }
+    } else {
+      return await props.eventService.saveEvent(props.event, sendUpdates)
     }
   }
 
-  const updateThenClose = () => updateEvent().then(() => onClose())
+  function getHeader() {
+    if (props.updateContext.isRecurringEvent) {
+      return `Update recurring event: ${props.event.title}`
+    } else {
+      return `Update event: ${props.event.title}`
+    }
+  }
+
+  function renderModalBody() {
+    if (props.updateContext.hasParticipants && !props.updateContext.isRecurringEvent) {
+      return <Text fontSize="sm">Would you like to send update emails to existing guests?</Text>
+    } else {
+      return (
+        <RadioGroup
+          onChange={(val) => {
+            setRadioValue(val as EditRecurringAction)
+          }}
+          value={radioValue}
+        >
+          <Stack>
+            <Radio size="sm" value={'SINGLE'}>
+              This event
+            </Radio>
+            <Radio size="sm" value={'THIS_AND_FOLLOWING'}>
+              This and following events
+            </Radio>
+            <Radio size="sm" value={'ALL'}>
+              All events
+            </Radio>
+          </Stack>
+        </RadioGroup>
+      )
+    }
+  }
+
+  function renderPrimaryAction() {
+    if (props.updateContext.hasParticipants) {
+      return (
+        <Box>
+          <Button
+            size="sm"
+            onClick={updateThenClose(true)}
+            ref={initialFocusRef}
+            colorScheme="primary"
+            borderRightRadius={0}
+          >
+            Send update
+          </Button>
+          <Menu size="sm" gutter={0} placement="bottom-end">
+            <MenuButton
+              as={IconButton}
+              aria-label="Options"
+              icon={<FiChevronDown />}
+              colorScheme="primary"
+              borderLeftRadius={0}
+              borderLeft={'1px solid'}
+              borderLeftColor={'gray.400'}
+            />
+            <MenuList padding={0.5}>
+              <MenuItem fontSize={'sm'} onClick={updateThenClose(false)}>
+                Send update without email
+              </MenuItem>
+            </MenuList>
+          </Menu>
+        </Box>
+      )
+    } else {
+      return (
+        <Button
+          size="sm"
+          onClick={updateThenClose(true)}
+          ref={initialFocusRef}
+          colorScheme="primary"
+        >
+          Save event
+        </Button>
+      )
+    }
+  }
+
+  const updateThenClose = (sendUpdates: boolean) => () =>
+    updateEvent(sendUpdates).then(() => onClose())
 
   return (
     <Modal
@@ -144,42 +242,21 @@ function ConfirmUpdateRecurringEventModal(props: IProps) {
       <ModalOverlay />
       <ModalContent top="20%">
         <ModalHeader pb="2" fontSize="md">
-          {`Update recurring event: ${props.event.title}`}
+          {getHeader()}
         </ModalHeader>
         <ModalCloseButton />
 
-        <ModalBody>
-          <RadioGroup
-            onChange={(val) => {
-              setRadioValue(val as EditRecurringAction)
-            }}
-            value={radioValue}
-          >
-            <Stack>
-              <Radio size="sm" value={'SINGLE'}>
-                This event
-              </Radio>
-              <Radio size="sm" value={'THIS_AND_FOLLOWING'}>
-                This and following events
-              </Radio>
-              <Radio size="sm" value={'ALL'}>
-                All events
-              </Radio>
-            </Stack>
-          </RadioGroup>
-        </ModalBody>
+        <ModalBody>{renderModalBody()}</ModalBody>
 
         <ModalFooter>
           <Button colorScheme="gray" variant="ghost" size="sm" mr={4} onClick={onClose}>
             Cancel
           </Button>
-          <Button size="sm" onClick={updateThenClose} ref={initialFocusRef}>
-            Update
-          </Button>
+          {renderPrimaryAction()}
         </ModalFooter>
       </ModalContent>
     </Modal>
   )
 }
 
-export default ConfirmUpdateRecurringEventModal
+export default ConfirmUpdateEventModal

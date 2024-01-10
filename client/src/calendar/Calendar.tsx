@@ -17,8 +17,8 @@ import Week from './Week'
 import Month from './Month'
 import WorkWeek from './WorkWeek'
 import EventEditFull from './event-edit/EventEditFull'
-import ConfirmDeleteRecurringEventModal from './event-edit/ConfirmDeleteRecurringEventModal'
-import ConfirmUpdateRecurringEventModal from './event-edit/ConfirmUpdateRecurringEventModal'
+import ConfirmDeleteEventModal from './event-edit/ConfirmDeleteEventModal'
+import ConfirmUpdateEventModal from './event-edit/ConfirmUpdateEventModal'
 
 import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
 import {
@@ -225,15 +225,17 @@ function Calendar() {
       switch (editingEvent.updateContext.eventEditAction) {
         case 'DELETE':
           return (
-            <ConfirmDeleteRecurringEventModal
+            <ConfirmDeleteEventModal
               eventService={eventService}
+              updateContext={editingEvent.updateContext}
               event={editingEvent.event}
             />
           )
         case 'UPDATE':
           return (
-            <ConfirmUpdateRecurringEventModal
+            <ConfirmUpdateEventModal
               eventService={eventService}
+              updateContext={editingEvent.updateContext}
               event={editingEvent.event}
             />
           )

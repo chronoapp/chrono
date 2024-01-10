@@ -200,8 +200,14 @@ export async function getEvent(calendarId: string, eventId: string): Promise<Eve
     })
 }
 
-export async function createEvent(calendarId: string, event: Event): Promise<Event> {
-  return fetch(`${API_URL}/calendars/${calendarId}/events/`, {
+export async function createEvent(
+  calendarId: string,
+  event: Event,
+  sendUpdates: boolean
+): Promise<Event> {
+  const sendUpdateType = sendUpdates ? 'all' : 'none'
+
+  return fetch(`${API_URL}/calendars/${calendarId}/events/?sendUpdateType=${sendUpdateType}`, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify(event),
@@ -213,8 +219,10 @@ export async function createEvent(calendarId: string, event: Event): Promise<Eve
 export async function updateEvent(
   calendarId: string,
   event: Partial<Event>,
-  sendUpdateType: SendUpdateType = 'none'
+  sendUpdates: boolean
 ): Promise<Event> {
+  const sendUpdateType = sendUpdates ? 'all' : 'none'
+
   return fetch(
     `${API_URL}/calendars/${calendarId}/events/${event.id}?sendUpdateType=${sendUpdateType}`,
     {
@@ -230,13 +238,19 @@ export async function updateEvent(
 export async function moveEvent(
   eventId: string,
   fromCalendarId: string,
-  toCalendarId: string
+  toCalendarId: string,
+  sendUpdates: boolean
 ): Promise<Event> {
-  return fetch(`${API_URL}/calendars/${fromCalendarId}/events/${eventId}/move`, {
-    method: 'POST',
-    headers: getHeaders(),
-    body: JSON.stringify({ calendar_id: toCalendarId }),
-  })
+  const sendUpdateType = sendUpdates ? 'all' : 'none'
+
+  return fetch(
+    `${API_URL}/calendars/${fromCalendarId}/events/${eventId}/move?sendUpdateType=${sendUpdateType}`,
+    {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ calendar_id: toCalendarId }),
+    }
+  )
     .then(handleErrors)
     .then((resp) => Event.fromJson(toCalendarId, resp))
 }

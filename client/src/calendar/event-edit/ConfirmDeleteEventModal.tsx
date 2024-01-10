@@ -17,9 +17,15 @@ import {
 import { EventService } from './useEventService'
 import Event from '@/models/Event'
 import useEventActions from '@/state/useEventActions'
-import { EditRecurringAction } from '@/state/EventsState'
+import { EditRecurringAction, EventUpdateContext } from '@/state/EventsState'
 
-function ConfirmDeleteRecurringEventModal(props: { event: Event; eventService: EventService }) {
+interface IProps {
+  event: Event // Event we are about to save.
+  updateContext: EventUpdateContext
+  eventService: EventService
+}
+
+function ConfirmDeleteRecurringEventModal(props: IProps) {
   const eventActions = useEventActions()
   const [radioValue, setRadioValue] = React.useState<EditRecurringAction>('SINGLE')
   const initialFocusRef = React.useRef(null)
@@ -29,10 +35,12 @@ function ConfirmDeleteRecurringEventModal(props: { event: Event; eventService: E
   }
 
   function deleteEvent() {
+    const sendUpdates = false
+
     if (radioValue === 'SINGLE') {
       props.eventService.deleteEvent(props.event.calendar_id, props.event.id)
     } else if (radioValue === 'THIS_AND_FOLLOWING') {
-      props.eventService.deleteThisAndFollowingEvents(props.event)
+      props.eventService.deleteThisAndFollowingEvents(props.event, sendUpdates)
     } else if (radioValue === 'ALL') {
       props.event.recurring_event_id &&
         props.eventService.deleteAllRecurringEvents(

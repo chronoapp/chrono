@@ -154,8 +154,8 @@ export default function useEventActions() {
         if (prevEditingEvent) {
           return {
             ...prevEditingEvent,
-            confirmAction: undefined,
-          }
+            updateContext: undefined,
+          } as EditingEvent
         }
         return null
       })
