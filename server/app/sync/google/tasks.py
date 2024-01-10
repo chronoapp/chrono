@@ -35,7 +35,7 @@ def syncEventToGoogleTask(
     userId: uuid.UUID,
     userCalendarId: uuid.UUID,
     eventId: str,
-    sendUpdates: SendUpdateType = 'none',
+    sendUpdates: SendUpdateType,
 ) -> None:
     """Sync Chrono's event to Google Calendar."""
 
@@ -70,7 +70,9 @@ def syncEventToGoogleTask(
 
 
 @dramatiq.actor(max_retries=1)
-def syncDeleteEventToGoogleTask(userId: uuid.UUID, userCalendarId: uuid.UUID, eventId: str) -> None:
+def syncDeleteEventToGoogleTask(
+    userId: uuid.UUID, userCalendarId: uuid.UUID, eventId: str, sendUpdates: SendUpdateType
+) -> None:
     """Sync Chrono's event to Google Calendar."""
 
     with scoped_session() as session:
@@ -87,7 +89,9 @@ def syncDeleteEventToGoogleTask(userId: uuid.UUID, userCalendarId: uuid.UUID, ev
 
         if event.google_id:
             try:
-                _resp = deleteGoogleEvent(user, userCalendar.google_id, event.google_id)
+                _resp = deleteGoogleEvent(
+                    user, userCalendar.google_id, event.google_id, sendUpdates
+                )
                 logger.info(
                     f'Deleted event from Google: {event.title} {event.id=} {event.google_id=}'
                 )
@@ -97,7 +101,11 @@ def syncDeleteEventToGoogleTask(userId: uuid.UUID, userCalendarId: uuid.UUID, ev
 
 @dramatiq.actor(max_retries=1)
 def syncMoveGoogleEventCalendarTask(
-    userId: uuid.UUID, googleEventId: str, fromCalendarId: uuid.UUID, toCalendarId: uuid.UUID
+    userId: uuid.UUID,
+    googleEventId: str,
+    fromCalendarId: uuid.UUID,
+    toCalendarId: uuid.UUID,
+    sendUpdates: SendUpdateType,
 ) -> None:
     with scoped_session() as session:
         userRepo = UserRepository(session)
@@ -110,7 +118,9 @@ def syncMoveGoogleEventCalendarTask(
         if not fromCalendar or not toCalendar:
             logger.warning(f'Calendar not found')
 
-        _resp = moveGoogleEvent(user, googleEventId, fromCalendar.google_id, toCalendar.google_id)
+        _resp = moveGoogleEvent(
+            user, googleEventId, fromCalendar.google_id, toCalendar.google_id, sendUpdates
+        )
         logger.info(f'Moved event {googleEventId}')
 
 

@@ -13,6 +13,8 @@ from app.db.models.conference_data import ConferenceCreateStatus
 
 
 """Interfaces with Google Calendar API.
+
+TODO: Make this interface deeper & don't expose Google's API directly.
 """
 SendUpdateType = Literal['all', 'externalOnly', 'none']
 
@@ -22,14 +24,6 @@ def getCalendarService(user: User):
     service = build('calendar', 'v3', credentials=credentials, cache_discovery=False)
 
     return service
-
-
-def convertToLocalTime(dateTime: datetime, timeZone: Optional[str]):
-    if not timeZone:
-        return dateTime
-
-    localAware = dateTime.astimezone(ZoneInfo(timeZone))  # convert
-    return localAware
 
 
 def getEventBody(event: Event, timeZone: str):
@@ -112,12 +106,12 @@ def getEventBody(event: Event, timeZone: str):
         eventBody['end'] = {'date': event.end_day, 'timeZone': timeZone, 'dateTime': None}
     else:
         eventBody['start'] = {
-            'dateTime': convertToLocalTime(event.start, timeZone).isoformat(),
+            'dateTime': _convertToLocalTime(event.start, timeZone).isoformat(),
             'timeZone': timeZone,
             'date': None,
         }
         eventBody['end'] = {
-            'dateTime': convertToLocalTime(event.end, timeZone).isoformat(),
+            'dateTime': _convertToLocalTime(event.end, timeZone).isoformat(),
             'timeZone': timeZone,
             'date': None,
         }
@@ -138,7 +132,7 @@ def createGoogleEvent(
     user: User,
     googleCalendarId: str,
     eventBody: Dict[str, Any],
-    sendUpdates: SendUpdateType = 'none',
+    sendUpdates: SendUpdateType,
 ):
     return (
         getCalendarService(user)
@@ -153,13 +147,24 @@ def createGoogleEvent(
     )
 
 
-def moveGoogleEvent(user: User, eventGoogleId: str, prevCalendarId: str, toCalendarId: str):
+def moveGoogleEvent(
+    user: User,
+    eventGoogleId: str,
+    prevCalendarId: str,
+    toCalendarId: str,
+    sendUpdates: SendUpdateType,
+):
     """Moves an event to another calendar, i.e. changes an event's organizer."""
     lockId = acquireLock(eventGoogleId)
     resp = (
         getCalendarService(user)
         .events()
-        .move(calendarId=prevCalendarId, eventId=eventGoogleId, destination=toCalendarId)
+        .move(
+            calendarId=prevCalendarId,
+            eventId=eventGoogleId,
+            destination=toCalendarId,
+            sendUpdates=sendUpdates,
+        )
         .execute()
     )
     lockId and releaseLock(eventGoogleId, lockId)
@@ -172,7 +177,7 @@ def updateGoogleEvent(
     calendarId: str,
     eventId: str,
     eventBody: Dict[str, Any],
-    sendUpdates: SendUpdateType = 'none',
+    sendUpdates: SendUpdateType,
 ):
     lockId = acquireLock(eventId)
     resp = (
@@ -192,10 +197,13 @@ def updateGoogleEvent(
     return resp
 
 
-def deleteGoogleEvent(user: User, calendarId: str, eventId: str):
+def deleteGoogleEvent(user: User, calendarId: str, eventId: str, sendUpdates: SendUpdateType):
     lockId = acquireLock(eventId)
     resp = (
-        getCalendarService(user).events().delete(calendarId=calendarId, eventId=eventId).execute()
+        getCalendarService(user)
+        .events()
+        .delete(calendarId=calendarId, eventId=eventId, sendUpdates=sendUpdates)
+        .execute()
     )
     lockId and releaseLock(eventId, lockId)
 
@@ -251,3 +259,11 @@ def removeEventsWebhook(user: User, channelId: str, resourceId: str):
         'resourceId': resourceId,
     }
     return getCalendarService(user).channels().stop(body=body).execute()
+
+
+def _convertToLocalTime(dateTime: datetime, timeZone: Optional[str]):
+    if not timeZone:
+        return dateTime
+
+    localAware = dateTime.astimezone(ZoneInfo(timeZone))  # convert
+    return localAware
