@@ -196,7 +196,7 @@ function ConfirmUpdateEventModal(props: IProps) {
           >
             Send update
           </Button>
-          <Menu size="sm" gutter={0} placement="bottom-end">
+          <Menu size="sm" gutter={2} placement="bottom-end">
             <MenuButton
               as={IconButton}
               aria-label="Options"

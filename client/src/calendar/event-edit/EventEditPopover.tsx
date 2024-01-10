@@ -113,7 +113,7 @@ function EventPopover(props: IProps) {
   }
 
   function onDeleteEvent() {
-    if (Event.showConfirmationModal(props.event)) {
+    if (Event.isRecurringOrHasParticipants(props.event)) {
       const updateContext = {
         eventEditAction: 'DELETE',
         isRecurringEvent: props.event.recurring_event_id !== null,
@@ -122,7 +122,7 @@ function EventPopover(props: IProps) {
 
       eventActions.showConfirmDialog(updateContext, props.event)
     } else {
-      props.eventService.deleteEvent(props.event.calendar_id, props.event.id)
+      props.eventService.deleteEvent(props.event.calendar_id, props.event.id, 'SINGLE', false)
     }
   }
 

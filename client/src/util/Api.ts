@@ -255,12 +255,21 @@ export async function moveEvent(
     .then((resp) => Event.fromJson(toCalendarId, resp))
 }
 
-export async function deleteEvent(calendarId: string, eventId: string): Promise<{}> {
-  return fetch(`${API_URL}/calendars/${calendarId}/events/${eventId}`, {
-    method: 'DELETE',
-    headers: getHeaders(),
-    body: JSON.stringify(event),
-  }).then(handleErrors)
+export async function deleteEvent(
+  calendarId: string,
+  eventId: string,
+  sendUpdates: boolean
+): Promise<{}> {
+  const sendUpdateType = sendUpdates ? 'all' : 'none'
+
+  return fetch(
+    `${API_URL}/calendars/${calendarId}/events/${eventId}?sendUpdateType=${sendUpdateType}`,
+    {
+      method: 'DELETE',
+      headers: getHeaders(),
+      body: JSON.stringify(event),
+    }
+  ).then(handleErrors)
 }
 
 export async function searchEvents(query: string): Promise<Event[]> {

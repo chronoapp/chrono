@@ -146,7 +146,7 @@ export default function ParticipantList(props: IProps) {
                       <MenuButton>
                         <FiMoreHorizontal />
                       </MenuButton>
-                      <MenuList pt={1} pb={1} maxWidth={10}>
+                      <MenuList padding={0.5} maxWidth={10}>
                         <MenuItem
                           fontSize={'sm'}
                           onClick={() => {

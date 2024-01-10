@@ -131,7 +131,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
   async function onSaveEvent() {
     const updatedEvent = getUpdatedEventWithConferencing()
 
-    if (Event.showConfirmationModal(updatedEvent)) {
+    if (Event.isRecurringOrHasParticipants(updatedEvent)) {
       const updateContext = {
         eventEditAction: 'UPDATE',
         isRecurringEvent: updatedEvent.recurring_event_id !== null,

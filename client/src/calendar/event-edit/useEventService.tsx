@@ -53,7 +53,7 @@ export default function useEventService() {
    * 3) The event is synced to the server, it will save the event.
    */
   function moveOrResizeEvent(event: Event) {
-    if (Event.showConfirmationModal(event)) {
+    if (Event.isRecurringOrHasParticipants(event)) {
       const updateContext = {
         eventEditAction: 'UPDATE',
         isRecurringEvent: event.recurring_event_id !== null,
@@ -141,17 +141,18 @@ export default function useEventService() {
   function deleteEvent(
     calendarId: string,
     eventId: string,
-    deleteMethod: EditRecurringAction = 'SINGLE'
+    deleteMethod: EditRecurringAction,
+    sendUpdates: boolean
   ) {
     setEditingEvent(null)
     eventActions.deleteEvent(calendarId, eventId, deleteMethod)
-    queueDeleteEvent(calendarId, eventId)
+    queueDeleteEvent(calendarId, eventId, sendUpdates)
   }
 
-  function deleteAllRecurringEvents(calendarId: string, eventId: string) {
+  function deleteAllRecurringEvents(calendarId: string, eventId: string, sendUpdates: boolean) {
     setEditingEvent(null)
     eventActions.deleteEvent(calendarId, eventId, 'ALL')
-    queueDeleteEvent(calendarId, eventId)
+    queueDeleteEvent(calendarId, eventId, sendUpdates)
   }
 
   /**
@@ -290,9 +291,9 @@ export default function useEventService() {
   /**
    * Removes an event from the calendar.
    */
-  function queueDeleteEvent(calendarId: string, eventId: string) {
+  function queueDeleteEvent(calendarId: string, eventId: string, sendUpdates: boolean) {
     const deleteEventTask = () =>
-      API.deleteEvent(calendarId, eventId).then(() => {
+      API.deleteEvent(calendarId, eventId, sendUpdates).then(() => {
         toast({
           render: (p) => {
             return <InfoAlert onClose={p.onClose} title="Event deleted." />

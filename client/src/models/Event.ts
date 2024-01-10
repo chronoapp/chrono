@@ -191,12 +191,7 @@ export default class Event {
     return 'needsAction'
   }
 
-  /**
-   * Show confirmation modal if either:
-   * 1) event is recurring
-   * 2) event has participants
-   */
-  static showConfirmationModal(event: Event) {
+  static isRecurringOrHasParticipants(event: Event) {
     return event.recurring_event_id !== null || event.participants.length > 0
   }
 }
