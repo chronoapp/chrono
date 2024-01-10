@@ -11,7 +11,12 @@ import Event from '@/models/Event'
 import * as dates from '@/util/dates'
 
 import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
-import { eventsState, EditRecurringAction, editingEventState } from '@/state/EventsState'
+import {
+  eventsState,
+  EditRecurringAction,
+  editingEventState,
+  EventUpdateContext,
+} from '@/state/EventsState'
 import useEventActions from '@/state/useEventActions'
 import useTaskQueue from '@/lib/hooks/useTaskQueue'
 
@@ -48,8 +53,14 @@ export default function useEventService() {
    * 3) The event is synced to the server, it will save the event.
    */
   function moveOrResizeEvent(event: Event) {
-    if (event.recurring_event_id) {
-      eventActions.showConfirmDialog('UPDATE_RECURRING_EVENT', event, 'MOVE_RESIZE')
+    if (Event.showConfirmationModal(event)) {
+      const updateContext = {
+        eventEditAction: 'UPDATE',
+        isRecurringEvent: event.recurring_event_id !== null,
+        hasParticipants: event.participants.length > 0,
+      } as EventUpdateContext
+
+      eventActions.showConfirmDialog(updateContext, event, 'MOVE_RESIZE')
     } else {
       if (event.syncStatus === 'NOT_SYNCED') {
         updateEventLocal(event)

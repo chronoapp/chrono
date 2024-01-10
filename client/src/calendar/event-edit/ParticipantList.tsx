@@ -148,6 +148,7 @@ export default function ParticipantList(props: IProps) {
                       </MenuButton>
                       <MenuList pt={1} pb={1} maxWidth={10}>
                         <MenuItem
+                          fontSize={'sm'}
                           onClick={() => {
                             const updatedParticipants = produce(props.participants, (draft) => {
                               for (let p of draft) {

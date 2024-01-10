@@ -15,9 +15,9 @@ import {
   Direction,
   EventDict,
   EditMode,
-  ConfirmAction,
   EventState,
   EditingEvent,
+  EventUpdateContext,
 } from '@/state/EventsState'
 
 /**
@@ -90,7 +90,7 @@ export default function useEventActions() {
       event: event,
       selectTailSegment: !!selectTailSegment,
       editRecurringAction: 'SINGLE' as EditRecurringAction,
-      confirmAction: undefined,
+      updateContext: undefined,
     })
   }
 
@@ -110,11 +110,12 @@ export default function useEventActions() {
   }
 
   /**
-   * To update a recurring event, we need to show a confirmation dialog
-   * to ask the user if they want to update this / all / all future events.
+   * Show a confirmation dialog if either:
+   * 1) Recurring event. Ask the user if they want to update this / all / all future events.
+   * 2) The event has participants. Ask the user if they want to send an update to the participants.
    */
   function showConfirmDialog(
-    action: ConfirmAction | undefined,
+    updateContext: EventUpdateContext | undefined,
     updatedEvent: Event,
     editMode?: EditMode
   ) {
@@ -122,7 +123,7 @@ export default function useEventActions() {
       if (prevEditingEvent) {
         return {
           ...prevEditingEvent,
-          confirmAction: action,
+          updateContext: updateContext,
           event: updatedEvent,
           editMode: editMode || prevEditingEvent.editMode,
         }
@@ -133,7 +134,7 @@ export default function useEventActions() {
           editMode: 'MOVE_RESIZE' as EditMode,
           selectTailSegment: false,
           editRecurringAction: 'SINGLE' as EditRecurringAction,
-          confirmAction: action,
+          updateContext: updateContext,
           event: updatedEvent,
         } as EditingEvent
       }
@@ -301,7 +302,7 @@ export default function useEventActions() {
       event,
       selectTailSegment: false,
       editRecurringAction: 'SINGLE' as EditRecurringAction,
-      confirmAction: undefined,
+      updateContext: undefined,
     })
   }
 

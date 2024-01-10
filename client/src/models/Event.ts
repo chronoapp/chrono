@@ -19,6 +19,9 @@ export type Transparency = 'opaque' | 'transparent'
 /**
  * Derived preperties are static because we could use the spread operator {..event, ..}
  * to copy the event for drag & drop.
+ *
+ * Use static methods to get computed properties, since events are copied & methods
+ * are not copied.
  */
 export default class Event {
   [immerable] = true
@@ -186,5 +189,14 @@ export default class Event {
     }
 
     return 'needsAction'
+  }
+
+  /**
+   * Show confirmation modal if either:
+   * 1) event is recurring
+   * 2) event has participants
+   */
+  static showConfirmationModal(event: Event) {
+    return event.recurring_event_id !== null || event.participants.length > 0
   }
 }

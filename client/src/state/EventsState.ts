@@ -11,7 +11,18 @@ export type DisplayView = 'Day' | 'Week' | 'WorkWeek' | 'Month'
 
 export type EditRecurringAction = 'SINGLE' | 'THIS_AND_FOLLOWING' | 'ALL'
 export type EditMode = 'READ' | 'EDIT' | 'FULL_EDIT' | 'MOVE_RESIZE'
-export type ConfirmAction = 'DELETE_RECURRING_EVENT' | 'UPDATE_RECURRING_EVENT'
+export type EventEditAction = 'DELETE' | 'UPDATE'
+
+/**
+ * Context for updating an event, to show a confirmation dialog
+ * 1) How to update a recurring event: single, this and following, all
+ * 2) If there are participants, whether to send an update email
+ */
+export interface EventUpdateContext {
+  eventEditAction: EventEditAction
+  isRecurringEvent: boolean
+  hasParticipants: boolean
+}
 
 export interface DragDropAction {
   action: Action
@@ -29,7 +40,7 @@ export type EditingEvent = {
   editMode: EditMode
   selectTailSegment: boolean
   editRecurringAction: EditRecurringAction
-  confirmAction: ConfirmAction | undefined
+  updateContext: EventUpdateContext | undefined
   event: Event
 }
 

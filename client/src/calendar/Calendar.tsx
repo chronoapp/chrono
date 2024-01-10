@@ -221,16 +221,16 @@ function Calendar() {
   }
 
   function renderConfirmationDialog() {
-    if (editingEvent?.confirmAction) {
-      switch (editingEvent.confirmAction) {
-        case 'DELETE_RECURRING_EVENT':
+    if (editingEvent?.updateContext) {
+      switch (editingEvent.updateContext.eventEditAction) {
+        case 'DELETE':
           return (
             <ConfirmDeleteRecurringEventModal
               eventService={eventService}
               event={editingEvent.event}
             />
           )
-        case 'UPDATE_RECURRING_EVENT':
+        case 'UPDATE':
           return (
             <ConfirmUpdateRecurringEventModal
               eventService={eventService}

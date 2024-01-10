@@ -11,7 +11,7 @@ import { InfoAlert } from '@/components/Alert'
 
 import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
-import { editingEventState } from '@/state/EventsState'
+import { editingEventState, EventUpdateContext } from '@/state/EventsState'
 import { userState } from '@/state/UserState'
 import { EventService } from './useEventService'
 import EventFields from './EventFields'
@@ -113,8 +113,14 @@ function EventPopover(props: IProps) {
   }
 
   function onDeleteEvent() {
-    if (props.event.recurring_event_id) {
-      eventActions.showConfirmDialog('DELETE_RECURRING_EVENT', props.event)
+    if (Event.showConfirmationModal(props.event)) {
+      const updateContext = {
+        eventEditAction: 'DELETE',
+        isRecurringEvent: props.event.recurring_event_id !== null,
+        hasParticipants: props.event.participants.length > 0,
+      } as EventUpdateContext
+
+      eventActions.showConfirmDialog(updateContext, props.event)
     } else {
       props.eventService.deleteEvent(props.event.calendar_id, props.event.id)
     }

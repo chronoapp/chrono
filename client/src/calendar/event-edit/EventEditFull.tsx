@@ -32,7 +32,7 @@ import EventParticipant from '@/models/EventParticipant'
 import { labelsState } from '@/state/LabelsState'
 import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
-import { displayState, editingEventState } from '@/state/EventsState'
+import { displayState, editingEventState, EventUpdateContext } from '@/state/EventsState'
 
 import { format, fullDayFormat } from '@/util/localizer'
 import { addNewLabels } from '@/calendar/utils/LabelUtils'
@@ -131,14 +131,15 @@ export default function EventEditFull(props: { event: Event; eventService: Event
   async function onSaveEvent() {
     const updatedEvent = getUpdatedEventWithConferencing()
 
-    if (isExistingRecurringEvent) {
-      // Update a recurring event.
-      if (!props.event.recurring_event_id || !props.event.original_start) {
-        throw Error('Could not find recurring event')
-      }
+    if (Event.showConfirmationModal(updatedEvent)) {
+      const updateContext = {
+        eventEditAction: 'UPDATE',
+        isRecurringEvent: updatedEvent.recurring_event_id !== null,
+        hasParticipants: updatedEvent.participants.length > 0,
+      } as EventUpdateContext
 
       eventActions.updateEditingEvent(updatedEvent)
-      eventActions.showConfirmDialog('UPDATE_RECURRING_EVENT', updatedEvent)
+      eventActions.showConfirmDialog(updateContext, updatedEvent)
     } else {
       // Update the individual event
       return await props.eventService.saveEvent(updatedEvent)
