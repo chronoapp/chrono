@@ -1,5 +1,6 @@
 import React from 'react'
 import produce from 'immer'
+import { useRecoilValue } from 'recoil'
 
 import {
   Box,
@@ -16,15 +17,13 @@ import {
   Radio,
   RadioGroup,
 } from '@chakra-ui/react'
-
 import { Menu, MenuButton, MenuList, MenuItem, IconButton } from '@chakra-ui/react'
-
 import { FiChevronDown } from 'react-icons/fi'
 
 import { EventService } from './useEventService'
 import Event from '@/models/Event'
 import useEventActions from '@/state/useEventActions'
-import { EditRecurringAction, EventUpdateContext } from '@/state/EventsState'
+import { eventsState, EditRecurringAction, EventUpdateContext } from '@/state/EventsState'
 import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 
 import * as API from '@/util/Api'
@@ -44,6 +43,8 @@ interface IProps {
  */
 function ConfirmUpdateEventModal(props: IProps) {
   const eventActions = useEventActions()
+  const events = useRecoilValue(eventsState)
+
   const initialFocusRef = React.useRef(null)
   const [radioValue, setRadioValue] = React.useState<EditRecurringAction>('SINGLE')
 
@@ -158,7 +159,27 @@ function ConfirmUpdateEventModal(props: IProps) {
 
   function renderModalBody() {
     if (props.updateContext.hasParticipants && !props.updateContext.isRecurringEvent) {
-      return <Text fontSize="sm">Would you like to send update emails to existing guests?</Text>
+      const originalEvent = events.eventsByCalendar[props.event.calendar_id][props.event.id]
+      const { addedParticipants, removedParticipants } = Event.getParticipantUpdates(
+        originalEvent,
+        props.event
+      )
+      const newGuest = addedParticipants.length > 0
+      const removedGuest = removedParticipants.length > 0
+
+      if (newGuest && removedGuest) {
+        return (
+          <Text fontSize="sm">Would you like to send update emails to new and removed guests?</Text>
+        )
+      } else if (newGuest && !removedGuest) {
+        return <Text fontSize="sm">Would you like to send invite emails new guests?</Text>
+      } else if (!newGuest && removedGuest) {
+        return (
+          <Text fontSize="sm">Would you like to send cancellation emails to removed guests?</Text>
+        )
+      } else {
+        return <Text fontSize="sm">Would you like to send update emails to existing guests?</Text>
+      }
     } else {
       return (
         <RadioGroup

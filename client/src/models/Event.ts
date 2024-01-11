@@ -194,4 +194,43 @@ export default class Event {
   static hasNonOrganizerParticipants(event: Event) {
     return event.participants.filter((p) => p.email !== event.organizer?.email).length > 0
   }
+
+  /**
+   * Gets the added, removed, and updated participants.
+   */
+  static getParticipantUpdates(event: Event, newEvent: Event) {
+    // Maps for quick access
+    const eventParticipants = event.participants.filter((p) => p.email !== event.organizer?.email)
+    const newEventParticipants = newEvent.participants.filter(
+      (p) => p.email !== newEvent.organizer?.email
+    )
+
+    const eventParticipantsByEmail = new Map(eventParticipants.map((p) => [p.email, p]))
+    const newEventParticipantEmails = new Set(newEventParticipants.map((p) => p.email))
+
+    const addedParticipants: EventParticipant[] = []
+    const removedParticipants: EventParticipant[] = []
+    const updatedParticipants: EventParticipant[] = []
+
+    // Check for added and updated participants
+    for (const participant of newEventParticipants) {
+      if (!eventParticipantsByEmail.has(participant.email)) {
+        addedParticipants.push(participant)
+      } else {
+        const oldParticipant = eventParticipantsByEmail.get(participant.email)
+        if (oldParticipant && !oldParticipant.equals(participant)) {
+          updatedParticipants.push(participant)
+        }
+      }
+    }
+
+    // Check for removed participants
+    for (const [email, participant] of eventParticipantsByEmail) {
+      if (!newEventParticipantEmails.has(email)) {
+        removedParticipants.push(participant)
+      }
+    }
+
+    return { addedParticipants, removedParticipants, updatedParticipants }
+  }
 }
