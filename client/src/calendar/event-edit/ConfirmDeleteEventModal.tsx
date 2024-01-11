@@ -72,7 +72,7 @@ function ConfirmDeleteRecurringEventModal(props: IProps) {
     if (props.updateContext.hasParticipants && !props.updateContext.isRecurringEvent) {
       return (
         <Text fontSize="sm">
-          Would you like delete the event and send update emails to existing guests?
+          Would you like to delete the event and send update emails to existing guests?
         </Text>
       )
     } else {

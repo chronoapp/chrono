@@ -58,7 +58,6 @@ import SelectReminders from './SelectReminders'
  */
 export default function EventEditFull(props: { event: Event; eventService: EventService }) {
   const eventActions = useEventActions()
-  const editingEvent = useRecoilValue(editingEventState)
   const labelState = useRecoilValue(labelsState)
   const calendarsById = useRecoilValue(calendarsState).calendarsById
   const setDisplay = useSetRecoilState(displayState)
@@ -96,9 +95,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
     : 1
 
   // Derived Properties
-  const recurringAction = editingEvent?.editRecurringAction
   const isUnsavedEvent = props.event.syncStatus === 'NOT_SYNCED'
-  const isExistingRecurringEvent = !isUnsavedEvent && props.event.recurrences != null
 
   function getUpdatedEvent(): Event {
     return {
@@ -128,20 +125,30 @@ export default function EventEditFull(props: { event: Event; eventService: Event
     }
   }
 
+  /**
+   * This could be a new event, or an existing event that has been edited.
+   */
   async function onSaveEvent() {
+    const originalEvent = props.event
     const updatedEvent = getUpdatedEventWithConferencing()
 
-    if (Event.isRecurringOrHasParticipants(updatedEvent)) {
+    const hasParticipants =
+      Event.hasNonOrganizerParticipants(originalEvent) ||
+      Event.hasNonOrganizerParticipants(updatedEvent)
+    const isRecurringEvent = originalEvent.recurring_event_id !== null
+    const showConfirmDialog = hasParticipants || isRecurringEvent
+
+    if (showConfirmDialog) {
       const updateContext = {
-        eventEditAction: 'UPDATE',
-        isRecurringEvent: updatedEvent.recurring_event_id !== null,
-        hasParticipants: updatedEvent.participants.length > 0,
+        eventEditAction: isUnsavedEvent ? 'CREATE' : 'UPDATE',
+        isRecurringEvent: originalEvent.recurring_event_id !== null,
+        hasParticipants: originalEvent.participants.length > 0,
       } as EventUpdateContext
 
       eventActions.updateEditingEvent(updatedEvent)
       eventActions.showConfirmDialog(updateContext, updatedEvent)
     } else {
-      // Update the individual event
+      // Update the individual event directly.
       return await props.eventService.saveEvent(updatedEvent)
     }
   }

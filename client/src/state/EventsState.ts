@@ -11,7 +11,7 @@ export type DisplayView = 'Day' | 'Week' | 'WorkWeek' | 'Month'
 
 export type EditRecurringAction = 'SINGLE' | 'THIS_AND_FOLLOWING' | 'ALL'
 export type EditMode = 'READ' | 'EDIT' | 'FULL_EDIT' | 'MOVE_RESIZE'
-export type EventEditAction = 'DELETE' | 'UPDATE'
+export type EventEditAction = 'DELETE' | 'UPDATE' | 'CREATE'
 
 /**
  * Context for updating an event, to show a confirmation dialog
@@ -20,7 +20,7 @@ export type EventEditAction = 'DELETE' | 'UPDATE'
  */
 export interface EventUpdateContext {
   eventEditAction: EventEditAction
-  isRecurringEvent: boolean
+  isRecurringEvent: boolean | undefined
   hasParticipants: boolean
 }
 
@@ -39,7 +39,6 @@ export type EditingEvent = {
   originalCalendarId: string | undefined
   editMode: EditMode
   selectTailSegment: boolean
-  editRecurringAction: EditRecurringAction
   updateContext: EventUpdateContext | undefined
   event: Event
 }

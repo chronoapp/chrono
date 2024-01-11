@@ -39,6 +39,7 @@ import useTaskQueue from '@/lib/hooks/useTaskQueue'
  */
 export default function useEventService() {
   const [events, setEvents] = useRecoilState(eventsState)
+
   const [editingEvent, setEditingEvent] = useRecoilState(editingEventState)
   const eventActions = useEventActions()
 
@@ -46,18 +47,22 @@ export default function useEventService() {
   const taskQueue = useTaskQueue({ shouldProcess: true })
 
   /**
-   * Handles updating or creating a new event.
+   * Handles updating an event via drag or resize.
    *
-   * 1) The event is a recurring event, it will show a confirmation dialog.
+   * 1) The event is a recurring event or has participants, it will show a confirmation dialog.
    * 2) The event is not synced to the server yet, it will update the event locally.
    * 3) The event is synced to the server, it will save the event.
    */
   function moveOrResizeEvent(event: Event) {
-    if (Event.isRecurringOrHasParticipants(event)) {
+    const hasParticipants = Event.hasNonOrganizerParticipants(event)
+    const isRecurringEvent = event.recurring_event_id !== null
+    const showConfirmDialog = hasParticipants || isRecurringEvent
+
+    if (showConfirmDialog) {
       const updateContext = {
         eventEditAction: 'UPDATE',
         isRecurringEvent: event.recurring_event_id !== null,
-        hasParticipants: event.participants.length > 0,
+        hasParticipants: hasParticipants,
       } as EventUpdateContext
 
       eventActions.showConfirmDialog(updateContext, event, 'MOVE_RESIZE')

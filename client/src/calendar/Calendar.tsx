@@ -19,6 +19,7 @@ import WorkWeek from './WorkWeek'
 import EventEditFull from './event-edit/EventEditFull'
 import ConfirmDeleteEventModal from './event-edit/ConfirmDeleteEventModal'
 import ConfirmUpdateEventModal from './event-edit/ConfirmUpdateEventModal'
+import ConfirmCreateEventModal from './event-edit/ConfirmCreateEventModal'
 
 import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
 import {
@@ -234,6 +235,14 @@ function Calendar() {
         case 'UPDATE':
           return (
             <ConfirmUpdateEventModal
+              eventService={eventService}
+              updateContext={editingEvent.updateContext}
+              event={editingEvent.event}
+            />
+          )
+        case 'CREATE':
+          return (
+            <ConfirmCreateEventModal
               eventService={eventService}
               updateContext={editingEvent.updateContext}
               event={editingEvent.event}

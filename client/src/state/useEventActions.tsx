@@ -89,7 +89,6 @@ export default function useEventActions() {
       editMode: 'READ' as EditMode,
       event: event,
       selectTailSegment: !!selectTailSegment,
-      editRecurringAction: 'SINGLE' as EditRecurringAction,
       updateContext: undefined,
     })
   }
@@ -165,13 +164,12 @@ export default function useEventActions() {
   /**
    * Switch edit mode between modal & popover.
    */
-  function updateEditMode(editMode: EditMode, editRecurringAction: EditRecurringAction) {
+  function updateEditMode(editMode: EditMode) {
     setEditingEvent((prevEditingEvent) => {
       if (prevEditingEvent) {
         return {
           ...prevEditingEvent,
           editMode: editMode,
-          editRecurringAction: editRecurringAction,
         }
       }
       return null
@@ -301,7 +299,6 @@ export default function useEventActions() {
       editMode: 'EDIT' as EditMode,
       event,
       selectTailSegment: false,
-      editRecurringAction: 'SINGLE' as EditRecurringAction,
       updateContext: undefined,
     })
   }

@@ -71,6 +71,10 @@ interface IProps {
   onSaveEvent: (event: Event) => void
 }
 
+/**
+ * This is the smaller event editor that shows up after a click or drag&drop
+ * to create a new event.
+ */
 export default function EventEditPartial(props: IProps) {
   const {
     eventActions,
@@ -472,7 +476,7 @@ export default function EventEditPartial(props: IProps) {
               ...getUpdatedEvent(props.event, eventFields, participants),
               conference_data: eventFields.conferenceData,
             })
-            eventActions.updateEditMode('FULL_EDIT', 'SINGLE')
+            eventActions.updateEditMode('FULL_EDIT')
           }}
         >
           More Options

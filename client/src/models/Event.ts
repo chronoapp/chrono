@@ -191,7 +191,7 @@ export default class Event {
     return 'needsAction'
   }
 
-  static isRecurringOrHasParticipants(event: Event) {
-    return event.recurring_event_id !== null || event.participants.length > 0
+  static hasNonOrganizerParticipants(event: Event) {
+    return event.participants.filter((p) => p.email !== event.organizer?.email).length > 0
   }
 }
