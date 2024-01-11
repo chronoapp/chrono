@@ -39,6 +39,8 @@ import { labelsState } from '@/state/LabelsState'
 import useEventActions from '@/state/useEventActions'
 import { displayState, editingEventState, DisplayView } from '@/state/EventsState'
 
+declare var MONTHLY_VIEW_ENABLED: boolean
+
 function DateHeaderSearch(props: { disableSearchMode: () => void; defaultSearchQuery: string }) {
   const navigate = useNavigate()
 
@@ -147,15 +149,19 @@ function DropdownMenu(props: { display: DisplayView; selectDisplay: (d: DisplayV
           <Text>Work week </Text>
           <Kbd>x</Kbd>
         </MenuItem>
-        <MenuDivider m="0" />
-        <MenuItem
-          display="flex"
-          justifyContent="space-between"
-          onClick={() => props.selectDisplay('Month')}
-        >
-          <Text>Month </Text>
-          <Kbd>m</Kbd>
-        </MenuItem>
+        {MONTHLY_VIEW_ENABLED && (
+          <>
+            <MenuDivider m="0" />
+            <MenuItem
+              display="flex"
+              justifyContent="space-between"
+              onClick={() => props.selectDisplay('Month')}
+            >
+              <Text>Month </Text>
+              <Kbd>m</Kbd>
+            </MenuItem>
+          </>
+        )}
       </MenuList>
     </Menu>
   )
@@ -264,8 +270,10 @@ export default function Header(props: { search: string }) {
           selectDisplay('WorkWeek')
         }
 
-        if (e.key === 'm') {
-          selectDisplay('Month')
+        if (MONTHLY_VIEW_ENABLED) {
+          if (e.key === 'm') {
+            selectDisplay('Month')
+          }
         }
       }
     }

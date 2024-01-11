@@ -22,11 +22,12 @@ import { roundNext15Min } from '@/util/localizer'
 import { GlobalEvent } from '@/util/global'
 
 import MiniCalendar from '@/calendar/MiniCalendar'
-import LabelPanel from './LabelPanel'
-import CalendarsPanel from './CalendarsPanel'
-import Plugins from './Plugins'
+import LabelPanel from '@/components/LabelPanel'
+import CalendarsPanel from '@/components/CalendarsPanel'
+import Plugins from '@/components/Plugins'
 import { ToastTag } from '@/components/Toast'
 import Settings from '@/components/Settings'
+import { InfoAlert } from '@/components/Alert'
 
 import Header from '@/calendar/Header'
 import * as API from '@/util/Api'
@@ -167,14 +168,7 @@ function Layout(props: Props) {
 
     toastId && toast.close(toastId)
     toast({
-      render: (props) => (
-        <ToastTag
-          title={'Calendar updated.'}
-          showSpinner={false}
-          Icon={props.icon}
-          onClose={props.onClose}
-        />
-      ),
+      render: (props) => <InfoAlert title={'Calendar Refreshed.'} onClose={props.onClose} />,
     })
   }
 

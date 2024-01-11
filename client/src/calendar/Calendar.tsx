@@ -31,7 +31,7 @@ import {
 import useEventActions from '@/state/useEventActions'
 
 /**
- * TODO: Store startDate and endDate to prevent unnecessary refreshes.
+ * The main calendar component.
  */
 function Calendar() {
   const firstOfWeek = startOfWeek()

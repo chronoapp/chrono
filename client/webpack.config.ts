@@ -1,10 +1,15 @@
 const path = require('path')
+const webpack = require('webpack')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 const HTMLWebpackPluginConfig = new HtmlWebpackPlugin({
   template: __dirname + '/src/index.html',
   filename: 'index.html',
   favicon: __dirname + '/src/assets/chrono.svg',
+})
+
+const definePlugin = new webpack.DefinePlugin({
+  MONTHLY_VIEW_ENABLED: false,
 })
 
 function buildConfig(env) {
@@ -38,7 +43,7 @@ function buildConfig(env) {
       ],
     },
     devtool: 'inline-source-map',
-    plugins: [HTMLWebpackPluginConfig],
+    plugins: [HTMLWebpackPluginConfig, definePlugin],
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: '[name].bundle.js',

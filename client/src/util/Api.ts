@@ -170,7 +170,8 @@ export async function deleteCalendar(calendarId: string) {
 export async function getCalendarEvents(
   calendarId: string,
   startDate: string,
-  endDate: string
+  endDate: string,
+  signal?: AbortSignal
 ): Promise<Event[]> {
   const params = {
     start_date: startDate,
@@ -182,6 +183,7 @@ export async function getCalendarEvents(
     .join('&')
 
   return fetch(`${API_URL}/calendars/${calendarId}/events/?${queryString}`, {
+    signal,
     headers: getHeaders(),
   })
     .then(handleErrors)
