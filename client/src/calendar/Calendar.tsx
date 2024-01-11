@@ -58,7 +58,15 @@ function Calendar() {
   }, [])
 
   useEffect(() => {
-    loadCurrentViewEvents()
+    // Aborts any pending requests after the component is unmounted.
+    const controller = new AbortController()
+    const { signal } = controller
+
+    loadCurrentViewEvents(signal)
+
+    return () => {
+      controller.abort()
+    }
   }, [display, calendars.calendarsById, update])
 
   useEffect(() => {
@@ -110,30 +118,28 @@ function Calendar() {
     }
   }
 
-  async function loadCurrentViewEvents() {
+  async function loadCurrentViewEvents(signal: AbortSignal) {
     if (display.view == 'Day') {
       const start = dates.startOf(display.selectedDate, 'day')
       const end = dates.endOf(display.selectedDate, 'day')
 
-      loadEvents(start, end)
+      loadEvents(start, end, signal)
     } else if (display.view == 'Week' || display.view == 'WorkWeek') {
       const lastWeek = dates.subtract(display.selectedDate, 1, 'week')
       const nextWeek = dates.add(display.selectedDate, 1, 'week')
 
       const start = dates.startOf(lastWeek, 'week', firstOfWeek)
       const end = dates.endOf(nextWeek, 'week', firstOfWeek)
-      loadEvents(start, end)
+      loadEvents(start, end, signal)
     } else if (display.view == 'Month') {
       const month = dates.visibleDays(display.selectedDate, firstOfWeek)
       const start = month[0]
       const end = month[month.length - 1]
-      loadEvents(start, end)
+      loadEvents(start, end, signal)
     }
-
-    // TODO: Cancel selections if the previous display is different (i.e. transition from month to week view)
   }
 
-  async function loadEvents(start: Date, end: Date) {
+  async function loadEvents(start: Date, end: Date, signal: AbortSignal) {
     eventActions.initEmptyEvents()
 
     const eventPromises = Object.values(calendars.calendarsById)
@@ -144,7 +150,8 @@ function Calendar() {
             eventsPromise: API.getCalendarEvents(
               calendar.id,
               formatDateTime(start),
-              formatDateTime(end)
+              formatDateTime(end),
+              signal
             ),
             calendarId: calendar.id,
           }
@@ -154,8 +161,15 @@ function Calendar() {
       })
 
     for (const e of eventPromises) {
-      const calendarEvents = await e.eventsPromise
-      eventActions.loadEvents(e.calendarId, calendarEvents)
+      try {
+        const calendarEvents = await e.eventsPromise
+        eventActions.loadEvents(e.calendarId, calendarEvents)
+      } catch (err) {
+        const isAbortError = err instanceof Error && err.name === 'AbortError'
+        if (!isAbortError) {
+          throw err
+        }
+      }
     }
   }
 
