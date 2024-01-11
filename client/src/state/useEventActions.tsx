@@ -22,6 +22,8 @@ import {
 
 /**
  * Handles actions that modify the event state locally.
+ * Does not make any API calls.
+ *
  * Includes Drag & Drop interactions.
  *
  */

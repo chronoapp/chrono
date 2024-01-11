@@ -86,13 +86,31 @@ function EventPopover(props: IProps) {
         <EventEditPartial
           event={props.event}
           eventFields={eventFields}
-          eventActions={eventActions}
           selectedCalendar={getSelectedCalendar(eventFields.calendarId)}
           participants={participants}
-          getUpdatedEvent={getUpdatedEvent}
-          setEventFields={setEventFields}
-          setParticipants={setParticipants}
-          onSaveEvent={onSaveEvent}
+          setEventFields={(eventFields: EventFields) => {
+            // Update the mutable event fields and update the editing event.
+            setEventFields(eventFields)
+            eventActions.updateEditingEvent(getUpdatedEvent(props.event, eventFields, participants))
+          }}
+          setParticipants={(participants: EventParticipant[]) => {
+            setParticipants(participants)
+            eventActions.updateEditingEvent(getUpdatedEvent(props.event, eventFields, participants))
+          }}
+          onSaveEvent={() => {
+            onSaveEvent({
+              ...getUpdatedEvent(props.event, eventFields, participants),
+            })
+          }}
+          onCancel={() => {
+            eventActions.cancelSelect()
+          }}
+          onClickMoreOptions={() => {
+            eventActions.updateEditingEvent({
+              ...getUpdatedEvent(props.event, eventFields, participants),
+            })
+            eventActions.updateEditMode('FULL_EDIT')
+          }}
         />
       )}
     </Box>

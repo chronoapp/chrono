@@ -56,7 +56,7 @@ export default function useEventService() {
   function moveOrResizeEvent(event: Event) {
     const hasParticipants = Event.hasNonOrganizerParticipants(event)
     const isRecurringEvent = event.recurring_event_id !== null
-    const showConfirmDialog = hasParticipants || isRecurringEvent
+    const showConfirmDialog = event.syncStatus == 'SYNCED' && (hasParticipants || isRecurringEvent)
 
     if (showConfirmDialog) {
       const updateContext = {
