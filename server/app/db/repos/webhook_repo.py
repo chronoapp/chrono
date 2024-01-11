@@ -1,4 +1,4 @@
-from typing import Optional
+from uuid import UUID
 
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
@@ -21,11 +21,11 @@ class WebhookRepository:
         self.session = session
 
     def getExpiringWebhooks(self) -> list[Webhook]:
-        expiresDt = datetime.now() - timedelta(days=EXPIRING_SOON_DAYS)
+        expiresDt = datetime.now() + timedelta(days=EXPIRING_SOON_DAYS)
 
         stmt = (
             select(Webhook)
-            .where(Webhook.expiration >= expiresDt)
+            .where(Webhook.expiration <= expiresDt)
             .options(selectinload(Webhook.calendar).selectinload(UserCalendar.user))
         )
 
@@ -46,7 +46,21 @@ class WebhookRepository:
 
         return list(webhooks)
 
-    def createCalendarWebhook(self, calendar: UserCalendar) -> Optional[Webhook]:
+    def getWebhookByCalendar(self, calendarId: UUID) -> Webhook | None:
+        stmt = select(Webhook).where(Webhook.calendar_id == calendarId)
+        webhook = (self.session.execute(stmt)).scalar()
+
+        return webhook
+
+    def getWebhookByChannelId(self, channelId: str) -> Webhook | None:
+        stmt = (
+            select(Webhook).where(Webhook.id == channelId).options(selectinload(Webhook.calendar))
+        )
+        webhook = (self.session.execute(stmt)).scalar()
+
+        return webhook
+
+    def createCalendarWebhook(self, calendar: UserCalendar) -> Webhook | None:
         """Create a webhook for the calendar to watche for event updates.
         Only creates one webhook per calendar.
         """
@@ -54,16 +68,13 @@ class WebhookRepository:
             logger.error(f'No API URL specified.')
             return None
 
-        stmt = select(Webhook).where(Webhook.calendar_id == calendar.id)
-        webhook = (self.session.execute(stmt)).scalar()
-
+        webhook = self.getWebhookByCalendar(calendar.id)
         if webhook:
-            print(f'{webhook.expiration}')
-            logger.info(f'Webhook exists.')
             return webhook
 
         try:
-            resp = addEventsWebhook(calendar, EVENTS_WEBHOOK_TTL_SECONDS)
+            webhookUrl = f'{config.API_URL}{config.API_V1_STR}/webhooks/google_events'
+            resp = addEventsWebhook(calendar, EVENTS_WEBHOOK_TTL_SECONDS, webhookUrl)
             expiration = resp.get('expiration')
             webhook = Webhook(
                 resp.get('id'), resp.get('resourceId'), resp.get('resourceUri'), int(expiration)
@@ -92,7 +103,7 @@ class WebhookRepository:
         """Refreshes all webhooks that are about to expire."""
         logger.debug(f'Refreshing Webhooks...')
         for webhook in self.getExpiringWebhooks():
-            isExpiring = webhook.expiration - timedelta(days=3) < datetime.now(timezone.utc)
+            isExpiring = webhook.expiration <= datetime.now(timezone.utc) + timedelta(days=3)
             if isExpiring:
                 logger.debug(f'Refresh Webhook {webhook.id}.')
                 self.cancelCalendarWebhook(webhook.calendar.user, webhook)

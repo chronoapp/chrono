@@ -234,9 +234,8 @@ def updateCalendar(user: User, calendar: UserCalendar):
     )
 
 
-def addEventsWebhook(calendar: UserCalendar, ttlSeconds: float):
+def addEventsWebhook(calendar: UserCalendar, ttlSeconds: float, webhookUrl: str):
     """Subscribes to an event notification channel. The subscription lasts for 30 days."""
-    webhookUrl = f'{config.API_URL}{config.API_V1_STR}/webhooks/google_events'
     uniqueId = uuid4().hex
 
     body = {

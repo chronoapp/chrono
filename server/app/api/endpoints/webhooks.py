@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, Request
-from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
 from app.api.utils.db import get_db
-from app.db.models import Webhook
+from app.db.repos.webhook_repo import WebhookRepository
 from app.sync.google.tasks import syncCalendarTask
+
 
 router = APIRouter()
 
@@ -14,8 +14,11 @@ async def updateGoogleEvent(request: Request, session: Session = Depends(get_db)
     """Watches for updates from google calendar and does an incremental sync of the calendar."""
 
     channelId = request.headers.get('x-goog-channel-id')
-    stmt = select(Webhook).where(Webhook.id == channelId).options(selectinload(Webhook.calendar))
-    webhook = (session.execute(stmt)).scalar()
+    if not channelId:
+        return {}
+
+    webhookRepo = WebhookRepository(session)
+    webhook = webhookRepo.getWebhookByChannelId(channelId)
 
     if webhook:
         syncCalendarTask.send(webhook.calendar.user_id, webhook.calendar_id, False)

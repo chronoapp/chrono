@@ -11,8 +11,8 @@ from app.api.endpoints import (
     webhooks,
     contacts,
     user,
+    plugins,
 )
-from app.api.endpoints.plugins import router as pluginsRouter
 
 api_router = APIRouter()
 api_router.include_router(healthcheck.router)
@@ -25,4 +25,4 @@ api_router.include_router(calendars.router)
 api_router.include_router(webhooks.router)
 api_router.include_router(contacts.router)
 api_router.include_router(user.router)
-api_router.include_router(pluginsRouter)
+api_router.include_router(plugins.router)
