@@ -11,7 +11,7 @@ import { InfoAlert } from '@/components/Alert'
 
 import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
-import { editingEventState } from '@/state/EventsState'
+import { editingEventState, EventUpdateContext } from '@/state/EventsState'
 import { userState } from '@/state/UserState'
 import { EventService } from './useEventService'
 import EventFields from './EventFields'
@@ -77,7 +77,7 @@ function EventPopover(props: IProps) {
           onDeleteEvent={onDeleteEvent}
           onClickEdit={() => {
             eventActions.updateEditingEvent(getUpdatedEvent(props.event, eventFields, participants))
-            eventActions.updateEditMode('FULL_EDIT', 'SINGLE')
+            eventActions.updateEditMode('FULL_EDIT')
           }}
           onClose={eventActions.cancelSelect}
           onUpdateResponse={onUpdateResponse}
@@ -86,19 +86,74 @@ function EventPopover(props: IProps) {
         <EventEditPartial
           event={props.event}
           eventFields={eventFields}
-          eventActions={eventActions}
           selectedCalendar={getSelectedCalendar(eventFields.calendarId)}
           participants={participants}
-          getUpdatedEvent={getUpdatedEvent}
-          setEventFields={setEventFields}
-          setParticipants={setParticipants}
-          onSaveEvent={(event) => {
-            props.eventService.saveEvent(event)
+          setEventFields={(eventFields: EventFields) => {
+            // Update the mutable event fields and update the editing event.
+            setEventFields(eventFields)
+            eventActions.updateEditingEvent(getUpdatedEvent(props.event, eventFields, participants))
+          }}
+          setParticipants={(participants: EventParticipant[]) => {
+            setParticipants(participants)
+            eventActions.updateEditingEvent(getUpdatedEvent(props.event, eventFields, participants))
+          }}
+          onSaveEvent={() => {
+            onSaveEvent({
+              ...getUpdatedEvent(props.event, eventFields, participants),
+            })
+          }}
+          onCancel={() => {
+            eventActions.cancelSelect()
+          }}
+          onClickMoreOptions={() => {
+            eventActions.updateEditingEvent({
+              ...getUpdatedEvent(props.event, eventFields, participants),
+            })
+            eventActions.updateEditMode('FULL_EDIT')
           }}
         />
       )}
     </Box>
   )
+
+  /**
+   * This could only be a new event. Show a confirmation dialog if the event has participants.
+   */
+  async function onSaveEvent(updatedEvent: Event) {
+    const hasParticipants = Event.hasNonOrganizerParticipants(updatedEvent)
+
+    if (hasParticipants) {
+      const updateContext = {
+        eventEditAction: 'CREATE',
+        isRecurringEvent: undefined,
+        hasParticipants: hasParticipants,
+      } as EventUpdateContext
+
+      eventActions.updateEditingEvent(updatedEvent)
+      eventActions.showConfirmDialog(updateContext, updatedEvent)
+    } else {
+      // Update the individual event directly.
+      return await props.eventService.saveEvent(updatedEvent)
+    }
+  }
+
+  function onDeleteEvent() {
+    const isRecurringEvent = props.event.recurring_event_id !== null
+    const hasParticipants = Event.hasNonOrganizerParticipants(props.event)
+    const showConfirmDialog = hasParticipants || isRecurringEvent
+
+    if (showConfirmDialog) {
+      const updateContext = {
+        eventEditAction: 'DELETE',
+        isRecurringEvent: isRecurringEvent,
+        hasParticipants: hasParticipants,
+      } as EventUpdateContext
+
+      eventActions.showConfirmDialog(updateContext, props.event)
+    } else {
+      props.eventService.deleteEvent(props.event.calendar_id, props.event.id, 'SINGLE', false)
+    }
+  }
 
   function getUpdatedEvent(
     e: Event,
@@ -112,14 +167,6 @@ function EventPopover(props: IProps) {
     }
   }
 
-  function onDeleteEvent() {
-    if (props.event.recurring_event_id) {
-      eventActions.showConfirmDialog('DELETE_RECURRING_EVENT', props.event)
-    } else {
-      props.eventService.deleteEvent(props.event.calendar_id, props.event.id)
-    }
-  }
-
   function getSelectedCalendar(calendarId: string): Calendar {
     const calendar = calendarsById[calendarId]
     if (calendar) {
@@ -129,6 +176,10 @@ function EventPopover(props: IProps) {
     }
   }
 
+  /**
+   * Updates the response status of the current user,
+   * without sending an email to notify participants.
+   */
   function onUpdateResponse(responseStatus: ResponseStatus) {
     if (!myself) {
       return

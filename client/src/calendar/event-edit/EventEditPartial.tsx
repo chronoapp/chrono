@@ -31,7 +31,6 @@ import { addNewLabels } from '@/calendar/utils/LabelUtils'
 import { format, fullDayFormat } from '@/util/localizer'
 import * as dates from '@/util/dates'
 
-import { EventActionsType } from '@/state/useEventActions'
 import { labelsState } from '@/state/LabelsState'
 import { displayState } from '@/state/EventsState'
 import { calendarsState } from '@/state/CalendarState'
@@ -58,29 +57,21 @@ import { LocationInput } from './LocationInput'
 interface IProps {
   event: Event
   eventFields: EventFields
-  eventActions: EventActionsType
   selectedCalendar: Calendar
   participants: EventParticipant[]
-  getUpdatedEvent: (
-    event: Event,
-    eventFields: EventFields,
-    participants: EventParticipant[]
-  ) => Event
   setEventFields: (eventFields: EventFields) => void
   setParticipants: (participants: EventParticipant[]) => void
-  onSaveEvent: (event: Event) => void
+  onSaveEvent: () => void
+  onClickMoreOptions: () => void
+  onCancel: () => void
 }
 
+/**
+ * This is the smaller event editor that shows up after a click or drag&drop
+ * to create a new event.
+ */
 export default function EventEditPartial(props: IProps) {
-  const {
-    eventActions,
-    eventFields,
-    selectedCalendar,
-    participants,
-    getUpdatedEvent,
-    setEventFields,
-    setParticipants,
-  } = props
+  const { eventFields, selectedCalendar, participants, setEventFields, setParticipants } = props
 
   const setDisplay = useSetRecoilState(displayState)
   const contentEditableRef = createRef<HTMLInputElement>()
@@ -102,7 +93,7 @@ export default function EventEditPartial(props: IProps) {
   function keyboardEvents(e: KeyboardEvent) {
     if (e.key === 'Enter') {
       if (contentEditableRef.current && document.activeElement !== contentEditableRef.current) {
-        props.onSaveEvent(getUpdatedEvent(props.event, eventFields, participants))
+        props.onSaveEvent()
       }
     }
   }
@@ -159,7 +150,7 @@ export default function EventEditPartial(props: IProps) {
           aria-label="close modal"
           color="gray.600"
           icon={<FiX />}
-          onClick={eventActions.cancelSelect}
+          onClick={props.onCancel}
         ></IconButton>
       </Box>
 
@@ -178,9 +169,6 @@ export default function EventEditPartial(props: IProps) {
           title={eventFields.title}
           portalCls={'.cal-event-modal-container'}
           isHeading={false}
-          onBlur={() => {
-            eventActions.updateEditingEvent(getUpdatedEvent(props.event, eventFields, participants))
-          }}
           handleChange={(title, labelIds: string[]) => {
             const updatedLabels = addNewLabels(labelState.labelsById, eventFields.labels, labelIds)
             setEventFields({ ...eventFields, title, labels: updatedLabels })
@@ -246,10 +234,6 @@ export default function EventEditPartial(props: IProps) {
                 setDisplay((prevState) => {
                   return { ...prevState, selectedDate: start }
                 })
-
-                eventActions.updateEditingEvent(
-                  getUpdatedEvent(props.event, updatedFields, participants)
-                )
               }}
             />
 
@@ -266,9 +250,6 @@ export default function EventEditPartial(props: IProps) {
                       endDay: fullDayFormat(endDate),
                     }
                     setEventFields(updatedEventFields)
-                    eventActions.updateEditingEvent(
-                      getUpdatedEvent(props.event, updatedEventFields, participants)
-                    )
                   }}
                 />
               )}
@@ -278,12 +259,9 @@ export default function EventEditPartial(props: IProps) {
                   end={eventFields.end}
                   onSelectStartDate={(date) => {
                     setEventFields({ ...eventFields, start: date })
-
-                    eventActions.updateEditingEvent({ ...props.event, start: date })
                   }}
                   onSelectEndDate={(date) => {
                     setEventFields({ ...eventFields, end: date })
-                    eventActions.updateEditingEvent({ ...props.event, end: date })
                   }}
                 />
               )}
@@ -324,9 +302,6 @@ export default function EventEditPartial(props: IProps) {
                   }
 
                   setEventFields(updatedFields)
-                  eventActions.updateEditingEvent(
-                    getUpdatedEvent(props.event, updatedFields, participants)
-                  )
                 }}
               >
                 All Day
@@ -343,8 +318,6 @@ export default function EventEditPartial(props: IProps) {
             defaultCalendarId={eventFields.calendarId}
             calendarsById={calendarsById}
             onChange={(calendar) => {
-              // Forces a color change without an API request.
-              // TODO: Discard changes on close.
               const updatedFields = {
                 ...eventFields,
                 organizer: EventParticipant.fromCreatorOrOrganizer(
@@ -354,13 +327,6 @@ export default function EventEditPartial(props: IProps) {
                 calendarId: calendar.id,
               }
               setEventFields(updatedFields)
-
-              const updatedEvent = {
-                ...props.event,
-                ...EventFields.getMutableEventFields(updatedFields),
-              }
-
-              eventActions.updateEditingEvent(updatedEvent)
             }}
           />
         </Flex>
@@ -437,26 +403,11 @@ export default function EventEditPartial(props: IProps) {
 
       <Flex mt="4" mb="2" ml="4" mr="4" justifyContent="space-between" alignItems="center">
         <Flex>
-          <Button
-            size="sm"
-            colorScheme="primary"
-            onClick={() =>
-              props.onSaveEvent({
-                ...getUpdatedEvent(props.event, eventFields, participants),
-                conference_data: eventFields.conferenceData,
-              })
-            }
-          >
+          <Button size="sm" colorScheme="primary" onClick={props.onSaveEvent}>
             Save
           </Button>
 
-          <Button
-            ml="2"
-            size="sm"
-            variant="ghost"
-            fontWeight="normal"
-            onClick={eventActions.cancelSelect}
-          >
+          <Button ml="2" size="sm" variant="ghost" fontWeight="normal" onClick={props.onCancel}>
             Cancel
           </Button>
         </Flex>
@@ -467,13 +418,7 @@ export default function EventEditPartial(props: IProps) {
           size="sm"
           fontWeight="normal"
           variant="ghost"
-          onClick={() => {
-            eventActions.updateEditingEvent({
-              ...getUpdatedEvent(props.event, eventFields, participants),
-              conference_data: eventFields.conferenceData,
-            })
-            eventActions.updateEditMode('FULL_EDIT', 'SINGLE')
-          }}
+          onClick={props.onClickMoreOptions}
         >
           More Options
         </Button>

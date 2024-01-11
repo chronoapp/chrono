@@ -91,7 +91,7 @@ export default function People() {
 
       {!isLoading && filteredContacts.length == 0 ? (
         <Center w="100%" h="2xl" overflow="auto">
-          <Text color="gray.700">We couldn't find any contacts matching "{searchQuery}"</Text>
+          <Text color="gray.700">We couldn't find any contacts</Text>
         </Center>
       ) : (
         <Flex direction={'column'} mb="2" mt="4" overflowY={'scroll'} maxH={'2xl'}>

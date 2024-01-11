@@ -32,7 +32,7 @@ import EventParticipant from '@/models/EventParticipant'
 import { labelsState } from '@/state/LabelsState'
 import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
-import { displayState, editingEventState } from '@/state/EventsState'
+import { displayState, editingEventState, EventUpdateContext } from '@/state/EventsState'
 
 import { format, fullDayFormat } from '@/util/localizer'
 import { addNewLabels } from '@/calendar/utils/LabelUtils'
@@ -58,7 +58,6 @@ import SelectReminders from './SelectReminders'
  */
 export default function EventEditFull(props: { event: Event; eventService: EventService }) {
   const eventActions = useEventActions()
-  const editingEvent = useRecoilValue(editingEventState)
   const labelState = useRecoilValue(labelsState)
   const calendarsById = useRecoilValue(calendarsState).calendarsById
   const setDisplay = useSetRecoilState(displayState)
@@ -96,9 +95,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
     : 1
 
   // Derived Properties
-  const recurringAction = editingEvent?.editRecurringAction
   const isUnsavedEvent = props.event.syncStatus === 'NOT_SYNCED'
-  const isExistingRecurringEvent = !isUnsavedEvent && props.event.recurrences != null
 
   function getUpdatedEvent(): Event {
     return {
@@ -128,19 +125,30 @@ export default function EventEditFull(props: { event: Event; eventService: Event
     }
   }
 
+  /**
+   * This could be a new event, or an existing event that has been edited.
+   */
   async function onSaveEvent() {
+    const originalEvent = props.event
     const updatedEvent = getUpdatedEventWithConferencing()
 
-    if (isExistingRecurringEvent) {
-      // Update a recurring event.
-      if (!props.event.recurring_event_id || !props.event.original_start) {
-        throw Error('Could not find recurring event')
-      }
+    const hasParticipants =
+      Event.hasNonOrganizerParticipants(originalEvent) ||
+      Event.hasNonOrganizerParticipants(updatedEvent)
+    const isRecurringEvent = originalEvent.recurring_event_id !== null
+    const showConfirmDialog = hasParticipants || isRecurringEvent
+
+    if (showConfirmDialog) {
+      const updateContext = {
+        eventEditAction: isUnsavedEvent ? 'CREATE' : 'UPDATE',
+        isRecurringEvent: originalEvent.recurring_event_id !== null,
+        hasParticipants: originalEvent.participants.length > 0,
+      } as EventUpdateContext
 
       eventActions.updateEditingEvent(updatedEvent)
-      eventActions.showConfirmDialog('UPDATE_RECURRING_EVENT', updatedEvent)
+      eventActions.showConfirmDialog(updateContext, updatedEvent)
     } else {
-      // Update the individual event
+      // Update the individual event directly.
       return await props.eventService.saveEvent(updatedEvent)
     }
   }

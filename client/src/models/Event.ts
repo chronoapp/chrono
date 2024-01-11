@@ -19,6 +19,9 @@ export type Transparency = 'opaque' | 'transparent'
 /**
  * Derived preperties are static because we could use the spread operator {..event, ..}
  * to copy the event for drag & drop.
+ *
+ * Use static methods to get computed properties, since events are copied & methods
+ * are not copied.
  */
 export default class Event {
   [immerable] = true
@@ -186,5 +189,9 @@ export default class Event {
     }
 
     return 'needsAction'
+  }
+
+  static hasNonOrganizerParticipants(event: Event) {
+    return event.participants.filter((p) => p.email !== event.organizer?.email).length > 0
   }
 }

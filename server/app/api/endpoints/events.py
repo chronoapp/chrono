@@ -111,7 +111,7 @@ async def getCalendarEvents(
 async def createCalendarEvent(
     calendarId: uuid.UUID,
     event: EventBaseVM,
-    sendUpdateType: SendUpdateType = 'all',
+    sendUpdateType: SendUpdateType = 'none',
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> Event:
@@ -179,7 +179,7 @@ async def updateCalendarEvent(
     event: EventBaseVM,
     calendarId: uuid.UUID,
     eventId: str,
-    sendUpdateType: SendUpdateType = 'all',
+    sendUpdateType: SendUpdateType = 'none',
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> Event:
@@ -211,6 +211,7 @@ async def moveEventCalendar(
     calendarId: uuid.UUID,
     eventId: str,
     calReq: MoveCalendarRequest,
+    sendUpdateType: SendUpdateType = 'none',
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> Event:
@@ -221,7 +222,7 @@ async def moveEventCalendar(
         # Makes sure both are google calendars.
         if event.isGoogleEvent():
             syncMoveGoogleEventCalendarTask.send(
-                user.id, event.google_id, calendarId, calReq.calendar_id
+                user.id, event.google_id, calendarId, calReq.calendar_id, sendUpdateType
             )
 
         return event
@@ -236,6 +237,7 @@ async def moveEventCalendar(
 async def deleteCalendarEvent(
     calendarId: uuid.UUID,
     eventId: str,
+    sendUpdateType: SendUpdateType = 'none',
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
@@ -252,7 +254,7 @@ async def deleteCalendarEvent(
         event = eventRepo.deleteEvent(user, userCalendar, eventId)
 
         if event.isGoogleEvent():
-            syncDeleteEventToGoogleTask.send(user.id, userCalendar.id, event.id)
+            syncDeleteEventToGoogleTask.send(user.id, userCalendar.id, event.id, sendUpdateType)
 
         return {}
 

@@ -11,7 +11,12 @@ import Event from '@/models/Event'
 import * as dates from '@/util/dates'
 
 import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
-import { eventsState, EditRecurringAction, editingEventState } from '@/state/EventsState'
+import {
+  eventsState,
+  EditRecurringAction,
+  editingEventState,
+  EventUpdateContext,
+} from '@/state/EventsState'
 import useEventActions from '@/state/useEventActions'
 import useTaskQueue from '@/lib/hooks/useTaskQueue'
 
@@ -34,6 +39,7 @@ import useTaskQueue from '@/lib/hooks/useTaskQueue'
  */
 export default function useEventService() {
   const [events, setEvents] = useRecoilState(eventsState)
+
   const [editingEvent, setEditingEvent] = useRecoilState(editingEventState)
   const eventActions = useEventActions()
 
@@ -41,15 +47,25 @@ export default function useEventService() {
   const taskQueue = useTaskQueue({ shouldProcess: true })
 
   /**
-   * Handles updating or creating a new event.
+   * Handles updating an event via drag or resize.
    *
-   * 1) The event is a recurring event, it will show a confirmation dialog.
+   * 1) The event is a recurring event or has participants, it will show a confirmation dialog.
    * 2) The event is not synced to the server yet, it will update the event locally.
    * 3) The event is synced to the server, it will save the event.
    */
   function moveOrResizeEvent(event: Event) {
-    if (event.recurring_event_id) {
-      eventActions.showConfirmDialog('UPDATE_RECURRING_EVENT', event, 'MOVE_RESIZE')
+    const hasParticipants = Event.hasNonOrganizerParticipants(event)
+    const isRecurringEvent = event.recurring_event_id !== null
+    const showConfirmDialog = event.syncStatus == 'SYNCED' && (hasParticipants || isRecurringEvent)
+
+    if (showConfirmDialog) {
+      const updateContext = {
+        eventEditAction: 'UPDATE',
+        isRecurringEvent: event.recurring_event_id !== null,
+        hasParticipants: hasParticipants,
+      } as EventUpdateContext
+
+      eventActions.showConfirmDialog(updateContext, event, 'MOVE_RESIZE')
     } else {
       if (event.syncStatus === 'NOT_SYNCED') {
         updateEventLocal(event)
@@ -86,9 +102,18 @@ export default function useEventService() {
    * requests in a queue.
    *
    * @param event Event to Create / Update
+   * @param sendUpdates Whether to send updates to participants.
+   * @param showToast Whether to show a toast message.
+   * @param resetEditingEvent Whether to reset the editing event.
+   *
    * @returns a promise of the updated event.
    */
-  function saveEvent(event: Event, showToast: boolean = true, resetEditingEvent: boolean = true) {
+  function saveEvent(
+    event: Event,
+    sendUpdates: boolean = true,
+    showToast: boolean = true,
+    resetEditingEvent: boolean = true
+  ) {
     const calendarId = event.calendar_id
     if (resetEditingEvent) {
       setEditingEvent(null)
@@ -103,41 +128,42 @@ export default function useEventService() {
           }),
         }
       })
-      queueCreateEvent(calendarId, event, showToast)
+      queueCreateEvent(calendarId, event, showToast, sendUpdates)
     } else {
       const hasMovedCalendar =
         editingEvent?.originalCalendarId && editingEvent.originalCalendarId !== calendarId
       if (hasMovedCalendar && editingEvent?.originalCalendarId) {
         console.log(`Moved calendars from ${editingEvent.originalCalendarId} to ${calendarId}`)
         eventActions.moveEventCalendarAction(event.id, editingEvent.originalCalendarId, calendarId)
-        queueMoveEvent(event.id, editingEvent.originalCalendarId, calendarId)
+        queueMoveEvent(event.id, editingEvent.originalCalendarId, calendarId, sendUpdates)
       }
 
       eventActions.updateEvent(calendarId, event.id, event)
-      queueUpdateEvent(calendarId, event, false)
+      queueUpdateEvent(calendarId, event, false, sendUpdates)
     }
   }
 
   function deleteEvent(
     calendarId: string,
     eventId: string,
-    deleteMethod: EditRecurringAction = 'SINGLE'
+    deleteMethod: EditRecurringAction,
+    sendUpdates: boolean
   ) {
     setEditingEvent(null)
     eventActions.deleteEvent(calendarId, eventId, deleteMethod)
-    queueDeleteEvent(calendarId, eventId)
+    queueDeleteEvent(calendarId, eventId, sendUpdates)
   }
 
-  function deleteAllRecurringEvents(calendarId: string, eventId: string) {
+  function deleteAllRecurringEvents(calendarId: string, eventId: string, sendUpdates: boolean) {
     setEditingEvent(null)
     eventActions.deleteEvent(calendarId, eventId, 'ALL')
-    queueDeleteEvent(calendarId, eventId)
+    queueDeleteEvent(calendarId, eventId, sendUpdates)
   }
 
   /**
    * This changes the parent event's recurrences to cut off at the current event's original start date.
    */
-  async function deleteThisAndFollowingEvents(event: Event) {
+  async function deleteThisAndFollowingEvents(event: Event, sendUpdates: boolean) {
     if (!event.recurrences || !event.recurring_event_id || !event.original_start) {
       throw Error('Invalid Recurring Event')
     }
@@ -169,17 +195,22 @@ export default function useEventService() {
       eventActions.deleteEvent(calendarId, deleteEvent.id, 'SINGLE')
     }
 
-    queueUpdateEvent(calendarId, updatedParentEvent, true)
+    queueUpdateEvent(calendarId, updatedParentEvent, true, sendUpdates)
   }
 
   /**
    * Queues API request to create an event.
    */
-  function queueCreateEvent(calendarId: string, event: Event, showToast: boolean) {
+  function queueCreateEvent(
+    calendarId: string,
+    event: Event,
+    showToast: boolean,
+    sendUpdates: boolean
+  ) {
     const createEventTask = () => {
       console.log(`RUN createEventTask id=${event.id} ${event.title}...`)
 
-      return API.createEvent(calendarId, event)
+      return API.createEvent(calendarId, event, sendUpdates)
         .then((event) => {
           console.log(`Created event id=${event.id}`)
 
@@ -214,11 +245,16 @@ export default function useEventService() {
    * That means an editing event was dragged and dropped.
    *
    */
-  function queueUpdateEvent(calendarId: string, event: Partial<Event>, showToast: boolean) {
+  function queueUpdateEvent(
+    calendarId: string,
+    event: Partial<Event>,
+    showToast: boolean,
+    sendUpdates: boolean
+  ) {
     const updateEventTask = () => {
       console.log(`RUN updateEventTask ${event.title}..`)
 
-      return API.updateEvent(calendarId, event).then((event) => {
+      return API.updateEvent(calendarId, event, sendUpdates).then((event) => {
         // Recurring event: TODO: Only refresh if moved calendar.
         if (Event.isParentRecurringEvent(event)) {
           document.dispatchEvent(new CustomEvent(GlobalEvent.refreshCalendar))
@@ -240,11 +276,16 @@ export default function useEventService() {
   /**
    * Moves an event from one calendar to another.
    */
-  function queueMoveEvent(eventId: string, fromCalendarId: string, toCalendarId: string) {
+  function queueMoveEvent(
+    eventId: string,
+    fromCalendarId: string,
+    toCalendarId: string,
+    sendUpdates: boolean
+  ) {
     const moveEventTask = () => {
       console.log(`Moving event ${eventId} from ${fromCalendarId} to ${toCalendarId}`)
 
-      return API.moveEvent(eventId, fromCalendarId, toCalendarId).then((e) => {
+      return API.moveEvent(eventId, fromCalendarId, toCalendarId, sendUpdates).then((e) => {
         console.log(`Moved event ${e.id}`)
       })
     }
@@ -255,9 +296,9 @@ export default function useEventService() {
   /**
    * Removes an event from the calendar.
    */
-  function queueDeleteEvent(calendarId: string, eventId: string) {
+  function queueDeleteEvent(calendarId: string, eventId: string, sendUpdates: boolean) {
     const deleteEventTask = () =>
-      API.deleteEvent(calendarId, eventId).then(() => {
+      API.deleteEvent(calendarId, eventId, sendUpdates).then(() => {
         toast({
           render: (p) => {
             return <InfoAlert onClose={p.onClose} title="Event deleted." />
