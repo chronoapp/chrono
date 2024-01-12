@@ -12,6 +12,7 @@ from app.api.endpoints import (
     contacts,
     user,
     plugins,
+    websockets,
 )
 
 api_router = APIRouter()
@@ -26,3 +27,4 @@ api_router.include_router(webhooks.router)
 api_router.include_router(contacts.router)
 api_router.include_router(user.router)
 api_router.include_router(plugins.router)
+api_router.include_router(websockets.router)

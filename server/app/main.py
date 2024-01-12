@@ -1,22 +1,36 @@
 import os
 import uvicorn
+import threading
+from contextlib import asynccontextmanager
+
+
 from starlette.requests import Request
 from starlette.middleware.cors import CORSMiddleware
 
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 
-from app.core import config
 from app.api.router import api_router
 from app.db.session import scoped_session
+from app.core.websockets import notification_listener
+from app.core import config
 
 # Register all tasks as part of this module.
 from app.sync.google.tasks import *
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Start the notification listener in a separate thread.
+    threading.Thread(target=notification_listener, daemon=True).start()
+    yield
+
 
 app = FastAPI(
     title=config.PROJECT_ID,
     openapi_url="/api/v1/openapi.json",
     default_response_class=ORJSONResponse,
+    lifespan=lifespan,
 )
 app.include_router(api_router, prefix=config.API_V1_STR)
 
