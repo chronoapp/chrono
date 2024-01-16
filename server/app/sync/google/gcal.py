@@ -225,7 +225,10 @@ def updateCalendar(user: User, calendar: UserCalendar):
         'selected': calendar.selected or False,
         'foregroundColor': calendar.foreground_color,
         'backgroundColor': calendar.background_color,
+        'summaryOverride': calendar.summary_override,
+        'description': calendar.description,
     }
+
     return (
         getCalendarService(user)
         .calendarList()

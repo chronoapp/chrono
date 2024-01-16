@@ -115,6 +115,7 @@ def syncGoogleCalendars(user: User, calendarList):
     for calendarItem in calendarList:
         gCalId = calendarItem.get('id')
         calSummary = calendarItem.get('summary')
+
         backgroundColor = mapGoogleColor(calendarItem.get('backgroundColor'))
         defaultReminders = [
             ReminderOverride(ReminderMethod(r.get('method')), r.get('minutes'))
@@ -123,6 +124,7 @@ def syncGoogleCalendars(user: User, calendarList):
 
         userCalendar = calendarsMap.get(gCalId)
         if userCalendar:
+            userCalendar.summary_override = calendarItem.get('summaryOverride')
             userCalendar.calendar.timezone = calendarItem.get('timeZone')
             userCalendar.calendar.summary = calSummary
             userCalendar.calendar.description = calendarItem.get('description')

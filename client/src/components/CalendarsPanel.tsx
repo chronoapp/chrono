@@ -274,10 +274,10 @@ export default function CalendarsPanel() {
             } as Calendar
 
             const calendar = await API.putCalendar(updatedCalendar)
-            updateCalendar(updatedCalendar)
+            updateCalendar(calendar)
           } else {
             const calendar = await API.createCalendar(
-              fields.summary,
+              fields.summaryOverride,
               fields.backgroundColor,
               fields.source,
               fields.description,

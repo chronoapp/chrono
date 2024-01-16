@@ -272,7 +272,6 @@ function LabelTree(props: IProps) {
                       variant="unstyled"
                       color="gray.600"
                       size="sm"
-                      pb="1"
                       as={Button}
                       fontWeight="normal"
                       visibility={isMouseInside || curMenuExpanded || isOpen ? 'visible' : 'hidden'}

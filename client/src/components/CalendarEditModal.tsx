@@ -34,11 +34,12 @@ export default function CalendarEditModal(props: IProps) {
 
   function getDefaultEditableFields(): CalendarEditable {
     return {
-      summary: props.editingCalendar?.summary || '',
+      summaryOverride:
+        props.editingCalendar?.summaryOverride || props.editingCalendar?.summary || '',
       description: props.editingCalendar?.description || '',
-      source: 'chrono',
-      backgroundColor: DEFAULT_CALENDAR_BG_COLOR,
-      timezone: undefined,
+      source: props.editingCalendar?.source || 'google',
+      backgroundColor: props.editingCalendar?.backgroundColor || DEFAULT_CALENDAR_BG_COLOR,
+      timezone: props.editingCalendar?.timezone,
     }
   }
 
@@ -61,9 +62,9 @@ export default function CalendarEditModal(props: IProps) {
               type="text"
               size="sm"
               fontSize={'sm'}
-              value={editableFields.summary}
+              value={editableFields.summaryOverride}
               onChange={(e) => {
-                setEditableFields({ ...editableFields, summary: e.target.value })
+                setEditableFields({ ...editableFields, summaryOverride: e.target.value })
               }}
             />
           </FormControl>

@@ -18,6 +18,7 @@ class CalendarBaseVM(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     summary: str
+    summary_override: Optional[str] = Field(alias='summaryOverride')
     description: Optional[str] = None
     background_color: str = Field(alias='backgroundColor')
     foreground_color: str = Field(alias='foregroundColor')
@@ -120,11 +121,11 @@ class CalendarRepository:
             raise CalendarNotFoundError('Calendar not found.')
 
         calendarDb.selected = userCalendar.selected or False
-        calendarDb.summary_override = userCalendar.summary
+        calendarDb.summary_override = userCalendar.summary_override
         calendarDb.background_color = userCalendar.background_color
         calendarDb.foreground_color = userCalendar.foreground_color
 
-        # TODO: More fields to update.
+        # TODO: Depending on ACL, Update the original calendar details on google
 
         return calendarDb
 

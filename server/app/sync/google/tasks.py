@@ -9,15 +9,7 @@ from app.db.repos.calendar_repo import CalendarRepository
 from app.db.repos.webhook_repo import WebhookRepository
 from app.db.session import scoped_session
 
-from .gcal import (
-    SendUpdateType,
-    moveGoogleEvent,
-    updateGoogleEvent,
-    getEventBody,
-    createGoogleEvent,
-    deleteGoogleEvent,
-    updateCalendar,
-)
+from . import gcal
 from .calendar import (
     syncCreatedOrUpdatedGoogleEvent,
     syncCalendarEvents,
@@ -36,7 +28,7 @@ def syncEventToGoogleTask(
     userId: uuid.UUID,
     userCalendarId: uuid.UUID,
     eventId: str,
-    sendUpdates: SendUpdateType,
+    sendUpdates: gcal.SendUpdateType,
 ) -> None:
     """Sync Chrono's event to Google Calendar."""
 
@@ -56,14 +48,14 @@ def syncEventToGoogleTask(
             logger.warning(f'Event {eventId} not found')
             return
 
-        eventBody = getEventBody(event, userCalendar.timezone)
+        eventBody = gcal.getEventBody(event, userCalendar.timezone)
 
         if event.google_id:
-            eventResp = updateGoogleEvent(
+            eventResp = gcal.updateGoogleEvent(
                 user, userCalendar.google_id, event.google_id, eventBody, sendUpdates
             )
         else:
-            eventResp = createGoogleEvent(user, userCalendar.google_id, eventBody, sendUpdates)
+            eventResp = gcal.createGoogleEvent(user, userCalendar.google_id, eventBody, sendUpdates)
 
         event = syncCreatedOrUpdatedGoogleEvent(userCalendar, eventRepo, event, eventResp, session)
 
@@ -72,7 +64,7 @@ def syncEventToGoogleTask(
 
 @dramatiq.actor(max_retries=1)
 def syncDeleteEventToGoogleTask(
-    userId: uuid.UUID, userCalendarId: uuid.UUID, eventId: str, sendUpdates: SendUpdateType
+    userId: uuid.UUID, userCalendarId: uuid.UUID, eventId: str, sendUpdates: gcal.SendUpdateType
 ) -> None:
     """Sync Chrono's event to Google Calendar."""
 
@@ -90,7 +82,7 @@ def syncDeleteEventToGoogleTask(
 
         if event.google_id:
             try:
-                _resp = deleteGoogleEvent(
+                _resp = gcal.deleteGoogleEvent(
                     user, userCalendar.google_id, event.google_id, sendUpdates
                 )
                 logger.info(
@@ -106,7 +98,7 @@ def syncMoveGoogleEventCalendarTask(
     googleEventId: str,
     fromCalendarId: uuid.UUID,
     toCalendarId: uuid.UUID,
-    sendUpdates: SendUpdateType,
+    sendUpdates: gcal.SendUpdateType,
 ) -> None:
     with scoped_session() as session:
         userRepo = UserRepository(session)
@@ -119,7 +111,7 @@ def syncMoveGoogleEventCalendarTask(
         if not fromCalendar or not toCalendar:
             logger.warning(f'Calendar not found')
 
-        _resp = moveGoogleEvent(
+        _resp = gcal.moveGoogleEvent(
             user, googleEventId, fromCalendar.google_id, toCalendar.google_id, sendUpdates
         )
         logger.info(f'Moved event {googleEventId}')
@@ -170,4 +162,4 @@ def updateCalendarTask(userId: uuid.UUID, calendarId: uuid.UUID) -> None:
         calendar = calRepo.getCalendar(user, calendarId)
 
         logger.debug(f'Update Calendar {calendar.google_id}')
-        updateCalendar(user, calendar)
+        gcal.updateCalendar(user, calendar)

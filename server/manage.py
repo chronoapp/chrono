@@ -64,7 +64,7 @@ def sync_cal_all(email: str, full: bool):
             print(f'User {email} not found')
             return
 
-        syncAllCalendarsTask.send(user.id, fullSync=full)
+        syncAllCalendarsTask(user.id, fullSync=full)
 
 
 @main.command()

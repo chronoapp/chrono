@@ -6,7 +6,7 @@ export type AccessRole = 'reader' | 'writer' | 'owner' | 'freeBusyReader'
 export type CalendarSource = 'google' | 'chrono'
 
 export interface CalendarEditable {
-  summary: string
+  summaryOverride: string
   description: string
   source: CalendarSource
   backgroundColor: string
@@ -20,6 +20,7 @@ export default class Calendar implements CalendarEditable {
     return new Calendar(
       json.id,
       json.summary,
+      json.summaryOverride,
       json.description,
       json.backgroundColor,
       json.foregroundColor,
@@ -36,6 +37,7 @@ export default class Calendar implements CalendarEditable {
   constructor(
     readonly id: string,
     readonly summary: string,
+    readonly summaryOverride: string,
     readonly description: string,
     readonly backgroundColor: string,
     readonly foregroundColor: string,
