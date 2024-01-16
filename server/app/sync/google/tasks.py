@@ -140,7 +140,7 @@ def syncAllCalendarsTask(userId: uuid.UUID, fullSync: bool) -> None:
         for calendar in user.calendars:
             if calendar.google_id != None:
                 webhookRepo.createCalendarWebhook(calendar)
-                syncCalendarTask.send(user.id, calendar.id, False)
+                syncCalendarTask.send(user.id, calendar.id, fullSync)
 
 
 @dramatiq.actor(max_retries=1)
