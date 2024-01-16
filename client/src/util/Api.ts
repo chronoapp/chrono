@@ -12,7 +12,8 @@ import Flags from '@/models/Flags'
 
 type SendUpdateType = 'none' | 'all' | 'external'
 
-const API_URL = 'http://localhost:8888/api/v1'
+export const API_URL = 'http://localhost:8888/api/v1'
+export const WEBSOCKET_URL = 'ws://localhost:8888/api/v1/ws'
 
 function handleErrors(response: any) {
   if (!response.ok) {
@@ -97,7 +98,9 @@ export async function getUser(): Promise<User> {
   return fetch(`${API_URL}/user/`, {
     method: 'GET',
     headers: getHeaders(),
-  }).then(handleErrors)
+  })
+    .then(handleErrors)
+    .then((resp) => User.fromJson(resp))
 }
 
 export async function updateUserFlags(flags: Flags): Promise<User> {
@@ -358,13 +361,6 @@ export async function putLabelRule(labelRule: LabelRule): Promise<LabelRule> {
   })
     .then(handleErrors)
     .then(LabelRule.fromJson)
-}
-
-export async function syncCalendar() {
-  return fetch(`${API_URL}/sync/`, {
-    method: 'POST',
-    headers: getHeaders(),
-  }).then(handleErrors)
 }
 
 // Contacts

@@ -1,5 +1,5 @@
 import React from 'react'
-import { useRecoilValue, useSetRecoilState } from 'recoil'
+import { useRecoilValue, useSetRecoilState, useRecoilState } from 'recoil'
 import { useParams, useNavigate } from 'react-router-dom'
 
 import {
@@ -12,7 +12,6 @@ import {
   MenuList,
   MenuItem,
   MenuDivider,
-  useToast,
 } from '@chakra-ui/react'
 import { Modal, ModalOverlay, ModalContent, ModalCloseButton } from '@chakra-ui/react'
 
@@ -25,9 +24,8 @@ import MiniCalendar from '@/calendar/MiniCalendar'
 import LabelPanel from '@/components/LabelPanel'
 import CalendarsPanel from '@/components/CalendarsPanel'
 import Plugins from '@/components/Plugins'
-import { ToastTag } from '@/components/Toast'
 import Settings from '@/components/Settings'
-import { InfoAlert } from '@/components/Alert'
+import useNotifications from '@/util/useNotifications'
 
 import Header from '@/calendar/Header'
 import * as API from '@/util/Api'
@@ -68,11 +66,7 @@ function NewEventButton() {
   )
 }
 
-function TopNavigationBar(props: {
-  refreshCalendar: () => void
-  canCreateEvent: boolean
-  searchQuery: string
-}) {
+function TopNavigationBar(props: { canCreateEvent: boolean; searchQuery: string }) {
   return (
     <Flex
       height="3.25rem"
@@ -84,14 +78,14 @@ function TopNavigationBar(props: {
 
       <Flex justifyContent="flex-end" align="flex-end">
         <Flex alignItems="center" justifyContent="center">
-          <SettingsMenu refreshCalendar={props.refreshCalendar} />
+          <SettingsMenu />
         </Flex>
       </Flex>
     </Flex>
   )
 }
 
-function SettingsMenu(props: { refreshCalendar: () => void }) {
+function SettingsMenu() {
   const navigate = useNavigate()
   const [settingsActive, setSettingsActive] = React.useState<boolean>(false)
 
@@ -107,9 +101,6 @@ function SettingsMenu(props: { refreshCalendar: () => void }) {
       </MenuButton>
 
       <MenuList zIndex="2">
-        <MenuItem fontSize={'sm'} onClick={props.refreshCalendar}>
-          Refresh Events
-        </MenuItem>
         <MenuDivider m="0" />
         <MenuItem icon={<FiSettings />} fontSize={'sm'} onClick={() => setSettingsActive(true)}>
           Settings
@@ -135,11 +126,18 @@ function SettingsMenu(props: { refreshCalendar: () => void }) {
  * Top Level Layout for the navigation and body.
  */
 function Layout(props: Props) {
-  const toast = useToast()
-
   const params = useParams()
   const searchQuery = (params.search as string) || ''
-  const setUser = useSetRecoilState(userState)
+  const [user, setUser] = useRecoilState(userState)
+
+  /**
+   * Sends an event to refresh the calendar when a notification is received.
+   */
+  useNotifications(user?.id || null, (msg) => {
+    if (msg === 'REFRESH_CALENDAR') {
+      document.dispatchEvent(new Event(GlobalEvent.refreshCalendar))
+    }
+  })
 
   React.useEffect(() => {
     async function fetchUser() {
@@ -149,28 +147,6 @@ function Layout(props: Props) {
 
     fetchUser()
   }, [])
-
-  async function refreshCalendar() {
-    const toastId = toast({
-      render: (props) => (
-        <ToastTag
-          title={'Updating calendar..'}
-          showSpinner={false}
-          Icon={props.icon}
-          onClose={props.onClose}
-        />
-      ),
-    })
-
-    await API.syncCalendar()
-
-    document.dispatchEvent(new Event(GlobalEvent.refreshCalendar))
-
-    toastId && toast.close(toastId)
-    toast({
-      render: (props) => <InfoAlert title={'Calendar Refreshed.'} onClose={props.onClose} />,
-    })
-  }
 
   return (
     <Box className="App">
@@ -195,11 +171,7 @@ function Layout(props: Props) {
         )}
 
         <Flex direction="column" width="100%">
-          <TopNavigationBar
-            refreshCalendar={refreshCalendar}
-            canCreateEvent={props.canCreateEvent}
-            searchQuery={searchQuery}
-          />
+          <TopNavigationBar canCreateEvent={props.canCreateEvent} searchQuery={searchQuery} />
 
           <Box height="100%" overflowY="auto">
             {props.children}

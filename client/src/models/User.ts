@@ -5,8 +5,13 @@ import Flags from './Flags'
  */
 export default class User {
   static fromJson(userJson: any) {
-    return new User(userJson.email, userJson.timezone, Flags.fromJson(userJson.flags))
+    return new User(userJson.id, userJson.email, userJson.timezone, Flags.fromJson(userJson.flags))
   }
 
-  constructor(readonly email: string, readonly timezone: string, readonly flags: Flags) {}
+  constructor(
+    readonly id: string,
+    readonly email: string,
+    readonly timezone: string,
+    readonly flags: Flags
+  ) {}
 }
