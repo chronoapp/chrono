@@ -38,3 +38,6 @@ if POSTMARK_API_URL and POSTMARK_API_KEY:
     EMAIL_PROVIDER = 'postmark'
 elif MAILGUN_API_URL and MAILGUN_API_KEY:
     EMAIL_PROVIDER = 'mailgun'
+
+LogLevel = Literal['debug', 'info', 'warning', 'error']
+LOG_LEVEL: str = os.environ.get('LOG_LEVEL', 'debug')

@@ -30,24 +30,23 @@ class ConnectionManager:
             self.connectionMap[clientID] = []
 
         self.connectionMap[clientID].append(websocket)
-        logger.info(f"Client #{clientID} connected.")
+        logger.debug(f"Client #{clientID} connected.")
 
     def disconnect(self, clientID: str, websocket: WebSocket):
         if clientID in self.connectionMap:
             self.connectionMap[clientID].remove(websocket)
             if not self.connectionMap[clientID]:
                 del self.connectionMap[clientID]
-
-            logger.info(f"Client #{clientID} disconnected.")
+            logger.debug(f"Client #{clientID} disconnected.")
 
     async def sendClientMessage(self, clientID: str, message: str):
         if clientID in self.connectionMap:
             for websocket in self.connectionMap[clientID]:
-                logger.info(f"Sending to {clientID}: {message}")
+                logger.debug(f"Sending to {clientID}: {message}")
                 await websocket.send_text(message)
 
     async def broadcast(self, message: str):
-        logger.info(f"Broadcasting: {message}")
+        logger.debug(f"Broadcasting: {message}")
         for _, connections in self.connectionMap.items():
             for websocket in connections:
                 await websocket.send_text(message)
