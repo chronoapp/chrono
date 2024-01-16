@@ -2,7 +2,14 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Route, Routes, Outlet, Navigate } from 'react-router-dom'
 
 import { RecoilRoot } from 'recoil'
-import { ChakraProvider, extendTheme, defineStyle, defineStyleConfig } from '@chakra-ui/react'
+import { menuAnatomy } from '@chakra-ui/anatomy'
+import {
+  ChakraProvider,
+  extendTheme,
+  defineStyle,
+  defineStyleConfig,
+  createMultiStyleConfigHelpers,
+} from '@chakra-ui/react'
 
 import { getAuthToken } from '@/util/Api'
 
@@ -17,6 +24,21 @@ import './style/index.scss'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/500.css'
 import '@fontsource/inter/700.css'
+
+const { definePartsStyle, defineMultiStyleConfig } = createMultiStyleConfigHelpers(menuAnatomy.keys)
+
+const baseStyle = definePartsStyle({
+  list: {
+    // this will style the MenuList component
+    padding: 0.5,
+  },
+  menu: {
+    gutter: 0,
+    size: 'sm',
+  },
+})
+
+const menuTheme = defineMultiStyleConfig({ baseStyle })
 
 const outlineButton = defineStyle({
   size: 'sm',
@@ -37,7 +59,7 @@ const sm = defineStyle({
   borderRadius: 'sm',
 })
 
-export const buttonTheme = defineStyleConfig({
+const buttonTheme = defineStyleConfig({
   sizes: { sm },
   variants: {
     outline: outlineButton,
@@ -71,7 +93,7 @@ const theme = extendTheme({
       1000: '#04091a',
     },
   },
-  components: { Button: buttonTheme },
+  components: { Button: buttonTheme, Menu: menuTheme },
 })
 
 /**

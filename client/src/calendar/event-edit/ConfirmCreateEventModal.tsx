@@ -87,7 +87,7 @@ function ConfirmCreateEventModal(props: IProps) {
                 borderLeft={'1px solid'}
                 borderLeftColor={'gray.400'}
               />
-              <MenuList padding={0.5}>
+              <MenuList>
                 <MenuItem fontSize={'sm'} onClick={() => createEvent(false)}>
                   Send invites without email
                 </MenuItem>

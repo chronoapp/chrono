@@ -197,7 +197,7 @@ export default function CalendarsPanel() {
                   </Text>
 
                   {isMouseInside && (
-                    <Menu isLazy>
+                    <Menu isLazy gutter={-1}>
                       <MenuButton
                         height="100%"
                         variant="unstyled"

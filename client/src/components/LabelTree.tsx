@@ -265,7 +265,7 @@ function LabelTree(props: IProps) {
                 {item.title}
               </Text>
 
-              <Menu isLazy>
+              <Menu isLazy gutter={-1}>
                 {({ isOpen }) => (
                   <>
                     <MenuButton
