@@ -1,3 +1,4 @@
+from uuid import UUID
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict
 
@@ -9,6 +10,7 @@ router = APIRouter()
 
 class UserModel(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+    id: UUID
     flags: dict[FlagType, bool]
     email: str
     timezone: str
@@ -18,7 +20,7 @@ class UserModel(BaseModel):
 async def getUser(user=Depends(get_current_user)):
     flags = FlagUtils(user).getAllFlags()
 
-    return UserModel(flags=flags, email=user.email, timezone=user.timezone)
+    return UserModel(id=user.id, flags=flags, email=user.email, timezone=user.timezone)
 
 
 @router.get('/user/flags/', response_model=dict[FlagType, bool])

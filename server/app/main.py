@@ -12,7 +12,7 @@ from fastapi.responses import ORJSONResponse
 
 from app.api.router import api_router
 from app.db.session import scoped_session
-from app.core.websockets import notification_listener
+from app.core.notifications import notification_listener
 from app.core import config
 
 # Register all tasks as part of this module.

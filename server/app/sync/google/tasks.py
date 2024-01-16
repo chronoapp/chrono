@@ -24,6 +24,7 @@ from .calendar import (
     syncCalendarsAndACL,
 )
 from app.core.logger import logger
+from app.core.notifications import sendClientNotification, NotificationType
 
 
 """Tasks to process google event syncing in background tasks.
@@ -152,6 +153,9 @@ def syncCalendarTask(userId: uuid.UUID, calendarId: uuid.UUID, fullSync: bool) -
         calendar = calRepo.getCalendar(user, calendarId)
 
         syncCalendarEvents(calendar, session, fullSync)
+
+    # Send notification to client
+    sendClientNotification(str(user.id), NotificationType.REFRESH_CALENDAR)
 
 
 @dramatiq.actor(max_retries=1)

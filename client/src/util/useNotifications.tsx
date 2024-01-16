@@ -3,7 +3,7 @@ import { useEffect, useRef, useCallback } from 'react'
 import { WEBSOCKET_URL } from '@/util/Api'
 
 const MAX_RECONECT_ATTEMPTS = 5
-const DEBOUNCE_DELAY = 5000
+const DEBOUNCE_DELAY = 2500
 
 /**
  * A debounce function that will delay the execution of the callback function

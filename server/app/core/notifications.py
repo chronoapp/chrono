@@ -1,9 +1,14 @@
 import redis
 import json
 import asyncio
+from enum import Enum
 
 from fastapi import WebSocket
 from app.core.logger import logger
+
+
+class NotificationType(Enum):
+    REFRESH_CALENDAR = 'REFRESH_CALENDAR'
 
 
 class ConnectionManager:
@@ -70,11 +75,11 @@ def notification_listener():
             asyncio.run(websocketManager.sendClientMessage(clientID, messageText))
 
 
-def send_notification(clientID: str, message: str):
+def sendClientNotification(clientID: str, message: NotificationType):
     """Sends a notification to the client.
 
     Every process in the API server will receive the notification, but only
     the one that has the websocket connection will send it to the client.
     """
     r = redis.Redis(host='redis', port=6379, db=0)
-    r.publish('app_notifications', json.dumps({'clientID': clientID, 'text': message}))
+    r.publish('app_notifications', json.dumps({'clientID': clientID, 'text': message.value}))
