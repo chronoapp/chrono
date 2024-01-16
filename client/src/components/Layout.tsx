@@ -25,7 +25,7 @@ import LabelPanel from '@/components/LabelPanel'
 import CalendarsPanel from '@/components/CalendarsPanel'
 import Plugins from '@/components/Plugins'
 import Settings from '@/components/Settings'
-import useWebSocket from '@/util/useWebsockets'
+import useNotifications from '@/util/useNotifications'
 
 import Header from '@/calendar/Header'
 import * as API from '@/util/Api'
@@ -133,7 +133,7 @@ function Layout(props: Props) {
   /**
    * Sends an event to refresh the calendar when a notification is received.
    */
-  useWebSocket(user?.id || null, (msg) => {
+  useNotifications(user?.id || null, (msg) => {
     if (msg === 'REFRESH_CALENDAR') {
       document.dispatchEvent(new Event(GlobalEvent.refreshCalendar))
     }

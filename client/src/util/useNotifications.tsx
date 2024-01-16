@@ -24,7 +24,7 @@ const debounce = (func: any, delay: number) => {
  * A React hook for connecting to the notifications via Websockets.
  * The caller must provide a callback function to handle messages.
  */
-const useWebSocket = (userId: string | null, messageHandler: (msg: string) => void) => {
+const useNotifications = (userId: string | null, messageHandler: (msg: string) => void) => {
   const ws = useRef<WebSocket | null>(null)
   const reconnectAttempts = useRef(0)
   const reconnectInterval = useRef(1000)
@@ -79,4 +79,4 @@ const useWebSocket = (userId: string | null, messageHandler: (msg: string) => vo
   return ws
 }
 
-export default useWebSocket
+export default useNotifications
