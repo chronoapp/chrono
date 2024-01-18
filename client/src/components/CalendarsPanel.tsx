@@ -61,18 +61,18 @@ function ConfirmDeleteCalendarAlert(props: {
     <AlertDialog isOpen={isOpen} leastDestructiveRef={props.cancelRef} onClose={props.onClose}>
       <AlertDialogOverlay>
         <AlertDialogContent>
-          <AlertDialogHeader fontSize="lg" fontWeight="bold">
-            Delete Calendar
-          </AlertDialogHeader>
-
-          <AlertDialogBody>Are you sure? You can't undo this action afterwards.</AlertDialogBody>
+          <AlertDialogHeader fontSize="md">Remove calendar from list?</AlertDialogHeader>
+          <AlertDialogBody fontSize={'sm'}>
+            To add the calendar back to your list, you will need to re-add it from google calendar
+            settings.
+          </AlertDialogBody>
 
           <AlertDialogFooter>
             <Button ref={props.cancelRef} onClick={props.onClose}>
               Cancel
             </Button>
             <Button colorScheme="red" onClick={() => props.onDelete(props.calendarId!)} ml={3}>
-              Delete
+              Remove calendar
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -141,12 +141,15 @@ export default function CalendarsPanel() {
   }
 
   async function onDeleteCalendar(calendarId: string) {
+    const calendarName = calendars.calendarsById[calendarId].summary
     setConfirmDeleteCalendarId(undefined)
     deleteCalendar(calendarId)
 
-    // TODO: Show loading
     API.deleteCalendar(calendarId).then(() => {
-      console.log(`Deleted: ${calendarId}`)
+      toastIdRef.current && toast.close(toastIdRef.current)
+      toastIdRef.current = toast({
+        render: (props) => <InfoAlert title={`Removed calendar ${calendarName}.`} />,
+      })
     })
   }
 
@@ -236,7 +239,7 @@ export default function CalendarsPanel() {
                             icon={<FiTrash />}
                             iconSpacing="1"
                           >
-                            Delete
+                            Remove from list
                           </MenuItem>
                         </MenuList>
                       </Portal>

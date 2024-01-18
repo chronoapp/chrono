@@ -237,6 +237,11 @@ def updateCalendar(user: User, calendar: UserCalendar):
     )
 
 
+def removeCalendar(user: User, calendar: UserCalendar):
+    """Removes the calendar from my list."""
+    return getCalendarService(user).calendarList().delete(calendarId=calendar.google_id).execute()
+
+
 def addEventsWebhook(calendar: UserCalendar, ttlSeconds: float, webhookUrl: str):
     """Subscribes to an event notification channel. The subscription lasts for 30 days."""
     uniqueId = uuid4().hex

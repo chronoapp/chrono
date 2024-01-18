@@ -96,6 +96,11 @@ async def deleteCalendar(
 ):
     try:
         calendarRepo = CalendarRepository(session)
+
+        userCalendar = calendarRepo.getCalendar(user, calendarId)
+        if userCalendar.source == 'google':
+            gcal.removeCalendar(user, userCalendar)
+
         calendarRepo.deleteCalendar(user, calendarId)
 
     except CalendarNotFoundError:

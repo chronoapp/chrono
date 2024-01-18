@@ -9,7 +9,7 @@ interface IProps {
   colorScheme: string
   details?: string
   icon?: AlertIcon
-  onClose: () => void
+  onClose?: () => void
 }
 
 const BaseAlert = (props: IProps) => {
@@ -40,13 +40,15 @@ const BaseAlert = (props: IProps) => {
           </Flex>
         </Flex>
 
-        <IconButton
-          size="sm"
-          variant="ghost"
-          aria-label="close alert"
-          icon={<FiX />}
-          onClick={props.onClose}
-        />
+        {props.onClose && (
+          <IconButton
+            size="sm"
+            variant="ghost"
+            aria-label="close alert"
+            icon={<FiX />}
+            onClick={props.onClose}
+          />
+        )}
       </Flex>
     </Flex>
   )
