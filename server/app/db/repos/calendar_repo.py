@@ -17,17 +17,18 @@ from app.db.repos.event_repo.view_models import ReminderOverrideVM
 class CalendarBaseVM(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
+    google_id: str | None = None
     summary: str
-    summary_override: Optional[str] = Field(alias='summaryOverride')
-    description: Optional[str] = None
+    summary_override: str | None = Field(alias='summaryOverride')
+    description: str | None = None
     background_color: str = Field(alias='backgroundColor')
     foreground_color: str = Field(alias='foregroundColor')
-    selected: Optional[bool] = None
-    primary: Optional[bool] = None
-    timezone: Optional[str] = None
-    access_role: Optional[str] = Field(default=None, alias='accessRole')
+    selected: bool | None = None
+    primary: bool | None = None
+    timezone: str | None = None
+    access_role: str | None = Field(default=None, alias='accessRole')
     source: CalendarSource
-    email: Optional[str] = None
+    email: str | None = None
     reminders: list[ReminderOverrideVM] = []
 
     @field_validator('timezone')

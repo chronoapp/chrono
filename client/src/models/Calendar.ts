@@ -19,6 +19,7 @@ export default class Calendar implements CalendarEditable {
   static fromJson(json): Calendar {
     return new Calendar(
       json.id,
+      json.google_id,
       json.summary,
       json.summaryOverride,
       json.description,
@@ -36,6 +37,7 @@ export default class Calendar implements CalendarEditable {
 
   constructor(
     readonly id: string,
+    readonly google_id: string | null,
     readonly summary: string,
     readonly summaryOverride: string,
     readonly description: string,

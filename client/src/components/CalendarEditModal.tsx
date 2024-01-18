@@ -11,7 +11,11 @@ import {
   ModalFooter,
   ModalBody,
   ModalCloseButton,
+  Link,
+  Text,
 } from '@chakra-ui/react'
+import { FiExternalLink } from 'react-icons/fi'
+
 import Calendar, { CalendarEditable, CalendarSource } from '@/models/Calendar'
 
 interface IProps {
@@ -23,6 +27,7 @@ interface IProps {
 }
 
 const DEFAULT_CALENDAR_BG_COLOR = '#2196f3'
+const GOOGLE_CALENDAR_SETTINGS_URL = 'https://calendar.google.com/calendar/u/0/r/settings/calendar/'
 
 /**
  * Modal to add / edit a calendar.
@@ -52,7 +57,7 @@ export default function CalendarEditModal(props: IProps) {
       <ModalOverlay />
       <ModalContent>
         <ModalHeader fontSize={'md'}>
-          {props.editingCalendar ? 'Edit Calendar' : 'New Calendar'}
+          {props.editingCalendar ? 'Edit calendar' : 'New calendar'}
         </ModalHeader>
         <ModalCloseButton />
         <ModalBody>
@@ -82,6 +87,21 @@ export default function CalendarEditModal(props: IProps) {
               }}
             />
           </FormControl>
+
+          {props.editingCalendar && props.editingCalendar.google_id && (
+            <Link
+              mt="2"
+              size="sm"
+              href={`${GOOGLE_CALENDAR_SETTINGS_URL}${btoa(props.editingCalendar.google_id)}`}
+              display="flex"
+              alignItems={'center'}
+            >
+              <Text mr="1" fontSize={'sm'}>
+                More settings
+              </Text>
+              <FiExternalLink />
+            </Link>
+          )}
         </ModalBody>
 
         <ModalFooter>
