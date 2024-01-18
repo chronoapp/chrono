@@ -29,7 +29,7 @@ class Calendar(Base):
     email_: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     user_calendars: Mapped[list['UserCalendar']] = relationship(
-        "UserCalendar", foreign_keys='[UserCalendar.id]'
+        "UserCalendar", foreign_keys='[UserCalendar.id]', cascade='all,delete'
     )
     events: Mapped[list['Event']] = relationship(
         "Event",
@@ -39,7 +39,10 @@ class Calendar(Base):
         back_populates='calendar',
     )
     access_control_rules: Mapped[list['AccessControlRule']] = relationship(
-        "AccessControlRule", back_populates='calendar', lazy='dynamic', cascade='all,delete'
+        "AccessControlRule",
+        back_populates='calendar',
+        lazy='dynamic',
+        cascade='all,delete',
     )
 
     @property

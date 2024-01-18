@@ -48,8 +48,9 @@ class UserCalendar(Base):
     deleted = mapped_column(Boolean)
 
     webhook: Mapped['Webhook'] = relationship(
-        "Webhook", uselist=False, back_populates="calendar", lazy='joined'
+        "Webhook", uselist=False, back_populates="calendar", lazy='joined', cascade='all,delete'
     )
+
     reminders: Mapped[list['ReminderOverride']] = relationship(
         "ReminderOverride",
         lazy='joined',
