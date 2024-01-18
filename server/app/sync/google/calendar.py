@@ -32,6 +32,7 @@ from app.db.models import (
 
 from app.db.models.event import Transparency, Visibility
 from app.db.repos.contact_repo import ContactRepository
+from app.db.repos.acl_repo import ACLRepository
 from app.db.repos.event_repo.event_repo import (
     EventRepository,
     getRecurringEventId,
@@ -47,7 +48,7 @@ from app.db.repos.event_repo.view_models import (
     ReminderOverrideVM,
 )
 
-from app.sync.google.gcal import getCalendarService, addEventsWebhook
+from app.sync.google import gcal
 from .view_models import GoogleCalendarEvent, ConferenceData
 
 """
@@ -109,9 +110,10 @@ def mapGoogleColor(color: str) -> str:
         return color
 
 
-def syncGoogleCalendars(user: User, calendarList):
+def syncGoogleCalendars(user: User, calendarList, session: Session, removeDeleted: bool = True):
     calendarsMap = {cal.google_id: cal for cal in user.getGoogleCalendars()}
 
+    # Add and update calendars
     for calendarItem in calendarList:
         gCalId = calendarItem.get('id')
         calSummary = calendarItem.get('summary')
@@ -164,35 +166,57 @@ def syncGoogleCalendars(user: User, calendarList):
             userCalendar.calendar = calendar
             user.calendars.append(userCalendar)
 
+        # Sync ACL
+        if userCalendar.access_role == 'owner':
+            aclRepo = ACLRepository(session)
+            syncAccessControlList(userCalendar, aclRepo)
 
-def syncAccessControlList(userCalendar: UserCalendar, aclResult):
+    # Remove deleted calendars
+    if removeDeleted:
+        existingCalendarIds = set(calendarsMap.keys())
+        googleCalendarIds = set([cal.get('id') for cal in calendarList])
+        deletedCalendarGoogleIds = existingCalendarIds - googleCalendarIds
+
+        for googleCalendarId in deletedCalendarGoogleIds:
+            userCalendar = calendarsMap.get(googleCalendarId)
+            if userCalendar:
+                calendar = userCalendar.calendar
+                session.delete(userCalendar)
+                session.delete(calendar)
+                session.commit()
+
+                logger.info(f'Deleted calendar {googleCalendarId}')
+
+
+def syncAccessControlList(userCalendar: UserCalendar, aclRepo: ACLRepository):
+    aclResult = gcal.getAccessControlList(userCalendar)
+
     for aclRule in aclResult.get('items'):
-        scope = aclRule.get('scope')
-        scopeType = scope.get('type')
-        scopeValue = scope.get('value')
+        aclId = aclRule.get('id')
 
-        acl = AccessControlRule(aclRule.get('id'), aclRule.get('role'), scopeType, scopeValue)
-        userCalendar.calendar.access_control_rules.append(acl)
+        existingAcl = aclRepo.getAccessControlRuleByGoogleId(aclId)
+        if not existingAcl:
+            scope = aclRule.get('scope')
+            scopeType = scope.get('type')
+            scopeValue = scope.get('value')
 
-
-def syncAccessControlListAllCalendars(user: User, service):
-    for calendar in user.getGoogleCalendars():
-        if calendar.access_role == 'owner':
-            aclResult = service.acl().list(calendarId=calendar.google_id).execute()
-            syncAccessControlList(calendar, aclResult)
+            acl = AccessControlRule(aclRule.get('id'), aclRule.get('role'), scopeType, scopeValue)
+            userCalendar.calendar.access_control_rules.append(acl)
 
 
-def syncCalendarsAndACL(user: User):
+def syncAllCalendars(user: User, session: Session):
     """Syncs calendars and access control list from google calendar."""
-    service = getCalendarService(user)
-    calendarList = service.calendarList().list().execute()
+    calendarList = gcal.getUserCalendars(user)
+    syncGoogleCalendars(user, calendarList.get('items'), session)
 
-    syncGoogleCalendars(user, calendarList.get('items'))
-    syncAccessControlListAllCalendars(user, service)
+
+def syncCalendar(user: User, calendarId: str, session: Session):
+    calendar = gcal.getUserCalendar(user, calendarId)
+    syncGoogleCalendars(user, [calendar], session, removeDeleted=False)
 
 
 def syncCalendarEvents(calendar: UserCalendar, session: Session, fullSync: bool = False) -> None:
-    service = getCalendarService(calendar.user)
+    service = gcal.getCalendarService(calendar.user)
     end = (datetime.utcnow() + timedelta(days=30)).isoformat() + 'Z'
     nextPageToken = None
 

@@ -48,7 +48,11 @@ class UserCalendar(Base):
     deleted = mapped_column(Boolean)
 
     webhook: Mapped['Webhook'] = relationship(
-        "Webhook", uselist=False, back_populates="calendar", lazy='joined', cascade='all,delete'
+        "Webhook",
+        uselist=False,
+        back_populates="calendar",
+        lazy='joined',
+        cascade='all,delete,delete-orphan',
     )
 
     reminders: Mapped[list['ReminderOverride']] = relationship(
@@ -83,7 +87,7 @@ class UserCalendar(Base):
         self.reminders = reminders
 
     def hasWriteAccess(self) -> bool:
-        return self.access_role == 'writer' or self.access_role == 'owner'
+        return self.access_role in ['writer', 'owner']
 
     @property
     def summary(self):

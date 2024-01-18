@@ -18,6 +18,7 @@ from app.db.repos.calendar_repo import (
 )
 from app.sync.google.tasks import updateCalendarTask
 from app.sync.google import gcal
+from app.sync.google.calendar import syncCalendar
 
 router = APIRouter()
 
@@ -47,17 +48,24 @@ async def getCalendars(user: User = Depends(get_current_user), session: Session 
 
 
 @router.post('/calendars/', response_model=CalendarVM)
-async def postCalendar(
+async def createCalendar(
     calendar: CalendarBaseVM,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
+    """Creates a new calendar.
+    TODO: Add user-defined params (color, primary, etc) so we don't have to sync to get them.
+    """
     calendarRepo = CalendarRepository(session)
     userCalendar = calendarRepo.createCalendar(user, calendar)
 
     if calendar.source == 'google':
-        resp = gcal.createCalendar(user, userCalendar)
-        userCalendar.google_id = resp['id']
+        resp = gcal.createCalendar(user, userCalendar.calendar)
+        googleId = resp['id']
+        userCalendar.google_id = googleId
+        userCalendar.calendar.google_id = googleId
+        syncCalendar(user, googleId, session)
+
     else:
         userCalendar.calendar.email_ = user.email
 
@@ -99,7 +107,7 @@ async def deleteCalendar(
 
         userCalendar = calendarRepo.getCalendar(user, calendarId)
         if userCalendar.source == 'google':
-            gcal.removeCalendar(user, userCalendar)
+            gcal.removeUserCalendar(user, userCalendar)
 
         calendarRepo.deleteCalendar(user, calendarId)
 

@@ -8,9 +8,8 @@ from googleapiclient.discovery import build
 
 from app.core import config
 from app.sync.locking import acquireLock, releaseLock
-from app.db.models import Event, User, UserCalendar
+from app.db.models import Event, User, UserCalendar, Calendar
 from app.db.models.conference_data import ConferenceCreateStatus
-
 
 """Interfaces with Google Calendar API.
 
@@ -210,17 +209,7 @@ def deleteGoogleEvent(user: User, calendarId: str, eventId: str, sendUpdates: Se
     return resp
 
 
-def createCalendar(user: User, calendar: UserCalendar):
-    """Creates a calendar and adds it to my list."""
-    body = {
-        'summary': calendar.summary,
-        'description': calendar.description,
-        'timeZone': calendar.timezone,
-    }
-    return getCalendarService(user).calendars().insert(body=body).execute()
-
-
-def updateCalendar(user: User, calendar: UserCalendar):
+def updateUserCalendar(user: User, calendar: UserCalendar):
     body = {
         'selected': calendar.selected or False,
         'foregroundColor': calendar.foreground_color,
@@ -237,9 +226,51 @@ def updateCalendar(user: User, calendar: UserCalendar):
     )
 
 
-def removeCalendar(user: User, calendar: UserCalendar):
+def removeUserCalendar(user: User, calendar: UserCalendar):
     """Removes the calendar from my list."""
     return getCalendarService(user).calendarList().delete(calendarId=calendar.google_id).execute()
+
+
+def getUserCalendars(user: User):
+    return getCalendarService(user).calendarList().list().execute()
+
+
+def getUserCalendar(user: User, calendarId: str):
+    return getCalendarService(user).calendarList().get(calendarId=calendarId).execute()
+
+
+def createCalendar(user: User, calendar: Calendar):
+    """Creates a calendar and adds it to my list."""
+    body = {
+        'summary': calendar.summary,
+        'description': calendar.description,
+        'timeZone': calendar.timezone,
+    }
+    return getCalendarService(user).calendars().insert(body=body).execute()
+
+
+def updateCalendar(user: User, calendar: Calendar):
+    """Updates a calendar and adds it to my list."""
+    body = {
+        'summary': calendar.summary,
+        'description': calendar.description,
+        'timeZone': calendar.timezone,
+    }
+    return (
+        getCalendarService(user)
+        .calendars()
+        .update(calendarId=calendar.google_id, body=body)
+        .execute()
+    )
+
+
+def getAccessControlList(userCalendar: UserCalendar):
+    return (
+        getCalendarService(userCalendar.user)
+        .acl()
+        .list(calendarId=userCalendar.google_id)
+        .execute()
+    )
 
 
 def addEventsWebhook(calendar: UserCalendar, ttlSeconds: float, webhookUrl: str):

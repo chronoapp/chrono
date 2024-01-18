@@ -61,7 +61,7 @@ def test_syncGoogleCalendars(user, session: Session):
         ],
     }
 
-    syncGoogleCalendars(user, [calendarItem])
+    syncGoogleCalendars(user, [calendarItem], session)
 
     calendarRepo = CalendarRepository(session)
     createdCalendar = next(

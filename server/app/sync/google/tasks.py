@@ -13,7 +13,7 @@ from . import gcal
 from .calendar import (
     syncCreatedOrUpdatedGoogleEvent,
     syncCalendarEvents,
-    syncCalendarsAndACL,
+    syncAllCalendars,
 )
 from app.core.logger import logger
 from app.core.notifications import sendClientNotification, NotificationType
@@ -126,7 +126,7 @@ def syncAllCalendarsTask(userId: uuid.UUID, fullSync: bool) -> None:
         webhookRepo = WebhookRepository(session)
         user = userRepo.getUser(userId)
 
-        syncCalendarsAndACL(user)
+        syncAllCalendars(user, session)
         session.commit()
 
         for calendar in user.calendars:
@@ -159,7 +159,8 @@ def updateCalendarTask(userId: uuid.UUID, calendarId: uuid.UUID) -> None:
         calRepo = CalendarRepository(session)
 
         user = userRepo.getUser(userId)
-        calendar = calRepo.getCalendar(user, calendarId)
+        userCalendar = calRepo.getCalendar(user, calendarId)
+        gcal.updateUserCalendar(user, userCalendar)
 
-        logger.debug(f'Update Calendar {calendar.google_id}')
-        gcal.updateCalendar(user, calendar)
+        if userCalendar.hasWriteAccess():
+            gcal.updateCalendar(user, userCalendar.calendar)

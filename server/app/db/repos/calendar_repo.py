@@ -19,7 +19,7 @@ class CalendarBaseVM(BaseModel):
 
     google_id: str | None = None
     summary: str
-    summary_override: str | None = Field(alias='summaryOverride')
+    summary_override: str | None = Field(default=None, alias='summaryOverride')
     description: str | None = None
     background_color: str = Field(alias='backgroundColor')
     foreground_color: str = Field(alias='foregroundColor')
@@ -117,16 +117,25 @@ class CalendarRepository:
     def updateCalendar(
         self, user: User, calendarId: uuid.UUID, userCalendar: CalendarVM
     ) -> UserCalendar:
+        """Updates the calendar details and returns the updated calendar.
+        If the calendar is not writable, it will only update the summary override.
+
+        The summary update will always be CalendarVM.summary. If the calendar is writable,
+        we update the summary field, otherwise we update the summary_override field.
+        """
         calendarDb = self.getCalendar(user, calendarId)
         if not calendarDb:
             raise CalendarNotFoundError('Calendar not found.')
 
+        # Updates for the user's calendar list.
         calendarDb.selected = userCalendar.selected or False
-        calendarDb.summary_override = userCalendar.summary_override
         calendarDb.background_color = userCalendar.background_color
         calendarDb.foreground_color = userCalendar.foreground_color
+        calendarDb.summary_override = userCalendar.summary
 
-        # TODO: Depending on ACL, Update the original calendar details on google
+        if calendarDb.hasWriteAccess():
+            calendarDb.calendar.summary = userCalendar.summary
+            calendarDb.calendar.description = userCalendar.description
 
         return calendarDb
 
