@@ -41,7 +41,9 @@ class AccessControlRule(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
 
     google_id: Mapped[Optional[str]] = mapped_column(String, index=True)
-    calendar_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('calendar.id'), nullable=True)
+    calendar_id: Mapped[uuid.UUID] = mapped_column(
+        UUID, ForeignKey('calendar.id'), nullable=True, index=True
+    )
     calendar: Mapped['Calendar'] = relationship('Calendar', back_populates='access_control_rules')
 
     role: Mapped[Optional[str]] = mapped_column(String(50))  # AccessRole
