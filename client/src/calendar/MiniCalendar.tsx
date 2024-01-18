@@ -68,7 +68,7 @@ export default function MiniCalendar() {
               mt="1px"
               mb="1px"
               fontSize={'xs'}
-              _hover={{ cursor: 'pointer', bg: 'gray.100' }}
+              _hover={{ cursor: 'pointer', bg: !isToday ? 'gray.100' : undefined }}
               backgroundColor={!isToday && isSelected ? 'gray.100' : undefined}
               className={clsx(
                 'cal-mini-month-day',

@@ -122,7 +122,7 @@ function EditLabelModal() {
         <ModalCloseButton />
         <ModalBody>
           <FormControl id="tag-name">
-            <FormLabel fontSize={'sm'}>Tag Name</FormLabel>
+            <FormLabel fontSize={'sm'}>Name</FormLabel>
             <Input
               type="text"
               placeholder=""
@@ -144,7 +144,7 @@ function EditLabelModal() {
           </FormControl>
 
           <FormControl id="tag-color" mt="2">
-            <FormLabel fontSize={'sm'}>Tag Color</FormLabel>
+            <FormLabel fontSize={'sm'}>Color</FormLabel>
 
             <Menu>
               <MenuButton as={Button} size="sm" rightIcon={<FiChevronDown />} variant="ghost">
