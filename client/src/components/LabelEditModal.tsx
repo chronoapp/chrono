@@ -19,6 +19,7 @@ import {
   MenuList,
   MenuItem,
   useToast,
+  ToastId,
 } from '@chakra-ui/react'
 import { FiChevronDown } from 'react-icons/fi'
 import { InfoAlert } from '@/components/Alert'
@@ -29,6 +30,8 @@ import { labelsState, LabelModalState } from '@/state/LabelsState'
 
 function EditLabelModal() {
   const toast = useToast()
+  const toastIdRef = React.useRef<ToastId>()
+
   const [labelState, setLabelState] = useRecoilState(labelsState)
 
   const allColors = getSortedLabelColors()
@@ -48,22 +51,38 @@ function EditLabelModal() {
     )
   }
 
-  function onClickSaveLabel(newLabelModal: LabelModalState, selectedColor: LabelColor) {
-    const updateLabel = (label) => {
-      setLabelState((prevState) => {
-        const newLabels = { ...prevState.labelsById, [label.id]: label }
-        return {
-          ...prevState,
-          labelsById: newLabels,
-          editingLabel: { ...newLabelModal, active: false, labelTitle: '' },
-        }
-      })
+  function updateLabelState(label) {
+    setLabelState((prevState) => {
+      const newLabels = { ...prevState.labelsById, [label.id]: label }
+      return {
+        ...prevState,
+        labelsById: newLabels,
+        editingLabel: { ...newLabelModal, active: false, labelTitle: '' },
+      }
+    })
 
-      toast({
-        render: (props) => (
-          <InfoAlert title={`Saved tag ${label.title}.`} onClose={props.onClose} />
-        ),
-      })
+    toastIdRef.current && toast.close(toastIdRef.current)
+    toastIdRef.current = toast({
+      render: (props) => <InfoAlert title={`Saved tag ${label.title}.`} onClose={props.onClose} />,
+    })
+  }
+
+  function addErrorMessage(title: string, details: string = '') {
+    toastIdRef.current && toast.close(toastIdRef.current)
+
+    toastIdRef.current = toast({
+      title: title,
+      duration: 3000,
+      render: (p) => {
+        return <InfoAlert onClose={p.onClose} title={title} icon={'info'} details={details} />
+      },
+    })
+  }
+
+  function onClickSaveLabel(newLabelModal: LabelModalState, selectedColor: LabelColor) {
+    if (!newLabelModal.labelTitle) {
+      addErrorMessage("Tag name can't be empty", 'Please enter a tag name before submitting.')
+      return
     }
 
     if (newLabelModal.labelId) {
@@ -73,10 +92,10 @@ function EditLabelModal() {
         color_hex: selectedColor.hex,
         title: newLabelModal.labelTitle,
       }
-      console.log(updatedLabel)
-      putLabel(updatedLabel).then(updateLabel)
+
+      putLabel(updatedLabel).then(updateLabelState)
     } else {
-      createLabel(newLabelModal.labelTitle, selectedColor.hex).then(updateLabel)
+      createLabel(newLabelModal.labelTitle, selectedColor.hex).then(updateLabelState)
     }
   }
 
@@ -102,7 +121,7 @@ function EditLabelModal() {
         <ModalHeader fontSize={'md'}>Add Tag</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          <FormControl id="tag-name" isRequired>
+          <FormControl id="tag-name">
             <FormLabel fontSize={'sm'}>Tag Name</FormLabel>
             <Input
               type="text"

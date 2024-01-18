@@ -1,17 +1,21 @@
-import React from 'react'
-
 import { FiX } from 'react-icons/fi'
-import { IoIosCheckmarkCircle } from 'react-icons/io'
+import { IoIosCheckmarkCircle, IoIosInformationCircle } from 'react-icons/io'
 import { Icon, IconButton, Flex, Text } from '@chakra-ui/react'
+
+type AlertIcon = 'info' | 'success'
 
 interface IProps {
   title: string
-  details?: string
   colorScheme: string
+  details?: string
+  icon?: AlertIcon
   onClose: () => void
 }
 
 const BaseAlert = (props: IProps) => {
+  const alertIcon = props.icon === 'info' ? IoIosInformationCircle : IoIosCheckmarkCircle
+  const alertColor = props.icon === 'info' ? 'gray.500' : 'green.500'
+
   return (
     <Flex
       direction="row"
@@ -23,7 +27,7 @@ const BaseAlert = (props: IProps) => {
     >
       <Flex justifyContent={'space-between'} direction="row" w="100%">
         <Flex py="3.5" pl="4" direction="row" alignItems={'center'} justifyContent="center">
-          <Icon w="6" h="6" color="green.500" as={IoIosCheckmarkCircle} />
+          <Icon w="6" h="6" color={alertColor} as={alertIcon} />
           <Flex pl="3" direction="column">
             <Text as="h4" fontSize="sm" fontWeight="600" color={`gray.800`}>
               {props.title}
@@ -46,6 +50,11 @@ const BaseAlert = (props: IProps) => {
       </Flex>
     </Flex>
   )
+}
+
+BaseAlert.defaultProps = {
+  colorScheme: 'gray',
+  icon: 'success',
 }
 
 export const InfoAlert = (props: Omit<IProps, 'colorScheme'>) => {

@@ -56,7 +56,7 @@ export default function CalendarEditModal(props: IProps) {
         </ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          <FormControl id="calendar-title" isRequired>
+          <FormControl id="calendar-title">
             <FormLabel fontSize={'sm'}>Title</FormLabel>
             <Input
               type="text"

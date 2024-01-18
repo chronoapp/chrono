@@ -24,6 +24,8 @@ import {
   AccordionPanel,
   AccordionIcon,
 } from '@chakra-ui/react'
+import { useToast, ToastId } from '@chakra-ui/react'
+import { InfoAlert } from '@/components/Alert'
 
 import Hoverable from '@/lib/Hoverable'
 import groupBy from '@/lib/js-lib/groupBy'
@@ -85,6 +87,9 @@ function ConfirmDeleteCalendarAlert(props: {
  * TODO: Update selected calendars to server.
  */
 export default function CalendarsPanel() {
+  const toast = useToast()
+  const toastIdRef = React.useRef<ToastId>()
+
   const [calendars, setCalendars] = useRecoilState(calendarsState)
 
   const confirmDeleteCancelRef = React.useRef<HTMLButtonElement>(null)
@@ -246,6 +251,18 @@ export default function CalendarsPanel() {
     )
   }
 
+  function addErrorMessage(title: string, details: string = '') {
+    toastIdRef.current && toast.close(toastIdRef.current)
+
+    toastIdRef.current = toast({
+      title: title,
+      duration: 3000,
+      render: (p) => {
+        return <InfoAlert onClose={p.onClose} title={title} icon={'info'} details={details} />
+      },
+    })
+  }
+
   const groupedCalendars = groupBy(Object.values(calendars.calendarsById), (cal) => cal.source)
   const keyArr = Array.from(groupedCalendars.keys())
 
@@ -265,7 +282,10 @@ export default function CalendarsPanel() {
         }
         onCancel={() => setEditModalActive(false)}
         onSave={async (fields) => {
-          // TODO: Handle errors, add alerts
+          if (!fields.summaryOverride) {
+            addErrorMessage("Title can't be empty", 'Please enter a title before submitting.')
+            return
+          }
 
           if (editingCalendarId) {
             const updatedCalendar = {
