@@ -7,7 +7,7 @@ CONTACT_SEARCH_QUERY = """
         FROM contact
         WHERE contact.user_id = :userId
     ) search
-    WHERE search.doc @@ to_tsquery(:query || ':*')
+    WHERE search.doc @@ to_tsquery(:query || ':*') AND email IS NOT NULL
     ORDER BY ts_rank(search.doc, to_tsquery(:query || ':*')) DESC
     LIMIT :limit;
 """
