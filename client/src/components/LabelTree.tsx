@@ -14,6 +14,15 @@ import {
   useToast,
 } from '@chakra-ui/react'
 
+import {
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
+} from '@chakra-ui/react'
+
 import Tree, { TreeNodeProps } from 'rc-tree'
 import { DataNode } from 'rc-tree/lib/interface'
 import { FiChevronDown, FiChevronRight, FiMoreHorizontal, FiTrash, FiEdit } from 'react-icons/fi'
@@ -25,7 +34,7 @@ import { Label } from '@/models/Label'
 import ColorPicker from './ColorPicker'
 import { LabelTagColor } from './LabelTag'
 
-import { putLabel, putLabels, deleteLabel } from '../util/Api'
+import * as API from '@/util/Api'
 import { labelsState } from '@/state/LabelsState'
 
 interface IProps {
@@ -59,10 +68,12 @@ function LabelTree(props: IProps) {
   const [expandedKeys, setExpandedKeys] = useState([])
   const [autoExpandParent, setAutoExpandParent] = useState(false)
 
-  const [selectedLabelId, setSelectedLabelId] = useState<string | undefined>(undefined)
-
   const labelItems = getOrderedLabels(labelState.labelsById)
   const prevEditLabelModalOpen = usePrevious(labelState.editingLabel.active)
+
+  const [selectedLabelId, setSelectedLabelId] = useState<string | undefined>(undefined)
+  const confirmDeleteCancelRef = React.useRef<HTMLButtonElement>(null)
+  const [confirmDeleteLabel, setConfirmDeleteLabel] = React.useState<Label | undefined>(undefined)
 
   useEffect(() => {
     if (prevEditLabelModalOpen && !labelState.editingLabel.active) {
@@ -163,7 +174,7 @@ function LabelTree(props: IProps) {
       }
     })
 
-    putLabels(Object.values(tagUpdates))
+    API.putLabels(Object.values(tagUpdates))
   }
 
   function onExpand(expandedKeys) {
@@ -178,7 +189,7 @@ function LabelTree(props: IProps) {
         labelsById: { ...labelsState.labelsById, [label.id]: label },
       }
     })
-    const _updatedLabel = await putLabel(label)
+    const _updatedLabel = await API.putLabel(label)
   }
 
   function LabelView(label: Label, allowEdit: boolean) {
@@ -217,17 +228,20 @@ function LabelTree(props: IProps) {
     }
   }
 
-  function onDeleteLabel(item: TreeItem) {
+  /**
+   * Updates the label in the state and sends a DELETE request to the API to delete the label.
+   */
+  function onDeleteLabel(label: Label) {
     setLabelState((prevState) => {
       return produce(prevState, (draft) => {
-        delete draft.labelsById[item.key]
+        delete draft.labelsById[label.id]
       })
     })
 
-    deleteLabel(item.key).then((r) => {
+    API.deleteLabel(label.id).then((r) => {
       toast({
         render: (props) => (
-          <InfoAlert title={`Tag ${item.title} deleted.`} onClose={props.onClose} />
+          <InfoAlert title={`Tag ${label.title} deleted.`} onClose={props.onClose} />
         ),
       })
     })
@@ -297,7 +311,7 @@ function LabelTree(props: IProps) {
                             <MenuItem
                               fontSize="sm"
                               onClick={() => {
-                                onDeleteLabel(item)
+                                setConfirmDeleteLabel(item.label)
                                 onMouseLeave()
                               }}
                               icon={<FiTrash />}
@@ -393,16 +407,65 @@ function LabelTree(props: IProps) {
   }
 
   return (
-    <Tree
-      expandedKeys={expandedKeys}
-      onExpand={onExpand}
-      autoExpandParent={autoExpandParent}
-      draggable
-      onDragStart={onDragStart}
-      onDragEnter={onDragEnter}
-      onDrop={onDrop}
-      treeData={treeData(labelItems, props.allowEdit)}
-    />
+    <>
+      <ConfirmDeleteLabelDialog
+        label={confirmDeleteLabel}
+        onClose={() => setConfirmDeleteLabel(undefined)}
+        onDelete={(label) => {
+          onDeleteLabel(label)
+          setConfirmDeleteLabel(undefined)
+        }}
+        cancelRef={confirmDeleteCancelRef}
+      />
+
+      <Tree
+        expandedKeys={expandedKeys}
+        onExpand={onExpand}
+        autoExpandParent={autoExpandParent}
+        draggable
+        onDragStart={onDragStart}
+        onDragEnter={onDragEnter}
+        onDrop={onDrop}
+        treeData={treeData(labelItems, props.allowEdit)}
+      />
+    </>
+  )
+}
+
+function ConfirmDeleteLabelDialog(props: {
+  label: Label | undefined
+  onClose: () => void
+  onDelete: (labelId: Label) => void
+  cancelRef: React.RefObject<HTMLButtonElement>
+}) {
+  if (!props.label) {
+    return <></>
+  }
+
+  return (
+    <AlertDialog
+      isOpen={!!props.label}
+      leastDestructiveRef={props.cancelRef}
+      onClose={props.onClose}
+    >
+      <AlertDialogOverlay>
+        <AlertDialogContent>
+          <AlertDialogHeader fontSize="md">Delete tag {props.label.title}?</AlertDialogHeader>
+          <AlertDialogBody fontSize={'sm'}>
+            This will remove the tag <b>{props.label.title}</b> from all events.
+          </AlertDialogBody>
+
+          <AlertDialogFooter>
+            <Button ref={props.cancelRef} onClick={props.onClose}>
+              Cancel
+            </Button>
+            <Button colorScheme="red" onClick={() => props.onDelete(props.label!)} ml={3}>
+              Delete Tag
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialogOverlay>
+    </AlertDialog>
   )
 }
 
