@@ -13,6 +13,7 @@ import {
   ModalCloseButton,
   Link,
   Text,
+  Textarea,
 } from '@chakra-ui/react'
 import { FiExternalLink } from 'react-icons/fi'
 
@@ -36,11 +37,11 @@ export default function CalendarEditModal(props: IProps) {
   const [editableFields, setEditableFields] = React.useState<CalendarEditable>(
     getDefaultEditableFields()
   )
+  const [isSaving, setIsSaving] = React.useState(false)
 
   function getDefaultEditableFields(): CalendarEditable {
     return {
-      summaryOverride:
-        props.editingCalendar?.summaryOverride || props.editingCalendar?.summary || '',
+      summary: props.editingCalendar?.summary || props.editingCalendar?.summary || '',
       description: props.editingCalendar?.description || '',
       source: props.editingCalendar?.source || 'google',
       backgroundColor: props.editingCalendar?.backgroundColor || DEFAULT_CALENDAR_BG_COLOR,
@@ -51,6 +52,8 @@ export default function CalendarEditModal(props: IProps) {
   React.useEffect(() => {
     setEditableFields(getDefaultEditableFields())
   }, [props.editingCalendar])
+
+  const isEditableCalendar = props.editingCalendar && props.editingCalendar.isWritable()
 
   return (
     <Modal isOpen={props.isActive} onClose={props.onCancel}>
@@ -65,32 +68,34 @@ export default function CalendarEditModal(props: IProps) {
             <FormLabel fontSize={'sm'}>Title</FormLabel>
             <Input
               type="text"
+              placeholder={'Title'}
               size="sm"
               fontSize={'sm'}
-              value={editableFields.summaryOverride}
+              value={editableFields.summary}
               onChange={(e) => {
-                setEditableFields({ ...editableFields, summaryOverride: e.target.value })
+                setEditableFields({ ...editableFields, summary: e.target.value })
               }}
             />
           </FormControl>
 
-          <FormControl id="calendar-description" mt="2">
-            <FormLabel fontSize={'sm'}>Description</FormLabel>
-            <Input
-              type="text"
-              size-="sm"
-              fontSize={'sm'}
-              placeholder=""
-              value={editableFields.description}
-              onChange={(e) => {
-                setEditableFields({ ...editableFields, description: e.target.value })
-              }}
-            />
-          </FormControl>
+          {(!props.editingCalendar || isEditableCalendar) && (
+            <FormControl id="calendar-description" mt="2">
+              <FormLabel fontSize={'sm'}>Description</FormLabel>
+              <Textarea
+                size="xs"
+                fontSize={'sm'}
+                placeholder={'Description'}
+                value={editableFields.description}
+                onChange={(e) => {
+                  setEditableFields({ ...editableFields, description: e.target.value })
+                }}
+              />
+            </FormControl>
+          )}
 
           {props.editingCalendar && props.editingCalendar.google_id && (
             <Link
-              mt="2"
+              mt="3"
               size="sm"
               href={`${GOOGLE_CALENDAR_SETTINGS_URL}${btoa(props.editingCalendar.google_id)}`}
               display="flex"
@@ -108,7 +113,15 @@ export default function CalendarEditModal(props: IProps) {
           <Button variant={'ghost'} mr={3} onClick={props.onCancel}>
             Cancel
           </Button>
-          <Button colorScheme="primary" onClick={() => props.onSave(editableFields)}>
+          <Button
+            colorScheme="primary"
+            isLoading={isSaving}
+            onClick={async () => {
+              setIsSaving(true)
+              await props.onSave(editableFields)
+              setIsSaving(false)
+            }}
+          >
             Save
           </Button>
         </ModalFooter>

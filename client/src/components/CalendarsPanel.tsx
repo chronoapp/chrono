@@ -285,7 +285,7 @@ export default function CalendarsPanel() {
         }
         onCancel={() => setEditModalActive(false)}
         onSave={async (fields) => {
-          if (!fields.summaryOverride) {
+          if (!fields.summary) {
             addErrorMessage("Title can't be empty", 'Please enter a title before submitting.')
             return
           }
@@ -300,7 +300,7 @@ export default function CalendarsPanel() {
             updateCalendar(calendar)
           } else {
             const calendar = await API.createCalendar(
-              fields.summaryOverride,
+              fields.summary,
               fields.backgroundColor,
               fields.source,
               fields.description,
@@ -343,7 +343,10 @@ export default function CalendarsPanel() {
                     color="gray.600"
                     fontWeight="normal"
                     variant="link"
-                    onClick={() => setEditModalActive(true)}
+                    onClick={() => {
+                      setEditingCalendarId(undefined)
+                      setEditModalActive(true)
+                    }}
                     float="left"
                     m="2"
                   >

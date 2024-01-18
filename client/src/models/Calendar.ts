@@ -6,7 +6,7 @@ export type AccessRole = 'reader' | 'writer' | 'owner' | 'freeBusyReader'
 export type CalendarSource = 'google' | 'chrono'
 
 export interface CalendarEditable {
-  summaryOverride: string
+  summary: string
   description: string
   source: CalendarSource
   backgroundColor: string
