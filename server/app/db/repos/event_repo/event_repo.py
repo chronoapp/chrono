@@ -889,6 +889,9 @@ def createOrUpdateEvent(
     overrideId: Optional[str] = None,
     googleId: Optional[str] = None,
 ) -> Event:
+    """Create a new event or update (PUT) an existing event by copying the properties from the view model
+    to the event model.
+    """
     recurrences = None if eventVM.recurring_event_id else eventVM.recurrences
 
     if creatorVM := eventVM.creator:
@@ -979,38 +982,37 @@ def createOrUpdateEvent(
 
         return event
     else:
-        # Patch request. Updates only the fields that are set.
-        eventDb.google_id = googleId or eventDb.google_id
-        eventDb.title = eventVM.title or eventDb.title
-        eventDb.description = eventVM.description or eventDb.description
-        eventDb.start = eventVM.start or eventDb.start
-        eventDb.end = eventVM.end or eventDb.end
-        eventDb.start_day = eventVM.start_day or eventDb.start_day
-        eventDb.end_day = eventVM.end_day or eventDb.end_day
-        eventDb.time_zone = eventVM.timezone or eventDb.time_zone
-        eventDb.recurring_event_id = eventVM.recurring_event_id or eventDb.recurring_event_id
+        if googleId:
+            eventDb.google_id = googleId
+
+        eventDb.title = eventVM.title or ""
+        eventDb.description = eventVM.description
+        eventDb.start = eventVM.start
+        eventDb.end = eventVM.end
+        eventDb.start_day = eventVM.start_day
+        eventDb.end_day = eventVM.end_day
+        eventDb.time_zone = eventVM.timezone
+        eventDb.recurring_event_id = eventVM.recurring_event_id
         eventDb.recurring_event_calendar_id = userCalendar.id
 
         if recurrences is not None:
             eventDb.recurrences = recurrences
 
-        eventDb.guests_can_modify = eventVM.guests_can_modify or eventDb.guests_can_modify
-        eventDb.guests_can_invite_others = (
-            eventVM.guests_can_invite_others or eventDb.guests_can_invite_others
-        )
-        eventDb.guests_can_see_other_guests = (
-            eventVM.guests_can_see_other_guests or eventDb.guests_can_see_other_guests
-        )
-        eventDb.conference_data = conferenceData or eventDb.conference_data
-        eventDb.location = eventVM.location or eventDb.location
+        eventDb.guests_can_modify = eventVM.guests_can_modify
+        eventDb.guests_can_invite_others = eventVM.guests_can_invite_others
+        eventDb.guests_can_see_other_guests = eventVM.guests_can_see_other_guests
+
+        eventDb.conference_data = conferenceData
+        eventDb.location = eventVM.location
 
         if not eventDb.creator:
             eventDb.creator = creator
 
         eventDb.organizer = organizer
-        eventDb.status = eventVM.status or eventDb.status
-        eventDb.visibility = eventVM.visibility or eventDb.visibility
-        eventDb.transparency = eventVM.transparency or eventDb.transparency
+        eventDb.status = eventVM.status
+
+        eventDb.visibility = eventVM.visibility
+        eventDb.transparency = eventVM.transparency
 
         if eventVM.use_default_reminders is not None:
             eventDb.use_default_reminders = eventVM.use_default_reminders
