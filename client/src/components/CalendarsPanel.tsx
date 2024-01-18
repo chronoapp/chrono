@@ -199,8 +199,14 @@ export default function CalendarsPanel() {
                   ></span>
                 </label>
 
-                <Flex align="center" justifyContent="space-between" w="100%">
-                  <Text userSelect="none" fontSize="sm" color={'gray.700'} pl="2">
+                <Flex align="center" justifyContent="space-between" w="100%" whiteSpace={'nowrap'}>
+                  <Text
+                    userSelect="none"
+                    fontSize="sm"
+                    color={'gray.700'}
+                    pl="2"
+                    overflow={'hidden'}
+                  >
                     {calendar.summary}
                   </Text>
 

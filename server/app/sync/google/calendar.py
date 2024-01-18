@@ -185,8 +185,6 @@ def syncGoogleCalendars(user: User, calendarList, session: Session, removeDelete
                 session.delete(calendar)
                 session.commit()
 
-                logger.info(f'Deleted calendar {googleCalendarId}')
-
 
 def syncAccessControlList(userCalendar: UserCalendar, aclRepo: ACLRepository):
     aclResult = gcal.getAccessControlList(userCalendar)
