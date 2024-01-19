@@ -1,7 +1,7 @@
 from typing import Any, Optional, Literal, Dict
 from uuid import uuid4
 from zoneinfo import ZoneInfo
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -15,6 +15,9 @@ from app.db.models.conference_data import ConferenceCreateStatus
 
 TODO: Make this interface deeper & don't expose Google's API directly.
 """
+EVENTS_WEBHOOK_TTL_DAYS = 30
+EVENTS_WEBHOOK_TTL_SECONDS = timedelta(days=EVENTS_WEBHOOK_TTL_DAYS).total_seconds()
+
 SendUpdateType = Literal['all', 'externalOnly', 'none']
 
 
@@ -278,6 +281,9 @@ def updateCalendar(user: User, calendar: Calendar):
 
 
 def getAccessControlList(userCalendar: UserCalendar):
+    """Returns the list of access control rules for the calendar.
+    https://developers.google.com/calendar/api/v3/reference/acl
+    """
     return (
         getCalendarService(userCalendar.user)
         .acl()
@@ -286,9 +292,9 @@ def getAccessControlList(userCalendar: UserCalendar):
     )
 
 
-def addEventsWebhook(calendar: UserCalendar, ttlSeconds: float, webhookUrl: str):
-    """Subscribes to an event notification channel. The subscription lasts for 30 days
-    so it needs to be refreshed.
+def addCalendarEventsWebhook(calendar: UserCalendar, webhookUrl: str):
+    """Subscribes to an event notification channel to watch for events changes within a calendar.
+    https://developers.google.com/calendar/api/v3/reference/events/watch
     """
     uniqueId = uuid4().hex
 
@@ -296,7 +302,7 @@ def addEventsWebhook(calendar: UserCalendar, ttlSeconds: float, webhookUrl: str)
         'id': uniqueId,
         'address': webhookUrl,
         'type': 'web_hook',
-        'params': {'ttl': ttlSeconds},
+        'params': {'ttl': EVENTS_WEBHOOK_TTL_SECONDS},
     }
     return (
         getCalendarService(calendar.user)
@@ -306,7 +312,25 @@ def addEventsWebhook(calendar: UserCalendar, ttlSeconds: float, webhookUrl: str)
     )
 
 
-def removeEventsWebhook(user: User, channelId: str, resourceId: str):
+def addCalendarListWebhook(user: User, webhookUrl: str):
+    """Subscribes to an calendar list notification channel.
+    https://developers.google.com/calendar/api/v3/reference/calendarList/watch
+    """
+    uniqueId = uuid4().hex
+
+    body = {
+        'id': uniqueId,
+        'address': webhookUrl,
+        'type': 'web_hook',
+        'params': {'ttl': EVENTS_WEBHOOK_TTL_SECONDS},
+    }
+    return getCalendarService(user).calendarList().watch(body=body).execute()
+
+
+def removeWebhook(user: User, channelId: str, resourceId: str):
+    """Stops watching resources through this channel.
+    https://developers.google.com/calendar/api/v3/reference/channels/stop
+    """
     body = {
         'id': channelId,
         'resourceId': resourceId,

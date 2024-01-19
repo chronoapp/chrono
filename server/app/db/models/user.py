@@ -13,6 +13,7 @@ from app.db.models.user_credentials import UserCredential
 if TYPE_CHECKING:
     from .label import Label
     from .contact import Contact
+    from .webhook import Webhook
 
 
 class User(Base):
@@ -50,6 +51,11 @@ class User(Base):
     )
     contacts: Mapped[list['Contact']] = relationship(
         'Contact', lazy='dynamic', cascade='all,delete'
+    )
+    webhooks: Mapped[list['Webhook']] = relationship(
+        "Webhook",
+        back_populates="user",
+        cascade='all,delete',
     )
 
     def __repr__(self):

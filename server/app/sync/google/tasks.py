@@ -121,7 +121,10 @@ def syncMoveGoogleEventCalendarTask(
 def syncAllCalendarsTask(userId: uuid.UUID, fullSync: bool) -> None:
     """
     1) Sync all calendars from google calendar.
-    2) Syncs events from all calendars.
+    2) Creates webhooks for all calendars.
+    3) Syncs events from all calendars.
+
+    TODO: Use the syncToken to do an incremental sync.
     """
 
     with scoped_session() as session:
@@ -131,12 +134,14 @@ def syncAllCalendarsTask(userId: uuid.UUID, fullSync: bool) -> None:
 
     with scoped_session() as session:
         userRepo = UserRepository(session)
-        webhookRepo = WebhookRepository(session)
-
         user = userRepo.getUser(userId)
+
+        webhookRepo = WebhookRepository(session)
+        webhookRepo.createCalendarListWebhook(user)
+
         for calendar in user.calendars:
             if calendar.google_id != None:
-                webhookRepo.createCalendarWebhook(calendar)
+                webhookRepo.createCalendarEventsWebhook(calendar)
                 syncCalendarTask.send(user.id, calendar.id, fullSync)
 
 

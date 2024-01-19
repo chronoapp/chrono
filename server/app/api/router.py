@@ -8,10 +8,10 @@ from app.api.endpoints import (
     label_rules,
     calendars,
     notifications,
-    webhooks,
     contacts,
     user,
     plugins,
+    webhooks_gcal,
 )
 
 api_router = APIRouter()
@@ -21,7 +21,7 @@ api_router.include_router(events.router)
 api_router.include_router(labels.router)
 api_router.include_router(label_rules.router)
 api_router.include_router(calendars.router)
-api_router.include_router(webhooks.router)
+api_router.include_router(webhooks_gcal.router)
 api_router.include_router(contacts.router)
 api_router.include_router(user.router)
 api_router.include_router(plugins.router)

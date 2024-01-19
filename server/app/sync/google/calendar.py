@@ -135,7 +135,7 @@ def syncGoogleCalendars(user: User, calendarList, session: Session, removeDelete
             userCalendar.google_id = gCalId
             userCalendar.background_color = backgroundColor
             userCalendar.foreground_color = calendarItem.get('foregroundColor')
-            userCalendar.selected = calendarItem.get('selected', True)
+            userCalendar.selected = calendarItem.get('selected', False)
             userCalendar.access_role = calendarItem.get('accessRole')
             userCalendar.primary = calendarItem.get('primary', False)
             userCalendar.deleted = calendarItem.get('deleted')
