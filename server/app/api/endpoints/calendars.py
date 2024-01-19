@@ -111,6 +111,7 @@ async def removeUserCalendar(
             gcal.removeUserCalendar(user, userCalendar)
 
         calendarRepo.removeUserCalendar(user, calendarId)
+        session.commit()
 
     except CalendarNotFoundError:
         raise HTTPException(HTTP_404_NOT_FOUND)
