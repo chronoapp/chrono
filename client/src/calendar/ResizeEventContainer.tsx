@@ -21,7 +21,8 @@ interface IProps {
 }
 
 interface IState {
-  event: Event | null
+  dragStart: Date | null
+  dragEnd: Date | null
   top: number
   height: number
 }
@@ -48,7 +49,8 @@ class ResizeEventContainer extends React.Component<IProps & InjectedEventActions
     this.getOffsetFromTopOfEvent = this.getOffsetFromTopOfEvent.bind(this)
 
     this.state = {
-      event: null,
+      dragStart: null,
+      dragEnd: null,
       top: 0,
       height: 0,
     }
@@ -66,24 +68,23 @@ class ResizeEventContainer extends React.Component<IProps & InjectedEventActions
     return this.containerRef
   }
 
-  private updateEvent(event: Event, startDate: Date, endDate: Date, top: number, height: number) {
-    const { event: lastEvent } = this.state
-    if (lastEvent && startDate === lastEvent.start && endDate === lastEvent.end) {
+  private updateEvent(startDate: Date, endDate: Date, top: number, height: number) {
+    const { dragStart: lastDragStart, dragEnd: lastDragEnd } = this.state
+    if (lastDragStart && startDate === lastDragStart && endDate === lastDragEnd) {
       return
     }
 
-    const nextEvent = { ...event, start: startDate, end: endDate }
     this.setState({
       top,
       height,
-      event: nextEvent,
+      dragStart: startDate,
+      dragEnd: endDate,
     })
   }
 
   private handleResize(point: SelectRect, bounds: Rect) {
     const { event, direction } = this.props.dragAndDropAction!
     const { slotMetrics } = this.props
-
     const currentSlot = slotMetrics.closestSlotFromPoint(point.y, bounds, true)
 
     let start
@@ -97,13 +98,11 @@ class ResizeEventContainer extends React.Component<IProps & InjectedEventActions
     }
 
     const range = slotMetrics.getRange(start, end)
-    this.updateEvent(event, start, dates.round(range.endDate), range.top, range.height)
+    this.updateEvent(start, dates.round(range.endDate), range.top, range.height)
   }
 
   private reset() {
-    if (this.state.event) {
-      this.setState({ event: null, top: 0, height: 0 })
-    }
+    this.setState({ top: 0, height: 0, dragStart: null, dragEnd: null })
   }
 
   private getOffsetFromTopOfEvent(point: EventData, eventNode: HTMLElement, event?: Event) {
@@ -163,19 +162,31 @@ class ResizeEventContainer extends React.Component<IProps & InjectedEventActions
       })
 
       selection.on('select', (point) => {
-        const { event } = this.state
-        if (!event) {
+        const updatedEvent = this.getDraggingEvent()
+        if (!updatedEvent) {
           return
         }
 
+        const originalEvent = this.props.dragAndDropAction?.event
+
         this.reset()
         this.props.eventActions.onInteractionEnd()
-        this.props.onEventUpdated(event)
 
-        if (event.start < this.props.slotMetrics.start && event.syncStatus === 'NOT_SYNCED') {
-          document.dispatchEvent(
-            new CustomEvent(GlobalEvent.scrollToEvent, { detail: event.start })
-          )
+        const isOriginalPosition =
+          dates.eq(originalEvent.start, updatedEvent.start) &&
+          dates.eq(originalEvent.end, updatedEvent.end)
+
+        if (!isOriginalPosition) {
+          this.props.onEventUpdated(updatedEvent)
+
+          if (
+            updatedEvent.start < this.props.slotMetrics.start &&
+            updatedEvent.syncStatus === 'NOT_SYNCED'
+          ) {
+            document.dispatchEvent(
+              new CustomEvent(GlobalEvent.scrollToEvent, { detail: updatedEvent.start })
+            )
+          }
         }
       })
 
@@ -190,21 +201,35 @@ class ResizeEventContainer extends React.Component<IProps & InjectedEventActions
     }
   }
 
+  private getDraggingEvent(): Event | null {
+    let draggingEvent = this.props.dragAndDropAction?.event
+
+    const isDragging = this.state.dragStart && this.state.dragEnd
+    if (!draggingEvent || !isDragging) {
+      return null
+    }
+
+    draggingEvent = { ...draggingEvent, start: this.state.dragStart!, end: this.state.dragEnd! }
+
+    return draggingEvent
+  }
+
   public render() {
     const events = this.props.children.props.children
-    const { event, top, height } = this.state
+    const { top, height } = this.state
     const today = new Date()
+    const draggingEvent = this.getDraggingEvent()
 
     return React.cloneElement(this.props.children, {
       ref: this.containerRef,
       children: (
         <div ref={this.containerRef}>
           {events}
-          {event && (
+          {draggingEvent && (
             <TimeGridEvent
               now={today}
-              event={event}
-              label={timeRangeFormat(event.start, event.end)}
+              event={draggingEvent}
+              label={timeRangeFormat(draggingEvent.start, draggingEvent.end)}
               style={{ top, height, width: 100, xOffset: 0, border: 'none' }}
               isPreview={true}
               getContainerRef={this.getContainerRef}

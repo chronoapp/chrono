@@ -145,9 +145,14 @@ export default function DragDropZone(props: IProps) {
           end: dates.add(dropDateStart, eventMins, 'minutes'),
         }
 
-        props.eventService.moveOrResizeEvent(updatedEvent)
-
-        resetDrag()
+        const isOriginalPosition =
+          dates.eq(event.start, updatedEvent.start) && dates.eq(event.end, updatedEvent.end)
+        if (isOriginalPosition) {
+          resetDrag()
+        } else {
+          props.eventService.moveOrResizeEvent(updatedEvent)
+          resetDrag()
+        }
       }}
       onDragEnd={(e) => {
         resetDrag()
