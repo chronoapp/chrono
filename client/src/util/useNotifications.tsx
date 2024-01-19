@@ -3,20 +3,35 @@ import { useEffect, useRef, useCallback } from 'react'
 import { WEBSOCKET_URL } from '@/util/Api'
 
 const MAX_RECONECT_ATTEMPTS = 5
-const DEBOUNCE_DELAY = 2500
+const DEBOUNCE_DELAY = 2000
+
+type MessageHandler = (msg: string) => void
 
 /**
  * A debounce function that will delay the execution of the callback function
  * until the delay time has passed.
  */
-const debounce = (func: any, delay: number) => {
-  let debounceTimer
+const debouncePerType = (func: MessageHandler, delay: number) => {
+  const debounceTimers = new Map<string, any>()
 
-  return function (...args) {
-    clearTimeout(debounceTimer)
-    debounceTimer = setTimeout(() => {
-      func(...args)
-    }, delay)
+  return {
+    call: function (msg: string) {
+      if (debounceTimers.has(msg)) {
+        clearTimeout(debounceTimers.get(msg))
+      }
+
+      const timedFuncCall = setTimeout(() => {
+        func(msg)
+      }, delay)
+
+      debounceTimers.set(msg, timedFuncCall)
+    },
+
+    cleanup: function () {
+      debounceTimers.forEach((timer) => {
+        clearTimeout(timer)
+      })
+    },
   }
 }
 
@@ -29,7 +44,7 @@ const useNotifications = (userId: string | null, messageHandler: (msg: string) =
   const reconnectAttempts = useRef(0)
   const reconnectInterval = useRef(1000)
 
-  const debouncedMessageHandler = useRef(debounce(messageHandler, DEBOUNCE_DELAY)).current
+  const debouncedMessageHandler = useRef(debouncePerType(messageHandler, DEBOUNCE_DELAY)).current
 
   const connect = useCallback(() => {
     if (userId) {
@@ -42,7 +57,7 @@ const useNotifications = (userId: string | null, messageHandler: (msg: string) =
       }
 
       ws.current.onmessage = (event) => {
-        debouncedMessageHandler(event.data)
+        debouncedMessageHandler.call(event.data)
       }
 
       ws.current.onclose = () => {
@@ -73,6 +88,7 @@ const useNotifications = (userId: string | null, messageHandler: (msg: string) =
 
     return () => {
       disconnect()
+      debouncedMessageHandler.cleanup()
     }
   }, [connect])
 

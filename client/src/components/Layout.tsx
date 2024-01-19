@@ -22,7 +22,7 @@ import { GlobalEvent } from '@/util/global'
 
 import MiniCalendar from '@/calendar/MiniCalendar'
 import LabelPanel from '@/components/LabelPanel'
-import CalendarsPanel from '@/components/CalendarsPanel'
+import CalendarList from '@/components/CalendarsList'
 import Plugins from '@/components/Plugins'
 import Settings from '@/components/Settings'
 import useNotifications from '@/util/useNotifications'
@@ -132,10 +132,13 @@ function Layout(props: Props) {
 
   /**
    * Sends an event to refresh the calendar when a notification is received.
+   * TODO: More granular refreshes based on the notification.
    */
   useNotifications(user?.id || null, (msg) => {
     if (msg === 'REFRESH_CALENDAR') {
       document.dispatchEvent(new Event(GlobalEvent.refreshCalendar))
+    } else if (msg === 'REFRESH_CALENDAR_LIST') {
+      document.dispatchEvent(new Event(GlobalEvent.refreshCalendarList))
     }
   })
 
@@ -164,7 +167,7 @@ function Layout(props: Props) {
                 height="100%"
               >
                 <LabelPanel />
-                <CalendarsPanel />
+                <CalendarList />
               </Flex>
             </Flex>
           </Box>

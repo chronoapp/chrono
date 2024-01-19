@@ -30,8 +30,12 @@ import { InfoAlert } from '@/components/Alert'
 import Hoverable from '@/lib/Hoverable'
 import groupBy from '@/lib/js-lib/groupBy'
 import { normalizeArr } from '@/lib/normalizer'
+import { generateGuid } from '@/lib/uuid'
 
 import * as API from '@/util/Api'
+import useGlobalEventListener from '@/util/useGlobalEventListener'
+import { GlobalEvent } from '@/util/global'
+
 import { calendarsState } from '@/state/CalendarState'
 import Calendar, { AccessRole, CalendarSource } from '@/models/Calendar'
 import CalendarEditModal from './CalendarEditModal'
@@ -86,7 +90,7 @@ function ConfirmDeleteCalendarAlert(props: {
  * TODO: Use calendar color, not event color.
  * TODO: Update selected calendars to server.
  */
-export default function CalendarsPanel() {
+export default function CalendarList() {
   const toast = useToast()
   const toastIdRef = React.useRef<ToastId>()
 
@@ -99,6 +103,24 @@ export default function CalendarsPanel() {
 
   const [editModalActive, setEditModalActive] = React.useState(false)
   const [editingCalendarId, setEditingCalendarId] = React.useState<undefined | string>(undefined)
+
+  // Refresh the calendar when we receive a refresh event.
+  const [refreshId, setRefreshId] = React.useState(generateGuid())
+
+  const handleRefreshEvent = React.useCallback(() => {
+    console.log('Refresh Calendar List')
+    setRefreshId(generateGuid())
+  }, [])
+
+  useGlobalEventListener(GlobalEvent.refreshCalendarList, handleRefreshEvent)
+
+  React.useEffect(() => {
+    async function init() {
+      const calendars = await API.getCalendars()
+      initCalendars(calendars)
+    }
+    init()
+  }, [refreshId])
 
   const initCalendars = (calendars: Calendar[]) => {
     setCalendars({ loading: false, calendarsById: normalizeArr(calendars, 'id') })
@@ -122,14 +144,6 @@ export default function CalendarsPanel() {
       return { ...prevState, calendarsById: newCalendars }
     })
   }
-
-  React.useEffect(() => {
-    async function init() {
-      const calendars = await API.getCalendars()
-      initCalendars(calendars)
-    }
-    init()
-  }, [])
 
   function onSelectCalendar(calendar: Calendar, selected: boolean) {
     const updated = produce(calendar, (draft) => {

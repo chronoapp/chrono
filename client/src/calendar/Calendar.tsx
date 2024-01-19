@@ -11,6 +11,8 @@ import useKeyPress from '@/lib/hooks/useKeyPress'
 import * as dates from '@/util/dates'
 import * as API from '@/util/Api'
 import { generateGuid } from '@/lib/uuid'
+import useGlobalEventListener from '@/util/useGlobalEventListener'
+import useEventActions from '@/state/useEventActions'
 
 import TimeGrid from './TimeGrid'
 import Week from './Week'
@@ -28,8 +30,6 @@ import {
   editingEventState,
   allVisibleEventsSelector,
 } from '@/state/EventsState'
-
-import useEventActions from '@/state/useEventActions'
 
 /**
  * The main calendar component.
@@ -50,13 +50,17 @@ function Calendar() {
 
   const queryParams = useQuery()
   const searchQuery = (queryParams.get('search') as string) || ''
-  const [update, setUpdater] = React.useState(generateGuid())
 
   useKeyPress(['ArrowLeft', 'ArrowRight'], onKeyPress)
 
+  // Refresh the calendar when we receive a refresh event.
+  const [refreshId, setRefreshId] = React.useState(generateGuid())
+
   const handleRefreshEvent = React.useCallback(() => {
-    setUpdater(generateGuid())
+    setRefreshId(generateGuid())
   }, [])
+
+  useGlobalEventListener(GlobalEvent.refreshCalendar, handleRefreshEvent)
 
   useEffect(() => {
     // Aborts any pending requests after the component is unmounted.
@@ -68,15 +72,7 @@ function Calendar() {
     return () => {
       controller.abort()
     }
-  }, [display, calendars.calendarsById, update])
-
-  useEffect(() => {
-    document.addEventListener(GlobalEvent.refreshCalendar, handleRefreshEvent)
-
-    return function cleanup() {
-      document.removeEventListener(GlobalEvent.refreshCalendar, handleRefreshEvent)
-    }
-  }, [handleRefreshEvent])
+  }, [display, calendars.calendarsById, refreshId])
 
   /**
    * Keyboard shortcuts.

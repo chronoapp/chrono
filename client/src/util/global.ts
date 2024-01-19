@@ -5,5 +5,6 @@
 
 export enum GlobalEvent {
   refreshCalendar = 'refreshCalendar',
+  refreshCalendarList = 'refreshCalendarList',
   scrollToEvent = 'scrollToEvent',
 }
