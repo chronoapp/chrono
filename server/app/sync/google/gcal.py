@@ -227,8 +227,21 @@ def updateUserCalendar(user: User, calendar: UserCalendar):
 
 
 def removeUserCalendar(user: User, calendar: UserCalendar):
-    """Removes the calendar from my list."""
-    return getCalendarService(user).calendarList().delete(calendarId=calendar.google_id).execute()
+    """Removes the calendar from my list.
+    Does not delete the calendar from Google, but hides it.
+    """
+
+    return (
+        getCalendarService(user)
+        .calendarList()
+        .patch(
+            calendarId=calendar.google_id,
+            body={
+                'hidden': True,
+            },
+        )
+        .execute()
+    )
 
 
 def getUserCalendars(user: User):
@@ -274,7 +287,9 @@ def getAccessControlList(userCalendar: UserCalendar):
 
 
 def addEventsWebhook(calendar: UserCalendar, ttlSeconds: float, webhookUrl: str):
-    """Subscribes to an event notification channel. The subscription lasts for 30 days."""
+    """Subscribes to an event notification channel. The subscription lasts for 30 days
+    so it needs to be refreshed.
+    """
     uniqueId = uuid4().hex
 
     body = {

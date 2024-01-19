@@ -42,7 +42,7 @@ class UserCalendar(Base):
     summary_override: Mapped[Optional[str]] = mapped_column(String(255))
     background_color: Mapped[Optional[str]] = mapped_column(String(10))
     foreground_color: Mapped[Optional[str]] = mapped_column(String(10))
-    selected: Mapped[bool] = mapped_column(Boolean)
+    selected: Mapped[bool] = mapped_column(Boolean)  # Visible in the list (checkmark)
     access_role = mapped_column(String(50))  # AccessRole
     primary = mapped_column(Boolean)
     deleted = mapped_column(Boolean)

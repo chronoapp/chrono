@@ -97,11 +97,12 @@ async def putCalendar(
 
 
 @router.delete('/calendars/{calendarId}')
-async def deleteCalendar(
+async def removeUserCalendar(
     calendarId: uuid.UUID,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
+    """Removes from the user's list of calendars."""
     try:
         calendarRepo = CalendarRepository(session)
 
@@ -109,7 +110,7 @@ async def deleteCalendar(
         if userCalendar.source == 'google':
             gcal.removeUserCalendar(user, userCalendar)
 
-        calendarRepo.deleteCalendar(user, calendarId)
+        calendarRepo.removeUserCalendar(user, calendarId)
 
     except CalendarNotFoundError:
         raise HTTPException(HTTP_404_NOT_FOUND)

@@ -139,8 +139,10 @@ class CalendarRepository:
 
         return calendarDb
 
-    def deleteCalendar(self, user: User, calendarId: uuid.UUID) -> None:
-        calendarDb = self.getCalendar(user, calendarId)
+    def removeUserCalendar(self, user: User, calendarId: uuid.UUID) -> None:
+        """Removes the UserCalendar from the user's calendar list.
 
-        self.session.execute(delete(UserCalendar).where(UserCalendar.id == calendarDb.id))
-        self.session.commit()
+        Events will still remain in the original calendar list until the original calendar is deleted.
+        """
+        calendarDb = self.getCalendar(user, calendarId)
+        self.session.delete(calendarDb)

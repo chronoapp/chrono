@@ -5,7 +5,6 @@ from app.api.utils.db import get_db
 from app.db.repos.webhook_repo import WebhookRepository
 from app.sync.google.tasks import syncCalendarTask
 
-
 router = APIRouter()
 
 

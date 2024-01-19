@@ -119,16 +119,21 @@ def syncMoveGoogleEventCalendarTask(
 
 @dramatiq.actor(max_retries=1)
 def syncAllCalendarsTask(userId: uuid.UUID, fullSync: bool) -> None:
-    """Syncs events from google calendar."""
+    """
+    1) Sync all calendars from google calendar.
+    2) Syncs events from all calendars.
+    """
+
+    with scoped_session() as session:
+        userRepo = UserRepository(session)
+        user = userRepo.getUser(userId)
+        syncAllCalendars(user, session)
 
     with scoped_session() as session:
         userRepo = UserRepository(session)
         webhookRepo = WebhookRepository(session)
+
         user = userRepo.getUser(userId)
-
-        syncAllCalendars(user, session)
-        session.commit()
-
         for calendar in user.calendars:
             if calendar.google_id != None:
                 webhookRepo.createCalendarWebhook(calendar)
