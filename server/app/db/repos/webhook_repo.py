@@ -84,7 +84,7 @@ class WebhookRepository:
             return webhook
 
         except HttpError as e:
-            logger.error(e.reason)
+            logger.error(f'Error adding calendar list webhook: {e.reason}')
             return None
 
     def createCalendarEventsWebhook(self, calendar: UserCalendar) -> Webhook | None:
@@ -118,7 +118,7 @@ class WebhookRepository:
             return webhook
 
         except HttpError as e:
-            logger.error(e.reason)
+            logger.error(f'Error adding webhook for {calendar.summary}: {e.reason}')
             return None
 
     def refreshExpiringWebhooks(self):

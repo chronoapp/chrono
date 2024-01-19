@@ -108,7 +108,6 @@ export default function CalendarList() {
   const [refreshId, setRefreshId] = React.useState(generateGuid())
 
   const handleRefreshEvent = React.useCallback(() => {
-    console.log('Refresh Calendar List')
     setRefreshId(generateGuid())
   }, [])
 

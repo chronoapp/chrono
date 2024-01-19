@@ -142,11 +142,15 @@ def syncAllCalendarsTask(userId: uuid.UUID, fullSync: bool) -> None:
         for calendar in user.calendars:
             if calendar.google_id != None:
                 webhookRepo.createCalendarEventsWebhook(calendar)
-                syncCalendarTask.send(user.id, calendar.id, fullSync)
+                syncCalendarTask.send(user.id, calendar.id, fullSync, sendNotification=False)
+
+    sendClientNotification(str(user.id), NotificationType.REFRESH_CALENDAR_LIST)
 
 
 @dramatiq.actor(max_retries=1)
-def syncCalendarTask(userId: uuid.UUID, calendarId: uuid.UUID, fullSync: bool) -> None:
+def syncCalendarTask(
+    userId: uuid.UUID, calendarId: uuid.UUID, fullSync: bool, sendNotification=True
+) -> None:
     with scoped_session() as session:
         userRepo = UserRepository(session)
         calRepo = CalendarRepository(session)
@@ -157,7 +161,8 @@ def syncCalendarTask(userId: uuid.UUID, calendarId: uuid.UUID, fullSync: bool) -
         syncCalendarEvents(calendar, session, fullSync)
 
     # Send notification to client
-    sendClientNotification(str(user.id), NotificationType.REFRESH_CALENDAR)
+    if sendNotification:
+        sendClientNotification(str(user.id), NotificationType.REFRESH_CALENDAR)
 
 
 @dramatiq.actor(max_retries=1)
