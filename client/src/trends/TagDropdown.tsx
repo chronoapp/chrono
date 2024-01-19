@@ -43,7 +43,7 @@ export default function TagDropdown(props: IProps) {
             </Flex>
           </MenuButton>
 
-          <MenuList pl="1">
+          <MenuList pl="1" fontSize={'sm'}>
             <LabelTree
               allowEdit={false}
               onSelect={(label) => {
