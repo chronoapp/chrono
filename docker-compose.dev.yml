@@ -23,7 +23,7 @@ services:
 
   # Redis for job queue.
   redis:
-    image: redis:5.0.5-alpine
+    image: redis:6.2-alpine
     volumes:
       - redis-data:/data
     command: redis-server --appendonly yes
