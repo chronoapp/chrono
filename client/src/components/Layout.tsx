@@ -24,7 +24,7 @@ import MiniCalendar from '@/calendar/MiniCalendar'
 import LabelPanel from '@/components/LabelPanel'
 import CalendarList from '@/components/CalendarsList'
 import Plugins from '@/components/Plugins'
-import Settings from '@/components/Settings'
+import Settings from '@/components/settings/Settings'
 import useNotifications from '@/util/useNotifications'
 
 import Header from '@/calendar/Header'

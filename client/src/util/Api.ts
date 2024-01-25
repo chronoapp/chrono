@@ -103,6 +103,16 @@ export async function getUser(): Promise<User> {
     .then((resp) => User.fromJson(resp))
 }
 
+export async function updateUser(user: User): Promise<User> {
+  return fetch(`${API_URL}/user/`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(user),
+  })
+    .then(handleErrors)
+    .then((resp) => User.fromJson(resp))
+}
+
 export async function updateUserFlags(flags: Flags): Promise<User> {
   return fetch(`${API_URL}/user/flags`, {
     method: 'PUT',
