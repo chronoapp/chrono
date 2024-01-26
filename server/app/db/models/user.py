@@ -29,7 +29,6 @@ class User(Base):
     name: Mapped[Optional[str]] = mapped_column(String(255))  # display name
     picture_url: Mapped[Optional[str]] = mapped_column(String(255))
 
-    google_oauth_state: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     credentials: Mapped[UserCredential] = relationship(
         'UserCredential',
         cascade='save-update, merge, delete, delete-orphan',
