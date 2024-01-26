@@ -18,14 +18,19 @@ class UserCredential(Base):
     """Represents a connected account (Google, Microsoft, etc) for a user."""
 
     __tablename__ = 'user_credentials'
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID,
+        primary_key=True,
+        nullable=False,
+        default=uuid.uuid4,
+    )
 
-    email: Mapped[str] = mapped_column(String(255), nullable=False)
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('user.id'), primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), nullable=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('user.id'))
     provider: Mapped[str] = mapped_column(
         String(30),
         unique=False,
         nullable=False,
-        primary_key=True,
     )
 
     token_data = mapped_column(JSONB, nullable=False)
@@ -35,3 +40,6 @@ class UserCredential(Base):
         self.email = email
         self.token_data = tokenData
         self.provider = provider.value
+
+    def __repr__(self):
+        return f'<UserCredential {self.email=} {self.provider=} {self.is_default=} />'
