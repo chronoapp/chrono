@@ -88,6 +88,7 @@ function TopNavigationBar(props: { canCreateEvent: boolean; searchQuery: string 
 function SettingsMenu() {
   const navigate = useNavigate()
   const [settingsActive, setSettingsActive] = React.useState<boolean>(false)
+  const user = useRecoilValue(userState)
 
   const logout = () => {
     setLocalStorageItem('auth_token', undefined)
@@ -97,7 +98,7 @@ function SettingsMenu() {
   return (
     <Menu size={'sm'}>
       <MenuButton ml="2" mr="2" p="1" as={Button} bgColor="transparent" borderRadius={'md'}>
-        <Avatar size="xs" />
+        <Avatar size="xs" src={user?.picture_url} />
       </MenuButton>
 
       <MenuList zIndex="2">
