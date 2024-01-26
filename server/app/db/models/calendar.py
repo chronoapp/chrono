@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from .access_control import AccessControlRule
 
 
-"""The base calendar is attached to an Event.
+"""This is the base calendar that is attached to an Event.
 Every event many-1 relationship to this calendar.
 """
 

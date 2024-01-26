@@ -14,7 +14,7 @@ class ProviderType(enum.Enum):
     Microsoft = 'microsoft'
 
 
-class UserCredential(Base):
+class UserAccount(Base):
     """Represents a connected account (Google, Microsoft, etc) for a user."""
 
     __tablename__ = 'user_credentials'
@@ -42,4 +42,4 @@ class UserCredential(Base):
         self.provider = provider.value
 
     def __repr__(self):
-        return f'<UserCredential {self.email=} {self.provider=} {self.is_default=} />'
+        return f'<UserAccount {self.email=} {self.provider=} {self.is_default=} />'

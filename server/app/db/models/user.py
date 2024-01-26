@@ -6,9 +6,8 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.orderinglist import ordering_list
 
 from app.db.base_class import Base
-from app.db.models.user_credentials import ProviderType
+from app.db.models.user_account import ProviderType, UserAccount
 from app.db.models.user_calendar import UserCalendar
-from app.db.models.user_credentials import UserCredential
 
 if TYPE_CHECKING:
     from .label import Label
@@ -29,8 +28,8 @@ class User(Base):
     name: Mapped[Optional[str]] = mapped_column(String(255))  # display name
     picture_url: Mapped[Optional[str]] = mapped_column(String(255))
 
-    credentials: Mapped[list[UserCredential]] = relationship(
-        'UserCredential',
+    accounts: Mapped[list[UserAccount]] = relationship(
+        'UserAccount',
         cascade='save-update, merge, delete, delete-orphan',
         backref='user',
     )
@@ -70,16 +69,16 @@ class User(Base):
     def getClassifierPath(self):
         return f'/var/lib/model_data/{self.username}.pkl'
 
-    def getDefaultAccount(self) -> UserCredential:
-        defaultAccount = next((c for c in self.credentials if c.is_default), None)
+    def getDefaultAccount(self) -> UserAccount:
+        defaultAccount = next((c for c in self.accounts if c.is_default), None)
         if not defaultAccount:
             # There should always be a default linked calendar account.
             raise Exception('No default account found')
 
         return defaultAccount
 
-    def getAccount(self, provider: ProviderType, email: str) -> Optional[UserCredential]:
+    def getAccount(self, provider: ProviderType, email: str) -> Optional[UserAccount]:
         return next(
-            (a for a in self.credentials if a.provider == provider.value and a.email == email),
+            (a for a in self.accounts if a.provider == provider.value and a.email == email),
             None,
         )

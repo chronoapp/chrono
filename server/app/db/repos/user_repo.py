@@ -15,7 +15,7 @@ class UserRepository:
     def getUser(self, userId: uuid.UUID) -> User:
         user = (
             self.session.execute(
-                select(User).where(User.id == userId).options(selectinload(User.credentials))
+                select(User).where(User.id == userId).options(selectinload(User.accounts))
             )
         ).scalar()
 
@@ -27,7 +27,7 @@ class UserRepository:
     def getUserByEmail(self, email: str) -> Optional[User]:
         user = (
             self.session.execute(
-                select(User).where(User.email == email).options(selectinload(User.credentials))
+                select(User).where(User.email == email).options(selectinload(User.accounts))
             )
         ).scalar()
 

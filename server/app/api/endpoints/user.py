@@ -9,6 +9,12 @@ from app.api.utils.db import get_db
 router = APIRouter()
 
 
+class AccountVM(BaseModel):
+    id: UUID
+    provider: str
+    email: str
+
+
 class UserVM(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
@@ -18,6 +24,7 @@ class UserVM(BaseModel):
     picture_url: str | None = None
     name: str | None = None
     username: str | None = None
+    accounts: list[AccountVM] | None = None
 
 
 @router.get('/user/', response_model=UserVM)
@@ -32,6 +39,16 @@ async def getUser(user=Depends(get_current_user)):
         picture_url=user.picture_url,
         name=user.name,
         username=user.username,
+        accounts=[
+            AccountVM(
+                id=account.id,
+                provider=account.provider,
+                email=account.email,
+            )
+            for account in user.accounts
+        ]
+        if user.accounts
+        else None,
     )
 
 

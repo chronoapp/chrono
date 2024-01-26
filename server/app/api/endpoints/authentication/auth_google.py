@@ -1,21 +1,28 @@
+import uuid
+from typing import Literal
+from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from fastapi import Depends, status, HTTPException, APIRouter
-from fastapi.responses import RedirectResponse
-from oauthlib.oauth2.rfc6749.errors import InvalidGrantError
-
 from urllib.parse import unquote
+
+from fastapi import Depends, status, HTTPException, APIRouter
+from fastapi.responses import RedirectResponse, HTMLResponse
+from jinja2 import Environment, PackageLoader
+
+from oauthlib.oauth2.rfc6749.errors import InvalidGrantError
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 
-from sqlalchemy.orm import Session
+from .token_utils import getAuthToken
 
-from app.core import config
 from app.db.repos.user_repo import UserRepository
-from app.db.models.user_credentials import UserCredential, ProviderType
+from app.db.models.user_account import UserAccount, ProviderType
 from app.db.models.user import User
 from app.api.utils.db import get_db
-from .token_utils import getAuthToken
+
+from app.core import config
 from app.core.logger import logger
+from app.utils.redis import getRedisConnection
+
 
 """Connect Google accounts with OAuth2
 
@@ -55,17 +62,24 @@ class AuthData(BaseModel):
     code: str
 
 
+AuthType = Literal['sign_in', 'add_account']
+
+SignedOutUser = 'SIGNED_OUT_USER'
+
+Template = Environment(loader=PackageLoader('app', 'templates'))
+
+
 @router.get('/oauth/google/auth')
-def googleAuth():
+def googleAuth(auth_type: AuthType = 'sign_in', user_id: uuid.UUID | None = None):
     """Redirects to google oauth consent screen.
     https://developers.google.com/identity/protocols/OAuth2WebServer
     """
-    flow = Flow.from_client_config(CREDENTIALS, scopes=GOOGLE_API_SCOPES)
-    flow.redirect_uri = config.APP_URL + '/auth'
-
+    flow = _getOauthFlow(auth_type)
     authorization_url, state = flow.authorization_url(
         access_type='offline', prompt='consent', include_granted_scopes='true'
     )
+
+    _initOAuthState(state, user_id)
 
     response = RedirectResponse(url=unquote(authorization_url))
     response.set_cookie(key='auth_state', value=state)
@@ -73,13 +87,52 @@ def googleAuth():
     return response
 
 
+@router.get('/oauth/google/add-account-callback')
+def addAccountCallback(state: str, code: str, session: Session = Depends(get_db)):
+    """Callback for add account flow."""
+    flow = _getOauthFlow('add_account')
+    flow.fetch_token(code=code)
+
+    oauthState = _getOAuthState(state)
+    if not oauthState:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, 'Invalid oauth state.')
+
+    userId = uuid.UUID(oauthState) if oauthState != SignedOutUser else None
+    if not userId:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, 'Invalid oauth state.')
+
+    googleSession = flow.authorized_session()
+    userInfo = googleSession.get('https://www.googleapis.com/userinfo/v2/me').json()
+    email = userInfo.get('email')
+
+    userRepo = UserRepository(session)
+    user = userRepo.getUser(userId)
+
+    if not user:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, 'User not found.')
+
+    creds = _getCredentialsDict(flow.credentials)
+
+    existingAccount = user.getAccount(ProviderType.Google, email)
+    if not existingAccount:
+        user.accounts.append(UserAccount(email, creds, ProviderType.Google))
+
+    session.commit()
+
+    # TODO: Send a notification to the frontend to refresh the user's accounts.
+    template = Template.get_template('oauth/index.html')
+
+    return HTMLResponse(content=template.render())
+
+
 @router.post('/oauth/google/token')
 def googleAuthToken(authData: AuthData, session: Session = Depends(get_db)):
-    try:
-        flow = Flow.from_client_config(CREDENTIALS, scopes=GOOGLE_API_SCOPES)
-        flow.redirect_uri = config.APP_URL + '/auth'
-        flow.fetch_token(code=authData.code)
+    """After Oauth is successful for signing up or signing in, exchange it for an auth token."""
+    flow = Flow.from_client_config(CREDENTIALS, scopes=GOOGLE_API_SCOPES)
+    flow.redirect_uri = config.APP_URL + '/auth'
 
+    try:
+        flow.fetch_token(code=authData.code)
     except InvalidGrantError:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, 'Invalid oauth grant details.')
 
@@ -96,22 +149,31 @@ def googleAuthToken(authData: AuthData, session: Session = Depends(get_db)):
     if not user:
         user = User(email, name, pictureUrl)
         session.add(user)
-    else:
-        user.email = email
-        user.name = name
-        user.picture_url = pictureUrl
 
     creds = _getCredentialsDict(flow.credentials)
 
     existingAccount = user.getAccount(ProviderType.Google, email)
     if not existingAccount:
-        user.credentials.append(UserCredential(email, creds, ProviderType.Google))
+        user.accounts.append(UserAccount(email, creds, ProviderType.Google))
 
     session.commit()
 
     authToken = getAuthToken(user)
 
     return {'token': authToken}
+
+
+def _getOauthFlow(auth_type: AuthType):
+    flow = Flow.from_client_config(CREDENTIALS, scopes=GOOGLE_API_SCOPES)
+
+    if auth_type == 'sign_in':
+        flow.redirect_uri = config.APP_URL + '/auth'
+    elif auth_type == 'add_account':
+        flow.redirect_uri = config.API_URL + '/oauth/google/add-account-callback'
+    else:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Invalid auth type.')
+
+    return flow
 
 
 def _getCredentialsDict(credentials: Credentials):
@@ -123,3 +185,24 @@ def _getCredentialsDict(credentials: Credentials):
         'client_secret': credentials.client_secret,
         'scopes': credentials.scopes,
     }
+
+
+def _initOAuthState(state: str, userId: uuid.UUID | None):
+    """Stores Google Oauth state, which links the request and the callback."""
+    redisClient = getRedisConnection()
+
+    if not userId:
+        redisClient.setex(f"google_oauth:state:{state}", 600, SignedOutUser)
+    else:
+        redisClient.setex(f"google_oauth:state:{state}", 600, str(userId))
+
+
+def _getOAuthState(state: str):
+    """Retrieves the user ID from the state."""
+    redisClient = getRedisConnection()
+
+    oauthState = redisClient.get(f"google_oauth:state:{state}")
+    if not oauthState:
+        return None
+    else:
+        return oauthState.decode('utf-8')

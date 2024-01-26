@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core import config
 from app.db.repos.user_repo import UserRepository
-from app.db.models.user_credentials import UserCredential, ProviderType
+from app.db.models.user_account import UserAccount, ProviderType
 from app.db.models.user import User
 from app.api.utils.db import get_db
 from app.sync.msft.calendar import getMsftUser, getMsftSettings
@@ -82,9 +82,7 @@ def msftCallback(request: Request, session: Session = Depends(get_db)):
 
     existingAccount = user.getAccount(ProviderType.Microsoft, email)
     if not existingAccount:
-        user.credentials.append(
-            UserCredential(email, tokenResult, ProviderType(ProviderType.Microsoft))
-        )
+        user.accounts.append(UserAccount(email, tokenResult, ProviderType(ProviderType.Microsoft)))
 
     session.commit()
 

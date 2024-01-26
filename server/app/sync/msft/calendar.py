@@ -3,7 +3,7 @@ import time
 
 from requests_oauthlib import OAuth2Session
 from app.core import config
-from app.db.models import UserCredential
+from app.db.models import UserAccount
 
 MSFT_GRAPH_URL = 'https://graph.microsoft.com/v1.0'
 
@@ -20,7 +20,7 @@ def getMsftSettings():
     }
 
 
-def getOrRefreshToken(creds: UserCredential):
+def getOrRefreshToken(creds: UserAccount):
     token = creds.token_data
     if token != None:
         # Check expiration
@@ -30,10 +30,12 @@ def getOrRefreshToken(creds: UserCredential):
         if now >= expire_time:
             settings = getMsftSettings()
             # Refresh the token
-            session = OAuth2Session(settings['app_id'],
-                                    token=token,
-                                    scope=settings['scopes'],
-                                    redirect_uri=settings['redirect'])
+            session = OAuth2Session(
+                settings['app_id'],
+                token=token,
+                scope=settings['scopes'],
+                redirect_uri=settings['redirect'],
+            )
 
             refresh_params = {
                 'client_id': settings['app_id'],

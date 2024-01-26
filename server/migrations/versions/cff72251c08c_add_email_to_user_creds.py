@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 
 from app.db.session import scoped_session
-from app.db.models import UserCredential
+from app.db.models import UserAccount
 
 # revision identifiers, used by Alembic.
 revision = 'cff72251c08c'
