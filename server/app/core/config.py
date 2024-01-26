@@ -2,12 +2,13 @@ from typing import Optional, Literal
 import os
 
 
-PROJECT_ID = 'chrono'
 API_V1_STR = "/api/v1"
 
 APP_URL: str = os.environ.get('APP_URL', 'https://localhost:3000')
-API_URL = os.environ.get('API_URL')
+BASE_API_URL = os.environ.get('API_URL')
+API_URL = f'{BASE_API_URL}{API_V1_STR}'
 
+GOOGLE_PROJECT_ID = os.environ.get('GOOGLE_PROJECT_ID')
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
 GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
 
@@ -40,4 +41,4 @@ elif MAILGUN_API_URL and MAILGUN_API_KEY:
     EMAIL_PROVIDER = 'mailgun'
 
 LogLevel = Literal['debug', 'info', 'warning', 'error']
-LOG_LEVEL: str = os.environ.get('LOG_LEVEL', 'debug')
+LOG_LEVEL: str = os.environ.get('LOG_LEVEL', 'info')

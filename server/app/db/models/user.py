@@ -29,7 +29,7 @@ class User(Base):
     name: Mapped[Optional[str]] = mapped_column(String(255))  # display name
     picture_url: Mapped[Optional[str]] = mapped_column(String(255))
 
-    credentials: Mapped[UserCredential] = relationship(
+    credentials: Mapped[list[UserCredential]] = relationship(
         'UserCredential',
         cascade='save-update, merge, delete, delete-orphan',
         backref='user',
@@ -70,9 +70,16 @@ class User(Base):
     def getClassifierPath(self):
         return f'/var/lib/model_data/{self.username}.pkl'
 
-    def syncWithGoogle(self) -> bool:
-        return (
-            self.credentials is not None
-            and self.credentials.provider == ProviderType.Google
-            and self.credentials.token_data is not None
+    def getDefaultAccount(self) -> UserCredential:
+        defaultAccount = next((c for c in self.credentials if c.is_default), None)
+        if not defaultAccount:
+            # There should always be a default linked calendar account.
+            raise Exception('No default account found')
+
+        return defaultAccount
+
+    def getAccount(self, provider: ProviderType, email: str) -> Optional[UserCredential]:
+        return next(
+            (a for a in self.credentials if a.provider == provider.value and a.email == email),
+            None,
         )

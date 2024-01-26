@@ -7,16 +7,9 @@ from googleapiclient.discovery import build
 from app.db.models import Contact, User
 
 
-def getPeopleService(user: User):
-    credentials = Credentials(**user.credentials.token_data)
-    service = build('people', 'v1', credentials=credentials, cache_discovery=False)
-
-    return service
-
-
 def syncContacts(user: User, session: Session, fullSync: bool = False) -> None:
     """Sync contacts from Google to the DB."""
-    service = getPeopleService(user)
+    service = _getPeopleService(user)
 
     syncOtherContacts(service, user, session)
     syncConnections(service, user, session)
@@ -94,3 +87,15 @@ def syncContactsToDB(user: User, contacts, session: Session):
             user.contacts.append(contact)
 
     session.commit()
+
+
+def _getPeopleService(user: User):
+    """Get the Google People API service for the user's default account.
+    TODO: Handle multiple accounts.
+    """
+    tokenData = user.getDefaultAccount().token_data
+
+    credentials = Credentials(**tokenData)
+    service = build('people', 'v1', credentials=credentials, cache_discovery=False)
+
+    return service

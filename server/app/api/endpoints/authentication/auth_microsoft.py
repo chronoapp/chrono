@@ -14,6 +14,7 @@ from app.db.models.user_credentials import UserCredential, ProviderType
 from app.db.models.user import User
 from app.api.utils.db import get_db
 from app.sync.msft.calendar import getMsftUser, getMsftSettings
+from .token_utils import getAuthToken
 
 router = APIRouter()
 
@@ -79,14 +80,15 @@ def msftCallback(request: Request, session: Session = Depends(get_db)):
         user.email = email
         user.name = name
 
-    user.credentials = UserCredential(tokenResult, ProviderType(ProviderType.Microsoft))
+    existingAccount = user.getAccount(ProviderType.Microsoft, email)
+    if not existingAccount:
+        user.credentials.append(
+            UserCredential(email, tokenResult, ProviderType(ProviderType.Microsoft))
+        )
+
     session.commit()
 
-    authToken = str(
-        jwt.encode(
-            {'user_id': user.id, 'iat': datetime.utcnow()}, config.TOKEN_SECRET, algorithm='HS256'
-        )
-    )
+    authToken = getAuthToken(user)
 
     response = RedirectResponse(config.APP_URL)
     response.set_cookie(key='auth_token', value=authToken)

@@ -22,7 +22,12 @@ SendUpdateType = Literal['all', 'externalOnly', 'none']
 
 
 def getCalendarService(user: User):
-    credentials = Credentials(**user.credentials.token_data)
+    """Returns a Google Calendar API service for the user.
+    TODO: Handle multiple accounts.
+    """
+    tokenData = user.getDefaultAccount().token_data
+
+    credentials = Credentials(**tokenData)
     service = build('calendar', 'v3', credentials=credentials, cache_discovery=False)
 
     return service

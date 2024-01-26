@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title=config.PROJECT_ID,
+    title='Chrono API',
     openapi_url="/api/v1/openapi.json",
     default_response_class=ORJSONResponse,
     lifespan=lifespan,
