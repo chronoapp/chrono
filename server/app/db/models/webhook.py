@@ -26,7 +26,7 @@ class Webhook(Base):
     user: Mapped['User'] = relationship('User', back_populates='webhooks')
 
     calendar_id: Mapped[uuid.UUID] = mapped_column(
-        UUID, ForeignKey('user_calendar.id'), nullable=False
+        UUID, ForeignKey('user_calendar.id'), nullable=True
     )
     calendar: Mapped['UserCalendar'] = relationship('UserCalendar', back_populates='webhook')
 

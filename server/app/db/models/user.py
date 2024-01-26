@@ -32,7 +32,6 @@ class User(Base):
     credentials: Mapped[UserCredential] = relationship(
         'UserCredential',
         cascade='save-update, merge, delete, delete-orphan',
-        uselist=False,
         backref='user',
     )
     timezone: Mapped[str] = mapped_column(String(255), nullable=False, server_default='UTC')
