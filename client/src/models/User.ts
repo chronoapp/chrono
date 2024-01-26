@@ -1,4 +1,5 @@
 import Flags from './Flags'
+import CalendarAccount from './CalendarAccount'
 
 /**
  * User information, including settings.
@@ -12,7 +13,8 @@ export default class User {
       Flags.fromJson(userJson.flags),
       userJson.picture_url,
       userJson.name,
-      userJson.username
+      userJson.username,
+      userJson.accounts.map((accountJson: any) => CalendarAccount.fromJson(accountJson))
     )
   }
 
@@ -23,6 +25,7 @@ export default class User {
     readonly flags: Flags,
     readonly picture_url: string,
     readonly name: string,
-    readonly username: string
+    readonly username: string,
+    readonly accounts: CalendarAccount[]
   ) {}
 }

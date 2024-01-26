@@ -1,7 +1,11 @@
 import { useRecoilState } from 'recoil'
+
 import { userState } from '@/state/UserState'
 import { Flex, Box, Text, Button, Heading, SimpleGrid, Select } from '@chakra-ui/react'
 import GoogleLogo from '@/assets/google.svg'
+import CalendarAccount from '@/models/CalendarAccount'
+
+import * as API from '@/util/Api'
 
 function CalendarSettings() {
   const [user, setUser] = useRecoilState(userState)
@@ -23,23 +27,20 @@ function CalendarSettings() {
               <img src={GoogleLogo} style={{ width: '30px', paddingRight: 5 }}></img>{' '}
               <Text fontSize="sm">Add Google Calendar Account</Text>
             </Flex>
-            <Button>Sign in With Google</Button>
+            <Button
+              onClick={() => {
+                window.open(API.getGoogleOauthUrl('add_account', user!.id), '_blank')
+              }}
+            >
+              Sign in With Google
+            </Button>
           </Flex>
         </Box>
 
-        <SimpleGrid columns={2} spacing={10} mt="2">
-          <Box fontSize="md" padding="2" borderRadius={'sm'} bgColor="gray.50">
-            <Flex direction={'column'}>
-              <Flex alignItems="center">
-                <img src={GoogleLogo} style={{ width: '30px', paddingRight: 5 }}></img>{' '}
-                <Text fontSize="sm">Google Calendar</Text>
-              </Flex>
-
-              <Text fontSize={'sm'} color="gray.500">
-                {user?.email}
-              </Text>
-            </Flex>
-          </Box>
+        <SimpleGrid columns={2} spacing={2} mt="2">
+          {user?.accounts.map((account) => (
+            <CalendarAccountIntegration key={account.id} {...account} />
+          ))}
         </SimpleGrid>
       </Box>
 
@@ -54,6 +55,23 @@ function CalendarSettings() {
         </Select>
       </Box>
     </Flex>
+  )
+}
+
+function CalendarAccountIntegration(account: CalendarAccount) {
+  return (
+    <Box fontSize="md" padding="2" borderRadius={'sm'} bgColor="gray.50">
+      <Flex direction={'column'}>
+        <Flex alignItems="center">
+          <img src={GoogleLogo} style={{ width: '30px', paddingRight: 5 }}></img>{' '}
+          <Text fontSize="sm">Google Calendar</Text>
+        </Flex>
+
+        <Text fontSize={'sm'} color="gray.500">
+          {account.email}
+        </Text>
+      </Flex>
+    </Box>
   )
 }
 

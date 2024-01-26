@@ -46,8 +46,14 @@ export function getHeaders() {
   }
 }
 
-export function getGoogleOauthUrl(): string {
-  return `${API_URL}/oauth/google/auth`
+type AuthType = 'sign_in' | 'add_account'
+
+export function getGoogleOauthUrl(authType: AuthType, userId?: string): string {
+  const url = `${API_URL}/oauth/google/auth?auth_type=${authType}`
+  if (userId) {
+    return `${url}&user_id=${userId}`
+  }
+  return url
 }
 
 export function getMsftOauthUrl(): string {

@@ -71,7 +71,7 @@ function LoginOptions(props: { onEnterEmail: (email: string) => void }) {
         pb="4"
         variant="outline"
         w="100%"
-        onClick={() => (window.location.href = getGoogleOauthUrl())}
+        onClick={() => (window.location.href = getGoogleOauthUrl('sign_in'))}
       >
         <img src={GoogleLogo} style={{ width: '40px', paddingRight: 5 }}></img>
         <Text fontSize={'sm'} fontWeight={'medium'}>

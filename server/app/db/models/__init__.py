@@ -1,7 +1,7 @@
 from app.db.base_class import Base
 
 from .user import User
-from .user_credentials import UserCredential, ProviderType
+from .user_account import UserAccount, ProviderType
 from .user_calendar import UserCalendar
 
 from .calendar import Calendar
