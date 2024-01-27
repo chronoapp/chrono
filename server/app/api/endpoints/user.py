@@ -24,16 +24,49 @@ class UserVM(BaseModel):
     picture_url: str | None = None
     name: str | None = None
     username: str | None = None
-    accounts: list[AccountVM] | None = None
+    accounts: list[AccountVM]
+
+
+class UpdateUserVM(BaseModel):
+    timezone: str
+    name: str | None = None
+    username: str | None = None
 
 
 @router.get('/user/', response_model=UserVM)
 async def getUser(user=Depends(get_current_user)):
-    flags = FlagUtils(user).getAllFlags()
+    return _userToVM(user)
 
+
+@router.put('/user/', response_model=UserVM)
+async def updateUser(userVM: UpdateUserVM, user=Depends(get_current_user), session=Depends(get_db)):
+    user.timezone = userVM.timezone
+    user.name = userVM.name
+    user.username = userVM.username
+
+    from app.core.logger import logger
+
+    logger.info(userVM)
+    session.add(user)
+    session.commit()
+
+    return _userToVM(user)
+
+
+@router.get('/user/flags/', response_model=dict[FlagType, bool])
+async def getUserFlags(user=Depends(get_current_user)):
+    return FlagUtils(user).getAllFlags()
+
+
+@router.put('/user/flags/', response_model=dict[FlagType, bool])
+async def setUserFlags(flags: dict[FlagType, bool], user=Depends(get_current_user)):
+    return FlagUtils(user).setAllFlags(flags)
+
+
+def _userToVM(user):
     return UserVM(
         id=user.id,
-        flags=flags,
+        flags=FlagUtils(user).getAllFlags(),
         email=user.email,
         timezone=user.timezone,
         picture_url=user.picture_url,
@@ -50,32 +83,3 @@ async def getUser(user=Depends(get_current_user)):
         if user.accounts
         else None,
     )
-
-
-@router.put('/user/', response_model=UserVM)
-async def updateUser(userVM: UserVM, user=Depends(get_current_user), session=Depends(get_db)):
-    user.timezone = userVM.timezone
-    user.name = userVM.name
-    user.username = userVM.username
-    session.add(user)
-    session.commit()
-
-    return UserVM(
-        id=user.id,
-        flags=FlagUtils(user).getAllFlags(),
-        email=user.email,
-        timezone=user.timezone,
-        picture_url=user.picture_url,
-        name=user.name,
-        username=user.username,
-    )
-
-
-@router.get('/user/flags/', response_model=dict[FlagType, bool])
-async def getUserFlags(user=Depends(get_current_user)):
-    return FlagUtils(user).getAllFlags()
-
-
-@router.put('/user/flags/', response_model=dict[FlagType, bool])
-async def setUserFlags(flags: dict[FlagType, bool], user=Depends(get_current_user)):
-    return FlagUtils(user).setAllFlags(flags)

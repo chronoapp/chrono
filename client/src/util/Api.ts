@@ -110,10 +110,16 @@ export async function getUser(): Promise<User> {
 }
 
 export async function updateUser(user: User): Promise<User> {
+  const userUpdate = {
+    name: user.name,
+    username: user.username,
+    timezone: user.timezone,
+  }
+
   return fetch(`${API_URL}/user/`, {
     method: 'PUT',
     headers: getHeaders(),
-    body: JSON.stringify(user),
+    body: JSON.stringify(userUpdate),
   })
     .then(handleErrors)
     .then((resp) => User.fromJson(resp))
