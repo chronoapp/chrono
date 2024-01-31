@@ -10,6 +10,7 @@ from app.core.logger import logger
 class NotificationType(Enum):
     REFRESH_CALENDAR = 'REFRESH_CALENDAR'
     REFRESH_CALENDAR_LIST = 'REFRESH_CALENDAR_LIST'
+    REFRESH_USER = 'REFRESH_USER'
 
 
 class ConnectionManager:

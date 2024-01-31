@@ -39,11 +39,11 @@ class ReminderOverride(Base):
     method: Mapped[ReminderMethod] = mapped_column(
         SQLAlchemyEnum(ReminderMethod, name='reminder_method')
     )
-    minutes: Mapped[int] = mapped_column(String(255), nullable=False)
+    minutes: Mapped[str] = mapped_column(String(255), nullable=False)
 
     def __init__(self, method: ReminderMethod, minutes: int):
         self.method = method
-        self.minutes = minutes
+        self.minutes = str(minutes)
 
     def __repr__(self) -> str:
         return f'<ReminderOverride method={self.method} minutes={self.minutes}/>'
