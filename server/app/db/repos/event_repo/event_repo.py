@@ -396,9 +396,12 @@ class EventRepository:
         if fromCalendar.id == toCalendar.id:
             raise EventRepoError('Cannot move between same calendars')
 
+        if fromCalendar.account_id != toCalendar.account_id:
+            raise EventRepoError('Cannot move event between different accounts')
+
         event = self.getEvent(user, fromCalendar, eventId)
         if not event:
-            raise EventRepoError(f'Cannot move the event.')
+            raise EventNotFoundError(f'Event {eventId} not found.')
 
         if event.recurring_event_id is not None:
             raise EventRepoError('Cannot move instance of recurring event.')
