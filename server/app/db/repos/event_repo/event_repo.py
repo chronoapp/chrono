@@ -372,7 +372,7 @@ class EventRepository:
         elif curEvent and curEvent.is_parent_recurring_event:
             updatedEvent = createOrUpdateEvent(userCalendar, curEvent, event)
 
-            self._updateRecurringEventOverrides(user, userCalendar, event)
+            self._updateRecurringEventOverrides(user, userCalendar, updatedEvent)
 
         # Update normal event.
         else:
@@ -536,22 +536,25 @@ class EventRepository:
 
         return eventInDbVM, parentEvent
 
-    def _updateRecurringEventOverrides(
-        self, user: User, userCalendar: UserCalendar, event: EventBaseVM
-    ):
-        """Since we're modifying the recurrence, we need to delete the overrides that no longer exist
+    def _updateRecurringEventOverrides(self, user: User, userCalendar: UserCalendar, event: Event):
+        """If the recurrence changes, so we need to delete the overrides that no longer exist
         as part of the new recurrence.
-
         """
-        stmt = BASE_EVENT_STATEMENT.where(
-            and_(
-                Event.recurring_event_id == event.id,
-                Event.recurring_event_calendar_id == event.calendar_id,
+        if not event.start:
+            raise EventRepoError('No start date for recurring event.')
+
+        overrides = (
+            self.session.execute(
+                BASE_EVENT_STATEMENT.where(
+                    Event.recurring_event_id == event.id,
+                    Event.recurring_event_calendar_id == event.calendar_id,
+                )
             )
+            .scalars()
+            .all()
         )
 
-        overrides = self.session.execute(stmt).scalars().all()
-        timezone = event.timezone or userCalendar.timezone or user.timezone
+        timezone = event.time_zone or userCalendar.timezone or user.timezone
         ruleSet = (
             None
             if not event.recurrences

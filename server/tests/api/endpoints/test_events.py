@@ -407,12 +407,12 @@ def test_updateEvent_withParticipants(user: User, session, test_client):
 
 
 def test_updateEvent_recurring(user: User, session, test_client):
-    """Modify for this & following events.
+    """Modify the recurrence for this & following events.
     TODO: Should delete outdated, overriden events.
     """
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
-    # Create a new recurring event 2020-01-01 to 2020-01-10 => 10 events.
+    # 1) Create a new recurring event 2020-01-01 to 2020-01-10 => 10 events.
     start = datetime.fromisoformat('2020-01-01T12:00:00')
     recurringEvent = createEvent(userCalendar, start, start + timedelta(hours=1))
     recurringEvent.recurrences = ['RRULE:FREQ=DAILY;UNTIL=20200110T120000Z']
@@ -422,7 +422,7 @@ def test_updateEvent_recurring(user: User, session, test_client):
     )
     assert len(events) == 10
 
-    # Create an overidden event
+    # 2) Create an overidden event
 
     override = createOrUpdateEvent(userCalendar, None, events[8])
     override.title = 'Override'
@@ -430,7 +430,11 @@ def test_updateEvent_recurring(user: User, session, test_client):
 
     session.commit()
 
-    # Trim the original event's instance list
+    events = getAllExpandedRecurringEventsList(
+        user, userCalendar, start, start + timedelta(days=20), session
+    )
+
+    # 3) Update the original recurring event. Trim the original event's instance list
     # Now, it starts from 2020-01-05.
 
     eventData = {
@@ -440,6 +444,7 @@ def test_updateEvent_recurring(user: User, session, test_client):
         "calendar_id": str(userCalendar.id),
         "recurrences": ['RRULE:FREQ=DAILY;UNTIL=20200105T120000Z'],
     }
+
     resp = test_client.put(
         f'/api/v1/calendars/{userCalendar.id}/events/{recurringEvent.id}',
         headers={'Authorization': getAuthToken(user)},
@@ -452,7 +457,7 @@ def test_updateEvent_recurring(user: User, session, test_client):
         user, userCalendar, start, start + timedelta(days=20), session
     )
 
-    # The overriden event should be removed.
+    # 4) Make sure the overriden event is removed.
     assert len(events) == 5
 
 
