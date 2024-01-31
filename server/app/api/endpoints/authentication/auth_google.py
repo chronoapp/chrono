@@ -22,7 +22,8 @@ from app.api.utils.db import get_db
 from app.core import config
 from app.core.logger import logger
 from app.utils.redis import getRedisConnection
-
+from app.sync.google.tasks import syncAllCalendarsTask
+from app.core.notifications import sendClientNotification, NotificationType
 
 """Connect Google accounts with OAuth2
 
@@ -89,7 +90,7 @@ def googleAuth(auth_type: AuthType = 'sign_in', user_id: uuid.UUID | None = None
 
 @router.get('/oauth/google/add-account-callback')
 def addAccountCallback(state: str, code: str, session: Session = Depends(get_db)):
-    """Callback for add account flow."""
+    """Callback for add account flow to connect a new account"""
     flow = _getOauthFlow('add_account')
     flow.fetch_token(code=code)
 
@@ -115,14 +116,17 @@ def addAccountCallback(state: str, code: str, session: Session = Depends(get_db)
 
     existingAccount = user.getAccount(ProviderType.Google, email)
     if not existingAccount:
-        user.accounts.append(UserAccount(email, creds, ProviderType.Google))
+        user.accounts.append(UserAccount(email, creds, ProviderType.Google, False))
 
     session.commit()
 
-    # TODO: Send a notification to the frontend to refresh the user's accounts.
-    template = Template.get_template('oauth/index.html')
+    # Send a notification to the frontend to refresh the user's accounts.
+    sendClientNotification(str(user.id), NotificationType.REFRESH_USER)
 
-    return HTMLResponse(content=template.render())
+    # Start syncing calendar after adding account.
+    syncAllCalendarsTask.send(user.id, False)
+
+    return HTMLResponse(content=Template.get_template('oauth/index.html').render())
 
 
 @router.post('/oauth/google/token')

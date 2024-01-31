@@ -19,6 +19,7 @@ import { FiSettings, FiLogOut } from 'react-icons/fi'
 
 import { roundNext15Min } from '@/util/localizer'
 import { GlobalEvent } from '@/util/global'
+import { generateGuid } from '@/lib/uuid'
 
 import MiniCalendar from '@/calendar/MiniCalendar'
 import LabelPanel from '@/components/LabelPanel'
@@ -130,6 +131,7 @@ function Layout(props: Props) {
   const params = useParams()
   const searchQuery = (params.search as string) || ''
   const [user, setUser] = useRecoilState(userState)
+  const [refreshUserId, setRefreshUserId] = React.useState(generateGuid())
 
   /**
    * Sends an event to refresh the calendar when a notification is received.
@@ -140,6 +142,8 @@ function Layout(props: Props) {
       document.dispatchEvent(new Event(GlobalEvent.refreshCalendar))
     } else if (msg === 'REFRESH_CALENDAR_LIST') {
       document.dispatchEvent(new Event(GlobalEvent.refreshCalendarList))
+    } else if (msg === 'REFRESH_USER') {
+      setRefreshUserId(generateGuid())
     }
   })
 
@@ -150,7 +154,7 @@ function Layout(props: Props) {
     }
 
     fetchUser()
-  }, [])
+  }, [refreshUserId])
 
   return (
     <Box className="App">
