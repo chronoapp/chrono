@@ -32,7 +32,7 @@ import { GlobalEvent } from '@/util/global'
 
 import { calendarsState } from '@/state/CalendarState'
 import { userState } from '@/state/UserState'
-import Calendar, { AccessRole } from '@/models/Calendar'
+import Calendar from '@/models/Calendar'
 import CalendarEditModal from './CalendarEditModal'
 import CalendarLogo from './CalendarLogo'
 import CalendarList from './CalendarList'
