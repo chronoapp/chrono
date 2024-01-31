@@ -61,7 +61,8 @@ def test_syncGoogleCalendars(user, session: Session):
         ],
     }
 
-    syncGoogleCalendars(user, [calendarItem], session)
+    account = user.getDefaultAccount()
+    syncGoogleCalendars(account, [calendarItem], session)
 
     calendarRepo = CalendarRepository(session)
     createdCalendar = next(
@@ -72,10 +73,12 @@ def test_syncGoogleCalendars(user, session: Session):
     assert createdCalendar.summary == calendarItem['summary']
 
     assert len(createdCalendar.reminders) == 2
-    assert createdCalendar.reminders[0].method == ReminderMethod.EMAIL
-    assert createdCalendar.reminders[0].minutes == 30
-    assert createdCalendar.reminders[1].method == ReminderMethod.POPUP
-    assert createdCalendar.reminders[1].minutes == 15
+    reminders = sorted(createdCalendar.reminders, key=lambda r: r.method.value)
+
+    assert reminders[0].method == ReminderMethod.EMAIL
+    assert reminders[0].minutes == '30'
+    assert reminders[1].method == ReminderMethod.POPUP
+    assert reminders[1].minutes == '15'
 
 
 # ==================== Sync Events ====================

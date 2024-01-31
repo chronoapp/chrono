@@ -1,5 +1,5 @@
 import uuid
-from typing import Optional, List, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 from sqlalchemy import String, UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
@@ -31,13 +31,9 @@ class User(Base):
     accounts: Mapped[list[UserAccount]] = relationship(
         'UserAccount',
         cascade='save-update, merge, delete, delete-orphan',
-        backref='user',
     )
     timezone: Mapped[str] = mapped_column(String(255), nullable=False, server_default='UTC')
 
-    calendars: Mapped[list[UserCalendar]] = relationship(
-        "UserCalendar", back_populates='user', lazy='joined', cascade='all,delete'
-    )
     labels: Mapped[list['Label']] = relationship(
         'Label',
         lazy='joined',
@@ -45,6 +41,11 @@ class User(Base):
         order_by="Label.position",
         collection_class=ordering_list('position', count_from=0),
         back_populates='user',
+    )
+
+    # TODO: Remove these relationships, which are now associated to UserAccount
+    calendars: Mapped[list[UserCalendar]] = relationship(
+        "UserCalendar", back_populates='user', lazy='joined', cascade='all,delete'
     )
     contacts: Mapped[list['Contact']] = relationship(
         'Contact', lazy='dynamic', cascade='all,delete'
@@ -63,7 +64,7 @@ class User(Base):
         self.name = name
         self.picture_url = pictureUrl
 
-    def getGoogleCalendars(self) -> List[UserCalendar]:
+    def getGoogleCalendars(self) -> list[UserCalendar]:
         return [cal for cal in self.calendars if cal.google_id != None]
 
     def getClassifierPath(self):
@@ -77,8 +78,14 @@ class User(Base):
 
         return defaultAccount
 
-    def getAccount(self, provider: ProviderType, email: str) -> Optional[UserAccount]:
+    def getGoogleAccounts(self) -> list[UserAccount]:
+        return [a for a in self.accounts if a.provider == ProviderType.Google.value]
+
+    def getAccount(self, provider: ProviderType, email: str) -> UserAccount | None:
         return next(
             (a for a in self.accounts if a.provider == provider.value and a.email == email),
             None,
         )
+
+    def getAccountById(self, accountId: uuid.UUID) -> UserAccount | None:
+        return next((a for a in self.accounts if a.id == accountId), None)

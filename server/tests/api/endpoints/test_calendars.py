@@ -22,6 +22,7 @@ def test_getCalendars(user, test_client):
 
 def test_postCalendar(user, session, test_client):
     calendarData = {
+        'account_id': str(user.getDefaultAccount().id),
         'summary': 'my calendar',
         'backgroundColor': '#cccccc',
         'foregroundColor': '#ffffff',

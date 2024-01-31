@@ -8,7 +8,7 @@ from app.db.base_class import Base
 from app.db.models.access_control import AccessRole
 
 if TYPE_CHECKING:
-    from app.db.models import User, Webhook, Calendar, ReminderOverride
+    from app.db.models import User, Webhook, Calendar, ReminderOverride, UserAccount
 
 CalendarSource = Literal['google', 'chrono']
 
@@ -33,6 +33,10 @@ class UserCalendar(Base):
 
     user_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('user.id'), nullable=False)
     user: Mapped['User'] = relationship('User', back_populates='calendars')
+
+    # Connected Calendar Account
+    account_id: Mapped[UUID] = mapped_column(UUID, ForeignKey('user_credentials.id'), nullable=True)
+    account: Mapped['UserAccount'] = relationship('UserAccount', back_populates='calendars')
 
     # IDs for google / msft / aapl.
     google_id = mapped_column(String(255), nullable=True, index=True)
