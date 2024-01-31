@@ -15,7 +15,7 @@ from google.oauth2.credentials import Credentials
 from .token_utils import getAuthToken
 
 from app.db.repos.user_repo import UserRepository
-from app.db.models.user_account import UserAccount, ProviderType
+from app.db.models.user_account import UserAccount, CalendarProvider
 from app.db.models.user import User
 from app.api.utils.db import get_db
 
@@ -114,9 +114,9 @@ def addAccountCallback(state: str, code: str, session: Session = Depends(get_db)
 
     creds = _getCredentialsDict(flow.credentials)
 
-    existingAccount = user.getAccount(ProviderType.Google, email)
+    existingAccount = user.getAccount(CalendarProvider.Google, email)
     if not existingAccount:
-        user.accounts.append(UserAccount(email, creds, ProviderType.Google, False))
+        user.accounts.append(UserAccount(email, creds, CalendarProvider.Google, False))
 
     session.commit()
 
@@ -156,9 +156,9 @@ def googleAuthToken(authData: AuthData, session: Session = Depends(get_db)):
 
     creds = _getCredentialsDict(flow.credentials)
 
-    existingAccount = user.getAccount(ProviderType.Google, email)
+    existingAccount = user.getAccount(CalendarProvider.Google, email)
     if not existingAccount:
-        user.accounts.append(UserAccount(email, creds, ProviderType.Google))
+        user.accounts.append(UserAccount(email, creds, CalendarProvider.Google))
 
     session.commit()
 

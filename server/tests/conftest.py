@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import select
 
 from app.db.base_class import Base
-from app.db.models import User, UserCalendar, UserAccount, ProviderType
+from app.db.models import User, UserCalendar, UserAccount, CalendarProvider
 from app.db.models.calendar import Calendar
 from app.main import app
 
@@ -54,7 +54,7 @@ def user(session):
     """Default user with a primary calendar."""
 
     user = User('user@chrono.so', 'Test User', None)
-    userAccount = UserAccount(user.email, {}, ProviderType.Google, True)
+    userAccount = UserAccount(user.email, {}, CalendarProvider.Google, True)
     userAccount.user = user
 
     calendarId = uuid.uuid4()

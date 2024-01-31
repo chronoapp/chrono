@@ -6,17 +6,23 @@ from app.utils.flags import FlagUtils, FlagType
 from app.api.utils.security import get_current_user
 from app.api.utils.db import get_db
 
+from app.db.models.user_account import CalendarProvider
+from app.db.models.user import User
+
 router = APIRouter()
 
 
 class AccountVM(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
-    provider: str
+    provider: CalendarProvider
     email: str
 
 
 class UserVM(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
+
     id: UUID
     flags: dict[FlagType, bool] | None
     email: str
@@ -63,7 +69,7 @@ async def setUserFlags(flags: dict[FlagType, bool], user=Depends(get_current_use
     return FlagUtils(user).setAllFlags(flags)
 
 
-def _userToVM(user):
+def _userToVM(user: User):
     return UserVM(
         id=user.id,
         flags=FlagUtils(user).getAllFlags(),
@@ -75,11 +81,11 @@ def _userToVM(user):
         accounts=[
             AccountVM(
                 id=account.id,
-                provider=account.provider,
+                provider=CalendarProvider(account.provider),
                 email=account.email,
             )
             for account in user.accounts
         ]
         if user.accounts
-        else None,
+        else [],
     )

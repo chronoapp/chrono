@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.orderinglist import ordering_list
 
 from app.db.base_class import Base
-from app.db.models.user_account import ProviderType, UserAccount
+from app.db.models.user_account import CalendarProvider, UserAccount
 from app.db.models.user_calendar import UserCalendar
 
 if TYPE_CHECKING:
@@ -24,7 +24,7 @@ class User(Base):
     username: Mapped[Optional[str]] = mapped_column(String(255))
     hashed_password: Mapped[Optional[str]] = mapped_column(String(255))
 
-    email: Mapped[Optional[str]] = mapped_column(String(255))
+    email: Mapped[str] = mapped_column(String(255))
     name: Mapped[Optional[str]] = mapped_column(String(255))  # display name
     picture_url: Mapped[Optional[str]] = mapped_column(String(255))
 
@@ -79,9 +79,9 @@ class User(Base):
         return defaultAccount
 
     def getGoogleAccounts(self) -> list[UserAccount]:
-        return [a for a in self.accounts if a.provider == ProviderType.Google.value]
+        return [a for a in self.accounts if a.provider == CalendarProvider.Google.value]
 
-    def getAccount(self, provider: ProviderType, email: str) -> UserAccount | None:
+    def getAccount(self, provider: CalendarProvider, email: str) -> UserAccount | None:
         return next(
             (a for a in self.accounts if a.provider == provider.value and a.email == email),
             None,

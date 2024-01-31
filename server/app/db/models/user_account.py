@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 import enum
 import uuid
 
-from sqlalchemy import Integer, ForeignKey, String, UUID, Boolean
+from sqlalchemy import ForeignKey, String, UUID, Boolean
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -14,9 +14,10 @@ if TYPE_CHECKING:
     from app.db.models.user import User
 
 
-class ProviderType(enum.Enum):
+class CalendarProvider(enum.Enum):
     Google = 'google'
     Microsoft = 'microsoft'
+    Chrono = 'chrono'
 
 
 class UserAccount(Base):
@@ -48,7 +49,7 @@ class UserAccount(Base):
     )
 
     def __init__(
-        self, email: str, tokenData: dict, provider: ProviderType, isDefault: bool = True
+        self, email: str, tokenData: dict, provider: CalendarProvider, isDefault: bool = True
     ) -> None:
         self.email = email
         self.token_data = tokenData
