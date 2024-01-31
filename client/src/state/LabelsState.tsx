@@ -6,10 +6,10 @@ import { LabelColor } from '@/models/LabelColors'
 export interface LabelState {
   loading: boolean
   labelsById: Record<string, Label>
-  editingLabel: LabelModalState
+  editingLabel: EditingLabelState
 }
 
-export interface LabelModalState {
+export interface EditingLabelState {
   active: boolean
   labelTitle: string
   labelColor?: LabelColor

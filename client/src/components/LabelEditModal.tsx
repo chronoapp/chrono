@@ -26,7 +26,7 @@ import { InfoAlert } from '@/components/Alert'
 import { putLabel, createLabel } from '@/util/Api'
 import { getSortedLabelColors, LabelColor } from '@/models/LabelColors'
 import { useRecoilState } from 'recoil'
-import { labelsState, LabelModalState } from '@/state/LabelsState'
+import { labelsState, EditingLabelState } from '@/state/LabelsState'
 
 function EditLabelModal() {
   const toast = useToast()
@@ -35,8 +35,8 @@ function EditLabelModal() {
   const [labelState, setLabelState] = useRecoilState(labelsState)
 
   const allColors = getSortedLabelColors()
-  const newLabelModal = labelState.editingLabel
-  const selectedColor = newLabelModal.labelColor ? newLabelModal.labelColor : allColors[0]
+  const editingLabel = labelState.editingLabel
+  const selectedColor = editingLabel.labelColor ? editingLabel.labelColor : allColors[0]
 
   function ColorLabel(color: LabelColor) {
     return (
@@ -57,7 +57,7 @@ function EditLabelModal() {
       return {
         ...prevState,
         labelsById: newLabels,
-        editingLabel: { ...newLabelModal, active: false, labelTitle: '' },
+        editingLabel: { ...editingLabel, active: false, labelTitle: '' },
       }
     })
 
@@ -79,7 +79,7 @@ function EditLabelModal() {
     })
   }
 
-  function onClickSaveLabel(newLabelModal: LabelModalState, selectedColor: LabelColor) {
+  function onClickSaveLabel(newLabelModal: EditingLabelState, selectedColor: LabelColor) {
     if (!newLabelModal.labelTitle) {
       addErrorMessage("Tag name can't be empty", 'Please enter a tag name before submitting.')
       return
@@ -104,7 +104,7 @@ function EditLabelModal() {
       return {
         ...prevState,
         editingLabel: {
-          ...newLabelModal,
+          ...editingLabel,
           active: false,
           labelTitle: '',
           labelId: undefined,
@@ -128,13 +128,13 @@ function EditLabelModal() {
               placeholder=""
               size="sm"
               fontSize={'sm'}
-              value={newLabelModal.labelTitle}
+              value={editingLabel.labelTitle}
               onChange={(e) => {
                 setLabelState((prevState) => {
                   return {
                     ...prevState,
                     editingLabel: {
-                      ...newLabelModal,
+                      ...editingLabel,
                       labelTitle: e.target.value,
                     },
                   }
@@ -162,7 +162,7 @@ function EditLabelModal() {
                           return {
                             ...prevState,
                             editingLabel: {
-                              ...newLabelModal,
+                              ...editingLabel,
                               labelColor: color,
                             },
                           }
@@ -184,7 +184,7 @@ function EditLabelModal() {
           </Button>
           <Button
             colorScheme="primary"
-            onClick={() => onClickSaveLabel(newLabelModal, selectedColor)}
+            onClick={() => onClickSaveLabel(editingLabel, selectedColor)}
           >
             Save
           </Button>
