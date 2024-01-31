@@ -139,6 +139,7 @@ export default function EventEditPartial(props: IProps) {
       </Menu>
     )
   }
+
   return (
     <>
       <Box className="cal-event-modal-header" mt="1">
@@ -315,7 +316,8 @@ export default function EventEditPartial(props: IProps) {
             <FiCalendar size="1em" />
           </Box>
           <SelectCalendar
-            defaultCalendarId={eventFields.calendarId}
+            originalCalendarId={null}
+            selectedCalendarId={eventFields.calendarId}
             calendarsById={calendarsById}
             onChange={(calendar) => {
               const updatedFields = {

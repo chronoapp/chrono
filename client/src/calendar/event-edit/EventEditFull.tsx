@@ -62,6 +62,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
   const calendarsById = useRecoilValue(calendarsState).calendarsById
   const setDisplay = useSetRecoilState(displayState)
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
+  const originalCalendarId = props.event.syncStatus === 'SYNCED' ? props.event.calendar_id : null
 
   // Event data and overrides
   const [eventFields, setEventFields] = useState(
@@ -465,7 +466,8 @@ export default function EventEditFull(props: { event: Event; eventService: Event
               <FiCalendar size={'1em'} />
             </Box>
             <SelectCalendar
-              defaultCalendarId={eventFields.calendarId}
+              originalCalendarId={originalCalendarId}
+              selectedCalendarId={eventFields.calendarId}
               calendarsById={calendarsById}
               onChange={(calendar) => {
                 const updatedFields = {

@@ -16,11 +16,14 @@ import { FiChevronDown } from 'react-icons/fi'
 import groupBy from '@/lib/js-lib/groupBy'
 
 import Calendar from '@/models/Calendar'
+import CalendarAccount from '@/models/CalendarAccount'
+
 import { userState } from '@/state/UserState'
 
 interface IProps {
   calendarsById: Record<number, Calendar>
-  defaultCalendarId: string
+  originalCalendarId: string | null
+  selectedCalendarId: string
   onChange: (calendar: Calendar) => void
 }
 
@@ -28,9 +31,16 @@ export default function SelectCalendar(props: IProps) {
   const user = useRecoilValue(userState)
 
   const writableCalendars = Object.values(props.calendarsById).filter((cal) => cal.isWritable())
-  const selectedCal = props.calendarsById[props.defaultCalendarId]
+  const selectedCal = props.calendarsById[props.selectedCalendarId]
 
-  const accounts = user?.accounts || []
+  // Since moving events between accounts isn't supported yet,
+  // we only show calendars from the same account as the original calendar.
+  let accounts: CalendarAccount[] = user?.accounts || []
+  if (props.originalCalendarId) {
+    const originalCalendar = props.calendarsById[props.originalCalendarId]
+    accounts = accounts.filter((account) => account.id === originalCalendar.account_id) || []
+  }
+
   const groupedCalendars = groupBy(writableCalendars, (cal) => cal.account_id)
 
   function renderCalendarItem(calendar: Calendar) {
@@ -55,6 +65,7 @@ export default function SelectCalendar(props: IProps) {
       >
         {renderCalendarItem(selectedCal)}
       </MenuButton>
+
       <MenuList mt="-1" p="0" zIndex="10">
         {accounts.map((account) => {
           const calendars = groupedCalendars.get(account.id)!
