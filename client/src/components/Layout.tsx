@@ -23,7 +23,7 @@ import { generateGuid } from '@/lib/uuid'
 
 import MiniCalendar from '@/calendar/MiniCalendar'
 import LabelPanel from '@/components/LabelPanel'
-import CalendarList from '@/components/CalendarsList'
+import CalendarAccountList from '@/components/CalendarAccountList'
 import Plugins from '@/components/Plugins'
 import Settings from '@/components/settings/Settings'
 import useNotifications from '@/util/useNotifications'
@@ -172,7 +172,7 @@ function Layout(props: Props) {
                 height="100%"
               >
                 <LabelPanel />
-                <CalendarList />
+                <CalendarAccountList />
               </Flex>
             </Flex>
           </Box>

@@ -1,14 +1,13 @@
 import { immerable } from 'immer'
 import Event from '@/models/Event'
 import ReminderOverride from '@/models/ReminderOverride'
+import { CalendarProvider } from './CalendarAccount'
 
 export type AccessRole = 'reader' | 'writer' | 'owner' | 'freeBusyReader'
-export type CalendarSource = 'google' | 'chrono'
-
 export interface CalendarEditable {
   summary: string
   description: string
-  source: CalendarSource
+  source: CalendarProvider
   backgroundColor: string
   timezone: string | undefined
 }
@@ -19,6 +18,7 @@ export default class Calendar implements CalendarEditable {
   static fromJson(json): Calendar {
     return new Calendar(
       json.id,
+      json.account_id,
       json.google_id,
       json.summary,
       json.summaryOverride,
@@ -37,6 +37,7 @@ export default class Calendar implements CalendarEditable {
 
   constructor(
     readonly id: string,
+    readonly account_id: string,
     readonly google_id: string | null,
     readonly summary: string,
     readonly summaryOverride: string,
@@ -46,7 +47,7 @@ export default class Calendar implements CalendarEditable {
     readonly selected: boolean,
     readonly primary: boolean,
     readonly accessRole: AccessRole,
-    readonly source: CalendarSource,
+    readonly source: CalendarProvider,
     readonly timezone: string,
     readonly email: string,
     readonly reminders: ReminderOverride[]

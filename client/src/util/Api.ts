@@ -4,7 +4,9 @@ import { formatDateTime } from '@/util/localizer'
 import Event from '@/models/Event'
 import { Label, TimePeriod } from '@/models/Label'
 import { LabelRule } from '@/models/LabelRule'
-import Calendar, { CalendarSource } from '@/models/Calendar'
+import Calendar from '@/models/Calendar'
+import { CalendarProvider } from '@/models/CalendarAccount'
+
 import Contact from '@/models/Contact'
 import User from '@/models/User'
 import ContactInEvent from '@/models/ContactInEvent'
@@ -136,9 +138,10 @@ export async function updateUserFlags(flags: Flags): Promise<User> {
 // ================== Calendars ==================
 
 export async function createCalendar(
+  account_id: string,
   summary: string,
   backgroundColor: string,
-  source: CalendarSource,
+  source: CalendarProvider,
   description: string,
   timezone?: string,
   foregroundColor: string = '#ffffff'
@@ -146,6 +149,7 @@ export async function createCalendar(
   return fetch(`${API_URL}/calendars/`, {
     method: 'POST',
     body: JSON.stringify({
+      account_id,
       summary,
       description,
       timezone,

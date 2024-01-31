@@ -14,17 +14,20 @@ import {
   Link,
   Text,
   Textarea,
+  Flex,
 } from '@chakra-ui/react'
 import { FiExternalLink } from 'react-icons/fi'
 
-import Calendar, { CalendarEditable, CalendarSource } from '@/models/Calendar'
+import Calendar, { CalendarEditable } from '@/models/Calendar'
+import CalendarAccount from '@/models/CalendarAccount'
+import CalendarLogo from '@/components/CalendarLogo'
 
 interface IProps {
-  isActive: boolean
+  account: CalendarAccount
   editingCalendar?: Calendar
 
   onCancel: () => void
-  onSave: (fields: CalendarEditable) => void
+  onSave: (account: CalendarAccount, fields: CalendarEditable) => void
 }
 
 const DEFAULT_CALENDAR_BG_COLOR = '#2196f3'
@@ -56,7 +59,7 @@ export default function CalendarEditModal(props: IProps) {
   const isEditableCalendar = props.editingCalendar && props.editingCalendar.isWritable()
 
   return (
-    <Modal isOpen={props.isActive} onClose={props.onCancel}>
+    <Modal isOpen={true} onClose={props.onCancel}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader fontSize={'md'}>
@@ -64,7 +67,23 @@ export default function CalendarEditModal(props: IProps) {
         </ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          <FormControl id="calendar-title">
+          <FormControl>
+            <FormLabel fontSize={'sm'}>Account</FormLabel>
+            <Flex
+              alignItems="center"
+              padding="2"
+              borderColor="gray.100"
+              borderRadius={'sm'}
+              borderWidth="1px"
+            >
+              <CalendarLogo source={props.account.provider} size={22} />
+              <Text fontSize="xs" pl="2" color="gray.600" fontWeight="md">
+                {props.account.email}
+              </Text>
+            </Flex>
+          </FormControl>
+
+          <FormControl id="calendar-title" mt="3">
             <FormLabel fontSize={'sm'}>Title</FormLabel>
             <Input
               type="text"
@@ -79,7 +98,7 @@ export default function CalendarEditModal(props: IProps) {
           </FormControl>
 
           {(!props.editingCalendar || isEditableCalendar) && (
-            <FormControl id="calendar-description" mt="2">
+            <FormControl id="calendar-description" mt="3">
               <FormLabel fontSize={'sm'}>Description</FormLabel>
               <Textarea
                 size="xs"
@@ -118,7 +137,7 @@ export default function CalendarEditModal(props: IProps) {
             isLoading={isSaving}
             onClick={async () => {
               setIsSaving(true)
-              await props.onSave(editableFields)
+              await props.onSave(props.account!, editableFields)
               setIsSaving(false)
             }}
           >
