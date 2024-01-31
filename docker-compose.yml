@@ -17,7 +17,6 @@ services:
       - MSFT_APP_ID=${MSFT_APP_ID}
       - MSFT_APP_SECRET=${MSFT_APP_SECRET}
       - TOKEN_SECRET=${TOKEN_SECRET}
-      - LOG_LEVEL=info
     logging:
       driver: loki
       options:

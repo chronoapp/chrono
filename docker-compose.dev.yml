@@ -10,7 +10,6 @@ services:
     command: /var/scripts/entrypoint-worker.sh
     environment:
       - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@postgres_db:5432/${DATABASE_NAME}
-      - LOG_LEVEL=debug
     env_file:
       - .env
 
