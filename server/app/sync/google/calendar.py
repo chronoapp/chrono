@@ -8,7 +8,6 @@ from sqlalchemy.orm import selectinload, Session
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from dateutil.rrule import rrulestr
-from googleapiclient.errors import HttpError
 from app.core.logger import logger
 
 
@@ -28,6 +27,7 @@ from app.db.models import (
     EventAttendee,
     ReminderOverride,
     ReminderMethod,
+    UserAccount,
 )
 
 from app.db.models.event import Transparency, Visibility
@@ -110,8 +110,10 @@ def mapGoogleColor(color: str) -> str:
         return color
 
 
-def syncGoogleCalendars(user: User, calendarList, session: Session, removeDeleted: bool = True):
-    calendarsMap = {cal.google_id: cal for cal in user.getGoogleCalendars()}
+def syncGoogleCalendars(
+    account: UserAccount, calendarList, session: Session, removeDeleted: bool = True
+):
+    calendarsMap = {cal.google_id: cal for cal in account.calendars}
 
     # Add and update calendars
     for calendarItem in calendarList:
@@ -164,7 +166,9 @@ def syncGoogleCalendars(user: User, calendarList, session: Session, removeDelete
             )
             userCalendar.google_id = gCalId
             userCalendar.calendar = calendar
-            user.calendars.append(userCalendar)
+            userCalendar.account = account
+            userCalendar.user = account.user
+            session.add(userCalendar)
 
         # Sync ACL
         if userCalendar.access_role == 'owner':
@@ -204,17 +208,17 @@ def syncAccessControlList(userCalendar: UserCalendar, aclRepo: ACLRepository):
 
 def syncAllCalendars(user: User, session: Session):
     """Syncs calendars and access control list from google calendar."""
-    calendarList = gcal.getUserCalendars(user)
-    syncGoogleCalendars(user, calendarList.get('items'), session)
+    for account in user.getGoogleAccounts():
+        calendarList = gcal.getUserCalendars(account)
+        syncGoogleCalendars(account, calendarList.get('items'), session)
 
 
-def syncCalendar(user: User, calendarId: str, session: Session):
-    calendar = gcal.getUserCalendar(user, calendarId)
-    syncGoogleCalendars(user, [calendar], session, removeDeleted=False)
+def syncCalendar(account: UserAccount, calendarId: str, session: Session):
+    calendar = gcal.getUserCalendar(account, calendarId)
+    syncGoogleCalendars(account, [calendar], session, removeDeleted=False)
 
 
 def syncCalendarEvents(calendar: UserCalendar, session: Session, fullSync: bool = False) -> None:
-    service = gcal.getCalendarService(calendar.user)
     end = (datetime.utcnow() + timedelta(days=30)).isoformat() + 'Z'
     nextPageToken = None
 
@@ -222,36 +226,25 @@ def syncCalendarEvents(calendar: UserCalendar, session: Session, fullSync: bool 
         isIncrementalSync = calendar.sync_token and not fullSync
         if isIncrementalSync:
             try:
-                eventsResult = (
-                    service.events()
-                    .list(
-                        calendarId=calendar.google_id,
-                        timeMax=None if calendar.sync_token else end,
-                        maxResults=PAGE_SIZE,
-                        singleEvents=False,
-                        syncToken=calendar.sync_token,
-                        pageToken=nextPageToken,
-                    )
-                    .execute()
+                eventsResult = gcal.getCalendarEvents(
+                    calendar,
+                    None if calendar.sync_token else end,
+                    PAGE_SIZE,
+                    calendar.sync_token,
+                    nextPageToken,
                 )
-            except HttpError as e:
-                if e.resp.status == 410:
-                    # Indicates the sync token is invalid => do a full sync.
-                    calendar.sync_token = None
-                    continue
-                else:
-                    raise
+
+            except gcal.InvalidSyncToken as e:
+                # Indicates the sync token is invalid => do a full sync.
+                calendar.sync_token = None
+                continue
         else:
-            eventsResult = (
-                service.events()
-                .list(
-                    calendarId=calendar.google_id,
-                    timeMax=end,
-                    maxResults=PAGE_SIZE,
-                    singleEvents=False,
-                    pageToken=nextPageToken,
-                )
-                .execute()
+            eventsResult = gcal.getCalendarEvents(
+                calendar,
+                end,
+                PAGE_SIZE,
+                None,
+                nextPageToken,
             )
 
         events = eventsResult.get('items', [])

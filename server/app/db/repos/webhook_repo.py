@@ -6,7 +6,7 @@ from sqlalchemy.orm import selectinload, Session
 
 from app.core.logger import logger
 from app.core import config
-from app.db.models import Webhook, User, UserCalendar
+from app.db.models import Webhook, User, UserCalendar, UserAccount
 
 from app.sync.google import gcal
 from googleapiclient.errors import HttpError
@@ -48,26 +48,29 @@ class WebhookRepository:
 
         return webhook
 
-    def getCalendarListWebhook(self, user: User) -> Webhook | None:
+    def getCalendarListWebhook(self, account: UserAccount) -> Webhook | None:
+        """TODO: Attach webhooks to the account instead of the user."""
         stmt = (
-            select(Webhook).where(Webhook.user_id == user.id).where(Webhook.type == 'calendar_list')
+            select(Webhook)
+            .where(Webhook.user_id == account.user_id)
+            .where(Webhook.type == 'calendar_list')
         )
         webhook = (self.session.execute(stmt)).scalar()
 
         return webhook
 
-    def createCalendarListWebhook(self, user: User) -> Webhook | None:
+    def createCalendarListWebhook(self, account: UserAccount) -> Webhook | None:
         """Create a webhook to watch for user calendar list updates."""
         if not config.API_URL:
             raise RepoError(f'No API URL specified.')
 
-        webhook = self.getCalendarListWebhook(user)
+        webhook = self.getCalendarListWebhook(account)
         if webhook:
             return webhook
 
         try:
             webhookUrl = f'{config.API_URL}{config.API_V1_STR}/webhooks/google_calendar_list'
-            resp = gcal.addCalendarListWebhook(user, webhookUrl)
+            resp = gcal.addCalendarListWebhook(account, webhookUrl)
             expiration = resp.get('expiration')
 
             webhook = Webhook(
@@ -77,7 +80,7 @@ class WebhookRepository:
                 int(expiration),
                 'calendar_list',
             )
-            webhook.user = user
+            webhook.user = account.user
             self.session.add(webhook)
             self.session.commit()
 
@@ -111,7 +114,7 @@ class WebhookRepository:
                 'calendar_events',
             )
             webhook.calendar = calendar
-            webhook.user = calendar.user
+            webhook.user = calendar.account.user
             self.session.add(webhook)
             self.session.commit()
 
@@ -128,12 +131,12 @@ class WebhookRepository:
             isExpiring = webhook.expiration <= datetime.now(timezone.utc) + timedelta(days=3)
             if isExpiring:
                 logger.debug(f'Refresh Webhook {webhook.id}.')
-                self.cancelCalendarEventsWebhook(webhook.calendar.user, webhook)
+                self.cancelCalendarEventsWebhook(webhook.calendar.account, webhook)
                 self.createCalendarEventsWebhook(webhook.calendar)
 
-    def cancelCalendarEventsWebhook(self, user: User, webhook: Webhook):
+    def cancelCalendarEventsWebhook(self, account: UserAccount, webhook: Webhook):
         try:
-            gcal.removeWebhook(user, webhook.id, webhook.resource_id)
+            gcal.removeWebhook(account, webhook.id, webhook.resource_id)
         except HttpError as e:
             logger.error(e.reason)
 

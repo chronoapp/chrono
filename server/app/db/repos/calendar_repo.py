@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.db.models.event import isValidTimezone
 from app.db.models.user_calendar import CalendarSource
-from app.db.models import User, UserCalendar, Calendar
+from app.db.models import User, UserCalendar, Calendar, UserAccount
 
 from app.db.repos.exceptions import CalendarNotFoundError
 from app.db.repos.event_repo.view_models import ReminderOverrideVM
@@ -17,6 +17,7 @@ from app.db.repos.event_repo.view_models import ReminderOverrideVM
 class CalendarBaseVM(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
+    account_id: uuid.UUID
     google_id: str | None = None
     summary: str
     summary_override: str | None = Field(default=None, alias='summaryOverride')
@@ -45,6 +46,11 @@ class CalendarVM(CalendarBaseVM):
 
 
 class CalendarRepository:
+    """Handles all calendar-related database operations.
+
+    TODO: Use Account instead of User, since a User can have multiple accounts.
+    """
+
     def __init__(self, session: Session):
         self.session = session
 
@@ -86,16 +92,20 @@ class CalendarRepository:
 
         return list(calendars)
 
-    def createCalendar(self, user: User, calendar: CalendarBaseVM) -> UserCalendar:
+    def createCalendar(self, account: UserAccount, calendar: CalendarBaseVM) -> UserCalendar:
         isPrimary = calendar.primary or False
 
         if isPrimary:
-            stmt = update(UserCalendar).where(UserCalendar.user_id == user.id).values(primary=False)
+            stmt = (
+                update(UserCalendar)
+                .where(UserCalendar.account_id == account.id)
+                .values(primary=False)
+            )
             self.session.execute(stmt)
 
         calendarId = uuid.uuid4()
         baseCalendar = Calendar(
-            calendarId, calendar.summary, calendar.description, calendar.timezone, user.email
+            calendarId, calendar.summary, calendar.description, calendar.timezone, account.email
         )
 
         userCalendar = UserCalendar(
@@ -110,7 +120,8 @@ class CalendarRepository:
             [],
         )
         userCalendar.calendar = baseCalendar
-        user.calendars.append(userCalendar)
+        userCalendar.user = account.user
+        userCalendar.account = account
 
         return userCalendar
 

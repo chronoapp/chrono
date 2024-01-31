@@ -57,18 +57,24 @@ async def createCalendar(
     TODO: Add user-defined params (color, primary, etc) so we don't have to sync to get them.
     """
     calendarRepo = CalendarRepository(session)
-    userCalendar = calendarRepo.createCalendar(user, calendar)
+
+    account = user.getAccountById(calendar.account_id)
+    if not account:
+        raise HTTPException(HTTP_404_NOT_FOUND, 'Account not found.')
+
+    userCalendar = calendarRepo.createCalendar(account, calendar)
 
     if calendar.source == 'google':
-        resp = gcal.createCalendar(user, userCalendar.calendar)
+        resp = gcal.createCalendar(account, userCalendar.calendar)
         googleId = resp['id']
         userCalendar.google_id = googleId
         userCalendar.calendar.google_id = googleId
-        syncCalendar(user, googleId, session)
+        syncCalendar(account, googleId, session)
 
     else:
         userCalendar.calendar.email_ = user.email
 
+    session.add(userCalendar)
     session.commit()
 
     return userCalendar
@@ -108,7 +114,7 @@ async def removeUserCalendar(
 
         userCalendar = calendarRepo.getCalendar(user, calendarId)
         if userCalendar.source == 'google':
-            gcal.removeUserCalendar(user, userCalendar)
+            gcal.removeUserCalendar(userCalendar.account, userCalendar)
 
         calendarRepo.removeUserCalendar(user, calendarId)
         session.commit()

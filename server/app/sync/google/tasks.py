@@ -48,14 +48,18 @@ def syncEventToGoogleTask(
             logger.warning(f'Event {eventId} not found')
             return
 
-        eventBody = gcal.getEventBody(event, userCalendar.timezone)
-
         if event.google_id:
             eventResp = gcal.updateGoogleEvent(
-                user, userCalendar.google_id, event.google_id, eventBody, sendUpdates
+                userCalendar,
+                event,
+                sendUpdates,
             )
         else:
-            eventResp = gcal.createGoogleEvent(user, userCalendar.google_id, eventBody, sendUpdates)
+            eventResp = gcal.createGoogleEvent(
+                userCalendar,
+                event,
+                sendUpdates,
+            )
 
         event = syncCreatedOrUpdatedGoogleEvent(userCalendar, eventRepo, event, eventResp, session)
 
@@ -81,15 +85,10 @@ def syncDeleteEventToGoogleTask(
             return
 
         if event.google_id:
-            try:
-                _resp = gcal.deleteGoogleEvent(
-                    user, userCalendar.google_id, event.google_id, sendUpdates
-                )
-                logger.info(
-                    f'Deleted event from Google: {event.title} {event.id=} {event.google_id=}'
-                )
-            except googleapiclient.errors.HttpError as e:
-                logger.warning(e)
+            resp = gcal.deleteGoogleEvent(
+                userCalendar.account, userCalendar.google_id, event.google_id, sendUpdates
+            )
+            logger.info(f'Deleted event from Google: {event.title} {event.id=} {event.google_id=}')
 
 
 @dramatiq.actor(max_retries=1)
@@ -112,7 +111,11 @@ def syncMoveGoogleEventCalendarTask(
             logger.warning(f'Calendar not found')
 
         _resp = gcal.moveGoogleEvent(
-            user, googleEventId, fromCalendar.google_id, toCalendar.google_id, sendUpdates
+            fromCalendar.account,
+            googleEventId,
+            fromCalendar.google_id,
+            toCalendar.google_id,
+            sendUpdates,
         )
         logger.info(f'Moved event {googleEventId}')
 
@@ -127,20 +130,23 @@ def syncAllCalendarsTask(userId: uuid.UUID, fullSync: bool) -> None:
     TODO: Use the syncToken to do an incremental sync.
     """
 
+    # 1) Sync calendar list.
     with scoped_session() as session:
         userRepo = UserRepository(session)
         user = userRepo.getUser(userId)
+
         syncAllCalendars(user, session)
 
+    # 2) Create webhooks and all events for all connected calendars.
     with scoped_session() as session:
         userRepo = UserRepository(session)
         user = userRepo.getUser(userId)
 
         webhookRepo = WebhookRepository(session)
-        webhookRepo.createCalendarListWebhook(user)
+        for account in user.getGoogleAccounts():
+            webhookRepo.createCalendarListWebhook(account)
 
-        for calendar in user.calendars:
-            if calendar.google_id != None:
+            for calendar in account.calendars:
                 webhookRepo.createCalendarEventsWebhook(calendar)
                 syncCalendarTask.send(user.id, calendar.id, fullSync, sendNotification=False)
 
@@ -151,6 +157,7 @@ def syncAllCalendarsTask(userId: uuid.UUID, fullSync: bool) -> None:
 def syncCalendarTask(
     userId: uuid.UUID, calendarId: uuid.UUID, fullSync: bool, sendNotification=True
 ) -> None:
+    """Syncs events from a single calendar."""
     with scoped_session() as session:
         userRepo = UserRepository(session)
         calRepo = CalendarRepository(session)
@@ -175,7 +182,7 @@ def updateCalendarTask(userId: uuid.UUID, calendarId: uuid.UUID) -> None:
 
         user = userRepo.getUser(userId)
         userCalendar = calRepo.getCalendar(user, calendarId)
-        gcal.updateUserCalendar(user, userCalendar)
+        gcal.updateUserCalendar(userCalendar.account, userCalendar)
 
         if userCalendar.hasWriteAccess():
-            gcal.updateCalendar(user, userCalendar.calendar)
+            gcal.updateCalendar(userCalendar.account, userCalendar.calendar)
