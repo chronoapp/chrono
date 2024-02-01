@@ -395,7 +395,7 @@ def test_event_repo_getRecurringEventWithParent(user, session):
         recurringEvent.id, datetime.fromisoformat('2020-12-02T12:00:00'), False
     )
     eventRepo = EventRepository(session)
-    event, parent = eventRepo.getRecurringEventWithParent(userCalendar, eventId, session)
+    event, parent = eventRepo.getRecurringEventWithParent(userCalendar, eventId)
 
     assert event.recurring_event_id == parent.id
     assert parent.id == recurringEvent.id

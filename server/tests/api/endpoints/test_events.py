@@ -32,6 +32,7 @@ def test_stripParticipants():
 
 
 def test_getEventsBasic(user: User, session, test_client):
+    """Ensure that fetch events returns the correct number of events."""
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     start = datetime.fromisoformat('2020-01-02T12:00:00-05:00')
@@ -57,6 +58,7 @@ def test_getEventsBasic(user: User, session, test_client):
 
 
 def test_createEvent_single(user: User, session, test_client):
+    """Create a single event."""
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     start = datetime.fromisoformat("2021-01-11T09:30:00+00:00")

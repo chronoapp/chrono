@@ -148,7 +148,7 @@ class WebhookRepository:
         stmt = (
             select(Webhook)
             .where(Webhook.expiration <= expiresDt)
-            .options(selectinload(Webhook.calendar).selectinload(UserCalendar.user))
+            .options(selectinload(Webhook.calendar).selectinload(UserCalendar.account))
         )
 
         webhooks = (self.session.execute(stmt)).scalars().all()

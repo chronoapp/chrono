@@ -6,13 +6,14 @@ with filtered_events as (
             label.key as label
         FROM event
         INNER JOIN user_calendar ON event.calendar_id = user_calendar.id
+        INNER JOIN user_credentials ON user_calendar.account_id = user_credentials.id
         INNER JOIN event_label ON event_label.event_uid = event.uid
         INNER JOIN label ON label.id = event_label.label_id
         WHERE {labelIdsFilter}
+        AND user_credentials.user_id = :userId
         AND event.status != 'deleted'
         AND event.start >= :start_time
         AND event.end <= :end_time
-        AND user_calendar.user_id = :userId
     )
 SELECT starting,
     coalesce(sum(EXTRACT(EPOCH FROM (e.end - e.start))), 0),

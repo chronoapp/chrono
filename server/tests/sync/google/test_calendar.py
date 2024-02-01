@@ -341,7 +341,8 @@ def test_syncEventsToDb_duplicateEventMultipleCalendars(user: User, session: Ses
     readOnlyCalendar.calendar = Calendar(
         calendarId, 'Another calendar', 'description', 'America/Toronto', 'test@example.com'
     )
-    user.calendars.append(readOnlyCalendar)
+    readOnlyCalendar.account = user.getDefaultAccount()
+    session.add(readOnlyCalendar)
 
     # Create events in both calendar
     eventItem = EVENT_ITEM_RECURRING.copy()

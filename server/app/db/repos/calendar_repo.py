@@ -121,7 +121,6 @@ class CalendarRepository:
             [],
         )
         userCalendar.calendar = baseCalendar
-        userCalendar.user = account.user
         userCalendar.account = account
 
         return userCalendar

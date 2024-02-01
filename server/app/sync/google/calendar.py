@@ -167,7 +167,6 @@ def syncGoogleCalendars(
             userCalendar.google_id = gCalId
             userCalendar.calendar = calendar
             userCalendar.account = account
-            userCalendar.user = account.user
             session.add(userCalendar)
 
         # Sync ACL
@@ -278,7 +277,7 @@ def syncEventsToDb(
     eventRepo = EventRepository(session)
 
     for eventItem in eventItems:
-        user = calendar.user
+        user = calendar.account.user
         googleEventId = eventItem['id']
         existingEvent = eventRepo.getGoogleEvent(calendar, googleEventId)
 
@@ -330,8 +329,6 @@ def syncDeletedEvent(
 
     existingEvent is only None if it is a recurring event.
     """
-    user = userCalendar.user
-
     if existingEvent:
         existingEvent.status = 'deleted'
 
@@ -504,7 +501,7 @@ def syncEventParticipants(
     event.participants.clear()
 
     for participantVM in participants:
-        contact = contactRepo.findContact(userCalendar.user, participantVM)
+        contact = contactRepo.findContact(userCalendar.account.user, participantVM)
 
         participant = EventAttendee(
             participantVM.email,

@@ -6,7 +6,7 @@ from sqlalchemy import func
 
 
 def test_getCalendar(user: User, test_client):
-    userCalendar = user.calendars[0]
+    userCalendar = user.getDefaultAccount().calendars[0]
 
     resp = test_client.get(
         f'/api/v1/calendars/{str(userCalendar.id)}', headers={'Authorization': getAuthToken(user)}
@@ -57,11 +57,13 @@ def test_postCalendar(user, session, test_client):
 
 
 def test_deleteCalendar(user, session, test_client):
-    userCalendar = user.calendars[0]
+    userCalendar = user.getDefaultAccount().calendars[0]
+    assert len(user.getDefaultAccount().calendars) == 1
 
     _resp = test_client.delete(
         f'/api/v1/calendars/{userCalendar.id}', headers={'Authorization': getAuthToken(user)}
     )
 
     session.refresh(user)
-    assert len(user.calendars) == 0
+
+    assert len(user.getDefaultAccount().calendars) == 0

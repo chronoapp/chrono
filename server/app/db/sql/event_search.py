@@ -4,10 +4,12 @@ EVENT_SEARCH_QUERY = """
             setweight(to_tsvector('english', event.title), 'A') as doc
         FROM event
         INNER JOIN user_calendar
-        ON event.calendar_id = user_calendar.id
+            ON event.calendar_id = user_calendar.id
+        INNER JOIN user_credentials
+            ON user_calendar.account_id = user_credentials.id
+        WHERE user_credentials.user_id = :userId
         AND event.recurrences is NULL
         AND event.status != 'deleted'
-        AND user_calendar.user_id = :userId
         AND event.start >= :start
         AND event.end <= :end
     ) search

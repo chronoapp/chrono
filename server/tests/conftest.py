@@ -64,7 +64,6 @@ def user(session):
     )
     userCalendar.calendar = calendar
     userCalendar.account = userAccount
-    userCalendar.user = user
     session.add(userCalendar)
     session.add(user)
     session.commit()

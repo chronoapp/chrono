@@ -69,7 +69,12 @@ BASE_EVENT_STATEMENT = (
 
 def getCalendarEventsStmt():
     """Statement to fetch events for a user calendar."""
-    return BASE_EVENT_STATEMENT.join(Event.calendar).join(Calendar.user_calendars).join(User)
+    return (
+        BASE_EVENT_STATEMENT.join(Event.calendar)
+        .join(Calendar.user_calendars)
+        .join(UserCalendar.account)
+        .join(User)
+    )
 
 
 class EventRepository:
@@ -185,7 +190,7 @@ class EventRepository:
             return GoogleEventInDBVM.model_validate(eventInDB)
         else:
             # Check if it's a virtual event within a recurrence.
-            event, _ = self.getRecurringEventWithParent(calendar, eventId, self.session)
+            event, _ = self.getRecurringEventWithParent(calendar, eventId)
 
             return event
 
@@ -239,9 +244,7 @@ class EventRepository:
         else:
             # Virtual recurring event instance.
             try:
-                eventVM, parentEvent = self.getRecurringEventWithParent(
-                    userCalendar, eventId, self.session
-                )
+                eventVM, parentEvent = self.getRecurringEventWithParent(userCalendar, eventId)
 
                 eventOverride = (
                     self.session.execute(
@@ -393,6 +396,7 @@ class EventRepository:
 
         fromCalendar = calendarRepo.getCalendar(user, fromCalendarId)
         toCalendar = calendarRepo.getCalendar(user, toCalendarId)
+
         if fromCalendar.id == toCalendar.id:
             raise EventRepoError('Cannot move between same calendars')
 
@@ -464,7 +468,7 @@ class EventRepository:
         TODO: Have option to send invites with Chrono.
         """
         # Permissions check.
-        user = userCalendar.user
+        user = userCalendar.account.user
         isOrganizer = event.isOrganizer(userCalendar)
         canModifyEvent = isOrganizer or event.guests_can_modify
         canInviteAttendees = canModifyEvent or event.guests_can_invite_others
@@ -515,7 +519,7 @@ class EventRepository:
                     event.participants.remove(attendee)
 
     def getRecurringEventWithParent(
-        self, calendar: UserCalendar, eventId: str, session: Session
+        self, calendar: UserCalendar, eventId: str
     ) -> Tuple[GoogleEventInDBVM, Event]:
         """Returns the parent from the virtual eventId.
         Returns tuple of (parent event, datetime).
@@ -530,7 +534,7 @@ class EventRepository:
             raise EventNotFoundError(f'Event ID {eventId} not found.')
 
         parentId = ''.join(parts[:-1])
-        parentEvent = self.getEvent(calendar.user, calendar, parentId)
+        parentEvent = self.getEvent(calendar.account.user, calendar, parentId)
 
         if not parentEvent:
             raise EventNotFoundError(f'Event ID {eventId} not found.')
@@ -664,7 +668,7 @@ def getRecurringEvent(
             else datetime.strptime(datePart, "%Y%m%dT%H%M%SZ")
         )
 
-        for e in getExpandedRecurringEvents(calendar.user, parentEvent, {}, dt, dt):
+        for e in getExpandedRecurringEvents(calendar.account.user, parentEvent, {}, dt, dt):
             if e.id == eventId:
                 return e
 
@@ -903,7 +907,7 @@ def createOrUpdateEvent(
     if creatorVM := eventVM.creator:
         creator = EventCreator(creatorVM.email, creatorVM.display_name, creatorVM.contact_id)
     else:
-        creator = EventCreator(userCalendar.user.email, None, None)
+        creator = EventCreator(userCalendar.account.email, None, None)
 
     if organizerVM := eventVM.organizer:
         organizer = EventOrganizer(

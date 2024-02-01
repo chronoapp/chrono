@@ -31,9 +31,6 @@ class UserCalendar(Base):
         lazy='joined',
     )
 
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('user.id'), nullable=False)
-    user: Mapped['User'] = relationship('User', back_populates='calendars')
-
     # Connected Calendar Account
     account_id: Mapped[UUID] = mapped_column(UUID, ForeignKey('user_credentials.id'), nullable=True)
     account: Mapped['UserAccount'] = relationship('UserAccount', back_populates='calendars')
@@ -51,6 +48,7 @@ class UserCalendar(Base):
     primary = mapped_column(Boolean)
     deleted = mapped_column(Boolean)
 
+    # Webhook linked to single calendar update events.
     webhook: Mapped['Webhook'] = relationship(
         "Webhook",
         uselist=False,
