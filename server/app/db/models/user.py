@@ -24,7 +24,7 @@ class User(Base):
     username: Mapped[Optional[str]] = mapped_column(String(255))
     hashed_password: Mapped[Optional[str]] = mapped_column(String(255))
 
-    email: Mapped[str] = mapped_column(String(255))
+    email: Mapped[str] = mapped_column(String(255), nullable=False)
     name: Mapped[Optional[str]] = mapped_column(String(255))  # display name
     picture_url: Mapped[Optional[str]] = mapped_column(String(255))
 
@@ -44,9 +44,6 @@ class User(Base):
     )
 
     # TODO: Remove these relationships, which are now associated to UserAccount
-    calendars: Mapped[list[UserCalendar]] = relationship(
-        "UserCalendar", back_populates='user', lazy='joined', cascade='all,delete'
-    )
     contacts: Mapped[list['Contact']] = relationship(
         'Contact', lazy='dynamic', cascade='all,delete'
     )
