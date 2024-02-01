@@ -17,6 +17,8 @@ import {
   editingEventState,
   EventUpdateContext,
 } from '@/state/EventsState'
+
+import { calendarsState } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
 import useTaskQueue from '@/lib/hooks/useTaskQueue'
 
@@ -39,6 +41,7 @@ import useTaskQueue from '@/lib/hooks/useTaskQueue'
  */
 export default function useEventService() {
   const [events, setEvents] = useRecoilState(eventsState)
+  const [calendars, setCalendars] = useRecoilState(calendarsState)
 
   const [editingEvent, setEditingEvent] = useRecoilState(editingEventState)
   const eventActions = useEventActions()
@@ -121,17 +124,21 @@ export default function useEventService() {
 
     if (event.syncStatus === 'NOT_SYNCED') {
       setEvents((prevState) => {
+        const updatedEvent = { ...event, syncStatus: 'SYNCING' } as Event
+
         return {
           ...prevState,
           eventsByCalendar: produce(prevState.eventsByCalendar, (draft) => {
-            draft[calendarId][event.id] = { ...event, syncStatus: 'SYNCING' }
+            draft[calendarId] = { ...draft[calendarId], [event.id]: updatedEvent }
           }),
         }
       })
+
       queueCreateEvent(calendarId, event, showToast, sendUpdates)
     } else {
       const hasMovedCalendar =
         editingEvent?.originalCalendarId && editingEvent.originalCalendarId !== calendarId
+
       if (hasMovedCalendar && editingEvent?.originalCalendarId) {
         console.log(`Moved calendars from ${editingEvent.originalCalendarId} to ${calendarId}`)
         eventActions.moveEventCalendarAction(event.id, editingEvent.originalCalendarId, calendarId)
@@ -227,6 +234,8 @@ export default function useEventService() {
               },
             })
           }
+
+          showCalendar(calendarId)
         })
         .catch((err) => {
           // Refresh on error
@@ -267,6 +276,8 @@ export default function useEventService() {
             },
           })
         }
+
+        showCalendar(calendarId)
       })
     }
 
@@ -307,6 +318,37 @@ export default function useEventService() {
       })
 
     taskQueue.addTask(deleteEventTask)
+  }
+
+  /**
+   * Sets the calendar to selected. Used after a new event is added to
+   * a hidden calendar.
+   */
+  function showCalendar(calendarId: string) {
+    const calendar = calendars.calendarsById[calendarId]
+    if (calendar.selected) {
+      return
+    }
+
+    const updatedCalendar = produce(calendar, (draft) => {
+      draft.selected = true
+    })
+
+    setCalendars((prevState) => {
+      return {
+        ...prevState,
+        calendarsById: {
+          ...prevState.calendarsById,
+          [calendar.id]: updatedCalendar,
+        },
+      }
+    })
+
+    const updateCalendarTask = () => {
+      API.putCalendar(updatedCalendar).then(() => {})
+    }
+
+    taskQueue.addTask(updateCalendarTask)
   }
 
   return {

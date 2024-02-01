@@ -271,7 +271,11 @@ export default function useEventActions() {
         const prevEvent = events.eventsByCalendar[prevCalendarId][eventId]
 
         if (prevEvent) {
-          eventsByCalendar[newCalendarId][eventId] = prevEvent
+          eventsByCalendar[newCalendarId] = {
+            ...eventsByCalendar[newCalendarId],
+            [eventId]: prevEvent,
+          }
+
           delete eventsByCalendar[prevCalendarId][eventId]
         } else {
           throw Error(`Event with id=${eventId} not found`)

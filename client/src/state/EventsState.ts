@@ -99,13 +99,15 @@ export const allVisibleEventsSelector = selector({
       eventWithEditing = produce(eventWithEditing, (draft) => {
         const calendarId = editingEvent.event.calendar_id || primaryCalendar!.id
 
-        if (draft.hasOwnProperty(calendarId)) {
-          if (editingEvent.originalCalendarId) {
-            delete draft[editingEvent.originalCalendarId][editingEvent.id]
-          }
-
-          draft[calendarId][editingEvent.id] = editingEvent.event
+        if (editingEvent.originalCalendarId) {
+          delete draft[editingEvent.originalCalendarId][editingEvent.id]
         }
+
+        draft[calendarId] = {
+          ...draft[calendarId],
+          [editingEvent.id]: editingEvent.event,
+        }
+
         return draft
       })
     }
