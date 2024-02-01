@@ -1,7 +1,8 @@
 from sqlalchemy import func, select
 
 from app.api.endpoints.authentication.token_utils import getAuthToken
-from app.db.models import UserCalendar, User
+from app.db.models import UserCalendar, User, UserAccount
+from sqlalchemy import func
 
 
 def test_getCalendar(user: User, test_client):
@@ -40,11 +41,17 @@ def test_postCalendar(user, session, test_client):
 
     calendar = resp.json()
 
-    assert calendar['id'] != None
+    assert calendar['id'] is not None
     assert calendar['summary'] == calendarData['summary']
 
-    stmt = select(func.count()).where(UserCalendar.user_id == user.id)
-    calendarsCount = (session.execute(stmt)).scalar()
+    stmt = (
+        select(func.count())
+        .select_from(UserCalendar)
+        .join(UserCalendar.account)
+        .where(UserAccount.user_id == user.id)
+    )
+
+    calendarsCount = session.execute(stmt).scalar()
 
     assert calendarsCount == 2
 

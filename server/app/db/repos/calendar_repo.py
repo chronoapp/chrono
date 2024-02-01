@@ -57,9 +57,9 @@ class CalendarRepository:
     def getPrimaryCalendar(self, userId: uuid.UUID) -> UserCalendar:
         userCalendar = (
             self.session.execute(
-                select(UserCalendar).where(
-                    UserCalendar.user_id == userId, UserCalendar.primary == True
-                )
+                select(UserCalendar)
+                .join(UserCalendar.account)
+                .where(UserAccount.user_id == userId, UserCalendar.primary == True)
             )
         ).scalar()
 
@@ -71,9 +71,9 @@ class CalendarRepository:
     def getCalendar(self, user: User, calendarId: uuid.UUID) -> UserCalendar:
         userCalendar = (
             self.session.execute(
-                select(UserCalendar).where(
-                    and_(UserCalendar.user_id == user.id, UserCalendar.id == calendarId)
-                )
+                select(UserCalendar)
+                .join(UserCalendar.account)
+                .where(UserAccount.user_id == user.id, UserCalendar.id == calendarId)
             )
         ).scalar()
 
@@ -85,7 +85,8 @@ class CalendarRepository:
     def getCalendars(self, user: User) -> list[UserCalendar]:
         result = self.session.execute(
             select(UserCalendar)
-            .where(UserCalendar.user_id == user.id)
+            .join(UserCalendar.account)
+            .where(UserAccount.user_id == user.id)
             .options(selectinload(UserCalendar.reminders))
         )
         calendars = result.scalars().all()

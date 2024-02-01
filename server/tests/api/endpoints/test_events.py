@@ -140,7 +140,7 @@ def test_createEvent_recurring_invalid(user: User, session, test_client):
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
     start = datetime.fromisoformat("2021-01-11T05:00:00+00:00")
     end = start + timedelta(hours=1)
-    event = {
+    event: dict = {
         "title": "laundry",
         "start": '20210111T050000Z',  # start.isoformat(),
         "end": end.isoformat(),
@@ -371,7 +371,7 @@ def test_updateEvent_withParticipants(user: User, session, test_client):
     session.commit()
 
     participant = EventAttendee(contact.email, None, contact.id, 'needsAction')
-    participant.event_id = event1.id
+    participant.event_uid = event1.uid
     session.add(participant)
 
     session.commit()
@@ -436,6 +436,7 @@ def test_updateEvent_recurring(user: User, session, test_client):
 
     # 3) Update the original recurring event. Trim the original event's instance list
     # Now, it starts from 2020-01-05.
+    assert recurringEvent.start and recurringEvent.end
 
     eventData = {
         "title": recurringEvent.title,
@@ -485,6 +486,7 @@ def test_moveEvent_single(user, session, test_client):
         headers={'Authorization': getAuthToken(user)},
         json={'calendar_id': str(cal2.id)},
     )
+    assert resp.status_code == 200
 
     # Make sure it's not in the old calendar
     resp = test_client.get(

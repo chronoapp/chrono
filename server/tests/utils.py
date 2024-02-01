@@ -19,6 +19,7 @@ def createCalendar(
         calendarId, None, '#ffffff', '#000000', True, 'owner', True, False, []
     )
     userCalendar.calendar = calendar
+    userCalendar.account = user.getDefaultAccount()
     user.calendars.append(userCalendar)
 
     return userCalendar

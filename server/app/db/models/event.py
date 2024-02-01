@@ -320,7 +320,7 @@ class Event(Base):
         """Checks if the calendar is the organizer of this event."""
         return self.organizer is not None and (
             self.organizer.email == userCalendar.email
-            or self.organizer.email == userCalendar.user.email
+            or self.organizer.email == userCalendar.account.email
         )
 
     def isGoogleEvent(self) -> bool:

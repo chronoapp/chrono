@@ -64,12 +64,6 @@ class User(Base):
         self.name = name
         self.picture_url = pictureUrl
 
-    def getGoogleCalendars(self) -> list[UserCalendar]:
-        return [cal for cal in self.calendars if cal.google_id != None]
-
-    def getClassifierPath(self):
-        return f'/var/lib/model_data/{self.username}.pkl'
-
     def getDefaultAccount(self) -> UserAccount:
         defaultAccount = next((c for c in self.accounts if c.is_default), None)
         if not defaultAccount:
