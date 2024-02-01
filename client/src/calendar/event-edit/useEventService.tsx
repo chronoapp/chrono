@@ -7,6 +7,7 @@ import { GlobalEvent } from '@/util/global'
 import { InfoAlert } from '@/components/Alert'
 
 import * as API from '@/util/Api'
+import { formatDateTime } from '@/util/localizer'
 import Event from '@/models/Event'
 import * as dates from '@/util/dates'
 
@@ -48,6 +49,44 @@ export default function useEventService() {
 
   const toast = useToast()
   const taskQueue = useTaskQueue({ shouldProcess: true })
+
+  /**
+   * Loads all events from all selected calendars from the server.
+   */
+  async function loadAllEvents(start: Date, end: Date, signal: AbortSignal) {
+    eventActions.initEmptyEvents()
+    console.log(`Loading events from ${start} to ${end}`)
+
+    const eventPromises = Object.values(calendars.calendarsById)
+      .filter((cal) => cal.selected)
+      .map((calendar) => {
+        try {
+          return {
+            eventsPromise: API.getCalendarEvents(
+              calendar.id,
+              formatDateTime(start),
+              formatDateTime(end),
+              signal
+            ),
+            calendarId: calendar.id,
+          }
+        } catch (err) {
+          return { eventsPromise: Promise.resolve([]), calendarId: calendar.id }
+        }
+      })
+
+    for (const e of eventPromises) {
+      try {
+        const calendarEvents = await e.eventsPromise
+        eventActions.loadEvents(e.calendarId, calendarEvents)
+      } catch (err) {
+        const isAbortError = err instanceof Error && err.name === 'AbortError'
+        if (!isAbortError) {
+          throw err
+        }
+      }
+    }
+  }
 
   /**
    * Handles updating an event via drag or resize.
@@ -261,8 +300,6 @@ export default function useEventService() {
     sendUpdates: boolean
   ) {
     const updateEventTask = () => {
-      console.log(`RUN updateEventTask ${event.title}..`)
-
       return API.updateEvent(calendarId, event, sendUpdates).then((event) => {
         // Recurring event: TODO: Only refresh if moved calendar.
         if (Event.isParentRecurringEvent(event)) {
@@ -352,6 +389,7 @@ export default function useEventService() {
   }
 
   return {
+    loadAllEvents,
     saveEvent,
     moveOrResizeEvent,
     deleteEvent,

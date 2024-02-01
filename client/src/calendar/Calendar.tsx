@@ -57,6 +57,7 @@ function Calendar() {
   const [refreshId, setRefreshId] = React.useState(generateGuid())
 
   const handleRefreshEvent = React.useCallback(() => {
+    // TODO: Only refresh the calendar that was updated, instead of all calendars.
     setRefreshId(generateGuid())
   }, [])
 
@@ -120,53 +121,19 @@ function Calendar() {
       const start = dates.startOf(display.selectedDate, 'day')
       const end = dates.endOf(display.selectedDate, 'day')
 
-      loadEvents(start, end, signal)
+      eventService.loadAllEvents(start, end, signal)
     } else if (display.view == 'Week' || display.view == 'WorkWeek') {
       const lastWeek = dates.subtract(display.selectedDate, 1, 'week')
       const nextWeek = dates.add(display.selectedDate, 1, 'week')
 
       const start = dates.startOf(lastWeek, 'week', firstOfWeek)
       const end = dates.endOf(nextWeek, 'week', firstOfWeek)
-      loadEvents(start, end, signal)
+      eventService.loadAllEvents(start, end, signal)
     } else if (display.view == 'Month') {
       const month = dates.visibleDays(display.selectedDate, firstOfWeek)
       const start = month[0]
       const end = month[month.length - 1]
-      loadEvents(start, end, signal)
-    }
-  }
-
-  async function loadEvents(start: Date, end: Date, signal: AbortSignal) {
-    eventActions.initEmptyEvents()
-
-    const eventPromises = Object.values(calendars.calendarsById)
-      .filter((cal) => cal.selected)
-      .map((calendar) => {
-        try {
-          return {
-            eventsPromise: API.getCalendarEvents(
-              calendar.id,
-              formatDateTime(start),
-              formatDateTime(end),
-              signal
-            ),
-            calendarId: calendar.id,
-          }
-        } catch (err) {
-          return { eventsPromise: Promise.resolve([]), calendarId: calendar.id }
-        }
-      })
-
-    for (const e of eventPromises) {
-      try {
-        const calendarEvents = await e.eventsPromise
-        eventActions.loadEvents(e.calendarId, calendarEvents)
-      } catch (err) {
-        const isAbortError = err instanceof Error && err.name === 'AbortError'
-        if (!isAbortError) {
-          throw err
-        }
-      }
+      eventService.loadAllEvents(start, end, signal)
     }
   }
 
