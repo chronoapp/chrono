@@ -43,14 +43,9 @@ class User(Base):
         back_populates='user',
     )
 
-    # TODO: Remove these relationships, which are now associated to UserAccount
+    # Move contacts relationships from User to UserAccount
     contacts: Mapped[list['Contact']] = relationship(
         'Contact', lazy='dynamic', cascade='all,delete'
-    )
-    webhooks: Mapped[list['Webhook']] = relationship(
-        "Webhook",
-        back_populates="user",
-        cascade='all,delete',
     )
 
     def __repr__(self):

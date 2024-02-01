@@ -8,8 +8,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from app.db.base_class import Base
 
 if TYPE_CHECKING:
-    from .user_calendar import UserCalendar
-    from .user import User
+    from app.db.models import UserAccount, UserCalendar, User
 
 WebhookType = Literal['calendar_list', 'calendar_events']
 
@@ -22,8 +21,10 @@ class Webhook(Base):
     # This ID is set to google's channel ID.
     id: Mapped[str] = mapped_column(String, primary_key=True, nullable=False)
 
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('user.id'), nullable=False)
-    user: Mapped['User'] = relationship('User', back_populates='webhooks')
+    account_id: Mapped[UUID] = mapped_column(
+        UUID, ForeignKey('user_credentials.id'), nullable=False
+    )
+    account: Mapped['UserAccount'] = relationship('UserAccount', back_populates='webhooks')
 
     calendar_id: Mapped[uuid.UUID] = mapped_column(
         UUID, ForeignKey('user_calendar.id'), nullable=True

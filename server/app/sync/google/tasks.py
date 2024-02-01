@@ -121,11 +121,11 @@ def syncMoveGoogleEventCalendarTask(
 
 
 @dramatiq.actor(max_retries=1)
-def syncAllCalendarsTask(userId: uuid.UUID, fullSync: bool) -> None:
+def syncAllCalendarsTask(accountId: uuid.UUID, fullSync: bool) -> None:
     """
-    1) Sync all calendars from google calendar.
-    2) Creates webhooks for all calendars.
-    3) Syncs events from all calendars.
+    1) Sync all calendars from google calendar account.
+    2) Creates webhooks for the account's calendars.
+    3) Syncs events from the account's calendars.
 
     TODO: Use the syncToken to do an incremental sync.
     """
@@ -133,43 +133,42 @@ def syncAllCalendarsTask(userId: uuid.UUID, fullSync: bool) -> None:
     # 1) Sync calendar list.
     with scoped_session() as session:
         userRepo = UserRepository(session)
-        user = userRepo.getUser(userId)
+        userAccount = userRepo.getUserAccount(accountId)
 
-        syncAllCalendars(user, session)
+        syncAllCalendars(userAccount, session)
 
     # 2) Create webhooks and all events for all connected calendars.
     with scoped_session() as session:
         userRepo = UserRepository(session)
-        user = userRepo.getUser(userId)
+        userAccount = userRepo.getUserAccount(accountId)
 
         webhookRepo = WebhookRepository(session)
-        for account in user.getGoogleAccounts():
-            webhookRepo.createCalendarListWebhook(account)
+        webhookRepo.createCalendarListWebhook(userAccount)
 
-            for calendar in account.calendars:
-                webhookRepo.createCalendarEventsWebhook(calendar)
-                syncCalendarTask.send(user.id, calendar.id, fullSync, sendNotification=False)
+        for calendar in userAccount.calendars:
+            webhookRepo.createCalendarEventsWebhook(userAccount, calendar)
+            syncCalendarTask.send(accountId, calendar.id, fullSync, sendNotification=False)
 
-    sendClientNotification(str(user.id), NotificationType.REFRESH_CALENDAR_LIST)
+        sendClientNotification(str(userAccount.user_id), NotificationType.REFRESH_CALENDAR_LIST)
 
 
 @dramatiq.actor(max_retries=1)
 def syncCalendarTask(
-    userId: uuid.UUID, calendarId: uuid.UUID, fullSync: bool, sendNotification=True
+    accountId: uuid.UUID, calendarId: uuid.UUID, fullSync: bool, sendNotification=True
 ) -> None:
     """Syncs events from a single calendar."""
     with scoped_session() as session:
         userRepo = UserRepository(session)
         calRepo = CalendarRepository(session)
 
-        user = userRepo.getUser(userId)
-        calendar = calRepo.getCalendar(user, calendarId)
+        userAccount = userRepo.getUserAccount(accountId)
+        calendar = calRepo.getCalendar(userAccount.user, calendarId)
 
         syncCalendarEvents(calendar, session, fullSync)
 
-    # Send notification to client
-    if sendNotification:
-        sendClientNotification(str(user.id), NotificationType.REFRESH_CALENDAR)
+        # Send notification to client
+        if sendNotification:
+            sendClientNotification(str(userAccount.user_id), NotificationType.REFRESH_CALENDAR)
 
 
 @dramatiq.actor(max_retries=1)

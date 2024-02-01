@@ -114,9 +114,10 @@ def addAccountCallback(state: str, code: str, session: Session = Depends(get_db)
 
     creds = _getCredentialsDict(flow.credentials)
 
-    existingAccount = user.getAccount(CalendarProvider.Google, email)
-    if not existingAccount:
-        user.accounts.append(UserAccount(email, creds, CalendarProvider.Google, False))
+    account = user.getAccount(CalendarProvider.Google, email)
+    if not account:
+        account = UserAccount(email, creds, CalendarProvider.Google, False)
+        user.accounts.append(account)
 
     session.commit()
 
@@ -124,7 +125,7 @@ def addAccountCallback(state: str, code: str, session: Session = Depends(get_db)
     sendClientNotification(str(user.id), NotificationType.REFRESH_USER)
 
     # Start syncing calendar after adding account.
-    syncAllCalendarsTask.send(user.id, False)
+    syncAllCalendarsTask.send(account.id, False)
 
     return HTMLResponse(content=Template.get_template('oauth/index.html').render())
 

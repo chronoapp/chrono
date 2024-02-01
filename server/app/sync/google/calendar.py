@@ -205,11 +205,10 @@ def syncAccessControlList(userCalendar: UserCalendar, aclRepo: ACLRepository):
             userCalendar.calendar.access_control_rules.append(acl)
 
 
-def syncAllCalendars(user: User, session: Session):
+def syncAllCalendars(userAccount: UserAccount, session: Session):
     """Syncs calendars and access control list from google calendar."""
-    for account in user.getGoogleAccounts():
-        calendarList = gcal.getUserCalendars(account)
-        syncGoogleCalendars(account, calendarList.get('items'), session)
+    calendarList = gcal.getUserCalendars(userAccount)
+    syncGoogleCalendars(userAccount, calendarList.get('items'), session)
 
 
 def syncCalendar(account: UserAccount, calendarId: str, session: Session):

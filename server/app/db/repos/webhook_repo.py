@@ -20,6 +20,7 @@ class WebhookRepository:
         self.session = session
 
     def getWebhookByChannelId(self, channelId: str) -> Webhook | None:
+        """Gets a webhook by google's channel ID."""
         stmt = (
             select(Webhook).where(Webhook.id == channelId).options(selectinload(Webhook.calendar))
         )
@@ -27,20 +28,15 @@ class WebhookRepository:
 
         return webhook
 
-    def getUserWebhooks(self, userId: int) -> list[Webhook]:
-        webhooks = (
-            (
-                self.session.execute(
-                    select(Webhook).join(UserCalendar).join(User).where(User.id == userId)
-                )
-            )
-            .scalars()
-            .all()
-        )
+    def getUserWebhooks(self, userId: UUID) -> list[Webhook]:
+        """Gets all webhooks for a user."""
+        stmt = select(Webhook).join(UserAccount).where(UserAccount.user_id == userId)
+        webhooks = (self.session.execute(stmt)).scalars().all()
 
         return list(webhooks)
 
     def getCalendarEventsWebhook(self, calendarId: UUID) -> Webhook | None:
+        """Gets the webhook for updating a calendar's events."""
         stmt = select(Webhook).where(
             Webhook.calendar_id == calendarId, Webhook.type == 'calendar_events'
         )
@@ -49,10 +45,10 @@ class WebhookRepository:
         return webhook
 
     def getCalendarListWebhook(self, account: UserAccount) -> Webhook | None:
-        """TODO: Attach webhooks to the account instead of the user."""
+        """Gets the webhook for updating a user's calendar list."""
         stmt = (
             select(Webhook)
-            .where(Webhook.user_id == account.user_id)
+            .where(Webhook.account_id == account.id)
             .where(Webhook.type == 'calendar_list')
         )
         webhook = (self.session.execute(stmt)).scalar()
@@ -69,7 +65,7 @@ class WebhookRepository:
             return webhook
 
         try:
-            webhookUrl = f'{config.API_URL}{config.API_V1_STR}/webhooks/google_calendar_list'
+            webhookUrl = f'{config.API_URL}/webhooks/google_calendar_list'
             resp = gcal.addCalendarListWebhook(account, webhookUrl)
             expiration = resp.get('expiration')
 
@@ -80,7 +76,7 @@ class WebhookRepository:
                 int(expiration),
                 'calendar_list',
             )
-            webhook.user = account.user
+            webhook.account = account
             self.session.add(webhook)
             self.session.commit()
 
@@ -90,7 +86,9 @@ class WebhookRepository:
             logger.error(f'Error adding calendar list webhook: {e.reason}')
             return None
 
-    def createCalendarEventsWebhook(self, calendar: UserCalendar) -> Webhook | None:
+    def createCalendarEventsWebhook(
+        self, account: UserAccount, calendar: UserCalendar
+    ) -> Webhook | None:
         """Create a webhook for the calendar to watche for event updates.
         Only creates one webhook per calendar.
         """
@@ -102,7 +100,7 @@ class WebhookRepository:
             return webhook
 
         try:
-            webhookUrl = f'{config.API_URL}{config.API_V1_STR}/webhooks/google_events'
+            webhookUrl = f'{config.API_URL}/webhooks/google_events'
             resp = gcal.addCalendarEventsWebhook(calendar, webhookUrl)
             expiration = resp.get('expiration')
 
@@ -113,8 +111,8 @@ class WebhookRepository:
                 int(expiration),
                 'calendar_events',
             )
+            webhook.account = account
             webhook.calendar = calendar
-            webhook.user = calendar.account.user
             self.session.add(webhook)
             self.session.commit()
 
@@ -124,31 +122,32 @@ class WebhookRepository:
             logger.error(f'Error adding webhook for {calendar.summary}: {e.reason}')
             return None
 
-    def refreshExpiringWebhooks(self):
+    def refreshExpiringWebhooks(self, user: User):
         """Refreshes all webhooks that are about to expire."""
-        logger.debug(f'Refreshing Webhooks...')
-        for webhook in self._getExpiringWebhooks():
-            isExpiring = webhook.expiration <= datetime.now(timezone.utc) + timedelta(days=3)
-            if isExpiring:
-                logger.debug(f'Refresh Webhook {webhook.id}.')
-                self.cancelCalendarEventsWebhook(webhook.calendar.account, webhook)
-                self.createCalendarEventsWebhook(webhook.calendar)
+        for webhook in self._getExpiringWebhooks(user):
+            self.cancelWebhook(webhook)
 
-    def cancelCalendarEventsWebhook(self, account: UserAccount, webhook: Webhook):
+            if webhook.type == 'calendar_list':
+                self.createCalendarListWebhook(webhook.account)
+            elif webhook.type == 'calendar_events':
+                self.createCalendarEventsWebhook(webhook.calendar.account, webhook.calendar)
+
+    def cancelWebhook(self, webhook: Webhook):
         try:
-            gcal.removeWebhook(account, webhook.id, webhook.resource_id)
+            gcal.removeWebhook(webhook.account, webhook.id, webhook.resource_id)
         except HttpError as e:
             logger.error(e.reason)
 
         self.session.delete(webhook)
 
-    def _getExpiringWebhooks(self) -> list[Webhook]:
+    def _getExpiringWebhooks(self, user: User) -> list[Webhook]:
         expiresDt = datetime.now() + timedelta(days=EXPIRING_SOON_DAYS)
 
         stmt = (
             select(Webhook)
+            .join(UserAccount)
             .where(Webhook.expiration <= expiresDt)
-            .options(selectinload(Webhook.calendar).selectinload(UserCalendar.account))
+            .where(UserAccount.user_id == user.id)
         )
 
         webhooks = (self.session.execute(stmt)).scalars().all()

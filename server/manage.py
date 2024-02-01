@@ -64,7 +64,9 @@ def sync_cal_all(email: str, full: bool):
             print(f'User {email} not found')
             return
 
-        syncAllCalendarsTask(user.id, fullSync=full)
+        for account in user.accounts:
+            print(f'Syncing {account}..')
+            syncAllCalendarsTask(account.id, fullSync=full)
 
 
 @main.command()
@@ -83,7 +85,10 @@ def sync_cal(email: str, cal: str, full: bool):
             print(f'User {email} not found')
             return
 
-        calendar = next((c for c in user.calendars if cal.lower() in c.summary.lower()), None)
+        calendarRepo = CalendarRepository(session)
+        calendars = calendarRepo.getCalendars(user)
+
+        calendar = next((c for c in calendars if cal.lower() in c.summary.lower()), None)
         if not calendar:
             print(f'Calendar {cal} not found')
             return

@@ -25,7 +25,7 @@ async def updateGoogleCalendarList(request: Request, session: Session = Depends(
     webhook = webhookRepo.getWebhookByChannelId(channelId)
 
     if webhook:
-        syncAllCalendarsTask.send(webhook.user_id, False)
+        syncAllCalendarsTask.send(webhook.account_id, False)
 
     return {}
 
@@ -42,6 +42,6 @@ async def updateGoogleEvent(request: Request, session: Session = Depends(get_db)
     webhook = webhookRepo.getWebhookByChannelId(channelId)
 
     if webhook:
-        syncCalendarTask.send(webhook.user_id, webhook.calendar_id, False)
+        syncCalendarTask.send(webhook.account_id, webhook.calendar_id, False)
 
     return {}

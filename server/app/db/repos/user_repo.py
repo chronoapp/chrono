@@ -4,7 +4,7 @@ from typing import Optional
 from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload, Session
 
-from app.db.models import User, Label
+from app.db.models import User, Label, UserAccount
 from .exceptions import NotFoundError
 
 
@@ -23,6 +23,16 @@ class UserRepository:
             return user
         else:
             raise NotFoundError('User not found.')
+
+    def getUserAccount(self, accountId: uuid.UUID) -> UserAccount:
+        account = (
+            self.session.execute(select(UserAccount).join(User).where(UserAccount.id == accountId))
+        ).scalar()
+
+        if account:
+            return account
+        else:
+            raise NotFoundError('Account not found.')
 
     def getUserByEmail(self, email: str) -> Optional[User]:
         user = (

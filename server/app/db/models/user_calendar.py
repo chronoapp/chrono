@@ -54,7 +54,7 @@ class UserCalendar(Base):
         uselist=False,
         back_populates="calendar",
         lazy='joined',
-        cascade='all,delete,delete-orphan',
+        cascade='all,delete',
     )
 
     reminders: Mapped[list['ReminderOverride']] = relationship(
