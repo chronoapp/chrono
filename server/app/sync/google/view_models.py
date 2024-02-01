@@ -119,8 +119,8 @@ class GoogleCalendarEvent(BaseModel):
     etag: str | None = None
     status: str = 'confirmed'
     htmlLink: str | None = None
-    created: datetime | None = None
-    updated: datetime | None = None
+    created: datetime
+    updated: datetime
     summary: str | None = None
     description: str | None = None
     location: str | None = None

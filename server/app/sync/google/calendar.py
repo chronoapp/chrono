@@ -1,5 +1,5 @@
 import uuid
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List, Any, Tuple
 from datetime import datetime
 
 from sqlalchemy import select
@@ -92,6 +92,7 @@ PAGE_SIZE = 1000
 class GoogleEventVM(EventBaseVM):
     google_id: Optional[str]
     recurring_event_g_id: Optional[str]
+    updated_at: datetime
 
 
 def convertToLocalTime(dateTime: datetime, timeZone: Optional[str]):
@@ -216,9 +217,11 @@ def syncCalendar(account: UserAccount, calendarId: str, session: Session):
     syncGoogleCalendars(account, [calendar], session, removeDeleted=False)
 
 
-def syncCalendarEvents(calendar: UserCalendar, session: Session, fullSync: bool = False) -> None:
+def syncCalendarEvents(calendar: UserCalendar, session: Session, fullSync: bool = False) -> int:
+    """Syncs events from google calendar to the database. Returns True if there are updates."""
     end = (datetime.utcnow() + timedelta(days=30)).isoformat() + 'Z'
     nextPageToken = None
+    numUpdates = 0
 
     while True:
         isIncrementalSync = calendar.sync_token and not fullSync
@@ -249,20 +252,21 @@ def syncCalendarEvents(calendar: UserCalendar, session: Session, fullSync: bool 
         nextPageToken = eventsResult.get('nextPageToken')
         nextSyncToken = eventsResult.get('nextSyncToken')
 
-        logger.info(f'Sync {len(events)} events for {calendar.summary}')
-        syncEventsToDb(calendar, events, session)
+        updates = syncEventsToDb(calendar, events, session)
+        numUpdates += updates
 
         if not nextPageToken:
             break
 
     calendar.sync_token = nextSyncToken
-
     session.commit()
+
+    return numUpdates
 
 
 def syncEventsToDb(
     calendar: UserCalendar, eventItems: List[Dict[str, Any]], session: Session
-) -> None:
+) -> int:
     """Sync items from google to the calendar.
 
     Events could have been moved from one calendar to another.
@@ -270,10 +274,13 @@ def syncEventsToDb(
         If C1 first: Delete it, then added in sync(C2)
         If C2 first: Update the calendar ID, then sync(C1) skips the delete (calendar id does not match).
 
+    Returns the number of updates.
+
     TODO: There's no guarantee that the recurring event is expanded first.
     We know which recurring event it is with the composite id of {id}_{start_date}.
     """
     eventRepo = EventRepository(session)
+    updates = 0
 
     for eventItem in eventItems:
         user = calendar.account.user
@@ -282,14 +289,19 @@ def syncEventsToDb(
 
         if eventItem['status'] == 'cancelled':
             syncDeletedEvent(calendar, existingEvent, eventItem, eventRepo, session)
+            updates += 1
         else:
-            event = syncCreatedOrUpdatedGoogleEvent(
+            event, updated = syncCreatedOrUpdatedGoogleEvent(
                 calendar, eventRepo, existingEvent, eventItem, session
             )
 
-            autoLabelEvents(event, user, session)
+            if updated:
+                autoLabelEvents(event, user, session)
+                updates += 1
 
         session.commit()
+
+    return updates
 
 
 def autoLabelEvents(event: Event, user: User, session: Session):
@@ -434,11 +446,14 @@ def syncCreatedOrUpdatedGoogleEvent(
     existingEvent: Optional[Event],
     eventItem: Dict[str, Any],
     session: Session,
-) -> Event:
+) -> Tuple[Event, bool]:
     """Syncs new event, or update existing from Google.
     For recurring events, translate the google reference to the internal event reference.
     """
     eventVM = googleEventToEventVM(userCalendar.id, eventItem)
+
+    if existingEvent and eventVM.updated_at <= existingEvent.updated_at:
+        return existingEvent, False
 
     baseRecurringEvent = None
     overrideId = existingEvent.id if existingEvent else None
@@ -460,6 +475,8 @@ def syncCreatedOrUpdatedGoogleEvent(
     event = createOrUpdateEvent(
         userCalendar, existingEvent, eventVM, overrideId=overrideId, googleId=eventVM.google_id
     )
+    # Use google's updated time to prevent dual updates when syncing from webhook.
+    event.updated_at = eventVM.updated_at
 
     if baseRecurringEvent:
         recurringEventId = None
@@ -485,7 +502,7 @@ def syncCreatedOrUpdatedGoogleEvent(
 
     syncEventParticipants(userCalendar, event, eventVM.participants, session)
 
-    return event
+    return event, True
 
 
 def syncEventParticipants(
@@ -665,5 +682,7 @@ def googleEventToEventVM(calendarId: uuid.UUID, eventItem: Dict[str, Any]) -> Go
         transparency=Transparency(googleEvent.transparency),
         use_default_reminders=googleEvent.reminders.useDefault if googleEvent.reminders else True,
         reminders=reminderOverrides,
+        updated_at=googleEvent.updated,
     )
+
     return eventVM

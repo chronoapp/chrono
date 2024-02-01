@@ -18,6 +18,7 @@ from sqlalchemy import (
     ForeignKeyConstraint,
     UUID,
     Enum as SQLAlchemyEnum,
+    func,
 )
 from sqlalchemy.orm import relationship, Mapped, mapped_column, backref
 
@@ -202,6 +203,10 @@ class Event(Base):
         "ReminderOverride",
         lazy='joined',
         cascade="all, delete-orphan",
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
     @property

@@ -140,6 +140,8 @@ class EventBaseVM(BaseModel):
     original_start_day: Optional[str] = None
     original_timezone: Optional[str] = None
 
+    updated_at: Optional[datetime] = None
+
     @field_validator('recurrences')
     def isValidRecurrence(
         cls, recurrences: Optional[List[str]], info: FieldValidationInfo

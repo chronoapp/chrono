@@ -61,9 +61,12 @@ def syncEventToGoogleTask(
                 sendUpdates,
             )
 
-        event = syncCreatedOrUpdatedGoogleEvent(userCalendar, eventRepo, event, eventResp, session)
+        event, updated = syncCreatedOrUpdatedGoogleEvent(
+            userCalendar, eventRepo, event, eventResp, session
+        )
 
-        logger.info(f'Synced event {event.title} {event.id=} to Google {event.google_id}')
+        if updated:
+            logger.info(f'Synced event {event.title} {event.id=} to Google {event.google_id}')
 
 
 @dramatiq.actor(max_retries=1)
@@ -164,10 +167,11 @@ def syncCalendarTask(
         userAccount = userRepo.getUserAccount(accountId)
         calendar = calRepo.getCalendar(userAccount.user, calendarId)
 
-        syncCalendarEvents(calendar, session, fullSync)
+        numUpdates = syncCalendarEvents(calendar, session, fullSync)
+        logger.info(f'Synced {numUpdates} events for {calendar.summary=}')
 
         # Send notification to client
-        if sendNotification:
+        if sendNotification and numUpdates > 0:
             sendClientNotification(str(userAccount.user_id), NotificationType.REFRESH_CALENDAR)
 
 
