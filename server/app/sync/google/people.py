@@ -1,63 +1,32 @@
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from google.oauth2.credentials import Credentials
+from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 
-from app.db.models import Contact, User
+from app.db.repos.contact_repo import ContactRepository
+from app.db.models import Contact, User, UserAccount
+from app.core.logger import logger
 
 
 def syncContacts(user: User, session: Session, fullSync: bool = False) -> None:
     """Sync contacts from Google to the DB."""
-    service = _getPeopleService(user)
 
-    syncOtherContacts(service, user, session)
-    syncConnections(service, user, session)
+    for account in user.accounts:
+        try:
+            connections = _getConnections(account)
+            _syncContactsToDB(user, connections, session)
 
+            otherContacts = _getOtherContacts(account)
+            _syncContactsToDB(user, otherContacts, session)
 
-def syncOtherContacts(service, user: User, session: Session):
-    nextPageToken = None
-    while True:
-        results = (
-            service.otherContacts()
-            .list(
-                readMask='names,emailAddresses,photos',
-                pageToken=nextPageToken,
-            )
-            .execute()
-        )
-
-        contacts = results.get('otherContacts', [])
-        syncContactsToDB(user, contacts, session)
-
-        nextPageToken = results.get('nextPageToken')
-        if not nextPageToken:
-            break
+        except HttpError as e:
+            logger.error(f'Error getting connections for {account}', e)
 
 
-def syncConnections(service, user: User, session: Session):
-    nextPageToken = None
-    while True:
-        results = (
-            service.people()
-            .connections()
-            .list(
-                resourceName='people/me',
-                personFields='names,emailAddresses,photos',
-                pageToken=nextPageToken,
-            )
-            .execute()
-        )
+def _syncContactsToDB(user: User, contacts, session: Session):
+    contactRepo = ContactRepository(user, session)
 
-        connections = results.get('connections', [])
-        syncContactsToDB(user, connections, session)
-
-        nextPageToken = results.get('nextPageToken')
-        if not nextPageToken:
-            break
-
-
-def syncContactsToDB(user: User, contacts, session: Session):
     for contact in contacts:
         resourceId = contact.get('resourceName')
         names = contact.get('names', [])
@@ -74,8 +43,7 @@ def syncContactsToDB(user: User, contacts, session: Session):
         photos = contact.get('photos', [])
         photoUrl = photos[0].get('url') if len(photos) > 0 else None
 
-        stmt = select(Contact).where(Contact.user_id == user.id, Contact.google_id == resourceId)
-        contact = (session.execute(stmt)).scalar()
+        contact = contactRepo.getGoogleContact(resourceId)
 
         if contact:
             contact.email = emailAddress
@@ -89,11 +57,64 @@ def syncContactsToDB(user: User, contacts, session: Session):
     session.commit()
 
 
-def _getPeopleService(user: User):
+def _getConnections(account: UserAccount):
+    """Get all connections from Google."""
+    service = _getPeopleService(account)
+    allConnections = []
+
+    nextPageToken = None
+    while True:
+        results = (
+            service.people()
+            .connections()
+            .list(
+                resourceName='people/me',
+                personFields='names,emailAddresses,photos',
+                pageToken=nextPageToken,
+            )
+            .execute()
+        )
+
+        connections = results.get('connections', [])
+        allConnections.extend(connections)
+
+        nextPageToken = results.get('nextPageToken')
+        if not nextPageToken:
+            break
+
+    return allConnections
+
+
+def _getOtherContacts(account: UserAccount):
+    service = _getPeopleService(account)
+    allContacts = []
+
+    nextPageToken = None
+    while True:
+        results = (
+            service.otherContacts()
+            .list(
+                readMask='names,emailAddresses,photos',
+                pageToken=nextPageToken,
+            )
+            .execute()
+        )
+
+        contacts = results.get('otherContacts', [])
+        allContacts.extend(contacts)
+
+        nextPageToken = results.get('nextPageToken')
+        if not nextPageToken:
+            break
+
+    return allContacts
+
+
+def _getPeopleService(account: UserAccount):
     """Get the Google People API service for the user's default account.
     TODO: Handle multiple accounts.
     """
-    tokenData = user.getDefaultAccount().token_data
+    tokenData = account.token_data
 
     credentials = Credentials(**tokenData)
     service = build('people', 'v1', credentials=credentials, cache_discovery=False)

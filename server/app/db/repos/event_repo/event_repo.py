@@ -477,11 +477,11 @@ class EventRepository:
         currentAttendeesMap = {p.email: p for p in event.participants}
         newAttendeesMap = set(p.email for p in newParticipants)
 
-        contactRepo = ContactRepository(self.session)
+        contactRepo = ContactRepository(user, self.session)
         existingContactIds = set()  # Make sure we don't add duplicate contacts
 
         for participantVM in newParticipants:
-            existingContact = contactRepo.findContact(user, participantVM)
+            existingContact = contactRepo.findContact(participantVM)
             if existingContact and existingContact.id in existingContactIds:
                 raise EventRepoError('Duplicate contact found.')
 

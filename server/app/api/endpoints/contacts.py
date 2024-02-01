@@ -18,9 +18,9 @@ async def getContact(
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
-    contactRepo = ContactRepository(session)
+    contactRepo = ContactRepository(user, session)
 
-    contact = contactRepo.getContact(user, contact_id)
+    contact = contactRepo.getContact(contact_id)
     if not contact:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -35,9 +35,9 @@ async def getContacts(
     session: Session = Depends(get_db),
 ):
     """TODO: Pagination."""
-    contactRepo = ContactRepository(session)
+    contactRepo = ContactRepository(user, session)
 
     if query:
-        return contactRepo.searchContacts(user, query, limit)
+        return contactRepo.searchContacts(query, limit)
     else:
-        return contactRepo.getContacts(user, limit)
+        return contactRepo.getContacts(limit)

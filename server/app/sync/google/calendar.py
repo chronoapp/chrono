@@ -496,12 +496,12 @@ def syncEventParticipants(
     session: Session,
 ):
     """Re-create event participants on google sync."""
-    contactRepo = ContactRepository(session)
+    contactRepo = ContactRepository(userCalendar.account.user, session)
     updatedParticipants = []
     event.participants.clear()
 
     for participantVM in participants:
-        contact = contactRepo.findContact(userCalendar.account.user, participantVM)
+        contact = contactRepo.findContact(participantVM)
 
         participant = EventAttendee(
             participantVM.email,

@@ -57,13 +57,14 @@ class ContactInEventVM(BaseModel):
 
 
 class ContactRepository:
-    def __init__(self, session: Session):
+    def __init__(self, user: User, session: Session):
+        self.user = user
         self.session = session
 
-    def searchContacts(self, user: User, query: str, limit: int = 10) -> list[Contact]:
+    def searchContacts(self, query: str, limit: int = 10) -> list[Contact]:
         tsQuery = ' | '.join(query.split())
         rows = self.session.execute(
-            text(CONTACT_SEARCH_QUERY), {'userId': user.id, 'query': tsQuery, 'limit': limit}
+            text(CONTACT_SEARCH_QUERY), {'userId': self.user.id, 'query': tsQuery, 'limit': limit}
         )
         rowIds = [r[0] for r in rows]
 
@@ -73,7 +74,7 @@ class ContactRepository:
 
         return list(contacts)
 
-    def addContact(self, user: User, contactVM: ContactVM) -> Contact:
+    def addContact(self, contactVM: ContactVM) -> Contact:
         contact = Contact(
             contactVM.first_name,
             contactVM.last_name,
@@ -81,52 +82,63 @@ class ContactRepository:
             contactVM.photo_url,
             contactVM.google_id,
         )
-        user.contacts.append(contact)
+        self.user.contacts.append(contact)
 
         return contact
 
-    def getContacts(self, user: User, limit: int = 10) -> list[Contact]:
+    def getContacts(self, limit: int = 10) -> list[Contact]:
         result = self.session.execute(
-            select(Contact).where(Contact.user_id == user.id).limit(limit)
+            select(Contact).where(Contact.user_id == self.user.id).limit(limit)
         )
 
         contacts = result.scalars().all()
 
         return list(contacts)
 
-    def findContact(self, user: User, participantVM: EventParticipantVM) -> Optional[Contact]:
+    def findContact(self, participantVM: EventParticipantVM) -> Optional[Contact]:
         existingContact = None
 
         if participantVM.contact_id:
-            existingContact = self.getContact(user, participantVM.contact_id)
+            existingContact = self.getContact(participantVM.contact_id)
             if not existingContact:
                 raise ContactRepoError('Invalid Participant.')
         elif participantVM.email:
-            existingContact = self.getContactWithEmail(user, participantVM.email)
+            existingContact = self.getContactWithEmail(participantVM.email)
 
         return existingContact
 
-    def getContact(self, user: User, contactId: uuid.UUID) -> Optional[Contact]:
+    def getContact(self, contactId: uuid.UUID) -> Optional[Contact]:
         return (
             self.session.execute(
-                select(Contact).where(and_(Contact.user_id == user.id, Contact.id == contactId))
+                select(Contact).where(
+                    and_(Contact.user_id == self.user.id, Contact.id == contactId)
+                )
             )
         ).scalar()
 
-    def getContactWithEmail(self, user: User, email: str) -> Optional[Contact]:
+    def getGoogleContact(self, googleId: str) -> Optional[Contact]:
         return (
             self.session.execute(
-                select(Contact).where(and_(Contact.user_id == user.id, Contact.email == email))
+                select(Contact).where(
+                    and_(Contact.user_id == self.user.id, Contact.google_id == googleId)
+                )
+            )
+        ).scalar()
+
+    def getContactWithEmail(self, email: str) -> Optional[Contact]:
+        return (
+            self.session.execute(
+                select(Contact).where(and_(Contact.user_id == self.user.id, Contact.email == email))
             )
         ).scalar()
 
     def getContactsInEvents(
-        self, user: User, startTime: datetime, endDateTime: datetime, limit: int = 50
+        self, startTime: datetime, endDateTime: datetime, limit: int = 50
     ) -> list[ContactInEventVM]:
         rows = self.session.execute(
             text(CONTACT_IN_EVENTS_QUERY),
             {
-                'userId': user.id,
+                'userId': self.user.id,
                 'startDateTime': startTime,
                 'endDateTime': endDateTime,
                 'limit': limit,

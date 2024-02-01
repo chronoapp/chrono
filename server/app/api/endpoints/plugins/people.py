@@ -17,9 +17,10 @@ async def getUserTrends(
     user=Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> list[ContactInEventVM]:
-    contactRepo = ContactRepository(session)
+    contactRepo = ContactRepository(user, session)
+
     try:
-        contactInEvents = contactRepo.getContactsInEvents(user, start, end)
+        contactInEvents = contactRepo.getContactsInEvents(start, end)
 
         return contactInEvents
 

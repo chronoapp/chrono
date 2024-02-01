@@ -126,9 +126,9 @@ def test_syncCreatedOrUpdatedGoogleEvent_single_with_attendees(user, session, ev
     calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Initial contact list. Make sure the contact is linked to the event attendee.
-    contactRepo = ContactRepository(session)
+    contactRepo = ContactRepository(user, session)
     contact = ContactVM(email='jon@chrono.so')
-    contact = contactRepo.addContact(user, contact)
+    contact = contactRepo.addContact(contact)
 
     session.commit()
 
