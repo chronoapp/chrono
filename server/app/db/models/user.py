@@ -43,11 +43,6 @@ class User(Base):
         back_populates='user',
     )
 
-    # Move contacts relationships from User to UserAccount
-    contacts: Mapped[list['Contact']] = relationship(
-        'Contact', lazy='dynamic', cascade='all,delete'
-    )
-
     def __repr__(self):
         return f'<User {self.id=} {self.email=}/>'
 

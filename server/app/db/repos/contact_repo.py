@@ -98,7 +98,6 @@ class ContactRepository:
             contactVM.google_id,
         )
         contact.account = account
-        contact.user = self.user
         self.session.add(contact)
 
         return contact

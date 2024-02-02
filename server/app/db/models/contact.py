@@ -17,11 +17,10 @@ class Contact(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
     google_id: Mapped[Optional[str]] = mapped_column(String(255), unique=True, nullable=True)
 
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('user.id'), nullable=False)
-    user: Mapped['User'] = relationship('User', back_populates='contacts')
-
     # Connected Calendar Account
-    account_id: Mapped[UUID] = mapped_column(UUID, ForeignKey('user_credentials.id'), nullable=True)
+    account_id: Mapped[UUID] = mapped_column(
+        UUID, ForeignKey('user_credentials.id'), nullable=False
+    )
     account: Mapped['UserAccount'] = relationship('UserAccount', back_populates='contacts')
 
     first_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)

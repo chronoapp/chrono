@@ -53,7 +53,6 @@ def _syncContactsToDB(account: UserAccount, contacts, session: Session):
         else:
             contactDB = Contact(givenName, familyName, emailAddress, photoUrl, resourceId)
 
-        contactDB.user = account.user
         contactDB.account = account
         session.add(contactDB)
 
