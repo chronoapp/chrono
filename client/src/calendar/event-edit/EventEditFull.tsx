@@ -28,11 +28,13 @@ import Contact from '@/models/Contact'
 import Calendar from '@/models/Calendar'
 import { Label } from '@/models/Label'
 import EventParticipant from '@/models/EventParticipant'
+import CalendarAccount from '@/models/CalendarAccount'
 
 import { labelsState } from '@/state/LabelsState'
 import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
 import { displayState, editingEventState, EventUpdateContext } from '@/state/EventsState'
+import { userState } from '@/state/UserState'
 
 import { format, fullDayFormat } from '@/util/localizer'
 import { addNewLabels } from '@/calendar/utils/LabelUtils'
@@ -63,6 +65,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
   const setDisplay = useSetRecoilState(displayState)
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
   const originalCalendarId = props.event.syncStatus === 'SYNCED' ? props.event.calendar_id : null
+  const user = useRecoilValue(userState)
 
   // Event data and overrides
   const [eventFields, setEventFields] = useState(
@@ -156,6 +159,20 @@ export default function EventEditFull(props: { event: Event; eventService: Event
 
   const labels: Label[] = Object.values(labelState.labelsById)
   const selectedCalendar = getSelectedCalendar(eventFields.calendarId)
+
+  /**
+   * Since moving events between accounts isn't supported yet,
+   * only show calendars from the same account as the original calendar.
+   */
+  function getCalendarAccounts(): CalendarAccount[] {
+    let accounts: CalendarAccount[] = user?.accounts || []
+    if (originalCalendarId) {
+      const originalCalendar = calendarsById[originalCalendarId]
+      accounts = accounts.filter((account) => account.id === originalCalendar.account_id) || []
+    }
+
+    return accounts
+  }
 
   return (
     <Modal size="3xl" isOpen={true} onClose={eventActions.cancelSelect}>
@@ -466,9 +483,8 @@ export default function EventEditFull(props: { event: Event; eventService: Event
               <FiCalendar size={'1em'} />
             </Box>
             <SelectCalendar
-              originalCalendarId={originalCalendarId}
+              accounts={getCalendarAccounts()}
               selectedCalendarId={eventFields.calendarId}
-              calendarsById={calendarsById}
               onChange={(calendar) => {
                 const updatedFields = {
                   ...eventFields,

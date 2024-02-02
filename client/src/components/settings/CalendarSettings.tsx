@@ -1,14 +1,18 @@
-import { useRecoilState } from 'recoil'
+import { useRecoilState, useRecoilValue } from 'recoil'
 
 import { userState } from '@/state/UserState'
+import { primaryCalendarSelector } from '@/state/CalendarState'
+
 import { Flex, Box, Text, Button, Heading, SimpleGrid, Select } from '@chakra-ui/react'
 import CalendarLogo from '@/components/CalendarLogo'
 import CalendarAccount from '@/models/CalendarAccount'
 
 import * as API from '@/util/Api'
+import SelectCalendar from '@/calendar/event-edit/SelectCalendar'
 
 function CalendarSettings() {
   const [user, setUser] = useRecoilState(userState)
+  const primaryCalendar = useRecoilValue(primaryCalendarSelector)
 
   return (
     <Flex direction={'column'} width={'100%'}>
@@ -44,6 +48,18 @@ function CalendarSettings() {
             <CalendarAccountIntegration key={account.id} account={account} />
           ))}
         </SimpleGrid>
+
+        <Box>
+          <Text fontSize={'sm'} mt="4">
+            Default Calendar
+          </Text>
+
+          <SelectCalendar
+            accounts={user?.accounts || []}
+            selectedCalendarId={primaryCalendar?.id || ''}
+            onChange={(calendar) => {}}
+          />
+        </Box>
       </Box>
 
       <Heading size="sm" mt="4">

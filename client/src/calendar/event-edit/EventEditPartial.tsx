@@ -34,6 +34,7 @@ import * as dates from '@/util/dates'
 import { labelsState } from '@/state/LabelsState'
 import { displayState } from '@/state/EventsState'
 import { calendarsState } from '@/state/CalendarState'
+import { userState } from '@/state/UserState'
 
 import { LabelTag } from '@/components/LabelTag'
 import LabelTree from '@/components/LabelTree'
@@ -78,6 +79,7 @@ export default function EventEditPartial(props: IProps) {
   const labelState = useRecoilValue(labelsState)
   const labels: Label[] = Object.values(labelState.labelsById)
   const calendarsById = useRecoilValue(calendarsState).calendarsById
+  const user = useRecoilValue(userState)
 
   const defaultDays = eventFields.allDay
     ? Math.max(dates.diff(eventFields.end, eventFields.start, 'day'), 1)
@@ -316,9 +318,8 @@ export default function EventEditPartial(props: IProps) {
             <FiCalendar size="1em" />
           </Box>
           <SelectCalendar
-            originalCalendarId={null}
+            accounts={user?.accounts || []}
             selectedCalendarId={eventFields.calendarId}
-            calendarsById={calendarsById}
             onChange={(calendar) => {
               const updatedFields = {
                 ...eventFields,
