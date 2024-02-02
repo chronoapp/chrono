@@ -14,8 +14,10 @@ LEFT JOIN
     event_participant p ON c.email = p.email_
 LEFT JOIN
     event e ON p.event_uid = e.uid AND e.start >= :startDateTime AND e.end <= :endDateTime
+LEFT JOIN
+    user_credentials uc ON c.account_id = uc.id
 WHERE
-    c.user_id = :userId
+    uc.user_id = :userId
 GROUP BY
     c.id,
     c.email,

@@ -15,17 +15,17 @@ def syncContacts(user: User, session: Session, fullSync: bool = False) -> None:
     for account in user.accounts:
         try:
             connections = _getConnections(account)
-            _syncContactsToDB(user, connections, session)
+            _syncContactsToDB(account, connections, session)
 
             otherContacts = _getOtherContacts(account)
-            _syncContactsToDB(user, otherContacts, session)
+            _syncContactsToDB(account, otherContacts, session)
 
         except HttpError as e:
             logger.error(f'Error getting connections for {account}', e)
 
 
-def _syncContactsToDB(user: User, contacts, session: Session):
-    contactRepo = ContactRepository(user, session)
+def _syncContactsToDB(account: UserAccount, contacts, session: Session):
+    contactRepo = ContactRepository(account, session)
 
     for contact in contacts:
         resourceId = contact.get('resourceName')
@@ -43,16 +43,19 @@ def _syncContactsToDB(user: User, contacts, session: Session):
         photos = contact.get('photos', [])
         photoUrl = photos[0].get('url') if len(photos) > 0 else None
 
-        contact = contactRepo.getGoogleContact(resourceId)
+        contactDB = contactRepo.getGoogleContact(resourceId)
 
-        if contact:
-            contact.email = emailAddress
-            contact.first_name = givenName
-            contact.last_name = familyName
-            contact.photo_url = photoUrl
+        if contactDB:
+            contactDB.email = emailAddress
+            contactDB.first_name = givenName
+            contactDB.last_name = familyName
+            contactDB.photo_url = photoUrl
         else:
-            contact = Contact(givenName, familyName, emailAddress, photoUrl, resourceId)
-            user.contacts.append(contact)
+            contactDB = Contact(givenName, familyName, emailAddress, photoUrl, resourceId)
+
+        contactDB.user = account.user
+        contactDB.account = account
+        session.add(contactDB)
 
     session.commit()
 

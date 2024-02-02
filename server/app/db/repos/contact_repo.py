@@ -5,11 +5,10 @@ from typing import Optional
 from pydantic import BaseModel, Field, computed_field, ConfigDict
 from functools import cached_property
 
-from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import text, select
 
-from app.db.models import User, Contact
+from app.db.models import Contact, UserAccount, User
 
 from app.db.sql.contact_search import CONTACT_SEARCH_QUERY
 from app.db.repos.event_repo.view_models import EventParticipantVM
@@ -62,9 +61,11 @@ class ContactRepository:
         self.session = session
 
     def searchContacts(self, query: str, limit: int = 10) -> list[Contact]:
+        """Search for all user contacts that match the query."""
         tsQuery = ' | '.join(query.split())
         rows = self.session.execute(
-            text(CONTACT_SEARCH_QUERY), {'userId': self.user.id, 'query': tsQuery, 'limit': limit}
+            text(CONTACT_SEARCH_QUERY),
+            {'userId': self.user.id, 'query': tsQuery, 'limit': limit},
         )
         rowIds = [r[0] for r in rows]
 
@@ -74,7 +75,21 @@ class ContactRepository:
 
         return list(contacts)
 
-    def addContact(self, contactVM: ContactVM) -> Contact:
+    def getContacts(self, limit: int = 10) -> list[Contact]:
+        """Gets all contacts for the user."""
+        result = self.session.execute(
+            select(Contact)
+            .join(UserAccount)
+            .where(UserAccount.user_id == self.user.id)
+            .limit(limit)
+        )
+
+        contacts = result.scalars().all()
+
+        return list(contacts)
+
+    def addContact(self, account: UserAccount, contactVM: ContactVM) -> Contact:
+        """Adds a new contact to the user's account."""
         contact = Contact(
             contactVM.first_name,
             contactVM.last_name,
@@ -82,18 +97,11 @@ class ContactRepository:
             contactVM.photo_url,
             contactVM.google_id,
         )
-        self.user.contacts.append(contact)
+        contact.account = account
+        contact.user = self.user
+        self.session.add(contact)
 
         return contact
-
-    def getContacts(self, limit: int = 10) -> list[Contact]:
-        result = self.session.execute(
-            select(Contact).where(Contact.user_id == self.user.id).limit(limit)
-        )
-
-        contacts = result.scalars().all()
-
-        return list(contacts)
 
     def findContact(self, participantVM: EventParticipantVM) -> Optional[Contact]:
         existingContact = None
@@ -110,25 +118,21 @@ class ContactRepository:
     def getContact(self, contactId: uuid.UUID) -> Optional[Contact]:
         return (
             self.session.execute(
-                select(Contact).where(
-                    and_(Contact.user_id == self.user.id, Contact.id == contactId)
-                )
+                select(Contact)
+                .join(UserAccount)
+                .where(UserAccount.user_id == self.user.id, Contact.id == contactId)
             )
         ).scalar()
 
     def getGoogleContact(self, googleId: str) -> Optional[Contact]:
-        return (
-            self.session.execute(
-                select(Contact).where(
-                    and_(Contact.user_id == self.user.id, Contact.google_id == googleId)
-                )
-            )
-        ).scalar()
+        return (self.session.execute(select(Contact).where(Contact.google_id == googleId))).scalar()
 
     def getContactWithEmail(self, email: str) -> Optional[Contact]:
         return (
             self.session.execute(
-                select(Contact).where(and_(Contact.user_id == self.user.id, Contact.email == email))
+                select(Contact)
+                .join(UserAccount)
+                .where(UserAccount.user_id == self.user.id, Contact.email == email)
             )
         ).scalar()
 

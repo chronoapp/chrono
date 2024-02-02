@@ -19,6 +19,7 @@ from app.db.repos.event_repo.event_repo import (
     createOrUpdateEvent,
 )
 from app.db.repos.calendar_repo import CalendarRepository
+from app.db.repos.contact_repo import ContactVM, ContactRepository
 
 from app.db.models import User, Event, Contact
 from app.db.models.event import stripParticipants
@@ -302,9 +303,12 @@ def test_createEvent_withParticipants(user: User, session, test_client):
     """
 
     # Setup Existing Contact
-
-    contact = Contact('Jon', 'Snow', 'jon@example.com', 'test-img.png', None)
-    user.contacts.append(contact)
+    contactRepo = ContactRepository(user.getDefaultAccount(), session)
+    contact = contactRepo.addContact(
+        ContactVM(
+            firstName='Jon', lastName='Snow', email='jon@example.com', photoUrl='test-img.png'
+        )
+    )
     session.commit()
 
     # Create new event with two participants

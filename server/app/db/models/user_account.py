@@ -10,7 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base_class import Base
 
 if TYPE_CHECKING:
-    from app.db.models import UserCalendar, Webhook, User
+    from app.db.models import UserCalendar, Webhook, User, Contact
 
 
 class CalendarProvider(enum.Enum):
@@ -48,6 +48,9 @@ class UserAccount(Base):
     )
     webhooks: Mapped[list['Webhook']] = relationship(
         "Webhook", back_populates='account', cascade='all,delete'
+    )
+    contacts: Mapped[list['Contact']] = relationship(
+        "Contact", back_populates='account', cascade='all,delete'
     )
 
     def __init__(

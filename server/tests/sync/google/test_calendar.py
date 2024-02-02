@@ -111,7 +111,7 @@ def test_syncCreatedOrUpdatedGoogleEvent_single(user, session: Session, eventRep
     eventItem = EVENT_ITEM_RECURRING.copy()
     del eventItem['recurrence']
 
-    event = syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
+    event, _ = syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
     session.commit()
 
     assert event.title == eventItem.get('summary')
@@ -122,14 +122,15 @@ def test_syncCreatedOrUpdatedGoogleEvent_single(user, session: Session, eventRep
     assert len(events) == 1
 
 
-def test_syncCreatedOrUpdatedGoogleEvent_single_with_attendees(user, session, eventRepo):
+def test_syncCreatedOrUpdatedGoogleEvent_single_with_attendees(user: User, session, eventRepo):
     calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Initial contact list. Make sure the contact is linked to the event attendee.
-    contactRepo = ContactRepository(user, session)
+    account = user.getDefaultAccount()
+    contactRepo = ContactRepository(account, session)
+
     contact = ContactVM(email='jon@chrono.so')
     contact = contactRepo.addContact(contact)
-
     session.commit()
 
     # Add attendees
@@ -141,7 +142,7 @@ def test_syncCreatedOrUpdatedGoogleEvent_single_with_attendees(user, session, ev
         {'email': 'abe@chrono.so'},
     ]
 
-    event = syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
+    event, _ = syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
     attendeeMap = {p.email: p for p in event.participants}
     session.commit()
 
@@ -153,7 +154,7 @@ def test_syncCreatedOrUpdatedGoogleEvent_single_with_attendees(user, session, ev
         {'email': 'sally@chrono.so', 'self': True, 'displayName': 'Sally'},
         {'email': 'eric@chrono.so'},
     ]
-    event = syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
+    event, _ = syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
     attendeeMap = {p.email: p for p in event.participants}
 
     assert len(event.participants) == 2

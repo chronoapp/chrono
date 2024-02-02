@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.db.repos.contact_repo import ContactRepository, ContactInEventVM
 from app.api.utils.security import get_current_user
 from app.api.utils.db import get_db
+from app.db.models import User
 
 router = APIRouter()
 
@@ -14,7 +15,7 @@ router = APIRouter()
 async def getUserTrends(
     start: datetime = datetime.now() - timedelta(days=365),
     end: datetime = datetime.now(),
-    user=Depends(get_current_user),
+    user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> list[ContactInEventVM]:
     contactRepo = ContactRepository(user, session)

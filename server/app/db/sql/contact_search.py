@@ -5,7 +5,8 @@ CONTACT_SEARCH_QUERY = """
             setweight(to_tsvector('english', coalesce(contact.last_name, '')), 'B') ||
             setweight(to_tsvector('english', coalesce(contact.email, '')), 'C') as doc
         FROM contact
-        WHERE contact.user_id = :userId
+        JOIN user_credentials ON user_credentials.id = contact.account_id
+        WHERE user_credentials.user_id = :userId
     ) search
     WHERE search.doc @@ to_tsquery(:query || ':*') AND email IS NOT NULL
     ORDER BY ts_rank(search.doc, to_tsquery(:query || ':*')) DESC

@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from app.db.base_class import Base
 
 if TYPE_CHECKING:
-    from .user import User
+    from app.db.models import UserAccount, User
 
 
 class Contact(Base):
@@ -19,6 +19,10 @@ class Contact(Base):
 
     user_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('user.id'), nullable=False)
     user: Mapped['User'] = relationship('User', back_populates='contacts')
+
+    # Connected Calendar Account
+    account_id: Mapped[UUID] = mapped_column(UUID, ForeignKey('user_credentials.id'), nullable=True)
+    account: Mapped['UserAccount'] = relationship('UserAccount', back_populates='contacts')
 
     first_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     last_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
