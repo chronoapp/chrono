@@ -1,8 +1,8 @@
 import uuid
 from typing import Optional, TYPE_CHECKING
 
-from sqlalchemy import String, UUID
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy import String, UUID, ForeignKey
+from sqlalchemy.orm import relationship, Mapped, mapped_column, backref
 from sqlalchemy.ext.orderinglist import ordering_list
 
 from app.db.base_class import Base
@@ -10,9 +10,7 @@ from app.db.models.user_account import CalendarProvider, UserAccount
 from app.db.models.user_calendar import UserCalendar
 
 if TYPE_CHECKING:
-    from .label import Label
-    from .contact import Contact
-    from .webhook import Webhook
+    from . import Label
 
 
 class User(Base):
@@ -41,6 +39,16 @@ class User(Base):
         order_by="Label.position",
         collection_class=ordering_list('position', count_from=0),
         back_populates='user',
+    )
+
+    default_calendar_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID, ForeignKey('user_calendar.id'), nullable=True
+    )
+    default_calendar: Mapped[Optional[UserCalendar]] = relationship(
+        'UserCalendar',
+        foreign_keys='User.default_calendar_id',
+        post_update=True,
+        uselist=False,
     )
 
     def __repr__(self):

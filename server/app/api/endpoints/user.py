@@ -6,6 +6,7 @@ from app.utils.flags import FlagUtils, FlagType
 from app.api.utils.security import get_current_user
 from app.api.utils.db import get_db
 
+from app.db.repos.calendar_repo import CalendarRepository
 from app.db.models.user_account import CalendarProvider
 from app.db.models.user import User
 
@@ -18,6 +19,7 @@ class AccountVM(BaseModel):
     id: UUID
     provider: CalendarProvider
     email: str
+    is_default: bool
 
 
 class UserVM(BaseModel):
@@ -30,6 +32,7 @@ class UserVM(BaseModel):
     picture_url: str | None = None
     name: str | None = None
     username: str | None = None
+    default_calendar_id: UUID | None = None
     accounts: list[AccountVM]
 
 
@@ -37,6 +40,7 @@ class UpdateUserVM(BaseModel):
     timezone: str
     name: str | None = None
     username: str | None = None
+    default_calendar_id: UUID | None = None
 
 
 @router.get('/user/', response_model=UserVM)
@@ -50,9 +54,14 @@ async def updateUser(userVM: UpdateUserVM, user=Depends(get_current_user), sessi
     user.name = userVM.name
     user.username = userVM.username
 
-    from app.core.logger import logger
+    if userVM.default_calendar_id:
+        # Makes sure the calendar exists
+        calendarRepo = CalendarRepository(session)
+        calendar = calendarRepo.getCalendar(user, userVM.default_calendar_id)
+        user.default_calendar_id = calendar.id
+    else:
+        user.default_calendar_id = None
 
-    logger.info(userVM)
     session.add(user)
     session.commit()
 
@@ -72,20 +81,24 @@ async def setUserFlags(flags: dict[FlagType, bool], user=Depends(get_current_use
 def _userToVM(user: User):
     return UserVM(
         id=user.id,
+        default_calendar_id=user.default_calendar_id,
         flags=FlagUtils(user).getAllFlags(),
         email=user.email,
         timezone=user.timezone,
         picture_url=user.picture_url,
         name=user.name,
         username=user.username,
-        accounts=[
-            AccountVM(
-                id=account.id,
-                provider=CalendarProvider(account.provider),
-                email=account.email,
-            )
-            for account in user.accounts
-        ]
-        if user.accounts
-        else [],
+        accounts=(
+            [
+                AccountVM(
+                    id=account.id,
+                    provider=CalendarProvider(account.provider),
+                    email=account.email,
+                    is_default=account.is_default,
+                )
+                for account in user.accounts
+            ]
+            if user.accounts
+            else []
+        ),
     )
