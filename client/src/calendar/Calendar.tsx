@@ -38,7 +38,6 @@ function Calendar() {
   const firstOfWeek = startOfWeek()
   const today = new Date()
   const eventService: EventService = useEventService()
-  const eventActions = useEventActions()
 
   const calendars = useRecoilValue(calendarsState)
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)

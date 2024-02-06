@@ -116,7 +116,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
         selectionRef.current.teardown()
       }
     }
-  }, [props.editingEvent, props.dragAndDropAction])
+  }, [props.editingEvent, props.dragAndDropAction, props.primaryCalendar])
 
   function getContainerRef() {
     return dayRef

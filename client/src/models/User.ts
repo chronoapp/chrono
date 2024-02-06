@@ -14,6 +14,7 @@ export default class User {
       userJson.picture_url,
       userJson.name,
       userJson.username,
+      userJson.default_calendar_id,
       userJson.accounts.map((accountJson: any) => CalendarAccount.fromJson(accountJson))
     )
   }
@@ -26,6 +27,7 @@ export default class User {
     readonly picture_url: string,
     readonly name: string,
     readonly username: string,
+    readonly defaultCalendarId: string,
     readonly accounts: CalendarAccount[]
   ) {}
 }

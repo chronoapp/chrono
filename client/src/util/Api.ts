@@ -116,6 +116,7 @@ export async function updateUser(user: User): Promise<User> {
     name: user.name,
     username: user.username,
     timezone: user.timezone,
+    default_calendar_id: user.defaultCalendarId,
   }
 
   return fetch(`${API_URL}/user/`, {
