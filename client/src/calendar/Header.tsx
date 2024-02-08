@@ -235,12 +235,12 @@ export default function Header(props: { search: string }) {
   }, [editingEvent, labels.editingLabel, props.search, isSearchMode])
 
   function isEditingText(target: Element) {
-    // Ignore keyboard shortcuts when typing in an input or textarea.
     return target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'DIV'
   }
 
   function handleKeyboardShortcuts(e: KeyboardEvent) {
-    if (isEditingText(e?.target as Element)) {
+    const target = e.target as Element
+    if (isEditingText(target) && e.key !== 'Escape') {
       return
     }
 
