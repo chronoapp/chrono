@@ -63,6 +63,8 @@ async def createCalendar(
         raise HTTPException(HTTP_404_NOT_FOUND, 'Account not found.')
 
     userCalendar = calendarRepo.createCalendar(account, calendar)
+    session.add(userCalendar)
+    session.commit()
 
     if calendar.source == 'google':
         resp = gcal.createCalendar(account, userCalendar.calendar)
@@ -74,7 +76,6 @@ async def createCalendar(
     else:
         userCalendar.calendar.email_ = user.email
 
-    session.add(userCalendar)
     session.commit()
 
     return userCalendar
