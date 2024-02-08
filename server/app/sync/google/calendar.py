@@ -432,6 +432,8 @@ def getOrCreateBaseRecurringEvent(
             [],
             status='active',
         )
+        # Force the event to be updated.
+        baseRecurringEvent.updated_at = datetime.min
         userCalendar.calendar.events.append(baseRecurringEvent)
 
     if not baseRecurringEvent.id:
@@ -449,6 +451,8 @@ def syncCreatedOrUpdatedGoogleEvent(
 ) -> Tuple[Event, bool]:
     """Syncs new event, or update existing from Google.
     For recurring events, translate the google reference to the internal event reference.
+
+    Return tuple of (event, updated: bool)
     """
     eventVM = googleEventToEventVM(userCalendar.id, eventItem)
 

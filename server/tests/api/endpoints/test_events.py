@@ -301,13 +301,15 @@ def test_createEvent_withParticipants(user: User, session, test_client):
     """Create event with participants emails.
     If the user has the contact stored, make sure that it's linked to the participant.
     """
+    account = user.getDefaultAccount()
 
     # Setup Existing Contact
-    contactRepo = ContactRepository(user.getDefaultAccount(), session)
+    contactRepo = ContactRepository(user, session)
     contact = contactRepo.addContact(
+        account,
         ContactVM(
             firstName='Jon', lastName='Snow', email='jon@example.com', photoUrl='test-img.png'
-        )
+        ),
     )
     session.commit()
 
@@ -365,8 +367,9 @@ def test_createEvent_withParticipants(user: User, session, test_client):
 
 def test_updateEvent_withParticipants(user: User, session, test_client):
     # Setup Existing Contact
+    account = user.getDefaultAccount()
     contact = Contact('Jon', 'Snow', 'jon@example.com', 'test-img.png', None)
-    user.contacts.append(contact)
+    account.contacts.append(contact)
 
     # Create an event with participants.
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)

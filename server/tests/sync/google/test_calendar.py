@@ -127,10 +127,10 @@ def test_syncCreatedOrUpdatedGoogleEvent_single_with_attendees(user: User, sessi
 
     # Initial contact list. Make sure the contact is linked to the event attendee.
     account = user.getDefaultAccount()
-    contactRepo = ContactRepository(account, session)
+    contactRepo = ContactRepository(user, session)
 
     contact = ContactVM(email='jon@chrono.so')
-    contact = contactRepo.addContact(contact)
+    contact = contactRepo.addContact(account, contact)
     session.commit()
 
     # Add attendees
@@ -164,7 +164,7 @@ def test_syncCreatedOrUpdatedGoogleEvent_single_with_attendees(user: User, sessi
 def test_syncCreatedOrUpdatedGoogleEvent_recurring(user, session, eventRepo):
     calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
-    event = syncCreatedOrUpdatedGoogleEvent(
+    event, _ = syncCreatedOrUpdatedGoogleEvent(
         calendar, eventRepo, None, EVENT_ITEM_RECURRING, session
     )
     session.commit()
@@ -192,7 +192,7 @@ def test_syncCreatedOrUpdatedGoogleEvent_allDay(user, session, eventRepo):
     }
 
     calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
-    event = syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
+    event, _ = syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
 
     assert event.all_day
     assert event.start_day == '2020-12-25'
@@ -244,6 +244,8 @@ def test_syncEventsToDb_recurring(user, session: Session):
             "id": googleEventId,
             "status": "confirmed",
             "summary": "recurring-event",
+            "created": "2021-01-09T23:00:00-05:00",
+            "updated": "2021-01-09T23:00:00-05:00",
             "start": {"dateTime": "2021-01-09T23:00:00-05:00", "timeZone": "America/Toronto"},
             "end": {"dateTime": "2021-01-09T23:30:00-05:00", "timeZone": "America/Toronto"},
             "recurrence": [
@@ -255,6 +257,8 @@ def test_syncEventsToDb_recurring(user, session: Session):
             "id": f"{googleEventId}_20210111T040000Z",
             "status": "confirmed",
             "summary": "recurring-event",
+            "created": "2021-01-09T23:00:00-05:00",
+            "updated": "2021-01-09T23:00:00-05:00",
             "start": {"dateTime": "2021-01-11T09:15:00-05:00"},
             "end": {"dateTime": "2021-01-11T09:45:00-05:00"},
             "recurringEventId": googleEventId,
@@ -262,6 +266,8 @@ def test_syncEventsToDb_recurring(user, session: Session):
         },
         {
             "id": f"{googleEventId}_20210113T040000Z",
+            "created": "2021-01-09T23:00:00-05:00",
+            "updated": "2021-01-09T23:00:00-05:00",
             "status": "cancelled",
             "recurringEventId": googleEventId,
             "originalStartTime": {"dateTime": "2021-01-12T23:00:00-05:00"},
@@ -290,7 +296,9 @@ def test_syncEventsToDb_recurring(user, session: Session):
 
 
 def test_syncEventsToDb_recurring_withParticipants(user, session):
-    """Make sure participants are created."""
+    """When an instance of a recurring event is created,
+    make sure the participants from the parent recurring event are included.
+    """
     calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Add the parent event
@@ -433,7 +441,7 @@ def test_syncCreatedOrUpdatedGoogleEvent_conferenceGoogleHangout(
         "conferenceId": "orw-shac-hgg",
     }
 
-    event = syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
+    event, _ = syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
     assert event.conference_data is not None
     assert event.conference_data.conference_id == 'orw-shac-hgg'
 
@@ -485,7 +493,7 @@ def test_syncCreatedOrUpdatedGoogleEvent_zoom(user, session: Session, eventRepo:
         "conferenceId": "123123",
     }
 
-    event = syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
+    event, _ = syncCreatedOrUpdatedGoogleEvent(calendar, eventRepo, None, eventItem, session)
 
     assert event.conference_data is not None
     assert event.conference_data.conference_id == '123123'
