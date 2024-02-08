@@ -31,7 +31,7 @@ class UserAccount(Base):
     )
 
     email: Mapped[str] = mapped_column(String(255), nullable=True)
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('user.id'))
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey('user.id', ondelete='CASCADE'))
     user: Mapped['User'] = relationship('User', back_populates='accounts')
 
     provider: Mapped[str] = mapped_column(

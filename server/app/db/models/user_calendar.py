@@ -32,7 +32,9 @@ class UserCalendar(Base):
     )
 
     # Connected Calendar Account
-    account_id: Mapped[UUID] = mapped_column(UUID, ForeignKey('user_credentials.id'), nullable=True)
+    account_id: Mapped[UUID] = mapped_column(
+        UUID, ForeignKey('user_credentials.id', ondelete='CASCADE'), nullable=True
+    )
     account: Mapped['UserAccount'] = relationship('UserAccount', back_populates='calendars')
 
     # IDs for google / msft / aapl.

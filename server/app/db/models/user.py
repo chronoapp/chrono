@@ -42,12 +42,13 @@ class User(Base):
     )
 
     default_calendar_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID, ForeignKey('user_calendar.id'), nullable=True
+        UUID,
+        ForeignKey('user_calendar.id', name="fk_user_default_calendar", ondelete='SET NULL'),
+        nullable=True,
     )
     default_calendar: Mapped[Optional[UserCalendar]] = relationship(
         'UserCalendar',
         foreign_keys='User.default_calendar_id',
-        post_update=True,
         uselist=False,
     )
 
