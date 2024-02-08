@@ -234,11 +234,16 @@ export default function Header(props: { search: string }) {
     }
   }, [editingEvent, labels.editingLabel, props.search, isSearchMode])
 
-  function isEditing() {
-    return !!editingEvent || labels.editingLabel.active
+  function isEditingText(target: Element) {
+    // Ignore keyboard shortcuts when typing in an input or textarea.
+    return target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'DIV'
   }
 
   function handleKeyboardShortcuts(e: KeyboardEvent) {
+    if (isEditingText(e?.target as Element)) {
+      return
+    }
+
     if (isSearchMode) {
       if (e.key === 'Escape') {
         e.preventDefault()
@@ -257,23 +262,21 @@ export default function Header(props: { search: string }) {
         eventActions.onInteractionEnd()
       }
 
-      if (!isEditing()) {
-        if (e.key === 'd') {
-          selectDisplay('Day')
-        }
+      if (e.key === 'd') {
+        selectDisplay('Day')
+      }
 
-        if (e.key === 'w') {
-          selectDisplay('Week')
-        }
+      if (e.key === 'w') {
+        selectDisplay('Week')
+      }
 
-        if (e.key === 'x') {
-          selectDisplay('WorkWeek')
-        }
+      if (e.key === 'x') {
+        selectDisplay('WorkWeek')
+      }
 
-        if (MONTHLY_VIEW_ENABLED) {
-          if (e.key === 'm') {
-            selectDisplay('Month')
-          }
+      if (MONTHLY_VIEW_ENABLED) {
+        if (e.key === 'm') {
+          selectDisplay('Month')
         }
       }
     }
