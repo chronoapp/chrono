@@ -156,4 +156,8 @@ class CalendarRepository:
         Events will still remain in the original calendar list until the original calendar is deleted.
         """
         calendarDb = self.getCalendar(user, calendarId)
+        if user.default_calendar_id == calendarId:
+            user.default_calendar_id = None
+
+        self.session.add(user)
         self.session.delete(calendarDb)
