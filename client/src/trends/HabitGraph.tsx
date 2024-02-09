@@ -133,7 +133,37 @@ function HabitGraph(props: IProps) {
       <Box>
         <Flex mb="1">{renderHeader()}</Flex>
         {weeks.map(renderWeek)}
+        {renderLessMoreAxis()}
       </Box>
+    )
+  }
+
+  function renderLessMoreAxis() {
+    const { h, s, l } = hexToHSL(props.selectedLabel!.color_hex)
+    const numIndices = 5
+    const indices = Array.from({ length: numIndices }, (_, i) => i + 1)
+
+    return (
+      <Flex justifyContent={'flex-end'} mt="5" mb="5">
+        <Flex alignItems={'center'}>
+          <Text fontSize="sm" color={'gray.500'} mr="2">
+            Less
+          </Text>
+          <Flex direction={'row'}>
+            {indices.map((i) => {
+              const ratio = (1.0 * i) / numIndices
+              const remainingLight = 100 - l
+              const addLight = (1 - ratio) * remainingLight
+              const color = `hsl(${h}, ${s}%, ${l + addLight}%)`
+
+              return <Box key={i} mr="1" width="25px" height="25px" bgColor={color}></Box>
+            })}
+          </Flex>
+          <Text fontSize="sm" color={'gray.500'} ml="2">
+            More
+          </Text>
+        </Flex>
+      </Flex>
     )
   }
 
