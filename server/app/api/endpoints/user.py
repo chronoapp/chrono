@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status, Response
 from pydantic import BaseModel, ConfigDict
 
 from app.utils.flags import FlagUtils, FlagType
@@ -7,8 +7,10 @@ from app.api.utils.security import get_current_user
 from app.api.utils.db import get_db
 
 from app.db.repos.calendar_repo import CalendarRepository
+
 from app.db.models.user_account import CalendarProvider
 from app.db.models.user import User
+
 
 router = APIRouter()
 
@@ -76,6 +78,20 @@ async def getUserFlags(user=Depends(get_current_user)):
 @router.put('/user/flags/', response_model=dict[FlagType, bool])
 async def setUserFlags(flags: dict[FlagType, bool], user=Depends(get_current_user)):
     return FlagUtils(user).setAllFlags(flags)
+
+
+@router.delete('/user/accounts/{account_id}')
+async def deleteUserAccount(
+    account_id: UUID, user=Depends(get_current_user), session=Depends(get_db)
+):
+    account = next((a for a in user.accounts if a.id == account_id), None)
+    if not account:
+        return Response({"message": "Account not found"}, status_code=status.HTTP_404_NOT_FOUND)
+
+    session.delete(account)
+    session.commit()
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 def _userToVM(user: User):

@@ -1,7 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
-from starlette.status import HTTP_404_NOT_FOUND
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from typing import List
@@ -36,7 +35,7 @@ async def getCalendar(
         return userCalendar
 
     except CalendarNotFoundError:
-        raise HTTPException(HTTP_404_NOT_FOUND)
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
 
 @router.get('/calendars/', response_model=List[CalendarVM])
@@ -60,7 +59,7 @@ async def createCalendar(
 
     account = user.getAccountById(calendar.account_id)
     if not account:
-        raise HTTPException(HTTP_404_NOT_FOUND, 'Account not found.')
+        raise HTTPException(status.HTTP_404_NOT_FOUND, 'Account not found.')
 
     userCalendar = calendarRepo.createCalendar(account, calendar)
     session.add(userCalendar)
@@ -100,7 +99,7 @@ async def putCalendar(
         return userCalendar
 
     except CalendarNotFoundError:
-        raise HTTPException(HTTP_404_NOT_FOUND)
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
 
 @router.delete('/calendars/{calendarId}')
@@ -121,6 +120,6 @@ async def removeUserCalendar(
         session.commit()
 
     except CalendarNotFoundError:
-        raise HTTPException(HTTP_404_NOT_FOUND)
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     return {}
