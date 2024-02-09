@@ -127,7 +127,9 @@ def addAccountCallback(state: str, code: str, session: Session = Depends(get_db)
     # Start syncing calendar after adding account.
     syncAllCalendarsTask.send(account.id, False)
 
-    return HTMLResponse(content=Template.get_template('oauth/index.html').render())
+    return HTMLResponse(
+        content=Template.get_template('oauth/index.html').render(APP_URL=config.APP_URL)
+    )
 
 
 @router.post('/oauth/google/token')

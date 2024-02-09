@@ -78,8 +78,7 @@ function ConfirmDeleteCalendarAlert(props: {
 
 /**
  * Displays list of calendars.
- * TODO: Use calendar color, not event color.
- * TODO: Update selected calendars to server.
+ *
  */
 export default function CalendarAccountList() {
   const toast = useToast()

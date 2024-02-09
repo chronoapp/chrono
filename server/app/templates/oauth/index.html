@@ -18,10 +18,19 @@
             text-align: center;
         }
     </style>
+
+<script>
+    window.opener.postMessage(
+    {
+      type: 'googleOAuthResponse',
+    },
+    '{{ APP_URL }}'
+  )
+</script>
 </head>
 <body>
     <div class="message">
-        <h1>Account connected successfully</h1>
+        <h2>Account connected successfully</h2>
         <p>Please close this tab.</p>
     </div>
 </body>

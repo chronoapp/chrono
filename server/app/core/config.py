@@ -4,8 +4,9 @@ import os
 
 API_V1_STR = "/api/v1"
 
-APP_URL: str = os.environ.get('APP_URL', 'https://localhost:3000')
-BASE_API_URL = os.environ.get('API_URL')
+APP_URL: str = os.environ['APP_URL']
+BASE_API_URL: str = os.environ['API_URL']
+
 API_URL = f'{BASE_API_URL}{API_V1_STR}'
 
 GOOGLE_PROJECT_ID = os.environ.get('GOOGLE_PROJECT_ID')

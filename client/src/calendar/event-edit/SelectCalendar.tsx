@@ -29,7 +29,7 @@ export default function SelectCalendar(props: IProps) {
   const calendarsById = useRecoilValue(calendarsState).calendarsById
   const writableCalendars = Object.values(calendarsById).filter((cal) => cal.isWritable())
   const selectedCal = calendarsById[props.selectedCalendarId]
-  const groupedCalendars = groupBy(writableCalendars, (cal) => cal.account_id)
+  const calendarsByAccount = groupBy(writableCalendars, (cal) => cal.account_id)
 
   function renderCalendarItem(calendar: Calendar) {
     return (
@@ -56,7 +56,7 @@ export default function SelectCalendar(props: IProps) {
 
       <MenuList mt="-1" p="0" zIndex="10">
         {props.accounts.map((account) => {
-          const calendars = groupedCalendars.get(account.id)!
+          const calendars = calendarsByAccount.get(account.id) || []
 
           return (
             <MenuGroup

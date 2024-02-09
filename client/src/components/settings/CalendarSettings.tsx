@@ -1,25 +1,47 @@
 import * as React from 'react'
-import { FiChevronDown } from 'react-icons/fi'
+import { FiChevronDown, FiTrash2 } from 'react-icons/fi'
 import { useRecoilState, useRecoilValue } from 'recoil'
-import { Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react'
+import { Menu, MenuButton, MenuList, MenuItem, IconButton } from '@chakra-ui/react'
 import { Flex, Box, Text, Button, Heading, SimpleGrid, useToast, ToastId } from '@chakra-ui/react'
 
 import { userState } from '@/state/UserState'
 import { primaryCalendarSelector } from '@/state/CalendarState'
+
 import Calendar from '@/models/Calendar'
+import User from '@/models/User'
+import CalendarAccount from '@/models/CalendarAccount'
 
 import CalendarLogo from '@/components/CalendarLogo'
-import CalendarAccount from '@/models/CalendarAccount'
 import { InfoAlert } from '@/components/Alert'
 
 import * as API from '@/util/Api'
 import SelectCalendar from '@/calendar/event-edit/SelectCalendar'
+import SettingsModal from './SettingsModal'
 
 function CalendarSettings() {
   const [user, setUser] = useRecoilState(userState)
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
+  const [accountToDelete, setAccountToDelete] = React.useState<CalendarAccount | null>(null)
+
   const toastIdRef = React.useRef<ToastId>()
   const toast = useToast()
+
+  React.useEffect(() => {
+    // Handle the oauth response from the popup window
+    function handleOauthComplete(event) {
+      if (event.data.type === 'googleOAuthResponse') {
+        API.getUser().then((user) => {
+          setUser(user)
+        })
+      }
+    }
+
+    window.addEventListener('message', handleOauthComplete)
+
+    return () => {
+      window.removeEventListener('message', handleOauthComplete)
+    }
+  }, [])
 
   if (!user) {
     return null
@@ -46,8 +68,8 @@ function CalendarSettings() {
     })
   }
 
-  const handleUpdateDefaultCalendar = (calendar: Calendar) => {
-    const updatedUser = { ...user, defaultCalendarId: calendar.id }
+  function handleUpdateDefaultCalendar(calendar: Calendar) {
+    const updatedUser = { ...user, defaultCalendarId: calendar.id } as User
     setUser(updatedUser)
 
     API.updateUser(updatedUser).then((res) => {
@@ -55,8 +77,39 @@ function CalendarSettings() {
     })
   }
 
+  function handleDeleteCalendarAccount(account: CalendarAccount) {
+    setAccountToDelete(account)
+  }
+
+  function handleConfirmDeleteCalendarAccount(user: User, accountToDelete: CalendarAccount) {
+    const updatedUser = {
+      ...user,
+      accounts: user.accounts.filter((a) => a.id !== accountToDelete.id),
+      defaultCalendarId:
+        user.defaultCalendarId === accountToDelete.id ? null : user.defaultCalendarId,
+    } as User
+
+    return API.removeUserAccount(accountToDelete.id).then((res) => {
+      setUser(updatedUser)
+      addMessage(`${accountToDelete.email} unlinked.`)
+      setAccountToDelete(null)
+    })
+  }
+
   return (
     <Flex direction={'column'} width={'100%'}>
+      {accountToDelete && (
+        <SettingsModal
+          onClose={() => {
+            setAccountToDelete(null)
+          }}
+          onConfirm={() => handleConfirmDeleteCalendarAccount(user, accountToDelete)}
+          header={`Unlink account ${accountToDelete.email}?`}
+          body={`Are you sure you want to unlink this account? This will remove all calendars from this account.`}
+          destructive={true}
+          confirmText={'Unlink'}
+        />
+      )}
       <Heading size="sm">General</Heading>
       <Box mt="2">
         <Text fontSize={'sm'}>Timezone</Text>
@@ -87,7 +140,11 @@ function CalendarSettings() {
 
         <SimpleGrid columns={2} spacing={2} mt="2">
           {user.accounts.map((account) => (
-            <CalendarAccountIntegration key={account.id} account={account} />
+            <CalendarAccountIntegration
+              key={account.id}
+              account={account}
+              onDelete={() => handleDeleteCalendarAccount(account)}
+            />
           ))}
         </SimpleGrid>
 
@@ -132,15 +189,26 @@ function CalendarSettings() {
   )
 }
 
-function CalendarAccountIntegration(props: { account: CalendarAccount }) {
+function CalendarAccountIntegration(props: { account: CalendarAccount; onDelete: () => void }) {
   return (
     <Box fontSize="md" padding="2" borderRadius={'sm'} bgColor="gray.50">
       <Flex direction={'column'}>
         <Flex alignItems="center">
           <CalendarLogo source={props.account.provider} size={30} />
+
           <Text fontSize="sm" pl="1">
             Google Calendar
           </Text>
+
+          {!props.account.isDefault && (
+            <IconButton
+              aria-label="delete"
+              icon={<FiTrash2 />}
+              size="xs"
+              ml="auto"
+              onClick={props.onDelete}
+            />
+          )}
         </Flex>
 
         <Text fontSize={'sm'} color="gray.500">

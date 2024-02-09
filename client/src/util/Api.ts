@@ -136,6 +136,13 @@ export async function updateUserFlags(flags: Flags): Promise<User> {
   }).then(handleErrors)
 }
 
+export async function removeUserAccount(accountId: string) {
+  return fetch(`${API_URL}/user/accounts/${accountId}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  }).then(handleErrors)
+}
+
 // ================== Calendars ==================
 
 export async function createCalendar(
