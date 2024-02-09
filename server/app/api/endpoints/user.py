@@ -1,5 +1,7 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, status, Response
+from fastapi import APIRouter, Depends, status
+from fastapi.responses import JSONResponse
+
 from pydantic import BaseModel, ConfigDict
 
 from app.utils.flags import FlagUtils, FlagType
@@ -86,12 +88,12 @@ async def deleteUserAccount(
 ):
     account = next((a for a in user.accounts if a.id == account_id), None)
     if not account:
-        return Response({"message": "Account not found"}, status_code=status.HTTP_404_NOT_FOUND)
+        return JSONResponse({"error": "Account not found"}, status_code=status.HTTP_404_NOT_FOUND)
 
     session.delete(account)
     session.commit()
 
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    return JSONResponse({}, status_code=status.HTTP_200_OK)
 
 
 def _userToVM(user: User):

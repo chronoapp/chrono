@@ -53,6 +53,6 @@ def test_user_delete_account(user: User, session, test_client):
     )
 
     # Ensure that the calendar and contacts are deleted.
-    assert resp.status_code == 204
+    assert resp.status_code == 200
     assert len(contactRepo.getContacts()) == 0
     assert len(calRepo.getCalendars(user)) == 1
