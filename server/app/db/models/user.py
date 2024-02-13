@@ -2,7 +2,7 @@ import uuid
 from typing import Optional, TYPE_CHECKING
 
 from sqlalchemy import String, UUID, ForeignKey
-from sqlalchemy.orm import relationship, Mapped, mapped_column, backref
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.orderinglist import ordering_list
 
 from app.db.base_class import Base
@@ -11,6 +11,7 @@ from app.db.models.user_calendar import UserCalendar
 
 if TYPE_CHECKING:
     from . import Label
+    from .zoom import ZoomConnection
 
 
 class User(Base):
@@ -30,6 +31,13 @@ class User(Base):
         'UserAccount',
         cascade='save-update, merge, delete, delete-orphan',
     )
+    zoom_connection: Mapped[Optional['ZoomConnection']] = relationship(
+        'ZoomConnection',
+        cascade='delete, delete-orphan',
+        uselist=False,
+        back_populates='user',
+    )
+
     timezone: Mapped[str] = mapped_column(String(255), nullable=False, server_default='UTC')
 
     labels: Mapped[list['Label']] = relationship(
