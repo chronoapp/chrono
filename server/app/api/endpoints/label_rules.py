@@ -45,9 +45,7 @@ async def getLabelRules(
         return result.scalars().all()
     else:
         result = session.execute(
-            select(LabelRule).where(
-                LabelRule.user_id,
-            )
+            select(LabelRule).where(LabelRule.user_id == user.id, LabelRule.label_id == label_id)
         )
         return result.scalars().all()
 
