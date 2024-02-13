@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Flex, Box, Text, Button, Container, Heading } from '@chakra-ui/react'
 
-import CalendarSettings from '@/components/settings/CalendarSettings'
+import GeneralSettings from '@/components/settings/GeneralSettings'
 import ProfileSettings from '@/components/settings/ProfileSettings'
 
 type SettingsTab = 'calendar' | 'profile'
@@ -46,7 +46,7 @@ function Settings() {
         </Flex>
 
         <Box width="100%">
-          {activeTab == 'calendar' && <CalendarSettings />}
+          {activeTab == 'calendar' && <GeneralSettings />}
           {activeTab == 'profile' && <ProfileSettings />}
         </Box>
       </Flex>

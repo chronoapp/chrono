@@ -58,6 +58,10 @@ export function getGoogleOauthUrl(authType: AuthType, userId?: string): string {
   return url
 }
 
+export function getZoomOauthUrl(userId: string): string {
+  return `${API_URL}/oauth/zoom/auth?user_id=${userId}`
+}
+
 export function getMsftOauthUrl(): string {
   return `${API_URL}/oauth/msft/auth`
 }

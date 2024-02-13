@@ -1,79 +1,33 @@
 import * as React from 'react'
-import { FiChevronDown, FiTrash2 } from 'react-icons/fi'
-import { useRecoilState, useRecoilValue } from 'recoil'
-import { Menu, MenuButton, MenuList, MenuItem, IconButton } from '@chakra-ui/react'
-import { Flex, Box, Text, Button, Heading, SimpleGrid, useToast, ToastId } from '@chakra-ui/react'
 
-import { userState } from '@/state/UserState'
+import { FiTrash2 } from 'react-icons/fi'
+import { useRecoilValue } from 'recoil'
+import { Flex, Box, Text, Button, Heading, SimpleGrid, IconButton } from '@chakra-ui/react'
+
 import { primaryCalendarSelector } from '@/state/CalendarState'
-
 import Calendar from '@/models/Calendar'
 import User from '@/models/User'
 import CalendarAccount from '@/models/CalendarAccount'
 
 import CalendarLogo from '@/components/CalendarLogo'
-import { InfoAlert } from '@/components/Alert'
-
 import * as API from '@/util/Api'
 import SelectCalendar from '@/calendar/event-edit/SelectCalendar'
 import SettingsModal from './SettingsModal'
 
-function CalendarSettings() {
-  const [user, setUser] = useRecoilState(userState)
+export default function CalendarSettings(props: {
+  user: User
+  addMessage: (message: string) => void
+  onUpdateUser: (user: User) => void
+}) {
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
   const [accountToDelete, setAccountToDelete] = React.useState<CalendarAccount | null>(null)
-
-  const toastIdRef = React.useRef<ToastId>()
-  const toast = useToast()
-
-  React.useEffect(() => {
-    // Handle the oauth response from the popup window
-    function handleOauthComplete(event) {
-      if (event.data.type === 'googleOAuthResponse') {
-        API.getUser().then((user) => {
-          setUser(user)
-        })
-      }
-    }
-
-    window.addEventListener('message', handleOauthComplete)
-
-    return () => {
-      window.removeEventListener('message', handleOauthComplete)
-    }
-  }, [])
-
-  if (!user) {
-    return null
-  }
-
-  function renderConferenceType(conferenceType: string) {
-    return (
-      <Flex alignItems="center">
-        <Text fontWeight="normal" ml="1">
-          Zoom
-        </Text>
-      </Flex>
-    )
-  }
-
-  function addMessage(title: string) {
-    toastIdRef.current && toast.close(toastIdRef.current)
-    toastIdRef.current = toast({
-      title: title,
-      duration: 3000,
-      render: (p) => {
-        return <InfoAlert onClose={p.onClose} title={title} />
-      },
-    })
-  }
+  const { user } = props
 
   function handleUpdateDefaultCalendar(calendar: Calendar) {
     const updatedUser = { ...user, defaultCalendarId: calendar.id } as User
-    setUser(updatedUser)
 
     API.updateUser(updatedUser).then((res) => {
-      addMessage(`Default calendar updated to ${calendar.summary}.`)
+      props.addMessage(`Default calendar updated to ${calendar.summary}.`)
     })
   }
 
@@ -90,14 +44,14 @@ function CalendarSettings() {
     } as User
 
     return API.removeUserAccount(accountToDelete.id).then((res) => {
-      setUser(updatedUser)
-      addMessage(`${accountToDelete.email} unlinked.`)
+      props.onUpdateUser(updatedUser)
+      props.addMessage(`${accountToDelete.email} unlinked.`)
       setAccountToDelete(null)
     })
   }
 
   return (
-    <Flex direction={'column'} width={'100%'}>
+    <>
       {accountToDelete && (
         <SettingsModal
           onClose={() => {
@@ -110,10 +64,6 @@ function CalendarSettings() {
           confirmText={'Unlink'}
         />
       )}
-      <Heading size="sm">General</Heading>
-      <Box mt="2">
-        <Text fontSize={'sm'}>Timezone</Text>
-      </Box>
 
       <Heading size="sm" mt="4">
         Calendars
@@ -148,44 +98,17 @@ function CalendarSettings() {
           ))}
         </SimpleGrid>
 
-        <Box>
-          <Text fontSize={'sm'} mt="4">
-            Default Calendar
-          </Text>
+        <Box mt="4">
+          <Text fontSize={'sm'}>Default Calendar</Text>
 
           <SelectCalendar
-            accounts={user.accounts}
+            accounts={props.user.accounts}
             selectedCalendarId={primaryCalendar?.id || ''}
             onChange={handleUpdateDefaultCalendar}
           />
         </Box>
       </Box>
-
-      <Heading size="sm" mt="4">
-        Conferencing
-      </Heading>
-
-      <Box mt="2">
-        <Text fontSize={'sm'}>Default Conferencing</Text>
-
-        <Menu>
-          <MenuButton
-            as={Button}
-            size="sm"
-            borderRadius="sm"
-            variant="ghost"
-            rightIcon={<FiChevronDown />}
-          >
-            {renderConferenceType('zoom')}
-          </MenuButton>
-
-          <MenuList mt="-1" p="0" fontSize={'xs'}>
-            <MenuItem value="zoom">Zoom</MenuItem>
-            <MenuItem value="google_meet">Google Meet</MenuItem>
-          </MenuList>
-        </Menu>
-      </Box>
-    </Flex>
+    </>
   )
 }
 
@@ -218,5 +141,3 @@ function CalendarAccountIntegration(props: { account: CalendarAccount; onDelete:
     </Box>
   )
 }
-
-export default CalendarSettings
