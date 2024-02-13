@@ -128,7 +128,7 @@ def addAccountCallback(state: str, code: str, session: Session = Depends(get_db)
     syncAllCalendarsTask.send(account.id, False)
 
     return HTMLResponse(
-        content=Template.get_template('oauth/index.html').render(APP_URL=config.APP_URL)
+        content=Template.get_template('oauth/google_complete.html').render(APP_URL=config.APP_URL)
     )
 
 
