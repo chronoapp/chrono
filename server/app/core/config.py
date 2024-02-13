@@ -43,3 +43,6 @@ elif MAILGUN_API_URL and MAILGUN_API_KEY:
 
 LogLevel = Literal['debug', 'info', 'warning', 'error']
 LOG_LEVEL: str = 'info'
+
+ZOOM_CLIENT_ID = os.environ.get('ZOOM_CLIENT_ID')
+ZOOM_CLIENT_SECRET = os.environ.get('ZOOM_CLIENT_SECRET')

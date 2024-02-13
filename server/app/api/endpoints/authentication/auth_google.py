@@ -14,6 +14,7 @@ from google.oauth2.credentials import Credentials
 
 from .token_utils import getAuthToken
 
+from app.db.repos.exceptions import NotFoundError
 from app.db.repos.user_repo import UserRepository
 from app.db.models.user_account import UserAccount, CalendarProvider
 from app.db.models.user import User
@@ -107,9 +108,10 @@ def addAccountCallback(state: str, code: str, session: Session = Depends(get_db)
     email = userInfo.get('email')
 
     userRepo = UserRepository(session)
-    user = userRepo.getUser(userId)
 
-    if not user:
+    try:
+        user = userRepo.getUser(userId)
+    except NotFoundError:
         raise HTTPException(status.HTTP_404_NOT_FOUND, 'User not found.')
 
     creds = _getCredentialsDict(flow.credentials)
