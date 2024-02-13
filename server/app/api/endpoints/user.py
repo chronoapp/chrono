@@ -26,6 +26,10 @@ class AccountVM(BaseModel):
     is_default: bool
 
 
+class ZoomConnectionVM(BaseModel):
+    email: str
+
+
 class UserVM(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
@@ -38,6 +42,7 @@ class UserVM(BaseModel):
     username: str | None = None
     default_calendar_id: UUID | None = None
     accounts: list[AccountVM]
+    zoom_connection: ZoomConnectionVM | None = None
 
 
 class UpdateUserVM(BaseModel):
@@ -96,6 +101,20 @@ async def deleteUserAccount(
     return JSONResponse({}, status_code=status.HTTP_200_OK)
 
 
+@router.delete('/user/zoom-connection/')
+async def deleteUserZoomConnection(user=Depends(get_current_user), session=Depends(get_db)):
+    """Deletes the user's zoom connection."""
+    if not user.zoom_connection:
+        return JSONResponse(
+            {"error": "Zoom connection not found"}, status_code=status.HTTP_404_NOT_FOUND
+        )
+
+    session.delete(user.zoom_connection)
+    session.commit()
+
+    return JSONResponse({}, status_code=status.HTTP_200_OK)
+
+
 def _userToVM(user: User):
     return UserVM(
         id=user.id,
@@ -118,5 +137,8 @@ def _userToVM(user: User):
             ]
             if user.accounts
             else []
+        ),
+        zoom_connection=(
+            ZoomConnectionVM(email=user.zoom_connection.email) if user.zoom_connection else None
         ),
     )

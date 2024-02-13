@@ -55,7 +55,7 @@ function GeneralSettings() {
       </Box>
 
       <CalendarSettings user={user} onUpdateUser={setUser} addMessage={addMessage} />
-      <ConferencingSettings user={user} />
+      <ConferencingSettings user={user} onUpdateUser={setUser} addMessage={addMessage} />
     </Flex>
   )
 }

@@ -20,11 +20,13 @@ export default function CalendarSettings(props: {
   onUpdateUser: (user: User) => void
 }) {
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
+
   const [accountToDelete, setAccountToDelete] = React.useState<CalendarAccount | null>(null)
   const { user } = props
 
   function handleUpdateDefaultCalendar(calendar: Calendar) {
     const updatedUser = { ...user, defaultCalendarId: calendar.id } as User
+    props.onUpdateUser(updatedUser)
 
     API.updateUser(updatedUser).then((res) => {
       props.addMessage(`Default calendar updated to ${calendar.summary}.`)
