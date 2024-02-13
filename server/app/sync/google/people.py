@@ -25,7 +25,7 @@ def syncContacts(user: User, session: Session, fullSync: bool = False) -> None:
 
 
 def _syncContactsToDB(account: UserAccount, contacts, session: Session):
-    contactRepo = ContactRepository(account, session)
+    contactRepo = ContactRepository(account.user, session)
 
     for contact in contacts:
         resourceId = contact.get('resourceName')
