@@ -62,6 +62,7 @@ export default class EventFields {
       transparency: eventFields.transparency,
       use_default_reminders: eventFields.useDefaultReminders,
       reminders: eventFields.reminders,
+      conference_data: eventFields.conferenceData,
     }
   }
 }
