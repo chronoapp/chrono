@@ -38,6 +38,7 @@ import WorkWeek from './WorkWeek'
 import { labelsState } from '@/state/LabelsState'
 import useEventActions from '@/state/useEventActions'
 import { displayState, editingEventState, DisplayView } from '@/state/EventsState'
+import useEventService from './event-edit/useEventService'
 
 declare var MONTHLY_VIEW_ENABLED: boolean
 
@@ -211,6 +212,7 @@ function DateHeaderNonSearch(props: {
  */
 export default function Header(props: { search: string }) {
   const eventActions = useEventActions()
+  const eventService = useEventService()
   const navigate = useNavigate()
 
   const [display, setDisplay] = useRecoilState(displayState)
@@ -249,7 +251,7 @@ export default function Header(props: { search: string }) {
         e.preventDefault()
 
         if (editingEvent) {
-          eventActions.cancelSelect()
+          eventService.discardEditingEvent()
         } else {
           setIsSearchMode(false)
           navigate({ pathname: '/', search: '' })
@@ -258,7 +260,7 @@ export default function Header(props: { search: string }) {
     } else {
       if (e.key === 'Escape') {
         e.preventDefault()
-        eventActions.cancelSelect()
+        eventService.discardEditingEvent()
         eventActions.onInteractionEnd()
       }
 

@@ -92,7 +92,7 @@ export default function EventEndingRow(props: IProps) {
               fontSize="xs"
               className="cal-event-row"
               onClick={(e) => {
-                eventActions.cancelSelect()
+                props.eventService.discardEditingEvent()
               }}
             >
               {count} more

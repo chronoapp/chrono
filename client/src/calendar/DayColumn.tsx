@@ -306,7 +306,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
         }
 
         if (props.editingEvent) {
-          props.eventActions.cancelSelect()
+          props.eventService.discardEditingEvent()
           hasJustCancelledEventCreateRef.current = true
         }
 
@@ -349,7 +349,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
       })
 
       selection.on('reset', () => {
-        props.eventActions.cancelSelect()
+        props.eventService.discardEditingEvent()
         setSelecting(false)
       })
 

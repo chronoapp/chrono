@@ -102,9 +102,7 @@ function EventPopover(props: IProps) {
               ...getUpdatedEvent(props.event, eventFields, participants),
             })
           }}
-          onCancel={() => {
-            eventActions.cancelSelect()
-          }}
+          onCancel={props.eventService.discardEditingEvent}
           onClickMoreOptions={() => {
             eventActions.updateEditingEvent({
               ...getUpdatedEvent(props.event, eventFields, participants),
