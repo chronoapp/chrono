@@ -27,6 +27,7 @@ import Tree, { TreeNodeProps } from 'rc-tree'
 import { DataNode } from 'rc-tree/lib/interface'
 import { FiChevronDown, FiChevronRight, FiMoreHorizontal, FiTrash, FiEdit } from 'react-icons/fi'
 import Hoverable from '@/lib/Hoverable'
+import usePrevious from '@/lib/hooks/usePrevious'
 
 import { LABEL_COLORS } from '@/models/LabelColors'
 import { InfoAlert } from '@/components/Alert'
@@ -51,14 +52,6 @@ class TreeItem {
     readonly position: number,
     readonly level = 0
   ) {}
-}
-
-function usePrevious(value) {
-  const ref = useRef()
-  useEffect(() => {
-    ref.current = value
-  })
-  return ref.current
 }
 
 function LabelTree(props: IProps) {
