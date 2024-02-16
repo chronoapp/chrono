@@ -65,7 +65,7 @@ async def searchEvents(
             return events
         else:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail=f'Search term cannot be empty.'
+                status_code=status.HTTP_400_BAD_REQUEST, detail='Search term cannot be empty.'
             )
 
     except ValueError as e:

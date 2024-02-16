@@ -330,6 +330,7 @@ def _getEventBody(event: Event, timeZone: str):
             ],
         }
 
+    # Either conferenceSolution and at least one entryPoint, or createRequest is required.
     if event.conference_data is not None:
         if (
             event.conference_data.create_request

@@ -922,13 +922,15 @@ def createOrUpdateEvent(
     if conferenceDataVM:
         conferenceData = ConferenceData(
             conferenceDataVM.conference_id,
-            ConferenceSolution(
-                conferenceDataVM.conference_solution.name,
-                conferenceDataVM.conference_solution.key_type,
-                conferenceDataVM.conference_solution.icon_uri,
-            )
-            if conferenceDataVM.conference_solution
-            else None,
+            (
+                ConferenceSolution(
+                    conferenceDataVM.conference_solution.name,
+                    conferenceDataVM.conference_solution.key_type,
+                    conferenceDataVM.conference_solution.icon_uri,
+                )
+                if conferenceDataVM.conference_solution
+                else None
+            ),
         )
         conferenceData.entry_points = [
             ConferenceEntryPoint(

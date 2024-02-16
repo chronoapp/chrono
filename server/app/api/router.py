@@ -12,6 +12,7 @@ from app.api.endpoints import (
     user,
     plugins,
     webhooks_gcal,
+    zoom,
 )
 
 api_router = APIRouter()
@@ -26,3 +27,4 @@ api_router.include_router(contacts.router)
 api_router.include_router(user.router)
 api_router.include_router(plugins.router)
 api_router.include_router(notifications.router)
+api_router.include_router(zoom.router)
