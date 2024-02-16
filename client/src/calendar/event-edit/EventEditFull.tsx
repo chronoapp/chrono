@@ -450,7 +450,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
               <FiVideo size={'1em'} />
             </Box>
             <ConferenceList
-              originalConferenceData={props.event.conference_data}
+              event={props.event}
               conferenceData={eventFields.conferenceData}
               onSelectConference={(conferenceData) => {
                 const updatedFields = {

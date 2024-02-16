@@ -2,6 +2,8 @@ import Flags from './Flags'
 import CalendarAccount from './CalendarAccount'
 import ZoomConnection from './ZoomConnection'
 
+export type VideoMeetType = 'google' | 'zoom' | 'other'
+
 /**
  * User information, including settings.
  */
@@ -19,6 +21,16 @@ export default class User {
       userJson.accounts.map((accountJson: any) => CalendarAccount.fromJson(accountJson)),
       userJson.zoom_connection ? ZoomConnection.fromJson(userJson.zoom_connection) : null
     )
+  }
+
+  static getVideoMeetTypes(user: User) {
+    const conferenceTypes: VideoMeetType[] = ['google']
+
+    if (user.zoomConnection) {
+      conferenceTypes.push('zoom')
+    }
+
+    return conferenceTypes
   }
 
   constructor(

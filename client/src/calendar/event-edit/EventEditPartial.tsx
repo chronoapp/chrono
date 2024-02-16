@@ -1,4 +1,4 @@
-import { createRef, useEffect } from 'react'
+import { createRef, useEffect, useRef } from 'react'
 import { useRecoilValue, useSetRecoilState } from 'recoil'
 import produce from 'immer'
 import moment from 'moment'
@@ -78,7 +78,6 @@ export default function EventEditPartial(props: IProps) {
   const contentEditableRef = createRef<HTMLInputElement>()
   const labelState = useRecoilValue(labelsState)
   const labels: Label[] = Object.values(labelState.labelsById)
-  const calendarsById = useRecoilValue(calendarsState).calendarsById
   const user = useRecoilValue(userState)
 
   const defaultDays = eventFields.allDay
@@ -357,7 +356,7 @@ export default function EventEditPartial(props: IProps) {
           </Box>
 
           <ConferenceList
-            originalConferenceData={props.event.conference_data}
+            event={props.event}
             conferenceData={eventFields.conferenceData}
             onSelectConference={(conferenceData) => {
               const updatedFields = {

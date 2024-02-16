@@ -102,11 +102,7 @@ export default function EventEditReadOnly(props: IProps) {
           )}
         </Flex>
 
-        <ConferenceList
-          originalConferenceData={event.conference_data}
-          conferenceData={eventFields.conferenceData}
-          readonly={true}
-        />
+        <ConferenceList event={event} conferenceData={eventFields.conferenceData} readonly={true} />
 
         {showReminder && (
           <Flex mt="2" alignItems={'center'}>
