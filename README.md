@@ -14,21 +14,25 @@ Copy over the `.env.example` file to `.env` and fill in the necessary environmen
 
 To setup Chrono with your own Google OAuth credentials, you will need to create a project in the Google Cloud Console and create OAuth 2.0 credentials. Set the `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` environment variables in the `.env` file.
 
-2) Build and run the containers
+2) Build and start the backend container.
+
+Docker build only needs to be done once, or when you make changes to the Dockerfile
+or add new python dependencies.
 
 ```bash
 ./scripts/docker-build.sh
 ./scripts/docker-start.sh
 ```
 
-3) Start the frontend
+4) Start the frontend
 
 ```bash
 cd client
+yarn install
 yarn dev
 ```
 
-3) Develop!
+5) Develop!
 
 To view server and worker logs, run `./scripts/docker-logs.sh`.
 
@@ -48,4 +52,3 @@ In the server/ directory, install packages with `poetry install`. This will inst
 **Upgrade Database**
 
 `alembic upgrade head`
-
