@@ -12,6 +12,8 @@ We use Docker for local development.
 
 Copy over the `.env.example` file to `.env` and fill in the necessary environment variables.
 
+To setup Chrono with your own Google OAuth credentials, you will need to create a project in the Google Cloud Console and create OAuth 2.0 credentials. Set the `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` environment variables in the `.env` file.
+
 2) Build and run the containers
 
 ```bash
@@ -22,7 +24,7 @@ Copy over the `.env.example` file to `.env` and fill in the necessary environmen
 3) Start the frontend
 
 ```bash
-cd frontend
+cd client
 yarn dev
 ```
 
