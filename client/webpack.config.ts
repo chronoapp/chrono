@@ -9,7 +9,7 @@ const HTMLWebpackPluginConfig = new HtmlWebpackPlugin({
 })
 
 const definePlugin = new webpack.DefinePlugin({
-  MONTHLY_VIEW_ENABLED: false,
+  ENABLE_MONTHLY_VIEW: false,
 })
 
 function buildConfig(env) {

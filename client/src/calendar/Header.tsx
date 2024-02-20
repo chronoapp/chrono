@@ -40,7 +40,7 @@ import useEventActions from '@/state/useEventActions'
 import { displayState, editingEventState, DisplayView } from '@/state/EventsState'
 import useEventService from './event-edit/useEventService'
 
-declare var MONTHLY_VIEW_ENABLED: boolean
+declare var ENABLE_MONTHLY_VIEW: boolean
 
 function DateHeaderSearch(props: { disableSearchMode: () => void; defaultSearchQuery: string }) {
   const navigate = useNavigate()
@@ -150,7 +150,7 @@ function DropdownMenu(props: { display: DisplayView; selectDisplay: (d: DisplayV
           <Text>Work week </Text>
           <Kbd>x</Kbd>
         </MenuItem>
-        {MONTHLY_VIEW_ENABLED && (
+        {ENABLE_MONTHLY_VIEW && (
           <>
             <MenuDivider m="0" />
             <MenuItem
@@ -276,7 +276,7 @@ export default function Header(props: { search: string }) {
         selectDisplay('WorkWeek')
       }
 
-      if (MONTHLY_VIEW_ENABLED) {
+      if (ENABLE_MONTHLY_VIEW) {
         if (e.key === 'm') {
           selectDisplay('Month')
         }
