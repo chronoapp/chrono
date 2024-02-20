@@ -3,9 +3,11 @@ import { FiChevronDown } from 'react-icons/fi'
 import { FiTrash } from 'react-icons/fi'
 import { Menu, MenuButton, MenuList, MenuItem, Image, IconButton } from '@chakra-ui/react'
 import { Flex, Box, Text, Button, Heading } from '@chakra-ui/react'
+
+import GoogleMeetLogo from '@/assets/google-meet.svg'
 import ZoomLogo from '@/assets/zoom-app.svg'
 
-import User from '@/models/User'
+import User, { VideoMeetType } from '@/models/User'
 import * as API from '@/util/Api'
 import ZoomConnection from '@/models/ZoomConnection'
 
@@ -16,14 +18,26 @@ export default function ConferencingSettings(props: {
 }) {
   const { user } = props
 
-  function renderConferenceType(conferenceType: string) {
-    return (
-      <Flex alignItems="center">
-        <Text fontWeight="normal" ml="1">
-          Zoom
-        </Text>
-      </Flex>
-    )
+  function renderConferenceType(type: VideoMeetType) {
+    if (type === 'zoom') {
+      return (
+        <Flex alignItems="center">
+          <Image width={'20px'} src={ZoomLogo} mr="0.5em" />
+          <Text fontWeight="normal" ml="1">
+            Zoom
+          </Text>
+        </Flex>
+      )
+    } else if (type === 'google') {
+      return (
+        <Flex alignItems="center">
+          <Image width={'20px'} src={GoogleMeetLogo} mr="0.5em" />
+          <Text fontWeight="normal" ml="1">
+            Google Meet
+          </Text>
+        </Flex>
+      )
+    }
   }
 
   return (
@@ -62,12 +76,17 @@ export default function ConferencingSettings(props: {
             variant="ghost"
             rightIcon={<FiChevronDown />}
           >
-            {renderConferenceType('zoom')}
+            {renderConferenceType('google')}
           </MenuButton>
 
           <MenuList mt="-1" p="0" fontSize={'xs'}>
-            <MenuItem value="zoom">Zoom</MenuItem>
-            <MenuItem value="google_meet">Google Meet</MenuItem>
+            {User.getVideoMeetTypes(user).map((videoMeetType) => {
+              return (
+                <MenuItem key={videoMeetType} value={videoMeetType}>
+                  {renderConferenceType(videoMeetType)}
+                </MenuItem>
+              )
+            })}
           </MenuList>
         </Menu>
       </Box>
