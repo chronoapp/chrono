@@ -161,11 +161,15 @@ def googleAuthToken(authData: AuthData, session: Session = Depends(get_db)):
 
     creds = _getCredentialsDict(flow.credentials)
 
-    existingAccount = user.getAccount(CalendarProvider.Google, email)
-    if not existingAccount:
-        user.accounts.append(UserAccount(email, creds, CalendarProvider.Google))
+    account = user.getAccount(CalendarProvider.Google, email)
+    if not account:
+        account = UserAccount(email, creds, CalendarProvider.Google)
+        user.accounts.append(account)
 
     session.commit()
+
+    # Start syncing calendar after initial account.
+    syncAllCalendarsTask.send(account.id, False)
 
     authToken = getAuthToken(user)
 
