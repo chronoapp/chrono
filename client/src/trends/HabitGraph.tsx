@@ -87,11 +87,12 @@ function HabitGraph(props: IProps) {
 
     return (
       <Flex key={idx}>
-        {week.map((day: DateTime, idx: number) => {
-          const label = formatDayOfMonth(day)
-          const dayKey = formatFullDay(day)
-          const dayValue = day > curDate ? 0 : trendMap.get(dayKey)
-          const isToday = curDate.hasSame(day, 'day')
+        {week.map((day: Date, dayIdx: number) => {
+          const dayKey = format(day, 'YYYY-MM-DD')
+          const dayValue = day > curDate ? 0 : trendMap.get(dayKey) || 0
+          const nextDayValue =
+            dayIdx < week.length - 1 ? trendMap.get(format(week[dayIdx + 1], 'YYYY-MM-DD')) || 0 : 0
+          const renderLink = dayValue > 0 && nextDayValue > 0
 
           let color
           if (dayValue) {
@@ -115,14 +116,34 @@ function HabitGraph(props: IProps) {
                   backgroundColor={color}
                   height="20"
                   alignItems="flex-start"
-                  justifyContent="center"
+                  justifyContent="flex-end"
                   border="1px solid rgba(230, 230, 230)"
                   borderRadius="md"
                   flex={1}
                   m="1"
-                ></Flex>
+                  position="relative"
+                >
+                  {renderLink && (
+                    <Box
+                      className="consecutive-days-link"
+                      position="absolute"
+                      right="-10px"
+                      top="50%"
+                      transform="translateY(-50%)"
+                      width="4"
+                      height="3"
+                      backgroundColor={color}
+                    ></Box>
+                  )}
+                </Flex>
               </PopoverTrigger>
-              <PopoverContent width={'xs'} color="white" bg="gray.600" borderColor="gray.600">
+              <PopoverContent
+                width={'xs'}
+                color="white"
+                bg="gray.600"
+                borderColor="gray.600"
+                zIndex={1000}
+              >
                 <PopoverArrow bg="gray.600" borderColor="gray.600" />
                 <PopoverBody textAlign={'center'}>
                   {dayValue && dayValue > 0
