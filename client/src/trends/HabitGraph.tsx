@@ -109,7 +109,7 @@ function HabitGraph(props: IProps) {
           }
 
           return (
-            <Popover isLazy trigger="hover" key={idx}>
+            <Popover isLazy trigger="hover" key={dayIdx}>
               <PopoverTrigger>
                 <Flex
                   className="habit-chart-day"
@@ -127,12 +127,12 @@ function HabitGraph(props: IProps) {
                     <Box
                       className="consecutive-days-link"
                       position="absolute"
-                      right="-10px"
+                      right="-9px"
                       top="50%"
                       transform="translateY(-50%)"
-                      width="4"
+                      width="2"
                       height="3"
-                      backgroundColor={color}
+                      backgroundColor={`hsl(${h}, ${s}%, ${l}%)`}
                     ></Box>
                   )}
                 </Flex>
