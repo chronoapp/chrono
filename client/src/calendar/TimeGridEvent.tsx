@@ -13,7 +13,7 @@ import { timeFormatShort } from '../util/localizer'
 import * as dates from '../util/dates'
 
 import { LabelTagColor } from '../components/LabelTag'
-
+import { adjustHSLBrightness } from '@/calendar/utils/Colors'
 interface IProps {
   event: Event
   style: { top: number; width: number; height: number; xOffset: number; border: string }
@@ -259,6 +259,17 @@ function TimeGridEvent(props: IProps) {
         }
       }}
     >
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: '5px',
+          backgroundColor: adjustHSLBrightness(backgroundColor, -10),
+          marginRight: '25px',
+        }}
+      ></div>
       {eventContents}
       {canEditEvent && renderAnchor('DOWN', dnd?.action == 'RESIZE' && props.isPreview)}
     </div>

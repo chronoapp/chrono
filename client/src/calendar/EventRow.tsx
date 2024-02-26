@@ -45,7 +45,7 @@ export function EventItem(props: {
   if (event.all_day) {
     eventDisplay = (
       <div
-        className={clsx('cal-event', props.isPreview && 'cal-event-preview-full')}
+        className={clsx('cal-event-all-day', props.isPreview && 'cal-event-preview-full')}
         style={{
           backgroundColor: Event.getBackgroundColor(event.end, calendar.backgroundColor, props.now),
           color: Event.getForegroundColor(

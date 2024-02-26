@@ -107,7 +107,9 @@ export default class Event {
       const hsl = `hsl(${h}, ${s}%, 90%)`
       return hsl
     } else {
-      return defaultColor
+      const { h, s, l } = hexToHSL(defaultColor)
+      const defaultColorAsHSL = `hsl(${h}, ${s}%, ${l}%)`
+      return defaultColorAsHSL
     }
   }
 
