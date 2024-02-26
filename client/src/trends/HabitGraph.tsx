@@ -124,13 +124,7 @@ function HabitGraph(props: IProps) {
                   )}
                 </Flex>
               </PopoverTrigger>
-              <PopoverContent
-                width={'xs'}
-                color="white"
-                bg="gray.600"
-                borderColor="gray.600"
-                zIndex={1000}
-              >
+              <PopoverContent width={'xs'} color="white" bg="gray.600" borderColor="gray.600">
                 <PopoverArrow bg="gray.600" borderColor="gray.600" />
                 <PopoverBody textAlign={'center'}>
                   {dayValue && dayValue > 0
