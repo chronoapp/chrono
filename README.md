@@ -34,6 +34,8 @@ yarn dev
 
 5) Develop!
 
+Go to http://localhost:3300 in your browser.
+
 To view server and worker logs, run `./scripts/docker-logs.sh`.
 
 To SSH into the container, run `./scripts/docker-shell.sh`.
