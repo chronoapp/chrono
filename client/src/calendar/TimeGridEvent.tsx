@@ -233,7 +233,9 @@ function TimeGridEvent(props: IProps) {
         zIndex: isEditing ? 5 : 0,
         cursor: props.isPreview ? 'move' : 'pointer',
         padding: 'unset',
-        backgroundColor: backgroundColorComputed,
+        backgroundColor: isEditing
+          ? backgroundColorComputed
+          : adjustHSLBrightness(backgroundColorComputed, +15),
         border: border,
         color: color,
         textDecoration: textDecoration,
@@ -265,7 +267,7 @@ function TimeGridEvent(props: IProps) {
           top: 0,
           bottom: 0,
           width: '6px',
-          backgroundColor: adjustHSLBrightness(backgroundColor, -10),
+          backgroundColor: backgroundColor,
           borderTopLeftRadius: '12px',
           borderBottomLeftRadius: '12px',
         }}
