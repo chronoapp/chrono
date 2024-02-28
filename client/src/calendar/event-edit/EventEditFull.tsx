@@ -175,7 +175,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
   }
 
   return (
-    <Modal size="3xl" isOpen={true} onClose={props.eventService.discardEditingEvent}>
+    <Modal size="3xl" isOpen={true} onClose={eventActions.cancelSelect}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader pb="2" fontSize={'md'}>
@@ -553,12 +553,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
         </ModalBody>
 
         <ModalFooter>
-          <Button
-            variant={'ghost'}
-            mr={3}
-            onClick={props.eventService.discardEditingEvent}
-            size="md"
-          >
+          <Button variant={'ghost'} mr={3} onClick={eventActions.cancelSelect} size="md">
             Cancel
           </Button>
 

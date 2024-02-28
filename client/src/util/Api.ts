@@ -371,9 +371,7 @@ export async function deleteZoomMeeting(meetingId: string) {
   return fetch(`${API_URL}/conferencing/zoom/${meetingId}`, {
     headers: getHeaders(),
     method: 'DELETE',
-  })
-    .then(handleErrors)
-    .catch((e) => {})
+  }).then(handleErrors)
 }
 
 // ================== Labels ==================

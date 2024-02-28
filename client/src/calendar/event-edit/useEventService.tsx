@@ -388,21 +388,6 @@ export default function useEventService() {
     taskQueue.addTask(updateCalendarTask)
   }
 
-  function discardEditingEvent() {
-    // Clean up meeting that was attached to the editing event
-    if (editingEvent && editingEvent.event.syncStatus === 'NOT_SYNCED') {
-      const conferenceData = editingEvent.event.conference_data
-      if (conferenceData && conferenceData.conference_id && conferenceData.conference_solution) {
-        const isZoomMeet = conferenceData.conference_solution.name === 'Zoom'
-        if (isZoomMeet) {
-          API.deleteZoomMeeting(conferenceData.conference_id)
-        }
-      }
-    }
-
-    eventActions.cancelSelect()
-  }
-
   return {
     loadAllEvents,
     saveEvent,
@@ -410,7 +395,6 @@ export default function useEventService() {
     deleteEvent,
     deleteThisAndFollowingEvents,
     deleteAllRecurringEvents,
-    discardEditingEvent,
   }
 }
 
