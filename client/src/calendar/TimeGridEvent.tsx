@@ -14,6 +14,7 @@ import * as dates from '../util/dates'
 
 import { LabelTagColor } from '../components/LabelTag'
 import { adjustHSLBrightness } from '@/calendar/utils/Colors'
+import { EventVerticalIndicator } from '@/components/EventStyle'
 interface IProps {
   event: Event
   style: { top: number; width: number; height: number; xOffset: number; border: string }
@@ -235,7 +236,7 @@ function TimeGridEvent(props: IProps) {
         padding: 'unset',
         backgroundColor: isEditing
           ? backgroundColorComputed
-          : adjustHSLBrightness(backgroundColorComputed, +15),
+          : adjustHSLBrightness(backgroundColorComputed, +20),
         border: border,
         color: color,
         textDecoration: textDecoration,
@@ -261,17 +262,7 @@ function TimeGridEvent(props: IProps) {
         }
       }}
     >
-      <Box
-        style={{
-          position: 'absolute',
-          top: 0,
-          bottom: 0,
-          width: '6px',
-          backgroundColor: backgroundColor,
-          borderTopLeftRadius: '12px',
-          borderBottomLeftRadius: '12px',
-        }}
-      ></Box>
+      <EventVerticalIndicator backgroundColor={backgroundColor} />
       {eventContents}
       {canEditEvent && renderAnchor('DOWN', dnd?.action == 'RESIZE' && props.isPreview)}
     </div>
