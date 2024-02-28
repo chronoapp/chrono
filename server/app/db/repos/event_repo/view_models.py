@@ -80,7 +80,7 @@ class ConferenceDataBaseVM(BaseModel):
     create_request: CreateConferenceRequestVM | None
 
     # Linking EntryPoint
-    entry_points: List[EntryPointBaseVM]
+    entry_points: list[EntryPointBaseVM]
 
 
 class ReminderOverrideVM(BaseModel):

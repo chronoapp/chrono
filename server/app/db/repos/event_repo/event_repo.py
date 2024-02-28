@@ -13,6 +13,7 @@ from sqlalchemy import asc, and_, select, delete, or_, update
 from sqlalchemy.orm import selectinload, Session
 from sqlalchemy import text, asc
 from sqlalchemy.sql.selectable import Select
+
 from app.db.models.conference_data import (
     ConferenceCreateRequest,
     ConferenceData,
@@ -23,6 +24,7 @@ from app.db.repos.event_repo.view_models import (
     EventBaseVM,
     EventInDBVM,
     EventParticipantVM,
+    ConferenceDataBaseVM,
     GoogleEventInDBVM,
     recurrenceToRuleSet,
 )
@@ -39,11 +41,10 @@ from app.db.models import (
     EventAttendee,
     ReminderOverride,
 )
+from app.db.models.conference_data import ConferenceKeyType, CommunicationMethod
 
 from app.db.repos.contact_repo import ContactRepository
 from app.db.repos.calendar_repo import CalendarRepository
-
-from app.api.endpoints.labels import LabelInDbVM, Label, combineLabels
 from app.db.repos.exceptions import (
     EventRepoError,
     InputError,
@@ -51,6 +52,9 @@ from app.db.repos.exceptions import (
     RepoError,
     EventRepoPermissionError,
 )
+
+from app.api.endpoints.labels import LabelInDbVM, Label, combineLabels
+from app.utils.zoom import ZoomAPI, ZoomMeetingInput
 
 
 MAX_RECURRING_EVENT_COUNT = 1000
@@ -206,6 +210,9 @@ class EventRepository:
             event.original_start_day = event.start_day
             event.original_timezone = event.timezone
 
+        # If conferencing is Chrono's type, we need to create a conference data object manually.
+        event = self._eventWithCreatedConferenceData(user, event)
+
         eventDb = createOrUpdateEvent(userCalendar, None, event, overrideId=event.id)
         eventDb.labels = getCombinedLabels(user, event.labels, self.session)
         self.session.commit()
@@ -322,7 +329,7 @@ class EventRepository:
 
         # Not found in DB.
         if not curEvent and not event.recurring_event_id:
-            raise EventNotFoundError(f'Event not found.')
+            raise EventNotFoundError('Event not found.')
 
         # This is an instance of a recurring event. Replace the recurring event instance with and override.
         elif not curEvent and event.recurring_event_id:
@@ -582,6 +589,59 @@ class EventRepository:
             if not isInNewRecurrence:
                 logging.info(f'DELETE {override} ')
                 self.session.delete(override)
+
+    def _eventWithCreatedConferenceData(self, user: User, event: EventBaseVM) -> EventBaseVM:
+        """If the event has conferencing solutions that are supported by Chrono
+        but not by Google Calendar, we need to create the conference data manually.
+        """
+        if not event.conference_data:
+            return event
+
+        conferenceDataVM = event.conference_data
+        createZoomMeet = (
+            conferenceDataVM.create_request
+            and conferenceDataVM.create_request.conference_solution_key_type
+            == ConferenceKeyType.ZOOM
+        )
+        if not createZoomMeet:
+            return event
+
+        if createZoomMeet and not user.zoom_connection:
+            raise EventRepoError('User does not have a Zoom connection.')
+
+        zoomAPI = ZoomAPI(self.session, user.zoom_connection)
+        conferenceDataVM = self._createZoomConference(event, zoomAPI)
+
+        return event.model_copy(update={'conference_data': conferenceDataVM})
+
+    def _createZoomConference(self, event: EventBaseVM, zoomAPI: ZoomAPI) -> ConferenceDataBaseVM:
+        """Creates a zoom conference for the event."""
+        ZOOM_IMAGE = 'https://lh3.googleusercontent.com/d/1HWZ0YS-xLVSAoQ2SUDuC3iFRtdm8a-FR'
+
+        zoomMeeting = zoomAPI.createMeeting(
+            ZoomMeetingInput(topic=event.title or '', agenda=event.description or '')
+        )
+
+        conferenceDataVM = ConferenceDataBaseVM(
+            conference_solution=ConferenceSolution(
+                'Zoom',
+                ConferenceKeyType.ADD_ON,
+                ZOOM_IMAGE,
+            ),
+            entry_points=[
+                ConferenceEntryPoint(
+                    CommunicationMethod.VIDEO,
+                    zoomMeeting.join_url,
+                    zoomMeeting.join_url.replace('https://', ''),
+                    str(zoomMeeting.id),
+                    zoomMeeting.password,
+                )
+            ],
+            conference_id=str(zoomMeeting.id),
+            create_request=None,
+        )
+
+        return conferenceDataVM
 
 
 def getCombinedLabels(user: User, labelVMs: List[LabelInDbVM], session: Session) -> List[Label]:

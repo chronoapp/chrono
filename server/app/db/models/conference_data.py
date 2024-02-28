@@ -24,6 +24,11 @@ class ConferenceKeyType(Enum):
     HANGOUTS_MEET = "hangoutsMeet"
     ADD_ON = "addOn"
 
+    """Contains the keys for the conference solutions
+    that are supported by Chrono.
+    """
+    ZOOM = "zoom"
+
 
 class ConferenceCreateStatus(Enum):
     PENDING = "pending"

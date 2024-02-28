@@ -1,8 +1,5 @@
-import { useEffect, useState } from 'react'
-
 import { FiChevronDown, FiX, FiExternalLink, FiPhone } from 'react-icons/fi'
 import { useRecoilValue } from 'recoil'
-import usePrevious from '@/lib/hooks/usePrevious'
 
 import {
   Box,
@@ -29,8 +26,6 @@ import { userState } from '@/state/UserState'
 import ConferenceData, { ConferenceKeyType } from '@/models/ConferenceData'
 
 import ConferenceEntryPoint from '@/models/ConferenceEntrypoint'
-
-import * as API from '@/util/Api'
 
 /**
  * Represents a conference service that can be selected by the user.
@@ -133,12 +128,13 @@ function getSelectedConference(
 ): ConferenceItem {
   if (conferenceData?.create_request?.conference_solution_key_type === 'hangoutsMeet') {
     return conferenceList.find((conference) => conference.type === 'google')!
+  } else if (conferenceData?.create_request?.conference_solution_key_type === 'zoom') {
+    return conferenceList.find((conference) => conference.type === 'zoom')!
   } else {
     return conferenceList.find(
       (conference) =>
-        (conference.conferenceData &&
-          conference.conferenceData.conference_id === conferenceData?.conference_id) ||
-        (conference.type === 'zoom' && isZoomMeeting(conferenceData))
+        conference.conferenceData &&
+        conference.conferenceData.conference_id === conferenceData?.conference_id
     )!
   }
 }
@@ -159,9 +155,9 @@ function getSelectedConferenceItem(
 }
 
 function ConferenceList(props: IProps) {
-  const user = useRecoilValue(userState)
-
   const { conferenceData, readonly, onSelectConference, ...boxProps } = props
+
+  const user = useRecoilValue(userState)
 
   // Merged list of selectable conferences.
   const conferenceList = getConferenceList(user!, conferenceData)
@@ -169,42 +165,6 @@ function ConferenceList(props: IProps) {
   const selectedConference = conferenceData
     ? getSelectedConferenceItem(conferenceList, conferenceData)
     : null
-
-  const [isCreatingZoomMeeting, setIsCreatingZoomMeeting] = useState(false)
-  const previousSelectedConference = usePrevious(selectedConference)
-
-  /**
-   * Delete the meeting after selecting another conference.
-   */
-  useEffect(() => {
-    const removePrevZoomMeeting =
-      previousSelectedConference &&
-      isZoomMeeting(previousSelectedConference.conferenceData) &&
-      (!selectedConference || previousSelectedConference.type !== selectedConference.type)
-
-    if (removePrevZoomMeeting) {
-      API.deleteZoomMeeting(previousSelectedConference.conferenceData.conference_id!)
-    }
-  }, [previousSelectedConference, selectedConference])
-
-  function renderConferenceDetails() {
-    if (isCreatingZoomMeeting) {
-      return (
-        <Text fontSize={'xs'} color="gray.500" ml="2" mt="1">
-          Creating Zoom meeting...
-        </Text>
-      )
-    }
-
-    if (selectedConference) {
-      return (
-        <ConferenceDetails
-          selectedVideoConference={selectedConference}
-          eventCreated={props.event.syncStatus === 'SYNCED'}
-        />
-      )
-    }
-  }
 
   return (
     <Flex direction={'column'} {...boxProps}>
@@ -240,11 +200,7 @@ function ConferenceList(props: IProps) {
                     } else if (conference.type === 'google') {
                       onSelectConference!(ConferenceData.newHangoutsMeet())
                     } else if (conference.type === 'zoom') {
-                      setIsCreatingZoomMeeting(true)
-                      const zoom = await API.createZoomMeeting(props.event)
-                      setIsCreatingZoomMeeting(false)
-
-                      onSelectConference!(zoom)
+                      onSelectConference!(ConferenceData.newZoomMeet())
                     }
                   }}
                 >
@@ -270,7 +226,12 @@ function ConferenceList(props: IProps) {
         </Box>
       )}
 
-      {renderConferenceDetails()}
+      {selectedConference && (
+        <ConferenceDetails
+          selectedVideoConference={selectedConference}
+          eventCreated={props.event.syncStatus === 'SYNCED'}
+        />
+      )}
     </Flex>
   )
 }

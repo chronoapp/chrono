@@ -1,7 +1,12 @@
 import { immerable } from 'immer'
 import ConferenceEntryPoint from './ConferenceEntrypoint'
 
-export type ConferenceKeyType = 'eventHangout' | 'eventNamedHangout' | 'hangoutsMeet' | 'addOn'
+export type ConferenceKeyType =
+  | 'eventHangout'
+  | 'eventNamedHangout'
+  | 'hangoutsMeet'
+  | 'addOn'
+  | 'zoom'
 
 export type ConferenceCreateStatus = 'pending' | 'success' | 'failure'
 
@@ -46,6 +51,10 @@ export default class ConferenceData {
 
   static newHangoutsMeet(): ConferenceData {
     return new ConferenceData(null, null, [], new CreateRequest('hangoutsMeet', 'pending'))
+  }
+
+  static newZoomMeet(): ConferenceData {
+    return new ConferenceData(null, null, [], new CreateRequest('zoom', 'pending'))
   }
 
   constructor(
