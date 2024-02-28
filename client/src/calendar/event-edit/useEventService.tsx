@@ -263,7 +263,7 @@ export default function useEventService() {
           if (event.recurrences) {
             document.dispatchEvent(new CustomEvent(GlobalEvent.refreshCalendar))
           } else {
-            eventActions.onSavedEventToServer(calendarId, event.id)
+            eventActions.handleSuccessfulEventSave(calendarId, event)
           }
 
           if (showToast) {
