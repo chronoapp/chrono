@@ -1,5 +1,5 @@
 import React from 'react'
-import { useToast } from '@chakra-ui/react'
+import { Box, useToast } from '@chakra-ui/react'
 import clsx from 'clsx'
 
 import { useRecoilValue } from 'recoil'
@@ -259,17 +259,17 @@ function TimeGridEvent(props: IProps) {
         }
       }}
     >
-      <div
+      <Box
         style={{
           position: 'absolute',
-          left: 0,
           top: 0,
           bottom: 0,
-          width: '5px',
+          width: '6px',
           backgroundColor: adjustHSLBrightness(backgroundColor, -10),
-          marginRight: '25px',
+          borderTopLeftRadius: '12px',
+          borderBottomLeftRadius: '12px',
         }}
-      ></div>
+      ></Box>
       {eventContents}
       {canEditEvent && renderAnchor('DOWN', dnd?.action == 'RESIZE' && props.isPreview)}
     </div>
