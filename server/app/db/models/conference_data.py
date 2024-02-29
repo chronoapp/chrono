@@ -24,16 +24,16 @@ class ConferenceKeyType(Enum):
     HANGOUTS_MEET = "hangoutsMeet"
     ADD_ON = "addOn"
 
-    """Contains the keys for the conference solutions
-    that are supported by Chrono.
-    """
-    ZOOM = "zoom"
-
 
 class ConferenceCreateStatus(Enum):
     PENDING = "pending"
     SUCCESS = "success"
     FAILURE = "failure"
+
+
+class ChronoConferenceType(Enum):
+    Google = "google"  # defer to ConferenceKeyType
+    Zoom = "zoom"
 
 
 SQLAlchemyEnumConferenceKeyType = SQLAlchemyEnum(ConferenceKeyType, name='conferencekeytype')
@@ -77,13 +77,20 @@ class ConferenceData(Base):
         backref=backref('conference_data', lazy='joined'),
     )
 
+    # Unique to Chrono
+    type: Mapped[ChronoConferenceType] = mapped_column(
+        SQLAlchemyEnum(ChronoConferenceType, name='chronoconferencetype')
+    )
+
     def __init__(
         self,
         conferenceId: str | None,
         conferenceSolution: Optional['ConferenceSolution'],
+        type: ChronoConferenceType = ChronoConferenceType.Google,
     ):
         self.conference_id = conferenceId
         self.conference_solution = conferenceSolution
+        self.type = type
 
     def __repr__(self) -> str:
         return f"<ConferenceData {self.conference_id} entrypoints=[{self.entry_points}]>"

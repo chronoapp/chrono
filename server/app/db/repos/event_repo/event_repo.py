@@ -19,6 +19,7 @@ from app.db.models.conference_data import (
     ConferenceData,
     ConferenceEntryPoint,
     ConferenceSolution,
+    ChronoConferenceType,
 )
 from app.db.repos.event_repo.view_models import (
     EventBaseVM,
@@ -598,15 +599,13 @@ class EventRepository:
             return event
 
         conferenceDataVM = event.conference_data
-        createZoomMeet = (
-            conferenceDataVM.create_request
-            and conferenceDataVM.create_request.conference_solution_key_type
-            == ConferenceKeyType.ZOOM
+        isZoomMeet = (
+            conferenceDataVM.create_request and conferenceDataVM.type == ChronoConferenceType.Zoom
         )
-        if not createZoomMeet:
+        if not isZoomMeet:
             return event
 
-        if createZoomMeet and not user.zoom_connection:
+        if isZoomMeet and not user.zoom_connection:
             raise EventRepoError('User does not have a Zoom connection.')
 
         zoomAPI = ZoomAPI(self.session, user.zoom_connection)
@@ -639,6 +638,7 @@ class EventRepository:
             ],
             conference_id=str(zoomMeeting.id),
             create_request=None,
+            type=ChronoConferenceType.Zoom,
         )
 
         return conferenceDataVM
