@@ -304,6 +304,8 @@ export default function useEventService() {
         // Recurring event: TODO: Only refresh if moved calendar.
         if (Event.isParentRecurringEvent(event)) {
           document.dispatchEvent(new CustomEvent(GlobalEvent.refreshCalendar))
+        } else {
+          eventActions.handleSuccessfulEventSave(calendarId, event)
         }
 
         if (showToast) {
