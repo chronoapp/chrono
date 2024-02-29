@@ -57,9 +57,9 @@ from app.db.repos.exceptions import (
 from app.api.endpoints.labels import LabelInDbVM, Label, combineLabels
 from app.utils.zoom import ZoomAPI, ZoomMeetingInput
 
+ZOOM_IMAGE = 'https://lh3.googleusercontent.com/ugWKRyPiOCwjn5jfaoVgC-O80F3nhKH1dKMGsibXvGV1tc6pGXLOJk9WO7dwhw8-Xl9IwkKZEFDbeMDgnx-kf8YGJZ9uhrJMK9KP8-ISybmbgg1LK121obq2o5ML0YugbWh-JevWMu4FxxTKzM2r68bfDG_NY-BNnHSG7NcOKxo-RE7dfObk3VkycbRZk_GUK_1UUI0KitNg7HBfyqFyxIPOmds0l-h2Q1atWtDWLi29n_2-s5uw_kV4l2KeeaSGws_x8h0zsYWLDP5wdKWwYMYiQD2AFM32SHJ4wLAcAKnwoZxUSyT_lWFTP0PHJ6PwETDGNZjmwh3hD6Drn7Z3mnX662S6tkoPD92LtMDA0eNLr6lg-ypI2fhaSGKOeWFwA5eFjds7YcH-axp6cleuiEp05iyPO8uqtRDRMEqQhPaiRTcw7pY5UAVbz2yXbMLVofojrGTOhdvlYvIdDgBOSUkqCshBDV4A2TJyDXxFjpSYaRvwwWIT0JgrIxLpBhnyd3_w6m5My5QtgBJEt_S2Dq4bXwCAA7VcRiD61WmDyHfU3dBiWQUNjcH39IKT9V1fbUcUkfDPM_AGjp7pwgG3w9yDemGi1OGlRXS4pU7UwF24c2dozrmaK17iPaExn0cmIgtBnFUXReY48NI8h2MNd_QysNMWYNYbufoPD7trSu6nS39wlUDQer2V'
 
 MAX_RECURRING_EVENT_COUNT = 1000
-
 
 BASE_EVENT_STATEMENT = (
     select(Event)
@@ -657,8 +657,6 @@ class EventRepository:
 
         if not self.zoomAPI:
             raise EventRepoError('User does not have a Zoom connection.')
-
-        ZOOM_IMAGE = 'https://lh3.googleusercontent.com/d/1HWZ0YS-xLVSAoQ2SUDuC3iFRtdm8a-FR'
 
         zoomMeeting = self.zoomAPI.createMeeting(
             ZoomMeetingInput(

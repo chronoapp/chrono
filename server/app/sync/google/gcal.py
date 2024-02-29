@@ -34,7 +34,7 @@ def getGoogleEvent(userCalendar: UserCalendar, eventId: str):
     return (
         _getCalendarService(userCalendar.account)
         .events()
-        .get(calendarId=userCalendar.id, eventId=eventId)
+        .get(calendarId=userCalendar.google_id, eventId=eventId)
         .execute()
     )
 
