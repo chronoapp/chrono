@@ -3,16 +3,25 @@ import pytest
 from unittest.mock import MagicMock, patch
 
 from datetime import datetime, timedelta
-from app.db.repos.event_repo.view_models import EventBaseVM, EventParticipantVM
+
+
+from app.db.repos.event_repo.view_models import (
+    EventBaseVM,
+    EventParticipantVM,
+    ConferenceDataBaseVM,
+    CreateConferenceRequestVM,
+    ConferenceKeyType,
+    ConferenceCreateStatus,
+    ConferenceSolutionVM,
+)
 from app.db.repos.exceptions import EventRepoPermissionError
 from app.db.repos.calendar_repo import CalendarRepository
-from app.db.models.event_participant import EventAttendee, EventOrganizer
+
 from tests.utils import createEvent, createCalendar
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models import Event, User
 from app.db.repos.event_repo.event_repo import (
     EventRepository,
     getRecurringEvent,
@@ -26,6 +35,11 @@ from app.db.repos.event_repo.event_repo import (
 from app.db.repos.event_repo.event_repo import (
     createOrUpdateEvent,
 )
+
+from app.db.models import Event, User
+from app.db.models.event_participant import EventAttendee, EventOrganizer
+from app.db.models.conference_data import ChronoConferenceType
+
 from app.utils.zoom import ZoomAPI
 
 
@@ -781,21 +795,24 @@ def test_event_repo_eventMatchesQuery(user: User, session: Session):
     assert eventMatchesQuery(event, "Foo | second")
 
 
-def test_event_repo_createZoomConference(user: User, session: Session):
+def test_event_repo_populateEventConferenceData(user: User, session: Session):
+    """Makes sure the Zoom API is called to create a meeting
+    when we have a zoom typed conference data with a create request.
+    """
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
-
-    startDay = '2020-12-25'
-    endDay = '2020-12-26'
-    eventVM = EventBaseVM(
-        title='Event',
-        description='Test event description',
-        start=datetime.strptime(startDay, "%Y-%m-%d"),
-        end=datetime.strptime(endDay, "%Y-%m-%d"),
-        start_day=startDay,
-        end_day=endDay,
-        calendar_id=userCalendar.id,
-        time_zone='America/Los_Angeles',
-        organizer=EventParticipantVM(email='user@rechrono.com', display_name='Event Organizer'),
+    eventVM = createTestEventVM(userCalendar.id).model_copy(
+        update={
+            'conference_data': ConferenceDataBaseVM(
+                conference_id=None,
+                conference_solution=None,
+                entry_points=[],
+                type=ChronoConferenceType.Zoom,
+                create_request=CreateConferenceRequestVM(
+                    conference_solution_key_type=ConferenceKeyType.ADD_ON,
+                    status=ConferenceCreateStatus.PENDING,
+                ),
+            ),
+        }
     )
 
     eventRepo = EventRepository(user, session)
@@ -807,9 +824,58 @@ def test_event_repo_createZoomConference(user: User, session: Session):
     zoomMeetingMock.id = 12345
     zoomMeetingMock.password = 'password'
     zoomAPIMock.createMeeting.return_value = zoomMeetingMock
+    eventRepo.zoomAPI = zoomAPIMock
 
-    conference = eventRepo._createZoomConference(eventVM, zoomAPIMock)
+    event = eventRepo._populateEventConferenceData(eventVM)
 
-    assert conference.conference_id == str(zoomMeetingMock.id)
-    assert conference.entry_points[0].uri == zoomMeetingMock.join_url
-    assert conference.entry_points[0].password == zoomMeetingMock.password
+    assert event.conference_data
+    assert event.conference_data.conference_id == str(zoomMeetingMock.id)
+    assert event.conference_data.entry_points[0].uri == zoomMeetingMock.join_url
+    assert event.conference_data.entry_points[0].password == zoomMeetingMock.password
+
+
+def test_event_repo_deleteConferenceData(user: User, session: Session):
+    """Makes sure that the Zoom API is called to delete a meeting."""
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
+
+    zoomMeetingID = 12345
+    eventVM = createTestEventVM(userCalendar.id).model_copy(
+        update={
+            'conference_data': ConferenceDataBaseVM(
+                conference_id=str(zoomMeetingID),
+                conference_solution=ConferenceSolutionVM(
+                    key_type=ConferenceKeyType.ADD_ON,
+                    name='Zoom',
+                    icon_uri='https://example.com/icon.png',
+                ),
+                entry_points=[],
+                type=ChronoConferenceType.Zoom,
+                create_request=None,
+            ),
+        }
+    )
+
+    eventRepo = EventRepository(user, session)
+    zoomAPIMock = MagicMock(spec=ZoomAPI)
+    eventRepo.zoomAPI = zoomAPIMock
+
+    eventRepo._deleteConferenceData(eventVM)
+
+    zoomAPIMock.deleteMeeting.assert_called_once_with(zoomMeetingID)
+
+
+def createTestEventVM(userCalendarId: uuid.UUID):
+    startDay = '2020-12-25'
+    endDay = '2020-12-26'
+
+    return EventBaseVM(
+        title='Event',
+        description='Test event description',
+        start=datetime.strptime(startDay, "%Y-%m-%d"),
+        end=datetime.strptime(endDay, "%Y-%m-%d"),
+        start_day=startDay,
+        end_day=endDay,
+        calendar_id=userCalendarId,
+        time_zone='America/Los_Angeles',
+        organizer=EventParticipantVM(email='user@rechrono.com', display_name='Event Organizer'),
+    )

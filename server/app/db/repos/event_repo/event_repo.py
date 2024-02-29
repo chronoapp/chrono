@@ -94,6 +94,9 @@ class EventRepository:
         self.session = session
         self.user = user
 
+        if self.user.zoom_connection:
+            self.zoomAPI = ZoomAPI(self.session, self.user.zoom_connection)
+
     def getRecurringEvents(self, calendarId: uuid.UUID, endDate: datetime) -> list[Event]:
         stmt = (
             getCalendarEventsStmt()
@@ -211,7 +214,7 @@ class EventRepository:
             event.original_timezone = event.timezone
 
         # If conferencing is Chrono's type, we need to create a conference data object manually.
-        event = self._eventWithCreatedConferenceData(event)
+        event = self._populateEventConferenceData(event)
 
         eventDb = createOrUpdateEvent(userCalendar, None, event, overrideId=event.id)
         eventDb.labels = getCombinedLabels(self.user, event.labels, self.session)
@@ -245,6 +248,7 @@ class EventRepository:
             ):
                 self.session.delete(e)
 
+            self._deleteConferenceData(event)
             self.session.commit()
 
             return event
@@ -588,33 +592,26 @@ class EventRepository:
                 logging.info(f'DELETE {override} ')
                 self.session.delete(override)
 
-    def _eventWithCreatedConferenceData(self, event: EventBaseVM) -> EventBaseVM:
+    def _populateEventConferenceData(self, event: EventBaseVM) -> EventBaseVM:
         """If the event has conferencing solutions that are supported by Chrono
         but not by Google Calendar, we need to create the conference data manually.
         """
+        ZOOM_IMAGE = 'https://lh3.googleusercontent.com/d/1HWZ0YS-xLVSAoQ2SUDuC3iFRtdm8a-FR'
+
         if not event.conference_data:
             return event
 
         conferenceDataVM = event.conference_data
-        isZoomMeet = (
+        isManagedZoomMeet = (
             conferenceDataVM.create_request and conferenceDataVM.type == ChronoConferenceType.Zoom
         )
-        if not isZoomMeet:
+        if not isManagedZoomMeet:
             return event
 
-        if isZoomMeet and not self.user.zoom_connection:
+        if isManagedZoomMeet and not self.zoomAPI:
             raise EventRepoError('User does not have a Zoom connection.')
 
-        zoomAPI = ZoomAPI(self.session, self.user.zoom_connection)
-        conferenceDataVM = self._createZoomConference(event, zoomAPI)
-
-        return event.model_copy(update={'conference_data': conferenceDataVM})
-
-    def _createZoomConference(self, event: EventBaseVM, zoomAPI: ZoomAPI) -> ConferenceDataBaseVM:
-        """Creates a zoom conference for the event."""
-        ZOOM_IMAGE = 'https://lh3.googleusercontent.com/d/1HWZ0YS-xLVSAoQ2SUDuC3iFRtdm8a-FR'
-
-        zoomMeeting = zoomAPI.createMeeting(
+        zoomMeeting = self.zoomAPI.createMeeting(
             ZoomMeetingInput(
                 topic=event.title or '',
                 agenda=event.description or '',
@@ -643,7 +640,23 @@ class EventRepository:
             type=ChronoConferenceType.Zoom,
         )
 
-        return conferenceDataVM
+        return event.model_copy(update={'conference_data': conferenceDataVM})
+
+    def _deleteConferenceData(self, event: Event):
+        """Deletes the conference data for the event if it is a Zoom meeting that we manage."""
+        if not self.zoomAPI:
+            return
+
+        if event.conference_data:
+            zoomMeetingId = (
+                int(event.conference_data.conference_id)
+                if event.conference_data.conference_id
+                and event.conference_data.type == ChronoConferenceType.Zoom
+                else None
+            )
+
+            if zoomMeetingId is not None:
+                self.zoomAPI.deleteMeeting(zoomMeetingId)
 
 
 def getCombinedLabels(user: User, labelVMs: List[LabelInDbVM], session: Session) -> List[Label]:
@@ -978,39 +991,9 @@ def createOrUpdateEvent(
     else:
         organizer = EventOrganizer(userCalendar.email, userCalendar.summary, None)
 
-    conferenceData = None
-
-    conferenceDataVM = eventVM.conference_data
-    if conferenceDataVM:
-        conferenceData = ConferenceData(
-            conferenceDataVM.conference_id,
-            (
-                ConferenceSolution(
-                    conferenceDataVM.conference_solution.name,
-                    conferenceDataVM.conference_solution.key_type,
-                    conferenceDataVM.conference_solution.icon_uri,
-                )
-                if conferenceDataVM.conference_solution
-                else None
-            ),
-        )
-        conferenceData.entry_points = [
-            ConferenceEntryPoint(
-                entryPointVM.entry_point_type,
-                entryPointVM.uri,
-                entryPointVM.label,
-                entryPointVM.meeting_code,
-                entryPointVM.password,
-            )
-            for entryPointVM in conferenceDataVM.entry_points
-        ]
-
-        if conferenceDataVM.create_request:
-            conferenceData.create_request = ConferenceCreateRequest(
-                conferenceDataVM.create_request.status,
-                conferenceDataVM.create_request.request_id,
-                conferenceDataVM.create_request.conference_solution_key_type,
-            )
+    conferenceData = createOrUpdateConferenceData(
+        eventDb.conference_data if eventDb else None, eventVM.conference_data
+    )
 
     reminders = (
         [
@@ -1095,6 +1078,52 @@ def createOrUpdateEvent(
             eventDb.reminders = reminders
 
         return eventDb
+
+
+def createOrUpdateConferenceData(
+    existingConferenceData: ConferenceData | None, conferenceDataVM: ConferenceDataBaseVM | None
+) -> ConferenceData | None:
+    """Makes sure we keep the existing conference data's type, which tells us whether we are
+    managing Zoom (+ other providers) meetings. If so, we need to track the meeting ID so
+    CRUD operations to the event will also change the Zoom meeting accordingly.
+    """
+    conferenceData = None
+
+    if conferenceDataVM:
+        existingConferenceType = existingConferenceData.type if existingConferenceData else None
+
+        conferenceData = ConferenceData(
+            conferenceDataVM.conference_id,
+            (
+                ConferenceSolution(
+                    conferenceDataVM.conference_solution.name,
+                    conferenceDataVM.conference_solution.key_type,
+                    conferenceDataVM.conference_solution.icon_uri,
+                )
+                if conferenceDataVM.conference_solution
+                else None
+            ),
+            type=existingConferenceType or conferenceDataVM.type,
+        )
+        conferenceData.entry_points = [
+            ConferenceEntryPoint(
+                entryPointVM.entry_point_type,
+                entryPointVM.uri,
+                entryPointVM.label,
+                entryPointVM.meeting_code,
+                entryPointVM.password,
+            )
+            for entryPointVM in conferenceDataVM.entry_points
+        ]
+
+        if conferenceDataVM.create_request:
+            conferenceData.create_request = ConferenceCreateRequest(
+                conferenceDataVM.create_request.status,
+                conferenceDataVM.create_request.request_id,
+                conferenceDataVM.create_request.conference_solution_key_type,
+            )
+
+    return conferenceData
 
 
 def getRRule(
