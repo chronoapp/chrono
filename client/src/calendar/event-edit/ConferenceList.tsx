@@ -128,7 +128,7 @@ function getSelectedConference(
 ): ConferenceItem {
   if (conferenceData?.create_request?.conference_solution_key_type === 'hangoutsMeet') {
     return conferenceList.find((conference) => conference.type === 'google')!
-  } else if (conferenceData?.create_request?.conference_solution_key_type === 'zoom') {
+  } else if (conferenceData?.type === 'zoom') {
     return conferenceList.find((conference) => conference.type === 'zoom')!
   } else {
     return conferenceList.find(
