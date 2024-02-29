@@ -32,7 +32,11 @@ class ConferenceCreateStatus(Enum):
 
 
 class ChronoConferenceType(Enum):
-    Google = "google"  # defer to ConferenceKeyType
+    """These represents whether we have created the conference ourselves,
+    or if defer to google's conference key type.
+    """
+
+    Google = "google"
     Zoom = "zoom"
 
 

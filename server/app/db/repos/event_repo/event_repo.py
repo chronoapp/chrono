@@ -619,7 +619,12 @@ class EventRepository:
         ZOOM_IMAGE = 'https://lh3.googleusercontent.com/d/1HWZ0YS-xLVSAoQ2SUDuC3iFRtdm8a-FR'
 
         zoomMeeting = zoomAPI.createMeeting(
-            ZoomMeetingInput(topic=event.title or '', agenda=event.description or '')
+            ZoomMeetingInput(
+                topic=event.title or '',
+                agenda=event.description or '',
+                start_time=event.start.isoformat(),
+                duration=int((event.end - event.start).total_seconds() / 60),
+            )
         )
 
         conferenceDataVM = ConferenceDataBaseVM(

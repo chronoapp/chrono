@@ -12,6 +12,8 @@ from app.db.models import ZoomConnection
 class ZoomMeetingInput(BaseModel):
     topic: str
     agenda: str
+    start_time: str  # date in isoformat
+    duration: int  # duration in minutes
 
 
 class ZoomMeeting(BaseModel):
