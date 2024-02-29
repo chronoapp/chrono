@@ -6,6 +6,7 @@ from app.db.models.conference_data import (
     CommunicationMethod,
     ConferenceCreateStatus,
     ConferenceKeyType,
+    ChronoConferenceType,
 )
 from app.db.models.event import EventStatus, Transparency, Visibility
 from app.db.models.event_participant import ResponseStatus
@@ -81,6 +82,8 @@ class ConferenceDataBaseVM(BaseModel):
 
     # Linking EntryPoint
     entry_points: list[EntryPointBaseVM]
+
+    type: ChronoConferenceType
 
 
 class ReminderOverrideVM(BaseModel):
