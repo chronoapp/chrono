@@ -97,7 +97,7 @@ async def getCalendarEvents(
         endDate = datetime.fromisoformat(end_date) if end_date else datetime.now()
 
         eventRepo = EventRepository(user, session)
-        return eventRepo.getEventsInRange(user, calendarId, startDate, endDate, limit)
+        return eventRepo.getEventsInRange(calendarId, startDate, endDate, limit)
 
     except ValueError as e:
         raise HTTPException(

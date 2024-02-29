@@ -94,12 +94,10 @@ class EventRepository:
         self.session = session
         self.user = user
 
-    def getRecurringEvents(
-        self, user: User, calendarId: uuid.UUID, endDate: datetime
-    ) -> list[Event]:
+    def getRecurringEvents(self, calendarId: uuid.UUID, endDate: datetime) -> list[Event]:
         stmt = (
             getCalendarEventsStmt()
-            .where(User.id == user.id)
+            .where(User.id == self.user.id)
             .filter(
                 and_(
                     and_(Event.recurrences != None, Event.recurrences != []),
@@ -115,10 +113,12 @@ class EventRepository:
         return list(result.scalars().all())
 
     def getSingleEvents(
-        self, user: User, calendarId: uuid.UUID, showRecurring: bool = True, showDeleted=False
+        self, calendarId: uuid.UUID, showRecurring: bool = True, showDeleted=False
     ) -> list[Event]:
         """Gets all events for the calendar."""
-        stmt = getCalendarEventsStmt().where(and_(User.id == user.id, Calendar.id == calendarId))
+        stmt = getCalendarEventsStmt().where(
+            and_(User.id == self.user.id, Calendar.id == calendarId)
+        )
 
         if not showDeleted:
             stmt = stmt.filter(Event.status != 'deleted')
@@ -132,15 +132,15 @@ class EventRepository:
         return list(singleEvents)
 
     def getEventsInRange(
-        self, user: User, calendarId: uuid.UUID, startDate: datetime, endDate: datetime, limit: int
+        self, calendarId: uuid.UUID, startDate: datetime, endDate: datetime, limit: int
     ) -> Iterable[EventInDBVM]:
         calendarRepo = CalendarRepository(self.session)
-        calendar = calendarRepo.getCalendar(user, calendarId)
+        calendar = calendarRepo.getCalendar(self.user, calendarId)
 
         singleEventsStmt = (
             getCalendarEventsStmt()
             .where(
-                User.id == user.id,
+                User.id == self.user.id,
                 UserCalendar.id == calendarId,
                 or_(Event.recurrences == None, Event.recurrences == []),
                 Event.recurring_event_id == None,
@@ -155,7 +155,7 @@ class EventRepository:
         singleEvents = result.scalars().all()
 
         expandedRecurringEvents = getAllExpandedRecurringEventsList(
-            user, calendar, startDate, endDate, self.session
+            self.user, calendar, startDate, endDate, self.session
         )
 
         allEvents = heapq.merge(

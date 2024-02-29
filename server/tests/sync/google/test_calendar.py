@@ -118,7 +118,7 @@ def test_syncCreatedOrUpdatedGoogleEvent_single(user, session: Session, eventRep
     assert event.google_id == eventItem.get('id')
     assert event.creator and event.creator.email == 'test-email@example.com'
 
-    events = eventRepo.getSingleEvents(user, calendar.id)
+    events = eventRepo.getSingleEvents(calendar.id)
     assert len(events) == 1
 
 
@@ -172,7 +172,7 @@ def test_syncCreatedOrUpdatedGoogleEvent_recurring(user, session, eventRepo):
     assert event.google_id == EVENT_ITEM_RECURRING.get('id')
 
     eventRepo = EventRepository(user, session)
-    events = eventRepo.getRecurringEvents(user, calendar.id, datetime.fromisoformat('2021-01-01'))
+    events = eventRepo.getRecurringEvents(calendar.id, datetime.fromisoformat('2021-01-01'))
 
     assert len(events) == 1
     assert events[0].recurrences != None
@@ -211,7 +211,7 @@ def test_syncEventsToDb_deleted(user: User, session: Session):
     session.commit()
 
     eventRepo = EventRepository(user, session)
-    events = eventRepo.getRecurringEvents(user, calendar.id, datetime.fromisoformat('2021-01-01'))
+    events = eventRepo.getRecurringEvents(calendar.id, datetime.fromisoformat('2021-01-01'))
 
     assert len(events) == 1
     assert events[0].status == 'active'
@@ -223,7 +223,7 @@ def test_syncEventsToDb_deleted(user: User, session: Session):
     syncEventsToDb(calendar, [eventItem], session)
     session.commit()
 
-    events = eventRepo.getRecurringEvents(user, calendar.id, datetime.fromisoformat('2021-01-01'))
+    events = eventRepo.getRecurringEvents(calendar.id, datetime.fromisoformat('2021-01-01'))
     assert len(events) == 0
 
 
@@ -282,7 +282,7 @@ def test_syncEventsToDb_recurring(user: User, session: Session):
 
     assert parent is not None
 
-    events = eventRepo.getSingleEvents(user, calendar.id, showDeleted=True)
+    events = eventRepo.getSingleEvents(calendar.id, showDeleted=True)
 
     assert len(events) == 3
 
@@ -320,7 +320,7 @@ def test_syncEventsToDb_recurring_withParticipants(user: User, session):
     session.commit()
 
     eventRepo = EventRepository(user, session)
-    events = eventRepo.getSingleEvents(user, calendar.id)
+    events = eventRepo.getSingleEvents(calendar.id)
 
     assert len(events) == 2
 
@@ -362,10 +362,10 @@ def test_syncEventsToDb_duplicateEventMultipleCalendars(user: User, session: Ses
 
     eventRepo = EventRepository(user, session)
 
-    events1 = eventRepo.getSingleEvents(user, readOnlyCalendar.id)
+    events1 = eventRepo.getSingleEvents(readOnlyCalendar.id)
     assert len(events1) == 1
 
-    events2 = eventRepo.getSingleEvents(user, myCalendar.id)
+    events2 = eventRepo.getSingleEvents(myCalendar.id)
     assert len(events2) == 1
 
     assert events1[0].google_id == events2[0].google_id
@@ -384,7 +384,7 @@ def test_syncEventsToDb_changedRecurringEvent(user: User, session: Session):
     )
 
     syncEventsToDb(calendar, [parentEvent, recurringEvent], session)
-    calEvents = eventRepo.getSingleEvents(user, calendar.id)
+    calEvents = eventRepo.getSingleEvents(calendar.id)
 
     assert len(calEvents) == 2
 
@@ -401,7 +401,7 @@ def test_syncEventsToDb_changedRecurringEvent(user: User, session: Session):
 
     syncEventsToDb(calendar, [recurringEvent2, parentEvent2], session)
 
-    calEvents = eventRepo.getSingleEvents(user, calendar.id)
+    calEvents = eventRepo.getSingleEvents(calendar.id)
     googleEventIds = set(e.google_id for e in calEvents)
 
     assert recurringEvent2['id'] in googleEventIds

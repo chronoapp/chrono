@@ -429,9 +429,7 @@ def test_event_repo_getRecurringEvent(user: User, session: Session):
     invalidEventId2 = f'{recurringEvent.id}_20211202T120000Z'
 
     # Re-query to merge with labels joined.
-    recurringEvent2 = (
-        session.execute(select(Event).where(Event.id == recurringEvent.id))
-    ).scalar()
+    recurringEvent2 = (session.execute(select(Event).where(Event.id == recurringEvent.id))).scalar()
 
     assert recurringEvent2
 
@@ -624,7 +622,7 @@ def test_event_repo_updateEvent_recurring(user: User, session: Session):
     session.commit()
 
     eventResult = list(
-        eventRepo.getEventsInRange(user, calendar.id, start, start + timedelta(days=1), 10)
+        eventRepo.getEventsInRange(calendar.id, start, start + timedelta(days=1), 10)
     )
 
     assert len(eventResult) == 1
