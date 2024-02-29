@@ -60,7 +60,7 @@ async def searchEvents(
 
         if query:
             tsQuery = ' | '.join(query.split())
-            events = eventRepo.search(user, tsQuery, start, end, limit=limit)
+            events = eventRepo.search(tsQuery, start, end, limit=limit)
 
             return events
         else:
@@ -133,7 +133,7 @@ async def createCalendarEvent(
         eventRepo = EventRepository(user, session)
 
         userCalendar = calendarRepo.getCalendar(user, calendarId)
-        eventDb = eventRepo.createEvent(user, userCalendar, event)
+        eventDb = eventRepo.createEvent(userCalendar, event)
 
         # Sync with google calendar.
         if userCalendar.source == 'google':
@@ -159,7 +159,7 @@ async def getCalendarEvent(
         calendarRepo = CalendarRepository(session)
 
         calendar = calendarRepo.getCalendar(user, calendarId)
-        event = eventRepo.getEventVM(user, calendar, eventId)
+        event = eventRepo.getEventVM(calendar, eventId)
 
         if event:
             return event
@@ -191,7 +191,7 @@ async def updateCalendarEvent(
         calendarRepo = CalendarRepository(session)
 
         userCalendar = calendarRepo.getCalendar(user, calendarId)
-        updatedEvent = eventRepo.updateEvent(user, userCalendar, eventId, event)
+        updatedEvent = eventRepo.updateEvent(userCalendar, eventId, event)
 
         if userCalendar.source == 'google' and updatedEvent.isGoogleEvent():
             syncEventToGoogleTask.send(user.id, userCalendar.id, updatedEvent.id, sendUpdateType)
@@ -217,7 +217,7 @@ async def moveEventCalendar(
 ) -> Event:
     try:
         eventRepo = EventRepository(user, session)
-        event = eventRepo.moveEvent(user, eventId, calendarId, calReq.calendar_id)
+        event = eventRepo.moveEvent(eventId, calendarId, calReq.calendar_id)
 
         # Makes sure both are google calendars.
         if event.isGoogleEvent():
@@ -251,7 +251,7 @@ async def deleteCalendarEvent(
         calendarRepo = CalendarRepository(session)
 
         userCalendar = calendarRepo.getCalendar(user, calendarId)
-        event = eventRepo.deleteEvent(user, userCalendar, eventId)
+        event = eventRepo.deleteEvent(userCalendar, eventId)
 
         if event.isGoogleEvent():
             syncDeleteEventToGoogleTask.send(user.id, userCalendar.id, event.id, sendUpdateType)

@@ -196,7 +196,7 @@ def test_createEvent_recurring(user: User, session, test_client, eventRepo: Even
     assert resp.status_code == 200
 
     eventId = resp.json()['id']
-    eventDb = eventRepo.getEvent(user, userCalendar, eventId)
+    eventDb = eventRepo.getEvent(userCalendar, eventId)
     assert eventDb is not None
 
     assert eventDb.recurrences == recurrences
@@ -229,10 +229,10 @@ def test_createEvent_allDay(user: User, session, test_client, eventRepo: EventRe
     eventResp = resp.json()
 
     assert eventResp.get('title') == event.get('title')
-    assert eventResp.get('all_day') == True
+    assert eventResp.get('all_day') is True
 
     eventId = resp.json()['id']
-    eventDb = eventRepo.getEvent(user, userCalendar, eventId)
+    eventDb = eventRepo.getEvent(userCalendar, eventId)
     assert eventDb
 
 

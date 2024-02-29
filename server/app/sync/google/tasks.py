@@ -44,7 +44,7 @@ def syncEventToGoogleTask(
             logger.error(f'User calendar {userCalendarId} not found')
             return
 
-        event = eventRepo.getEvent(user, userCalendar, eventId)
+        event = eventRepo.getEvent(userCalendar, eventId)
         if not event:
             logger.warning(f'Event {eventId} not found')
             return
@@ -84,7 +84,7 @@ def syncDeleteEventToGoogleTask(
         eventRepo = EventRepository(user, session)
 
         userCalendar = calRepo.getCalendar(user, userCalendarId)
-        event = eventRepo.getEventVM(user, userCalendar, eventId)
+        event = eventRepo.getEventVM(userCalendar, eventId)
         if not event:
             logger.warning(f'Event {eventId} not found')
             return

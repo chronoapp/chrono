@@ -23,7 +23,6 @@ from app.db.repos.event_repo.event_repo import (
     EventNotFoundError,
     getRecurringEventId,
 )
-from app.db.repos.event_repo.view_models import ConferenceDataBaseVM, CreateConferenceRequestVM
 from app.db.repos.event_repo.event_repo import (
     createOrUpdateEvent,
 )
@@ -41,9 +40,7 @@ def test_event_repo_search(user: User, session: Session):
     session.commit()
 
     eventRepo = EventRepository(user, session)
-    events = list(
-        eventRepo.search(user, "Pear", start - timedelta(days=30), start + timedelta(days=30))
-    )
+    events = list(eventRepo.search("Pear", start - timedelta(days=30), start + timedelta(days=30)))
 
     assert len(events) == 2
     assert all(e.title and 'Pear' in e.title for e in events)
@@ -91,9 +88,7 @@ def test_event_repo_search_recurring(user: User, session: Session):
     # 1) The individual event
     # 2) The recurring events, except the overriden event
     eventRepo = EventRepository(user, session)
-    events = list(
-        eventRepo.search(user, "Pear", start - timedelta(days=30), start + timedelta(days=30))
-    )
+    events = list(eventRepo.search("Pear", start - timedelta(days=30), start + timedelta(days=30)))
 
     assert len(events) == 5
     assert events[0].title == 'Blueberry Pear'
@@ -135,7 +130,7 @@ def test_event_repo_CRUD(user: User, session: Session):
     eventRepo = EventRepository(user, session)
 
     # 1) Create Event
-    event = eventRepo.createEvent(user, userCalendar, eventVM)
+    event = eventRepo.createEvent(userCalendar, eventVM)
     session.add(event)
     session.commit()
 
@@ -144,7 +139,10 @@ def test_event_repo_CRUD(user: User, session: Session):
     assert event.organizer and event.organizer.email == organizer.email
 
     # 2) Get Event
-    event = eventRepo.getEvent(user, userCalendar, event.id)
+    eventDB = eventRepo.getEvent(userCalendar, event.id)
+    assert eventDB
+
+    event = eventDB
     assert event.title == eventVM.title
     assert event.calendar.id == userCalendar.id
 
@@ -153,7 +151,7 @@ def test_event_repo_CRUD(user: User, session: Session):
     eventVM.description = "new description"
 
     # 3) Update Event
-    event = eventRepo.updateEvent(user, userCalendar, event.id, eventVM)
+    event = eventRepo.updateEvent(userCalendar, event.id, eventVM)
     session.commit()
     assert event.organizer and event.organizer.email == eventVM.organizer.email
     assert event.description == eventVM.description
@@ -172,25 +170,25 @@ def test_event_repo_edit_permissions(user: User, session: Session):
     session.commit()
 
     eventRepo = EventRepository(user, session)
-    eventVM = eventRepo.getEventVM(user, userCalendar, event.id)
+    eventVM = eventRepo.getEventVM(userCalendar, event.id)
     assert eventVM is not None
 
     # Try to update the event. Should fail if modifying main event fields.
     eventVMUpdated = eventVM.model_copy(update={'title': "new summary"})
     with pytest.raises(EventRepoPermissionError):
-        eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
+        eventRepo.updateEvent(userCalendar, event.id, eventVMUpdated)
 
     eventVMUpdated = eventVM.model_copy(update={'description': "new description"})
     with pytest.raises(EventRepoPermissionError):
-        eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
+        eventRepo.updateEvent(userCalendar, event.id, eventVMUpdated)
 
     eventVMUpdated = eventVM.model_copy(update={'start': eventVM.start + timedelta(hours=1)})
     with pytest.raises(EventRepoPermissionError):
-        eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
+        eventRepo.updateEvent(userCalendar, event.id, eventVMUpdated)
 
     eventVMUpdated = eventVM.model_copy(update={'end': eventVM.end + timedelta(hours=1)})
     with pytest.raises(EventRepoPermissionError):
-        eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
+        eventRepo.updateEvent(userCalendar, event.id, eventVMUpdated)
 
 
 def test_event_repo_edit_attendee_permissions_as_guest(user: User, session: Session):
@@ -209,7 +207,7 @@ def test_event_repo_edit_attendee_permissions_as_guest(user: User, session: Sess
     session.commit()
 
     eventRepo = EventRepository(user, session)
-    eventVM = eventRepo.getEventVM(user, userCalendar, event.id)
+    eventVM = eventRepo.getEventVM(userCalendar, event.id)
     assert eventVM is not None
 
     # Make sure this user can update their own responseStatus.
@@ -218,7 +216,7 @@ def test_event_repo_edit_attendee_permissions_as_guest(user: User, session: Sess
         for p in eventVM.participants
     ]
     eventVMUpdated = eventVM.model_copy(update={'participants': newParticipants})
-    event = eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
+    event = eventRepo.updateEvent(userCalendar, event.id, eventVMUpdated)
     participant = next(p for p in event.participants if p.email == user.email)
     assert participant.response_status == 'accepted'
 
@@ -227,7 +225,7 @@ def test_event_repo_edit_attendee_permissions_as_guest(user: User, session: Sess
         p.model_copy(update={'response_status': 'accepted'}) for p in eventVM.participants
     ]
     eventVMUpdated = eventVM.model_copy(update={'participants': newParticipants})
-    event = eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
+    event = eventRepo.updateEvent(userCalendar, event.id, eventVMUpdated)
     participantsMap = {p.email: p for p in event.participants}
 
     assert participantsMap['p1@chrono.so'].response_status == 'needsAction'
@@ -238,7 +236,6 @@ def test_event_repo_edit_attendee_permissions_as_guest(user: User, session: Sess
     newParticipants.append(EventParticipantVM(email='p3@chrono.so'))
     with pytest.raises(EventRepoPermissionError):
         eventRepo.updateEvent(
-            user,
             userCalendar,
             event.id,
             eventVM.model_copy(update={'participants': newParticipants}),
@@ -249,11 +246,11 @@ def test_event_repo_edit_attendee_permissions_as_guest(user: User, session: Sess
     session.add(event)
     session.commit()
 
-    eventVM = eventRepo.getEventVM(user, userCalendar, event.id)
+    eventVM = eventRepo.getEventVM(userCalendar, event.id)
     assert eventVM is not None
 
     event = eventRepo.updateEvent(
-        user, userCalendar, event.id, eventVM.model_copy(update={'participants': newParticipants})
+        userCalendar, event.id, eventVM.model_copy(update={'participants': newParticipants})
     )
     assert len(event.participants) == 4
     participantsMap = {p.email: p for p in event.participants}
@@ -263,7 +260,6 @@ def test_event_repo_edit_attendee_permissions_as_guest(user: User, session: Sess
     del participantsMap['p1@chrono.so']
     removedParticipants = [p for p in participantsMap.values()]
     event = eventRepo.updateEvent(
-        user,
         userCalendar,
         event.id,
         eventVM.model_copy(update={'participants': removedParticipants}),
@@ -286,7 +282,7 @@ def test_event_repo_edit_attendee_permissions_as_organizer(user: User, session: 
     session.commit()
 
     eventRepo = EventRepository(user, session)
-    eventVM = eventRepo.getEventVM(user, userCalendar, event.id)
+    eventVM = eventRepo.getEventVM(userCalendar, event.id)
     assert eventVM is not None
 
     # We can add a new participant
@@ -294,7 +290,7 @@ def test_event_repo_edit_attendee_permissions_as_organizer(user: User, session: 
     newParticipants.append(EventParticipantVM(email='p3@chrono.so', response_status='tentative'))
     eventVMUpdated = eventVM.model_copy(update={'participants': newParticipants})
 
-    event = eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
+    event = eventRepo.updateEvent(userCalendar, event.id, eventVMUpdated)
     participantsMap = {p.email: p for p in event.participants}
     assert len(event.participants) == 4
     assert participantsMap['p3@chrono.so'].response_status == 'tentative'
@@ -305,7 +301,6 @@ def test_event_repo_edit_attendee_permissions_as_organizer(user: User, session: 
 
     removedParticipants = [p for p in participantsMap.values()]
     event = eventRepo.updateEvent(
-        user,
         userCalendar,
         event.id,
         eventVM.model_copy(update={'participants': removedParticipants}),
@@ -326,13 +321,13 @@ def test_event_repo_delete(user: User, session: Session):
 
     eventRepo = EventRepository(user, session)
 
-    event = eventRepo.getEvent(user, userCalendar, e1.id)
+    event = eventRepo.getEvent(userCalendar, e1.id)
     assert event is not None
     assert event.status == 'active'
 
-    eventRepo.deleteEvent(user, userCalendar, e1.id)
+    eventRepo.deleteEvent(userCalendar, e1.id)
 
-    event = eventRepo.getEvent(user, userCalendar, e1.id)
+    event = eventRepo.getEvent(userCalendar, e1.id)
     assert event is not None
     assert event.status == 'deleted'
 
@@ -357,10 +352,10 @@ def test_event_repo_deleteRecurring(user: User, session: Session):
     )
     assert eventId
 
-    eventVM = eventRepo.getEventVM(user, userCalendar, eventId)
+    eventVM = eventRepo.getEventVM(userCalendar, eventId)
     assert eventVM
 
-    eventRepo.deleteEvent(user, userCalendar, eventVM.id)
+    eventRepo.deleteEvent(userCalendar, eventVM.id)
     session.commit()
 
     # 2) Delete Event Twice
@@ -369,13 +364,13 @@ def test_event_repo_deleteRecurring(user: User, session: Session):
     )
     assert eventId
 
-    eventVM = eventRepo.getEventVM(user, userCalendar, eventId)
+    eventVM = eventRepo.getEventVM(userCalendar, eventId)
     assert eventVM
 
-    eventRepo.deleteEvent(user, userCalendar, eventVM.id)
-    eventRepo.deleteEvent(user, userCalendar, eventVM.id)
+    eventRepo.deleteEvent(userCalendar, eventVM.id)
+    eventRepo.deleteEvent(userCalendar, eventVM.id)
     session.commit()
-    event = eventRepo.getEvent(user, userCalendar, recurringEvent.id)
+    event = eventRepo.getEvent(userCalendar, recurringEvent.id)
 
     # 3) Override then delete event
     eventId = getRecurringEventId(
@@ -383,12 +378,12 @@ def test_event_repo_deleteRecurring(user: User, session: Session):
     )
     assert eventId
 
-    eventVM = eventRepo.getEventVM(user, userCalendar, eventId)
+    eventVM = eventRepo.getEventVM(userCalendar, eventId)
     assert eventVM
 
     eventVM.title = 'override'
-    eventRepo.updateEvent(user, userCalendar, eventVM.id, eventVM)
-    eventRepo.deleteEvent(user, userCalendar, eventVM.id)
+    eventRepo.updateEvent(userCalendar, eventVM.id, eventVM)
+    eventRepo.deleteEvent(userCalendar, eventVM.id)
     session.commit()
 
 
@@ -584,12 +579,12 @@ def test_event_repo_updateEvent_recurring(user: User, session: Session):
     overrideEvent = events[0]
     overrideEvent.title = 'foo'
 
-    event = eventRepo.updateEvent(user, calendar, overrideEvent.id, overrideEvent)
+    event = eventRepo.updateEvent(calendar, overrideEvent.id, overrideEvent)
     assert event.title == overrideEvent.title
 
     overrideEvent = events[1]
     overrideEvent.title = 'bar'
-    event = eventRepo.updateEvent(user, calendar, overrideEvent.id, overrideEvent)
+    event = eventRepo.updateEvent(calendar, overrideEvent.id, overrideEvent)
     assert event.title == overrideEvent.title
 
     events = getAllExpandedRecurringEventsList(
@@ -601,12 +596,12 @@ def test_event_repo_updateEvent_recurring(user: User, session: Session):
     # 2) Override the parent recurring event. Moves the end date forward by 1h.
     # Makes sure all overrides are kept, since the new range includes these events.
 
-    parentEventVM = eventRepo.getEventVM(user, calendar, parentEvent.id)
+    parentEventVM = eventRepo.getEventVM(calendar, parentEvent.id)
     assert parentEventVM is not None
 
     parentEvent.end = parentEventVM.end + timedelta(hours=1)
 
-    event = eventRepo.updateEvent(user, calendar, parentEventVM.id, parentEventVM)
+    event = eventRepo.updateEvent(calendar, parentEventVM.id, parentEventVM)
     events = getAllExpandedRecurringEventsList(
         user, calendar, start, start + timedelta(days=1), session
     )
@@ -618,7 +613,7 @@ def test_event_repo_updateEvent_recurring(user: User, session: Session):
     # Makes sure all overrides are deleted, since the new range excludes these events.
 
     updatedParentVM = parentEventVM.model_copy(update={'recurrences': []})
-    event = eventRepo.updateEvent(user, calendar, parentEventVM.id, updatedParentVM)
+    event = eventRepo.updateEvent(calendar, parentEventVM.id, updatedParentVM)
     session.commit()
 
     eventResult = list(
@@ -659,22 +654,22 @@ def test_event_repo_updateEvent_this_and_following(user: User, session: Session)
     overrideEvent = events[0]
     overrideEvent.title = 'foo'
     overrideEvent.start = overrideEvent.start + timedelta(hours=1)
-    eventRepo.updateEvent(user, calendar, overrideEvent.id, overrideEvent)
+    eventRepo.updateEvent(calendar, overrideEvent.id, overrideEvent)
 
     # This event should be removed by the update.
     overrideEvent2 = events[4]
     overrideEvent2.title = 'bar'
-    eventRepo.updateEvent(user, calendar, overrideEvent2.id, overrideEvent2)
+    eventRepo.updateEvent(calendar, overrideEvent2.id, overrideEvent2)
 
     """3) Update the parent event's recurrence.
     It will be cut off at 01-03 (two events)
     """
 
-    parentEventVM = eventRepo.getEventVM(user, calendar, parentEvent.id)
+    parentEventVM = eventRepo.getEventVM(calendar, parentEvent.id)
     assert parentEventVM
 
     parentEventVM.recurrences = ['RRULE:FREQ=DAILY;UNTIL=20220103T120000Z']
-    eventRepo.updateEvent(user, calendar, parentEventVM.id, parentEventVM)
+    eventRepo.updateEvent(calendar, parentEventVM.id, parentEventVM)
 
     events = getAllExpandedRecurringEventsList(
         user, calendar, start, start + timedelta(days=10), session
@@ -686,7 +681,7 @@ def test_event_repo_updateEvent_this_and_following(user: User, session: Session)
 
     # Make sure the override is deleted.
     with pytest.raises(InputError):
-        eventRepo.getEventVM(user, calendar, overrideEvent2.id)
+        eventRepo.getEventVM(calendar, overrideEvent2.id)
 
 
 """Test Move Events"""
@@ -713,16 +708,16 @@ def test_event_repo_moveEvent(user: User, session: Session):
     # Move the event to second calendar.
     eventRepo = EventRepository(user, session)
 
-    event = eventRepo.getEvent(user, userCalendar, eventId)
+    event = eventRepo.getEvent(userCalendar, eventId)
     assert event is not None
 
-    eventRepo.moveEvent(user, eventId, userCalendar.id, userCalendar2.id)
+    eventRepo.moveEvent(eventId, userCalendar.id, userCalendar2.id)
 
     # Ensure it exists in the new calendar
-    event = eventRepo.getEvent(user, userCalendar, eventId)
+    event = eventRepo.getEvent(userCalendar, eventId)
     assert event is None
 
-    event = eventRepo.getEvent(user, userCalendar2, eventId)
+    event = eventRepo.getEvent(userCalendar2, eventId)
     assert event and event.id == eventId
 
 
@@ -757,15 +752,15 @@ def test_event_repo_moveEvent_recurring(user: User, session: Session):
     eventRepo = EventRepository(user, session)
 
     with pytest.raises(EventRepoError):
-        eventRepo.moveEvent(user, eventInstanceId, userCalendar.id, userCalendar2.id)
+        eventRepo.moveEvent(eventInstanceId, userCalendar.id, userCalendar2.id)
 
     # Move the base event to second calendar.
-    eventRepo.moveEvent(user, baseEventId, userCalendar.id, userCalendar2.id)
+    eventRepo.moveEvent(baseEventId, userCalendar.id, userCalendar2.id)
 
     with pytest.raises(EventNotFoundError):
-        event2 = eventRepo.getEventVM(user, userCalendar, eventInstanceId)
+        event2 = eventRepo.getEventVM(userCalendar, eventInstanceId)
 
-    event2 = eventRepo.getEventVM(user, userCalendar2, eventInstanceId)
+    event2 = eventRepo.getEventVM(userCalendar2, eventInstanceId)
 
     assert event2
     assert event2.id == eventInstanceId

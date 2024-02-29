@@ -172,25 +172,23 @@ class EventRepository:
 
         return googleEvent
 
-    def getEvent(self, user: User, calendar: UserCalendar, eventId: str) -> Optional[Event]:
+    def getEvent(self, calendar: UserCalendar, eventId: str) -> Optional[Event]:
         """Gets an event that exists in the DB only.
         Does not include overriden instances of recurring events.
         """
         curEvent: Optional[Event] = (
             self.session.execute(
                 getCalendarEventsStmt().where(
-                    User.id == user.id, Calendar.id == calendar.id, Event.id == eventId
+                    User.id == self.user.id, Calendar.id == calendar.id, Event.id == eventId
                 )
             )
         ).scalar()
 
         return curEvent
 
-    def getEventVM(
-        self, user: User, calendar: UserCalendar, eventId: str
-    ) -> Optional[GoogleEventInDBVM]:
+    def getEventVM(self, calendar: UserCalendar, eventId: str) -> Optional[GoogleEventInDBVM]:
         """Gets the event view model, which includes instances of recurring events."""
-        eventInDB = self.getEvent(user, calendar, eventId)
+        eventInDB = self.getEvent(calendar, eventId)
 
         if eventInDB:
             return GoogleEventInDBVM.model_validate(eventInDB)
@@ -200,10 +198,10 @@ class EventRepository:
 
             return event
 
-    def createEvent(self, user: User, userCalendar: UserCalendar, event: EventBaseVM) -> Event:
+    def createEvent(self, userCalendar: UserCalendar, event: EventBaseVM) -> Event:
         self.verifyPermissions(userCalendar, None, event)
 
-        if event.id and self.getEvent(user, userCalendar, event.id):
+        if event.id and self.getEvent(userCalendar, event.id):
             raise EventRepoError('Could not create event with existing id.')
 
         # Keeps track of the "Original" time this recurrence should have started.
@@ -213,13 +211,13 @@ class EventRepository:
             event.original_timezone = event.timezone
 
         # If conferencing is Chrono's type, we need to create a conference data object manually.
-        event = self._eventWithCreatedConferenceData(user, event)
+        event = self._eventWithCreatedConferenceData(event)
 
         eventDb = createOrUpdateEvent(userCalendar, None, event, overrideId=event.id)
-        eventDb.labels = getCombinedLabels(user, event.labels, self.session)
+        eventDb.labels = getCombinedLabels(self.user, event.labels, self.session)
         self.session.commit()
 
-        newEvent = self.getEvent(user, userCalendar, eventDb.id)
+        newEvent = self.getEvent(userCalendar, eventDb.id)
         if not newEvent:
             raise EventNotFoundError
 
@@ -228,14 +226,14 @@ class EventRepository:
 
         return newEvent
 
-    def deleteEvent(self, user: User, userCalendar: UserCalendar, eventId: str) -> Event:
+    def deleteEvent(self, userCalendar: UserCalendar, eventId: str) -> Event:
         """
         TODO: Propagate changes to all copies of the event.
         """
         if not userCalendar.hasWriteAccess():
             raise RepoError('User cannot write event.')
 
-        event = self.getEvent(user, userCalendar, eventId)
+        event = self.getEvent(userCalendar, eventId)
 
         if event:
             event.status = 'deleted'
@@ -246,6 +244,7 @@ class EventRepository:
                 Event.recurring_event_id == event.id,
             ):
                 self.session.delete(e)
+
             self.session.commit()
 
             return event
@@ -321,12 +320,11 @@ class EventRepository:
 
     def updateEvent(
         self,
-        user: User,
         userCalendar: UserCalendar,
         eventId: str,
         event: EventBaseVM,
     ) -> Event:
-        curEvent = self.getEvent(user, userCalendar, eventId)
+        curEvent = self.getEvent(userCalendar, eventId)
         self.verifyPermissions(userCalendar, curEvent, event)
 
         # Not found in DB.
@@ -335,7 +333,7 @@ class EventRepository:
 
         # This is an instance of a recurring event. Replace the recurring event instance with and override.
         elif not curEvent and event.recurring_event_id:
-            parentEvent = self.getEvent(user, userCalendar, event.recurring_event_id)
+            parentEvent = self.getEvent(userCalendar, event.recurring_event_id)
 
             if not parentEvent:
                 raise EventNotFoundError(f'Invalid parent event {event.recurring_event_id}.')
@@ -377,34 +375,32 @@ class EventRepository:
             self.session.commit()
 
             # Re-fetch the event to get the updated participants.
-            if refreshedEvent := self.getEvent(user, userCalendar, updatedEvent.id):
+            if refreshedEvent := self.getEvent(userCalendar, updatedEvent.id):
                 updatedEvent = refreshedEvent
 
         # We are overriding a parent recurring event.
         elif curEvent and curEvent.is_parent_recurring_event:
             updatedEvent = createOrUpdateEvent(userCalendar, curEvent, event)
 
-            self._updateRecurringEventOverrides(user, userCalendar, updatedEvent)
+            self._updateRecurringEventOverrides(userCalendar, updatedEvent)
 
         # Update normal event.
         else:
             updatedEvent = createOrUpdateEvent(userCalendar, curEvent, event)
 
         updatedEvent.labels.clear()
-        updatedEvent.labels = getCombinedLabels(user, event.labels, self.session)
+        updatedEvent.labels = getCombinedLabels(self.user, event.labels, self.session)
 
         self.updateEventParticipants(userCalendar, updatedEvent, event.participants)
         self.session.commit()
 
         return updatedEvent
 
-    def moveEvent(
-        self, user: User, eventId: str, fromCalendarId: uuid.UUID, toCalendarId: uuid.UUID
-    ) -> Event:
+    def moveEvent(self, eventId: str, fromCalendarId: uuid.UUID, toCalendarId: uuid.UUID) -> Event:
         calendarRepo = CalendarRepository(self.session)
 
-        fromCalendar = calendarRepo.getCalendar(user, fromCalendarId)
-        toCalendar = calendarRepo.getCalendar(user, toCalendarId)
+        fromCalendar = calendarRepo.getCalendar(self.user, fromCalendarId)
+        toCalendar = calendarRepo.getCalendar(self.user, toCalendarId)
 
         if fromCalendar.id == toCalendar.id:
             raise EventRepoError('Cannot move between same calendars')
@@ -412,7 +408,7 @@ class EventRepository:
         if fromCalendar.account_id != toCalendar.account_id:
             raise EventRepoError('Cannot move event between different accounts')
 
-        event = self.getEvent(user, fromCalendar, eventId)
+        event = self.getEvent(fromCalendar, eventId)
         if not event:
             raise EventNotFoundError(f'Event {eventId} not found.')
 
@@ -430,13 +426,13 @@ class EventRepository:
         return event
 
     def search(
-        self, user: User, searchQuery: str, start: datetime, end: datetime, limit: int = 250
+        self, searchQuery: str, start: datetime, end: datetime, limit: int = 250
     ) -> Iterable[EventInDBVM]:
         """TODO: Limit number of events. Pagination?"""
         # 1) Single Events
         rows = self.session.execute(
             text(EVENT_SEARCH_QUERY),
-            {'userId': user.id, 'query': searchQuery, 'start': start, 'end': end},
+            {'userId': self.user.id, 'query': searchQuery, 'start': start, 'end': end},
         )
         rowIds = [r[0] for r in rows]
         stmt = getCalendarEventsStmt().filter(Event.id.in_(rowIds)).order_by(asc(Event.end))
@@ -446,14 +442,14 @@ class EventRepository:
         # 2) Recurring events + deduplicate from (1)
         rows = self.session.execute(
             text(RECURRING_EVENT_SEARCH_QUERY),
-            {'userId': user.id, 'query': searchQuery},
+            {'userId': self.user.id, 'query': searchQuery},
         )
         rowIds = [r[0] for r in rows]
         stmt = getCalendarEventsStmt().where(Event.id.in_(rowIds))
         recurringEvents = [
             i
             for i in getAllExpandedRecurringEvents(
-                user, stmt, start, end, searchQuery, self.session
+                self.user, stmt, start, end, searchQuery, self.session
             )
             if i.id not in recurringEventInstanceIds
         ]
@@ -543,7 +539,7 @@ class EventRepository:
             raise EventNotFoundError(f'Event ID {eventId} not found.')
 
         parentId = ''.join(parts[:-1])
-        parentEvent = self.getEvent(calendar.account.user, calendar, parentId)
+        parentEvent = self.getEvent(calendar, parentId)
 
         if not parentEvent:
             raise EventNotFoundError(f'Event ID {eventId} not found.')
@@ -552,7 +548,7 @@ class EventRepository:
 
         return eventInDbVM, parentEvent
 
-    def _updateRecurringEventOverrides(self, user: User, userCalendar: UserCalendar, event: Event):
+    def _updateRecurringEventOverrides(self, userCalendar: UserCalendar, event: Event):
         """If the recurrence changes, so we need to delete the overrides that no longer exist
         as part of the new recurrence.
         """
@@ -570,7 +566,7 @@ class EventRepository:
             .all()
         )
 
-        timezone = event.time_zone or userCalendar.timezone or user.timezone
+        timezone = event.time_zone or userCalendar.timezone or self.user.timezone
         ruleSet = (
             None
             if not event.recurrences
@@ -592,7 +588,7 @@ class EventRepository:
                 logging.info(f'DELETE {override} ')
                 self.session.delete(override)
 
-    def _eventWithCreatedConferenceData(self, user: User, event: EventBaseVM) -> EventBaseVM:
+    def _eventWithCreatedConferenceData(self, event: EventBaseVM) -> EventBaseVM:
         """If the event has conferencing solutions that are supported by Chrono
         but not by Google Calendar, we need to create the conference data manually.
         """
@@ -606,10 +602,10 @@ class EventRepository:
         if not isZoomMeet:
             return event
 
-        if isZoomMeet and not user.zoom_connection:
+        if isZoomMeet and not self.user.zoom_connection:
             raise EventRepoError('User does not have a Zoom connection.')
 
-        zoomAPI = ZoomAPI(self.session, user.zoom_connection)
+        zoomAPI = ZoomAPI(self.session, self.user.zoom_connection)
         conferenceDataVM = self._createZoomConference(event, zoomAPI)
 
         return event.model_copy(update={'conference_data': conferenceDataVM})
