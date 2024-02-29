@@ -67,19 +67,6 @@
     min-width: 0;
   }
 }
-.cal-event-all-day {
-  box-sizing: border-box;
-  box-shadow: none;
-  margin: 0;
-  padding: $event-padding;
-  background-color: $event-bg;
-  border-radius: $event-border-radius;
-  color: $event-color;
-  cursor: pointer;
-  width: 100%;
-  text-align: left;
-  font-size: 70%;
-}
 
 .cal-event-row {
   box-sizing: border-box;

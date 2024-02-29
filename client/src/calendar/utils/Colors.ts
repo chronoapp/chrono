@@ -51,7 +51,7 @@ export function adjustHSLBrightness(hslColor: string, brightnessAdjustment: numb
   }
 
   let [_, h, s, l] = parts
-  lightness = parseInt(l)
+  let lightness = parseInt(l)
 
   // Adjust lightness
   lightness += brightnessAdjustment
@@ -60,4 +60,3 @@ export function adjustHSLBrightness(hslColor: string, brightnessAdjustment: numb
 
   return `hsl(${h}, ${s}%, ${lightness}%)`
 }
-let lightness: number

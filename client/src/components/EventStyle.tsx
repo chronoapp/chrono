@@ -11,9 +11,8 @@ export function EventVerticalIndicator(props: IndicatorColorProps) {
     <Box
       style={{
         position: 'absolute',
-        top: 0,
-        bottom: 0,
-        width: '6px',
+        height: '100%',
+        width: '4px',
         backgroundColor: backgroundColor,
         borderTopLeftRadius: '10px',
         borderBottomLeftRadius: '10px',

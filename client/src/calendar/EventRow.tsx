@@ -55,6 +55,7 @@ export function EventItem(props: {
       <div
         className={clsx('cal-event', props.isPreview && 'cal-event-preview-full')}
         style={{
+          position: 'relative',
           backgroundColor: isEditing ? backgroundColor : adjustHSLBrightness(backgroundColor, +20),
           color: Event.getForegroundColor(
             event.end,

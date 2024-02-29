@@ -16,10 +16,6 @@
     pointer-events: none;
   }
 
-  &.cal-selected {
-    background-color: darken($event-bg, 10%);
-  }
-
   &:focus {
     outline: 5px auto $event-outline;
   }
