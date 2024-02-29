@@ -610,7 +610,7 @@ class EventRepository:
         - Update the current event's linked zoom conference data
 
         2) Current event has managed conference data.
-        - Delete the current event's linked zoom conference data
+        - Delete the current event's linked zoom conference data if it's a different meeting.
         """
 
         # 1) New event with new conference data.
@@ -632,11 +632,18 @@ class EventRepository:
 
         # 2) Prev event with managed Zoom meeting.
         if prevEvent and prevEvent.conference_data:
-            isManagedZoomMeet = (
-                prevEvent.conference_data.create_request is not None
-                and prevEvent.conference_data.type == ChronoConferenceType.Zoom
+            newConferenceId = (
+                newEvent.conference_data.conference_id
+                if (newEvent and newEvent.conference_data)
+                else None
             )
-            if isManagedZoomMeet:
+
+            deletePreviousZoomMeeting = (
+                prevEvent.conference_data.conference_id is not None
+                and prevEvent.conference_data.type == ChronoConferenceType.Zoom
+                and prevEvent.conference_data.conference_id != newConferenceId
+            )
+            if deletePreviousZoomMeeting:
                 self._deleteConferenceData(prevEvent)
 
         return newEvent
@@ -698,20 +705,24 @@ class EventRepository:
             )
 
             if zoomMeetingId is not None:
-                self.zoomAPI.updateMeeting(
-                    zoomMeetingId,
-                    ZoomMeetingInput(
-                        topic=event.title or '',
-                        agenda=event.description or '',
-                        start_time=event.start.isoformat(),
-                        duration=int((event.end - event.start).total_seconds() / 60),
-                    ),
-                )
+                try:
+                    self.zoomAPI.updateMeeting(
+                        zoomMeetingId,
+                        ZoomMeetingInput(
+                            topic=event.title or '',
+                            agenda=event.description or '',
+                            start_time=event.start.isoformat(),
+                            duration=int((event.end - event.start).total_seconds() / 60),
+                        ),
+                    )
+                except Exception as e:
+                    # Event could have already been deleted from Zoom.
+                    logging.error(f'Error updating Zoom meeting: {e}')
 
     def _deleteConferenceData(self, event: Event):
         """Deletes the conference data for the event if it is a Zoom meeting that we manage."""
         if not self.zoomAPI:
-            return
+            raise EventRepoError('User does not have a Zoom connection.')
 
         if event.conference_data:
             zoomMeetingId = (
@@ -722,7 +733,11 @@ class EventRepository:
             )
 
             if zoomMeetingId is not None:
-                self.zoomAPI.deleteMeeting(zoomMeetingId)
+                try:
+                    self.zoomAPI.deleteMeeting(zoomMeetingId)
+                except Exception as e:
+                    # Event could have already been deleted from Zoom.
+                    logging.info(f'Error deleting Zoom meeting: {e}')
 
 
 def getCombinedLabels(user: User, labelVMs: List[LabelInDbVM], session: Session) -> List[Label]:
