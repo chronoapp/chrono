@@ -90,8 +90,9 @@ class EventRepository:
     Should be self-contained, without dependencies to google or other services.
     """
 
-    def __init__(self, session: Session):
+    def __init__(self, user: User, session: Session):
         self.session = session
+        self.user = user
 
     def getRecurringEvents(
         self, user: User, calendarId: uuid.UUID, endDate: datetime

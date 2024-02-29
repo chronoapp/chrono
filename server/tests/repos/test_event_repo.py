@@ -1,5 +1,6 @@
 import uuid
 import pytest
+from unittest.mock import MagicMock, patch
 
 from datetime import datetime, timedelta
 from app.db.repos.event_repo.view_models import EventBaseVM, EventParticipantVM
@@ -22,12 +23,14 @@ from app.db.repos.event_repo.event_repo import (
     EventNotFoundError,
     getRecurringEventId,
 )
+from app.db.repos.event_repo.view_models import ConferenceDataBaseVM, CreateConferenceRequestVM
 from app.db.repos.event_repo.event_repo import (
     createOrUpdateEvent,
 )
+from app.utils.zoom import ZoomAPI
 
 
-def test_event_repo_search(user, session):
+def test_event_repo_search(user: User, session: Session):
     calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
     start = datetime.fromisoformat('2020-01-01T12:00:00-05:00')
     end = start + timedelta(hours=1)
@@ -37,16 +40,16 @@ def test_event_repo_search(user, session):
     createEvent(calendar, start, end, title='Apple Banana')
     session.commit()
 
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
     events = list(
         eventRepo.search(user, "Pear", start - timedelta(days=30), start + timedelta(days=30))
     )
 
     assert len(events) == 2
-    assert all('Pear' in e.title for e in events)
+    assert all(e.title and 'Pear' in e.title for e in events)
 
 
-def test_event_repo_search_recurring(user, session):
+def test_event_repo_search_recurring(user: User, session: Session):
     """Assure we can search instances of a recurring event."""
     calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
     start = datetime.fromisoformat('2020-01-01T12:00:00-05:00')
@@ -87,7 +90,7 @@ def test_event_repo_search_recurring(user, session):
     # Search "Pear". Makes sure we get results from both:
     # 1) The individual event
     # 2) The recurring events, except the overriden event
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
     events = list(
         eventRepo.search(user, "Pear", start - timedelta(days=30), start + timedelta(days=30))
     )
@@ -103,7 +106,7 @@ def test_event_repo_search_recurring(user, session):
 """Tests CRUD operations for events"""
 
 
-def test_event_repo_CRUD(user, session):
+def test_event_repo_CRUD(user: User, session: Session):
     """Tests a CRUD flow for events.
 
     1) Create Event
@@ -124,20 +127,21 @@ def test_event_repo_CRUD(user, session):
         start_day=startDay,
         end_day=endDay,
         calendar_id=userCalendar.id,
-        timezone=timezone,
+        time_zone=timezone,
         recurrences=['FREQ=WEEKLY;BYDAY=SU;INTERVAL=1;COUNT=5'],
         organizer=organizer,
     )
 
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
 
     # 1) Create Event
     event = eventRepo.createEvent(user, userCalendar, eventVM)
     session.add(event)
     session.commit()
+
     assert event.title == eventVM.title
-    assert event.creator.email == user.email
-    assert event.organizer.email == organizer.email
+    assert event.creator and event.creator.email == user.email
+    assert event.organizer and event.organizer.email == organizer.email
 
     # 2) Get Event
     event = eventRepo.getEvent(user, userCalendar, event.id)
@@ -151,11 +155,11 @@ def test_event_repo_CRUD(user, session):
     # 3) Update Event
     event = eventRepo.updateEvent(user, userCalendar, event.id, eventVM)
     session.commit()
-    assert event.organizer.email == eventVM.organizer.email
+    assert event.organizer and event.organizer.email == eventVM.organizer.email
     assert event.description == eventVM.description
 
 
-def test_event_repo_edit_permissions(user, session):
+def test_event_repo_edit_permissions(user: User, session: Session):
     """Tests that we can't edit an event if we don't have permission."""
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
@@ -167,8 +171,9 @@ def test_event_repo_edit_permissions(user, session):
     event.organizer = EventOrganizer('other@chrono.so', None, None)
     session.commit()
 
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
     eventVM = eventRepo.getEventVM(user, userCalendar, event.id)
+    assert eventVM is not None
 
     # Try to update the event. Should fail if modifying main event fields.
     eventVMUpdated = eventVM.model_copy(update={'title': "new summary"})
@@ -188,7 +193,7 @@ def test_event_repo_edit_permissions(user, session):
         eventRepo.updateEvent(user, userCalendar, event.id, eventVMUpdated)
 
 
-def test_event_repo_edit_attendee_permissions_as_guest(user, session):
+def test_event_repo_edit_attendee_permissions_as_guest(user: User, session: Session):
     """Tests edit event attendees when the user is not the organizer."""
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
     event = createEvent(
@@ -203,8 +208,9 @@ def test_event_repo_edit_attendee_permissions_as_guest(user, session):
     event.guests_can_invite_others = False
     session.commit()
 
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
     eventVM = eventRepo.getEventVM(user, userCalendar, event.id)
+    assert eventVM is not None
 
     # Make sure this user can update their own responseStatus.
     newParticipants = [
@@ -244,6 +250,8 @@ def test_event_repo_edit_attendee_permissions_as_guest(user, session):
     session.commit()
 
     eventVM = eventRepo.getEventVM(user, userCalendar, event.id)
+    assert eventVM is not None
+
     event = eventRepo.updateEvent(
         user, userCalendar, event.id, eventVM.model_copy(update={'participants': newParticipants})
     )
@@ -263,7 +271,7 @@ def test_event_repo_edit_attendee_permissions_as_guest(user, session):
     assert len(event.participants) == 4
 
 
-def test_event_repo_edit_attendee_permissions_as_organizer(user, session):
+def test_event_repo_edit_attendee_permissions_as_organizer(user: User, session: Session):
     """Tests edit event attendees when the user is the organizer."""
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
     event = createEvent(
@@ -277,8 +285,9 @@ def test_event_repo_edit_attendee_permissions_as_organizer(user, session):
     event.organizer = EventOrganizer(user.email, None, None)
     session.commit()
 
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
     eventVM = eventRepo.getEventVM(user, userCalendar, event.id)
+    assert eventVM is not None
 
     # We can add a new participant
     newParticipants = eventVM.participants
@@ -307,7 +316,7 @@ def test_event_repo_edit_attendee_permissions_as_organizer(user, session):
     assert 'p2@chrono.so' not in participantsMap
 
 
-def test_event_repo_delete(user, session):
+def test_event_repo_delete(user: User, session: Session):
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
     start = datetime.fromisoformat('2020-01-01T12:00:00-05:00')
     end = start + timedelta(hours=1)
@@ -315,14 +324,16 @@ def test_event_repo_delete(user, session):
     e1 = createEvent(userCalendar, start, end, title='Blueberry Pear')
     session.commit()
 
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
 
     event = eventRepo.getEvent(user, userCalendar, e1.id)
+    assert event is not None
     assert event.status == 'active'
 
     eventRepo.deleteEvent(user, userCalendar, e1.id)
 
     event = eventRepo.getEvent(user, userCalendar, e1.id)
+    assert event is not None
     assert event.status == 'deleted'
 
 
@@ -338,7 +349,7 @@ def test_event_repo_deleteRecurring(user: User, session: Session):
     recurringEvent.recurrences = ['RRULE:FREQ=DAILY;COUNT=5']
     session.commit()
 
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
 
     # 1) Delete Event Normally
     eventId = getRecurringEventId(
@@ -381,7 +392,7 @@ def test_event_repo_deleteRecurring(user: User, session: Session):
     session.commit()
 
 
-def test_event_repo_getRecurringEventWithParent(user, session):
+def test_event_repo_getRecurringEventWithParent(user: User, session: Session):
     """Make sure we can fetch an instance of a recurring event and its parent."""
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
@@ -394,14 +405,16 @@ def test_event_repo_getRecurringEventWithParent(user, session):
     eventId = getRecurringEventId(
         recurringEvent.id, datetime.fromisoformat('2020-12-02T12:00:00'), False
     )
-    eventRepo = EventRepository(session)
+    assert eventId
+
+    eventRepo = EventRepository(user, session)
     event, parent = eventRepo.getRecurringEventWithParent(userCalendar, eventId)
 
     assert event.recurring_event_id == parent.id
     assert parent.id == recurringEvent.id
 
 
-def test_event_repo_getRecurringEvent(user, session):
+def test_event_repo_getRecurringEvent(user: User, session: Session):
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Create a new recurring event.
@@ -416,18 +429,22 @@ def test_event_repo_getRecurringEvent(user, session):
     invalidEventId2 = f'{recurringEvent.id}_20211202T120000Z'
 
     # Re-query to merge with labels joined.
-    recurringEvent = (session.execute(select(Event).where(Event.id == recurringEvent.id))).scalar()
+    recurringEvent2 = (
+        session.execute(select(Event).where(Event.id == recurringEvent.id))
+    ).scalar()
 
-    getRecurringEvent(userCalendar, validEventId, recurringEvent)
+    assert recurringEvent2
+
+    getRecurringEvent(userCalendar, validEventId, recurringEvent2)
 
     with pytest.raises(InputError):
-        getRecurringEvent(userCalendar, invalidEventId1, recurringEvent)
+        getRecurringEvent(userCalendar, invalidEventId1, recurringEvent2)
 
     with pytest.raises(InputError):
-        getRecurringEvent(userCalendar, invalidEventId2, recurringEvent)
+        getRecurringEvent(userCalendar, invalidEventId2, recurringEvent2)
 
 
-def test_event_repo_getRecurringEvent_all_day(user, session):
+def test_event_repo_getRecurringEvent_all_day(user: User, session: Session):
     """Makes sure we can get fetch an all day recurring event"""
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
@@ -441,7 +458,7 @@ def test_event_repo_getRecurringEvent_all_day(user, session):
         start_day=startDay,
         end_day=endDay,
         calendar_id=userCalendar.id,
-        timezone='America/Los_Angeles',
+        time_zone='America/Los_Angeles',
         recurrences=['FREQ=WEEKLY;BYDAY=SU;INTERVAL=1;COUNT=5'],
     )
 
@@ -457,7 +474,7 @@ def test_event_repo_getRecurringEvent_all_day(user, session):
     assert event.recurring_event_id == parentEvent.id
 
 
-def test_event_repo_getAllExpandedRecurringEvents_override(user, session):
+def test_event_repo_getAllExpandedRecurringEvents_override(user: User, session: Session):
     calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     # Create a new recurring event. 01-02 to 01-07 => 6 events
@@ -501,7 +518,7 @@ def test_event_repo_getAllExpandedRecurringEvents_override(user, session):
     assert events[1].title == 'Override'
 
 
-def test_event_repo_getAllExpandedRecurringEvents_fullDay(user, session):
+def test_event_repo_getAllExpandedRecurringEvents_fullDay(user: User, session: Session):
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     startDay = '2020-12-25'
@@ -515,7 +532,7 @@ def test_event_repo_getAllExpandedRecurringEvents_fullDay(user, session):
         start_day=startDay,
         end_day=endDay,
         calendar_id=userCalendar.id,
-        timezone=timezone,
+        time_zone=timezone,
         recurrences=['FREQ=WEEKLY;BYDAY=SU;INTERVAL=1;COUNT=5'],
     )
 
@@ -543,7 +560,7 @@ def test_event_repo_getAllExpandedRecurringEvents_withTimezone(user, session):
     ]
 
 
-def test_event_repo_updateEvent_recurring(user: User, session):
+def test_event_repo_updateEvent_recurring(user: User, session: Session):
     """Move recurring event to outside a range."""
     calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
@@ -565,7 +582,7 @@ def test_event_repo_updateEvent_recurring(user: User, session):
     assert len(events) == 2
     assert [e.title for e in events] == [parentEvent.title, parentEvent.title]
 
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
     overrideEvent = events[0]
     overrideEvent.title = 'foo'
 
@@ -614,7 +631,7 @@ def test_event_repo_updateEvent_recurring(user: User, session):
     assert eventResult[0].id == parentEvent.id
 
 
-def test_event_repo_updateEvent_this_and_following(user, session):
+def test_event_repo_updateEvent_this_and_following(user: User, session: Session):
     """Updates this & following events.
 
     This creates two new parent events.
@@ -638,7 +655,7 @@ def test_event_repo_updateEvent_this_and_following(user, session):
     events = getAllExpandedRecurringEventsList(
         user, calendar, start, start + timedelta(days=10), session
     )
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
 
     # This event should be kept by the update.
     overrideEvent = events[0]
@@ -656,6 +673,8 @@ def test_event_repo_updateEvent_this_and_following(user, session):
     """
 
     parentEventVM = eventRepo.getEventVM(user, calendar, parentEvent.id)
+    assert parentEventVM
+
     parentEventVM.recurrences = ['RRULE:FREQ=DAILY;UNTIL=20220103T120000Z']
     eventRepo.updateEvent(user, calendar, parentEventVM.id, parentEventVM)
 
@@ -675,7 +694,7 @@ def test_event_repo_updateEvent_this_and_following(user, session):
 """Test Move Events"""
 
 
-def test_event_repo_moveEvent(user, session):
+def test_event_repo_moveEvent(user: User, session: Session):
     """Moved the event from one calendar to another and make sure
     we've updated the association table.
     """
@@ -688,14 +707,13 @@ def test_event_repo_moveEvent(user, session):
     # Create an event in the first calendar.
     start = datetime.fromisoformat('2020-01-01T12:00:00-05:00')
     end = start + timedelta(hours=1)
-    event = createEvent(userCalendar, start, end, title='Do stuff')
-    session.add(event)
+    evt = createEvent(userCalendar, start, end, title='Do stuff')
+    session.add(evt)
     session.commit()
-
-    eventId = event.id
+    eventId = evt.id
 
     # Move the event to second calendar.
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
 
     event = eventRepo.getEvent(user, userCalendar, eventId)
     assert event is not None
@@ -707,10 +725,10 @@ def test_event_repo_moveEvent(user, session):
     assert event is None
 
     event = eventRepo.getEvent(user, userCalendar2, eventId)
-    assert event.id == eventId
+    assert event and event.id == eventId
 
 
-def test_event_repo_moveEvent_recurring(user, session):
+def test_event_repo_moveEvent_recurring(user: User, session: Session):
     """Moved the event from one calendar to another.
     Makes sure all the recurring events instances are expanded.
     """
@@ -738,7 +756,7 @@ def test_event_repo_moveEvent_recurring(user, session):
         user, userCalendar, start, start + timedelta(days=1), session
     )
     eventInstanceId = events[0].id
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
 
     with pytest.raises(EventRepoError):
         eventRepo.moveEvent(user, eventInstanceId, userCalendar.id, userCalendar2.id)
@@ -747,13 +765,15 @@ def test_event_repo_moveEvent_recurring(user, session):
     eventRepo.moveEvent(user, baseEventId, userCalendar.id, userCalendar2.id)
 
     with pytest.raises(EventNotFoundError):
-        event = eventRepo.getEventVM(user, userCalendar, eventInstanceId)
+        event2 = eventRepo.getEventVM(user, userCalendar, eventInstanceId)
 
-    event = eventRepo.getEventVM(user, userCalendar2, eventInstanceId)
-    assert event.id == eventInstanceId
+    event2 = eventRepo.getEventVM(user, userCalendar2, eventInstanceId)
+
+    assert event2
+    assert event2.id == eventInstanceId
 
 
-def test_event_repo_eventMatchesQuery(user, session):
+def test_event_repo_eventMatchesQuery(user: User, session: Session):
     """TODO: Test that the OR filters match results given from a full text Postgres search."""
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
     start = datetime.fromisoformat('2020-01-01T12:00:00-05:00')
@@ -766,3 +786,37 @@ def test_event_repo_eventMatchesQuery(user, session):
     )
     assert eventMatchesQuery(event, "First")
     assert eventMatchesQuery(event, "Foo | second")
+
+
+def test_event_repo_createZoomConference(user: User, session: Session):
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
+
+    startDay = '2020-12-25'
+    endDay = '2020-12-26'
+    eventVM = EventBaseVM(
+        title='Event',
+        description='Test event description',
+        start=datetime.strptime(startDay, "%Y-%m-%d"),
+        end=datetime.strptime(endDay, "%Y-%m-%d"),
+        start_day=startDay,
+        end_day=endDay,
+        calendar_id=userCalendar.id,
+        time_zone='America/Los_Angeles',
+        organizer=EventParticipantVM(email='user@rechrono.com', display_name='Event Organizer'),
+    )
+
+    eventRepo = EventRepository(user, session)
+
+    # Create a mock ZoomMeeting object to return from the createMeeting method
+    zoomAPIMock = MagicMock(spec=ZoomAPI)
+    zoomMeetingMock = MagicMock()
+    zoomMeetingMock.join_url = 'https://example.com/join'
+    zoomMeetingMock.id = 12345
+    zoomMeetingMock.password = 'password'
+    zoomAPIMock.createMeeting.return_value = zoomMeetingMock
+
+    conference = eventRepo._createZoomConference(eventVM, zoomAPIMock)
+
+    assert conference.conference_id == str(zoomMeetingMock.id)
+    assert conference.entry_points[0].uri == zoomMeetingMock.join_url
+    assert conference.entry_points[0].password == zoomMeetingMock.password

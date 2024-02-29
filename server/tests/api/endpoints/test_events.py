@@ -81,7 +81,7 @@ def test_createEvent_single(user: User, session, test_client):
 
     assert eventResp.get('title') == event.get('title')
 
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
     userEvents = eventRepo.getSingleEvents(user, userCalendar.id)
 
     assert len(userEvents) == 1
@@ -512,7 +512,7 @@ def test_moveEvent_single(user, session, test_client):
     assert resp.json().get('id') == event.id
 
 
-def test_deleteEvent_single(user, session, test_client):
+def test_deleteEvent_single(user: User, session, test_client):
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     start = datetime.now()
@@ -521,7 +521,7 @@ def test_deleteEvent_single(user, session, test_client):
     session.add(event)
     session.commit()
 
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
     events = eventRepo.getSingleEvents(user, userCalendar.id)
 
     assert len(events) == 1

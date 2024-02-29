@@ -31,6 +31,7 @@ from app.db.models import (
 )
 
 from app.db.models.event import Transparency, Visibility
+from app.db.models.conference_data import ChronoConferenceType
 from app.db.repos.contact_repo import ContactRepository
 from app.db.repos.acl_repo import ACLRepository
 from app.db.repos.event_repo.event_repo import (
@@ -279,11 +280,12 @@ def syncEventsToDb(
     TODO: There's no guarantee that the recurring event is expanded first.
     We know which recurring event it is with the composite id of {id}_{start_date}.
     """
-    eventRepo = EventRepository(session)
+    user = calendar.account.user
+    eventRepo = EventRepository(user, session)
     updates = 0
 
     for eventItem in eventItems:
-        user = calendar.account.user
+
         googleEventId = eventItem['id']
         existingEvent = eventRepo.getGoogleEvent(calendar, googleEventId)
 
@@ -587,6 +589,7 @@ def conferenceDataToVM(conferenceData: ConferenceData | None) -> ConferenceDataB
         conference_id=conferenceId,
         entry_points=entryPoints,
         create_request=createRequestVM,
+        type=ChronoConferenceType.Google,
     )
 
     return conferenceDataVM

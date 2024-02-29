@@ -54,7 +54,7 @@ async def searchEvents(
     TODO: Filter by dates
     """
     try:
-        eventRepo = EventRepository(session)
+        eventRepo = EventRepository(user, session)
         start = datetime.fromisoformat(start_date) if start_date else START_OF_TIME
         end = datetime.fromisoformat(end_date) if end_date else datetime.now() + timedelta(days=365)
 
@@ -96,7 +96,7 @@ async def getCalendarEvents(
         )
         endDate = datetime.fromisoformat(end_date) if end_date else datetime.now()
 
-        eventRepo = EventRepository(session)
+        eventRepo = EventRepository(user, session)
         return eventRepo.getEventsInRange(user, calendarId, startDate, endDate, limit)
 
     except ValueError as e:
@@ -130,7 +130,7 @@ async def createCalendarEvent(
 
     try:
         calendarRepo = CalendarRepository(session)
-        eventRepo = EventRepository(session)
+        eventRepo = EventRepository(user, session)
 
         userCalendar = calendarRepo.getCalendar(user, calendarId)
         eventDb = eventRepo.createEvent(user, userCalendar, event)
@@ -155,7 +155,7 @@ async def getCalendarEvent(
     session: Session = Depends(get_db),
 ) -> EventInDBVM:
     try:
-        eventRepo = EventRepository(session)
+        eventRepo = EventRepository(user, session)
         calendarRepo = CalendarRepository(session)
 
         calendar = calendarRepo.getCalendar(user, calendarId)
@@ -187,7 +187,7 @@ async def updateCalendarEvent(
     in the DB with the composite id of {baseId}_{date}.
     """
     try:
-        eventRepo = EventRepository(session)
+        eventRepo = EventRepository(user, session)
         calendarRepo = CalendarRepository(session)
 
         userCalendar = calendarRepo.getCalendar(user, calendarId)
@@ -216,7 +216,7 @@ async def moveEventCalendar(
     session: Session = Depends(get_db),
 ) -> Event:
     try:
-        eventRepo = EventRepository(session)
+        eventRepo = EventRepository(user, session)
         event = eventRepo.moveEvent(user, eventId, calendarId, calReq.calendar_id)
 
         # Makes sure both are google calendars.
@@ -247,7 +247,7 @@ async def deleteCalendarEvent(
     """
 
     try:
-        eventRepo = EventRepository(session)
+        eventRepo = EventRepository(user, session)
         calendarRepo = CalendarRepository(session)
 
         userCalendar = calendarRepo.getCalendar(user, calendarId)

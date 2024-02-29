@@ -35,9 +35,10 @@ def syncEventToGoogleTask(
     with scoped_session() as session:
         userRepo = UserRepository(session)
         calRepo = CalendarRepository(session)
-        eventRepo = EventRepository(session)
 
         user = userRepo.getUser(userId)
+        eventRepo = EventRepository(user, session)
+
         userCalendar = calRepo.getCalendar(user, userCalendarId)
         if not userCalendar:
             logger.error(f'User calendar {userCalendarId} not found')
@@ -78,9 +79,10 @@ def syncDeleteEventToGoogleTask(
     with scoped_session() as session:
         userRepo = UserRepository(session)
         calRepo = CalendarRepository(session)
-        eventRepo = EventRepository(session)
 
         user = userRepo.getUser(userId)
+        eventRepo = EventRepository(user, session)
+
         userCalendar = calRepo.getCalendar(user, userCalendarId)
         event = eventRepo.getEventVM(user, userCalendar, eventId)
         if not event:

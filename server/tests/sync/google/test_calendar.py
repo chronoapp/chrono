@@ -171,7 +171,7 @@ def test_syncCreatedOrUpdatedGoogleEvent_recurring(user, session, eventRepo):
 
     assert event.google_id == EVENT_ITEM_RECURRING.get('id')
 
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
     events = eventRepo.getRecurringEvents(user, calendar.id, datetime.fromisoformat('2021-01-01'))
 
     assert len(events) == 1
@@ -201,7 +201,7 @@ def test_syncCreatedOrUpdatedGoogleEvent_allDay(user, session, eventRepo):
     assert event.end == datetime.fromisoformat('2020-12-26T00:00:00')
 
 
-def test_syncEventsToDb_deleted(user, session: Session):
+def test_syncEventsToDb_deleted(user: User, session: Session):
     """TODO: Ensures that all child events are deleted when the parent
     recurring event is deleted.
     """
@@ -210,7 +210,7 @@ def test_syncEventsToDb_deleted(user, session: Session):
     syncEventsToDb(calendar, [EVENT_ITEM_RECURRING], session)
     session.commit()
 
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
     events = eventRepo.getRecurringEvents(user, calendar.id, datetime.fromisoformat('2021-01-01'))
 
     assert len(events) == 1
@@ -230,7 +230,7 @@ def test_syncEventsToDb_deleted(user, session: Session):
 # ==================== Sync Recurring Events ====================
 
 
-def test_syncEventsToDb_recurring(user, session: Session):
+def test_syncEventsToDb_recurring(user: User, session: Session):
     """Event from 11:00-11:30pm: at 01-09, (EXCLUDE 01-10), 01-11, 01-12
     - UPDATE event's time at 01-10 -> 10-11
     - DELETE event at 01-12
@@ -277,7 +277,7 @@ def test_syncEventsToDb_recurring(user, session: Session):
     syncEventsToDb(calendar, eventItems, session)
     session.commit()
 
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
     parent = eventRepo.getGoogleEvent(calendar, googleEventId)
 
     assert parent is not None
@@ -295,7 +295,7 @@ def test_syncEventsToDb_recurring(user, session: Session):
         assert e.recurring_event_calendar_id == parent.calendar_id
 
 
-def test_syncEventsToDb_recurring_withParticipants(user, session):
+def test_syncEventsToDb_recurring_withParticipants(user: User, session):
     """When an instance of a recurring event is created,
     make sure the participants from the parent recurring event are included.
     """
@@ -319,7 +319,7 @@ def test_syncEventsToDb_recurring_withParticipants(user, session):
     syncEventsToDb(calendar, [eventItem, eventItemParent], session)
     session.commit()
 
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
     events = eventRepo.getSingleEvents(user, calendar.id)
 
     assert len(events) == 2
@@ -360,7 +360,7 @@ def test_syncEventsToDb_duplicateEventMultipleCalendars(user: User, session: Ses
     syncEventsToDb(readOnlyCalendar, [eventItem], session)
     syncEventsToDb(myCalendar, [eventItem], session)
 
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
 
     events1 = eventRepo.getSingleEvents(user, readOnlyCalendar.id)
     assert len(events1) == 1
@@ -376,7 +376,7 @@ def test_syncEventsToDb_changedRecurringEvent(user: User, session: Session):
     - Event id is the same, but the recurring event has changed.
     """
     calendar = CalendarRepository(session).getPrimaryCalendar(user.id)
-    eventRepo = EventRepository(session)
+    eventRepo = EventRepository(user, session)
 
     parentEvent = EVENT_ITEM_RECURRING.copy()
     recurringEvent = getRecurringEventItem(
