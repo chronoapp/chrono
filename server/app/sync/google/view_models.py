@@ -3,6 +3,8 @@ from pydantic import BaseModel
 
 from typing import Literal
 
+from app.db.repos.event_repo.view_models import EventBaseVM
+
 
 """
 Defines Pydantic models for Google Calendar API data.
@@ -114,6 +116,8 @@ class WorkingLocation(BaseModel):
 
 
 class GoogleCalendarEvent(BaseModel):
+    """The event that we receive from the Google Calendar API."""
+
     id: str
     kind: str | None = None
     etag: str | None = None
@@ -151,3 +155,11 @@ class GoogleCalendarEvent(BaseModel):
     workingLocationProperties: WorkingLocation | None = None
     attachments: list[Attachment] = []
     eventType: str | None = None
+
+
+class GoogleEventVM(EventBaseVM):
+    """Internal representation of a Google Calendar event."""
+
+    google_id: str | None
+    recurring_event_g_id: str | None
+    updated_at: datetime
