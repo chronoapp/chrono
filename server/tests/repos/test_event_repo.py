@@ -795,7 +795,7 @@ def test_event_repo_eventMatchesQuery(user: User, session: Session):
     assert eventMatchesQuery(event, "Foo | second")
 
 
-def test_event_repo_populateEventConferenceData(user: User, session: Session):
+def test_event_repo_createConferenceData(user: User, session: Session):
     """Makes sure the Zoom API is called to create a meeting
     when we have a zoom typed conference data with a create request.
     """
@@ -826,12 +826,11 @@ def test_event_repo_populateEventConferenceData(user: User, session: Session):
     zoomAPIMock.createMeeting.return_value = zoomMeetingMock
     eventRepo.zoomAPI = zoomAPIMock
 
-    event = eventRepo._populateEventConferenceData(eventVM)
+    conferenceDataVM = eventRepo._createConferenceData(eventVM)
 
-    assert event.conference_data
-    assert event.conference_data.conference_id == str(zoomMeetingMock.id)
-    assert event.conference_data.entry_points[0].uri == zoomMeetingMock.join_url
-    assert event.conference_data.entry_points[0].password == zoomMeetingMock.password
+    assert conferenceDataVM.conference_id == str(zoomMeetingMock.id)
+    assert conferenceDataVM.entry_points[0].uri == zoomMeetingMock.join_url
+    assert conferenceDataVM.entry_points[0].password == zoomMeetingMock.password
 
 
 def test_event_repo_deleteConferenceData(user: User, session: Session):

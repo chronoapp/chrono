@@ -214,17 +214,18 @@ class EventRepository:
             event.original_timezone = event.timezone
 
         # If conferencing is Chrono's type, we need to create a conference data object manually.
-        event = self._populateEventConferenceData(event)
-
+        event = self._populateEventConferenceData(None, event)
         eventDb = createOrUpdateEvent(userCalendar, None, event, overrideId=event.id)
         eventDb.labels = getCombinedLabels(self.user, event.labels, self.session)
+
         self.session.commit()
 
         newEvent = self.getEvent(userCalendar, eventDb.id)
         if not newEvent:
             raise EventNotFoundError
 
-        self.updateEventParticipants(userCalendar, newEvent, event.participants)
+        self._updateEventParticipants(userCalendar, newEvent, event.participants)
+
         self.session.commit()
 
         return newEvent
@@ -327,7 +328,7 @@ class EventRepository:
         userCalendar: UserCalendar,
         eventId: str,
         event: EventBaseVM,
-    ) -> Event:
+    ) -> EventInDBVM:
         curEvent = self.getEvent(userCalendar, eventId)
         self.verifyPermissions(userCalendar, curEvent, event)
 
@@ -372,6 +373,7 @@ class EventRepository:
                 )
             ).scalar()
 
+            event = self._populateEventConferenceData(curEvent, EventBaseVM.model_validate(event))
             updatedEvent = createOrUpdateEvent(
                 userCalendar, existingOverrideInstance, event, overrideId=eventId, googleId=googleId
             )
@@ -384,18 +386,20 @@ class EventRepository:
 
         # We are overriding a parent recurring event.
         elif curEvent and curEvent.is_parent_recurring_event:
+            event = self._populateEventConferenceData(curEvent, EventBaseVM.model_validate(event))
             updatedEvent = createOrUpdateEvent(userCalendar, curEvent, event)
 
             self._updateRecurringEventOverrides(userCalendar, updatedEvent)
 
         # Update normal event.
         else:
+            event = self._populateEventConferenceData(curEvent, EventBaseVM.model_validate(event))
             updatedEvent = createOrUpdateEvent(userCalendar, curEvent, event)
 
         updatedEvent.labels.clear()
         updatedEvent.labels = getCombinedLabels(self.user, event.labels, self.session)
 
-        self.updateEventParticipants(userCalendar, updatedEvent, event.participants)
+        self._updateEventParticipants(userCalendar, updatedEvent, event.participants)
         self.session.commit()
 
         return updatedEvent
@@ -463,7 +467,7 @@ class EventRepository:
 
         return allEvents
 
-    def updateEventParticipants(
+    def _updateEventParticipants(
         self,
         userCalendar: UserCalendar,
         event: Event,
@@ -553,8 +557,8 @@ class EventRepository:
         return eventInDbVM, parentEvent
 
     def _updateRecurringEventOverrides(self, userCalendar: UserCalendar, event: Event):
-        """If the recurrence changes, so we need to delete the overrides that no longer exist
-        as part of the new recurrence.
+        """Delete the overrides that no longer exist as part of the new recurrence.
+        This is done when the user updates a recurring event and changes the recurrence rule.
         """
         if not event.start:
             raise EventRepoError('No start date for recurring event.')
@@ -589,27 +593,65 @@ class EventRepository:
                 False if not ruleSet else ruleSet.after(originalStart, inc=True) == originalStart
             )
             if not isInNewRecurrence:
-                logging.info(f'DELETE {override} ')
+                logging.info(f'Delete recurring event override: {override} ')
                 self.session.delete(override)
 
-    def _populateEventConferenceData(self, event: EventBaseVM) -> EventBaseVM:
-        """If the event has conferencing solutions that are supported by Chrono
+    def _populateEventConferenceData(
+        self, prevEvent: Event | None, newEvent: EventBaseVM
+    ) -> EventBaseVM:
+        """Creates or updates conference data for the event and returns a new event with the updated conference data.
+        This needs to be done before creating or updating the event in the database.
+
+        If the event has conferencing solutions that are supported by Chrono
         but not by Google Calendar, we need to create the conference data manually.
+
+        1) New event has conference data.
+        - Create the new zoom conference data for new event.
+        - Update the current event's linked zoom conference data
+
+        2) Current event has managed conference data.
+        - Delete the current event's linked zoom conference data
         """
-        ZOOM_IMAGE = 'https://lh3.googleusercontent.com/d/1HWZ0YS-xLVSAoQ2SUDuC3iFRtdm8a-FR'
 
-        if not event.conference_data:
-            return event
+        # 1) New event with new conference data.
+        if newEvent and newEvent.conference_data:
+            isManagedZoomMeet = (
+                newEvent.conference_data
+                and newEvent.conference_data.type == ChronoConferenceType.Zoom
+            )
+            if isManagedZoomMeet:
+                createZoomMeeting = newEvent.conference_data.create_request is not None
+                updateZoomMeeting = newEvent.conference_data.conference_id is not None
 
-        conferenceDataVM = event.conference_data
-        isManagedZoomMeet = (
-            conferenceDataVM.create_request and conferenceDataVM.type == ChronoConferenceType.Zoom
-        )
-        if not isManagedZoomMeet:
-            return event
+                if createZoomMeeting:
+                    conferenceDataVM = self._createConferenceData(newEvent)
+                    newEvent = newEvent.model_copy(update={'conference_data': conferenceDataVM})
 
-        if isManagedZoomMeet and not self.zoomAPI:
+                elif updateZoomMeeting:
+                    self._updateConferenceData(newEvent)
+
+        # 2) Prev event with managed Zoom meeting.
+        if prevEvent and prevEvent.conference_data:
+            isManagedZoomMeet = (
+                prevEvent.conference_data.create_request is not None
+                and prevEvent.conference_data.type == ChronoConferenceType.Zoom
+            )
+            if isManagedZoomMeet:
+                self._deleteConferenceData(prevEvent)
+
+        return newEvent
+
+    def _createConferenceData(self, event: EventBaseVM) -> ConferenceDataBaseVM:
+        assert (
+            event.conference_data
+            and event.conference_data.create_request
+            and event.conference_data.type == ChronoConferenceType.Zoom
+        ), 'Invalid conference data.'
+
+        if not self.zoomAPI:
             raise EventRepoError('User does not have a Zoom connection.')
+
+        ZOOM_IMAGE = 'https://lh3.googleusercontent.com/d/1HWZ0YS-xLVSAoQ2SUDuC3iFRtdm8a-FR'
 
         zoomMeeting = self.zoomAPI.createMeeting(
             ZoomMeetingInput(
@@ -640,7 +682,31 @@ class EventRepository:
             type=ChronoConferenceType.Zoom,
         )
 
-        return event.model_copy(update={'conference_data': conferenceDataVM})
+        return conferenceDataVM
+
+    def _updateConferenceData(self, event: EventBaseVM):
+        """Updates the conference data for the event if it is a Zoom meeting that we manage."""
+        if not self.zoomAPI:
+            raise EventRepoError('User does not have a Zoom connection.')
+
+        if event.conference_data:
+            zoomMeetingId = (
+                int(event.conference_data.conference_id)
+                if event.conference_data.conference_id
+                and event.conference_data.type == ChronoConferenceType.Zoom
+                else None
+            )
+
+            if zoomMeetingId is not None:
+                self.zoomAPI.updateMeeting(
+                    zoomMeetingId,
+                    ZoomMeetingInput(
+                        topic=event.title or '',
+                        agenda=event.description or '',
+                        start_time=event.start.isoformat(),
+                        duration=int((event.end - event.start).total_seconds() / 60),
+                    ),
+                )
 
     def _deleteConferenceData(self, event: Event):
         """Deletes the conference data for the event if it is a Zoom meeting that we manage."""
