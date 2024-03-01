@@ -21,6 +21,7 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.orm import relationship, Mapped, mapped_column, backref
+from sqlalchemy.dialects.postgresql import JSONB
 
 from app.db.base_class import Base
 from app.db.models.event_label import event_label_association_table
@@ -92,9 +93,6 @@ class Event(Base):
     """This ID could be duplicated to multiple calendars, so it's not a primary key.
     """
     id: Mapped[str] = mapped_column(String, default=shortuuid.uuid, nullable=False, index=True)
-
-    # Google-specific
-    google_id: Mapped[Optional[str]] = mapped_column(String(255), index=True)
 
     calendar_id: Mapped[uuid.UUID] = mapped_column(
         UUID(),
@@ -208,6 +206,10 @@ class Event(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+    # Google-specific. TODO: Inherit from a base class.
+    google_id: Mapped[Optional[str]] = mapped_column(String(255), index=True)
+    extended_properties: Mapped[Optional[dict]] = mapped_column(JSONB)
 
     @property
     def title_short(self) -> Optional[str]:
