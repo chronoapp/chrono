@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from passlib.context import CryptContext
+import bcrypt
+
 from sqlalchemy.orm import Session
 from fastapi import Depends, status, HTTPException, APIRouter
 
@@ -9,7 +10,6 @@ from app.db.models.user import User
 from app.api.utils.db import get_db
 from .token_utils import getAuthToken
 
-pwdContext = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 router = APIRouter()
 
@@ -20,11 +20,11 @@ class LoginUser(BaseModel):
 
 
 def verifyPassword(plainPass: str, hashedPass: str) -> bool:
-    return pwdContext.verify(plainPass, hashedPass)
+    return bcrypt.checkpw(plainPass.encode('utf-8'), hashedPass.encode('utf-8'))
 
 
 def getPasswordHash(plainPass: str) -> str:
-    return pwdContext.hash(plainPass)
+    return bcrypt.hashpw(plainPass.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 
 def authenticateUser(loginUser: LoginUser, session: Session) -> User:
