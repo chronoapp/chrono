@@ -106,19 +106,8 @@ def chronoToGoogleEvent(event: Event, timeZone: str):
                 for entrypoint in event.conference_data.entry_points
             ]
 
-        if event.conference_data.type == ChronoConferenceType.Zoom:
-            eventBody['extendedProperties'] = {
-                'private': {
-                    'chrono_conference': json.dumps(
-                        {
-                            'type': ChronoConferenceType.Zoom.value,
-                            'id': event.conference_data.conference_id,
-                        }
-                    )
-                }
-            }
-        else:
-            eventBody['extendedProperties'] = {'private': {}}
+        extendedProperties = event.extended_properties or {'private': {}}
+        eventBody['extendedProperties'] = extendedProperties
 
     else:
         eventBody['conferenceData'] = None
@@ -237,6 +226,9 @@ def googleEventToEventVM(calendarId: uuid.UUID, eventItem: dict[str, Any]) -> Go
         transparency=Transparency(googleEvent.transparency),
         use_default_reminders=googleEvent.reminders.useDefault if googleEvent.reminders else True,
         reminders=reminderOverrides,
+        extended_properties=(
+            googleEvent.extendedProperties.model_dump() if googleEvent.extendedProperties else None
+        ),
         updated_at=googleEvent.updated,
     )
 
