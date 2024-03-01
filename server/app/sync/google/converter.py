@@ -1,9 +1,11 @@
 import uuid
+import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from typing import Any
 
+from app.core.logger import logger
 from app.db.models import Event, ReminderMethod
 from app.db.models.conference_data import (
     ChronoConferenceType,
@@ -21,7 +23,7 @@ from app.db.repos.event_repo.view_models import (
     ReminderOverrideVM,
 )
 
-from .view_models import ConferenceData, GoogleCalendarEvent, GoogleEventVM
+from .view_models import ConferenceData, GoogleCalendarEvent, GoogleEventVM, ExtendedProperties
 
 """Transforms Viewmodels from Google to Chrono data models and vice versa.
 """
@@ -103,6 +105,21 @@ def chronoToGoogleEvent(event: Event, timeZone: str):
                 }
                 for entrypoint in event.conference_data.entry_points
             ]
+
+        if event.conference_data.type == ChronoConferenceType.Zoom:
+            eventBody['extendedProperties'] = {
+                'private': {
+                    'chrono_conference': json.dumps(
+                        {
+                            'type': ChronoConferenceType.Zoom.value,
+                            'id': event.conference_data.conference_id,
+                        }
+                    )
+                }
+            }
+        else:
+            eventBody['extendedProperties'] = {'private': {}}
+
     else:
         eventBody['conferenceData'] = None
 
@@ -144,7 +161,9 @@ def googleEventToEventVM(calendarId: uuid.UUID, eventItem: dict[str, Any]) -> Go
     guestsCanInviteOthers = googleEvent.guestsCanInviteOthers
     guestsCanSeeOtherGuests = googleEvent.guestsCanSeeOtherGuests
 
-    conferenceDataVM = _conferenceDataToVM(googleEvent.conferenceData)
+    conferenceDataVM = _conferenceDataToVM(
+        googleEvent.conferenceData, googleEvent.extendedProperties
+    )
     location = googleEvent.location
 
     originalStartTime = googleEvent.originalStartTime
@@ -233,12 +252,32 @@ def convertStatus(status: str):
         return 'active'
 
 
-def _conferenceDataToVM(conferenceData: ConferenceData | None) -> ConferenceDataBaseVM | None:
+def _conferenceDataToVM(
+    conferenceData: ConferenceData | None, extendedProperties: ExtendedProperties | None
+) -> ConferenceDataBaseVM | None:
     """Parses conference data from Google to Chrono's view model."""
     if not conferenceData:
         return None
 
     conferenceDataVM = None
+
+    conferenceType = ChronoConferenceType.Google
+    if extendedProperties and extendedProperties.private is not None:
+        conferenceDataProperty = extendedProperties.private.get('chrono_conference')
+        if conferenceDataProperty:
+            try:
+                conferenceDataPropertyDict = json.loads(conferenceDataProperty)
+                if (
+                    conferenceDataPropertyDict['type'] == ChronoConferenceType.Zoom.value
+                    and conferenceDataPropertyDict['id'] == conferenceData.conferenceId
+                ):
+                    conferenceType = ChronoConferenceType.Zoom
+
+            except json.JSONDecodeError:
+                # In case the property has been tampered with.
+                logger.warning(
+                    f'Failed to decode conference data property {conferenceDataProperty}'
+                )
 
     createRequestVM = None
     if conferenceData.createRequest:
@@ -277,7 +316,7 @@ def _conferenceDataToVM(conferenceData: ConferenceData | None) -> ConferenceData
         conference_id=conferenceId,
         entry_points=entryPoints,
         create_request=createRequestVM,
-        type=ChronoConferenceType.Google,
+        type=conferenceType,
     )
 
     return conferenceDataVM

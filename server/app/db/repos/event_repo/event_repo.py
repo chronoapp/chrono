@@ -57,7 +57,7 @@ from app.db.repos.exceptions import (
 from app.api.endpoints.labels import LabelInDbVM, Label, combineLabels
 from app.utils.zoom import ZoomAPI, ZoomMeetingInput
 
-ZOOM_IMAGE = 'https://lh3.googleusercontent.com/ugWKRyPiOCwjn5jfaoVgC-O80F3nhKH1dKMGsibXvGV1tc6pGXLOJk9WO7dwhw8-Xl9IwkKZEFDbeMDgnx-kf8YGJZ9uhrJMK9KP8-ISybmbgg1LK121obq2o5ML0YugbWh-JevWMu4FxxTKzM2r68bfDG_NY-BNnHSG7NcOKxo-RE7dfObk3VkycbRZk_GUK_1UUI0KitNg7HBfyqFyxIPOmds0l-h2Q1atWtDWLi29n_2-s5uw_kV4l2KeeaSGws_x8h0zsYWLDP5wdKWwYMYiQD2AFM32SHJ4wLAcAKnwoZxUSyT_lWFTP0PHJ6PwETDGNZjmwh3hD6Drn7Z3mnX662S6tkoPD92LtMDA0eNLr6lg-ypI2fhaSGKOeWFwA5eFjds7YcH-axp6cleuiEp05iyPO8uqtRDRMEqQhPaiRTcw7pY5UAVbz2yXbMLVofojrGTOhdvlYvIdDgBOSUkqCshBDV4A2TJyDXxFjpSYaRvwwWIT0JgrIxLpBhnyd3_w6m5My5QtgBJEt_S2Dq4bXwCAA7VcRiD61WmDyHfU3dBiWQUNjcH39IKT9V1fbUcUkfDPM_AGjp7pwgG3w9yDemGi1OGlRXS4pU7UwF24c2dozrmaK17iPaExn0cmIgtBnFUXReY48NI8h2MNd_QysNMWYNYbufoPD7trSu6nS39wlUDQer2V'
+ZOOM_IMAGE = 'https://lh3.googleusercontent.com/d/1HWZ0YS-xLVSAoQ2SUDuC3iFRtdm8a-FR'
 
 MAX_RECURRING_EVENT_COUNT = 1000
 
@@ -696,7 +696,7 @@ class EventRepository:
 
         if event.conference_data:
             zoomMeetingId = (
-                int(event.conference_data.conference_id)
+                event.conference_data.conference_id
                 if event.conference_data.conference_id
                 and event.conference_data.type == ChronoConferenceType.Zoom
                 else None
@@ -724,7 +724,7 @@ class EventRepository:
 
         if event.conference_data:
             zoomMeetingId = (
-                int(event.conference_data.conference_id)
+                event.conference_data.conference_id
                 if event.conference_data.conference_id
                 and event.conference_data.type == ChronoConferenceType.Zoom
                 else None
@@ -1070,9 +1070,7 @@ def createOrUpdateEvent(
     else:
         organizer = EventOrganizer(userCalendar.email, userCalendar.summary, None)
 
-    conferenceData = createOrUpdateConferenceData(
-        eventDb.conference_data if eventDb else None, eventVM.conference_data
-    )
+    conferenceData = createConferenceData(eventVM.conference_data)
 
     reminders = (
         [
@@ -1159,18 +1157,10 @@ def createOrUpdateEvent(
         return eventDb
 
 
-def createOrUpdateConferenceData(
-    existingConferenceData: ConferenceData | None, conferenceDataVM: ConferenceDataBaseVM | None
-) -> ConferenceData | None:
-    """Makes sure we keep the existing conference data's type, which tells us whether we are
-    managing Zoom (+ other providers) meetings. If so, we need to track the meeting ID so
-    CRUD operations to the event will also change the Zoom meeting accordingly.
-    """
+def createConferenceData(conferenceDataVM: ConferenceDataBaseVM | None) -> ConferenceData | None:
     conferenceData = None
 
     if conferenceDataVM:
-        existingConferenceType = existingConferenceData.type if existingConferenceData else None
-
         conferenceData = ConferenceData(
             conferenceDataVM.conference_id,
             (
@@ -1182,7 +1172,7 @@ def createOrUpdateConferenceData(
                 if conferenceDataVM.conference_solution
                 else None
             ),
-            type=existingConferenceType or conferenceDataVM.type,
+            type=conferenceDataVM.type,
         )
         conferenceData.entry_points = [
             ConferenceEntryPoint(
