@@ -63,9 +63,11 @@ const zoomConference: ConferenceItem = {
   conferenceData: null,
 }
 
-function videoMeetType(type: ConferenceKeyType): VideoMeetType {
-  if (type === 'hangoutsMeet') {
+function videoMeetType(conferenceData: ConferenceData): VideoMeetType {
+  if (conferenceData.conference_solution?.key_type === 'hangoutsMeet') {
     return 'google'
+  } else if (conferenceData.type === 'zoom') {
+    return 'zoom'
   } else {
     return 'other'
   }
@@ -84,8 +86,8 @@ function getConferenceList(user: User, conferenceData: ConferenceData | null): C
   if (conferenceData && conferenceData.conference_solution) {
     conferenceList.push({
       title: conferenceData.conference_solution.name,
-      type: videoMeetType(conferenceData.conference_solution.key_type),
-      logo: conferenceData.conference_solution.icon_uri,
+      type: videoMeetType(conferenceData),
+      logo: conferenceData.type == 'zoom' ? ZoomLogo : conferenceData.conference_solution.icon_uri,
       conferenceData: conferenceData,
     })
   }
@@ -98,7 +100,8 @@ function getConferenceList(user: User, conferenceData: ConferenceData | null): C
         conferenceList.push(googleMeetConference)
       }
     } else if (type === 'zoom') {
-      if (!conferenceData || !isZoomMeeting(conferenceData)) {
+      const isZoomMeeting = conferenceData?.type === 'zoom' && !!conferenceData?.conference_solution
+      if (!conferenceData || !isZoomMeeting) {
         conferenceList.push(zoomConference)
       }
     }
@@ -113,13 +116,6 @@ function getConferenceList(user: User, conferenceData: ConferenceData | null): C
       return 0
     }
   })
-}
-
-function isZoomMeeting(conferenceData: ConferenceData) {
-  return (
-    conferenceData.conference_solution?.name.includes('Zoom') &&
-    conferenceData.conference_solution?.key_type === 'addOn'
-  )
 }
 
 function getSelectedConference(
@@ -139,21 +135,6 @@ function getSelectedConference(
   }
 }
 
-/**
- * Merges the selected conference with the conference data.
- */
-function getSelectedConferenceItem(
-  conferenceList: ConferenceItem[],
-  conferenceData: ConferenceData
-) {
-  const conference = getSelectedConference(conferenceList, conferenceData)
-
-  return {
-    ...conference,
-    conferenceData: conferenceData,
-  }
-}
-
 function ConferenceList(props: IProps) {
   const { conferenceData, readonly, onSelectConference, ...boxProps } = props
 
@@ -162,8 +143,12 @@ function ConferenceList(props: IProps) {
   // Merged list of selectable conferences.
   const conferenceList = getConferenceList(user!, conferenceData)
 
+  // Merges the selected conference with the conference data.
   const selectedConference = conferenceData
-    ? getSelectedConferenceItem(conferenceList, conferenceData)
+    ? {
+        ...getSelectedConference(conferenceList, conferenceData),
+        conferenceData: conferenceData,
+      }
     : null
 
   return (
