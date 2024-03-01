@@ -1,5 +1,6 @@
 import uuid
 import pytest
+import json
 from unittest.mock import MagicMock, patch
 
 from datetime import datetime, timedelta
@@ -165,10 +166,11 @@ def test_event_repo_CRUD(user: User, session: Session):
     eventVM.description = "new description"
 
     # 3) Update Event
-    event = eventRepo.updateEvent(userCalendar, event.id, eventVM)
+    updatedEventVM = eventRepo.updateEvent(userCalendar, event.id, eventVM)
     session.commit()
-    assert event.organizer and event.organizer.email == eventVM.organizer.email
-    assert event.description == eventVM.description
+
+    assert updatedEventVM.organizer and updatedEventVM.organizer.email == eventVM.organizer.email
+    assert updatedEventVM.description == eventVM.description
 
 
 def test_event_repo_edit_permissions(user: User, session: Session):
@@ -795,12 +797,64 @@ def test_event_repo_eventMatchesQuery(user: User, session: Session):
     assert eventMatchesQuery(event, "Foo | second")
 
 
+def test_event_repo_populateEventConferenceData(user: User, session: Session):
+    """Tests populating an event with conference data.
+    Ensure that existing extended_properties are not overwritten.
+    """
+
+    userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
+
+    # 1) We have an existing event with extended properties.
+    event = createEvent(
+        userCalendar,
+        datetime.now(),
+        datetime.now() + timedelta(hours=1),
+        title='Event',
+    )
+    event.extended_properties = {'private': {'foo': 'bar'}}
+    session.commit()
+
+    eventRepo = EventRepository(user, session)
+    eventVM = eventRepo.getEventVM(userCalendar, event.id)
+
+    assert eventVM
+    assert eventVM.conference_data is None
+
+    # 2) Add conferencing data to the event.
+    eventVM.conference_data = ConferenceDataBaseVM(
+        conference_id=None,
+        conference_solution=None,
+        entry_points=[],
+        type=ChronoConferenceType.Zoom,
+        create_request=CreateConferenceRequestVM(
+            conference_solution_key_type=ConferenceKeyType.ADD_ON,
+            status=ConferenceCreateStatus.PENDING,
+        ),
+    )
+
+    zoomAPIMock, createdZoomMeeting = _createMockZoomAPI()
+    zoomAPIMock.createMeeting.return_value = createdZoomMeeting
+    eventRepo.zoomAPI = zoomAPIMock
+
+    # 3) Ensure we add conference data to the extended properties and that existing
+    # properties are not overwritten.
+    updatedEventVM = eventRepo._populateEventConferenceData(event, eventVM)
+
+    assert updatedEventVM.extended_properties
+    assert updatedEventVM.extended_properties['private']['foo'] == 'bar'
+    assert updatedEventVM.extended_properties['private']['chrono_conference']
+
+    conferenceData = json.loads(updatedEventVM.extended_properties['private']['chrono_conference'])
+    assert conferenceData['type'] == 'zoom'
+    assert conferenceData['id'] == str(createdZoomMeeting.id)
+
+
 def test_event_repo_createConferenceData(user: User, session: Session):
     """Makes sure the Zoom API is called to create a meeting
     when we have a zoom typed conference data with a create request.
     """
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
-    eventVM = createTestEventVM(userCalendar.id).model_copy(
+    eventVM = _createTestEventVM(userCalendar.id).model_copy(
         update={
             'conference_data': ConferenceDataBaseVM(
                 conference_id=None,
@@ -818,19 +872,15 @@ def test_event_repo_createConferenceData(user: User, session: Session):
     eventRepo = EventRepository(user, session)
 
     # Create a mock ZoomMeeting object to return from the createMeeting method
-    zoomAPIMock = MagicMock(spec=ZoomAPI)
-    zoomMeetingMock = MagicMock()
-    zoomMeetingMock.join_url = 'https://example.com/join'
-    zoomMeetingMock.id = 12345
-    zoomMeetingMock.password = 'password'
-    zoomAPIMock.createMeeting.return_value = zoomMeetingMock
+    zoomAPIMock, createdZoomMeeting = MagicMock(spec=ZoomAPI)
+    zoomAPIMock.createMeeting.return_value = createdZoomMeeting
     eventRepo.zoomAPI = zoomAPIMock
 
     conferenceDataVM = eventRepo._createConferenceData(eventVM)
 
-    assert conferenceDataVM.conference_id == str(zoomMeetingMock.id)
-    assert conferenceDataVM.entry_points[0].uri == zoomMeetingMock.join_url
-    assert conferenceDataVM.entry_points[0].password == zoomMeetingMock.password
+    assert conferenceDataVM.conference_id == str(createdZoomMeeting.id)
+    assert conferenceDataVM.entry_points[0].uri == createdZoomMeeting.join_url
+    assert conferenceDataVM.entry_points[0].password == createdZoomMeeting.password
 
 
 def test_event_repo_deleteConferenceData(user: User, session: Session):
@@ -838,7 +888,7 @@ def test_event_repo_deleteConferenceData(user: User, session: Session):
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     zoomMeetingID = 12345
-    eventVM = createTestEventVM(userCalendar.id).model_copy(
+    eventVM = _createTestEventVM(userCalendar.id).model_copy(
         update={
             'conference_data': ConferenceDataBaseVM(
                 conference_id=str(zoomMeetingID),
@@ -855,7 +905,7 @@ def test_event_repo_deleteConferenceData(user: User, session: Session):
     )
 
     eventRepo = EventRepository(user, session)
-    zoomAPIMock = MagicMock(spec=ZoomAPI)
+    zoomAPIMock, _created = _createMockZoomAPI()
     eventRepo.zoomAPI = zoomAPIMock
 
     eventRepo._deleteConferenceData(eventVM)
@@ -863,7 +913,18 @@ def test_event_repo_deleteConferenceData(user: User, session: Session):
     zoomAPIMock.deleteMeeting.assert_called_once_with(zoomMeetingID)
 
 
-def createTestEventVM(userCalendarId: uuid.UUID):
+def _createMockZoomAPI():
+    zoomAPIMock = MagicMock(spec=ZoomAPI)
+    zoomMeetingMock = MagicMock()
+    zoomMeetingMock.join_url = 'https://example.com/join'
+    zoomMeetingMock.id = 12345
+    zoomMeetingMock.password = 'password'
+    zoomAPIMock.createMeeting.return_value = zoomMeetingMock
+
+    return zoomAPIMock, zoomMeetingMock
+
+
+def _createTestEventVM(userCalendarId: uuid.UUID):
     startDay = '2020-12-25'
     endDay = '2020-12-26'
 

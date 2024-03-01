@@ -1,4 +1,5 @@
 import uuid
+import json
 import heapq
 
 from typing import List, Optional, Iterable, Tuple, Generator, AsyncGenerator, Dict, cast
@@ -611,7 +612,21 @@ class EventRepository:
 
         2) Current event has managed conference data.
         - Delete the current event's linked zoom conference data if it's a different meeting.
+
+        # TODO: Delete conference data from extended properties
         """
+
+        def createZoomMeetingProperties(conferenceId: str):
+            return {
+                'private': {
+                    'chrono_conference': json.dumps(
+                        {
+                            'type': ChronoConferenceType.Zoom.value,
+                            'id': conferenceId,
+                        }
+                    )
+                }
+            }
 
         # 1) New event with new conference data.
         if newEvent and newEvent.conference_data:
@@ -623,14 +638,35 @@ class EventRepository:
                 createZoomMeeting = newEvent.conference_data.create_request is not None
                 updateZoomMeeting = newEvent.conference_data.conference_id is not None
 
+                updatedExtendedProperties = newEvent.extended_properties or {}
                 if createZoomMeeting:
                     conferenceDataVM = self._createConferenceData(newEvent)
-                    newEvent = newEvent.model_copy(update={'conference_data': conferenceDataVM})
+                    assert conferenceDataVM.conference_id, 'Invalid conference data.'
+
+                    # Store the conference data in the extended properties.
+                    zoomProperties = createZoomMeetingProperties(conferenceDataVM.conference_id)
+                    updatedExtendedProperties = updatedNestedDict(
+                        updatedExtendedProperties, zoomProperties
+                    )
+                    newEvent = newEvent.model_copy(
+                        update={
+                            'conference_data': conferenceDataVM,
+                            'extended_properties': updatedExtendedProperties,
+                        }
+                    )
 
                 elif updateZoomMeeting:
-                    self._updateConferenceData(newEvent)
+                    updatedMeetingId = self._updateConferenceData(newEvent)
+                    if updatedMeetingId:
+                        zoomProperties = createZoomMeetingProperties(updatedMeetingId)
+                        updatedExtendedProperties = updatedNestedDict(
+                            updatedExtendedProperties, zoomProperties
+                        )
+                        newEvent = newEvent.model_copy(
+                            update={'extended_properties': updatedExtendedProperties}
+                        )
 
-        # 2) Prev event with managed Zoom meeting.
+        # 2) Prev event with managed Zoom meeting: Delete if it's a different meeting.
         if prevEvent and prevEvent.conference_data:
             newConferenceId = (
                 newEvent.conference_data.conference_id
@@ -689,11 +725,16 @@ class EventRepository:
 
         return conferenceDataVM
 
-    def _updateConferenceData(self, event: EventBaseVM):
-        """Updates the conference data for the event if it is a Zoom meeting that we manage."""
+    def _updateConferenceData(self, event: EventBaseVM) -> str | None:
+        """Updates the conference data for the event if it is a Zoom meeting that we manage.
+
+        Returns:
+            - The updated Zoom meeting ID if the meeting was updated.
+        """
         if not self.zoomAPI:
             raise EventRepoError('User does not have a Zoom connection.')
 
+        zoomMeetingId = None
         if event.conference_data:
             zoomMeetingId = (
                 event.conference_data.conference_id
@@ -716,6 +757,8 @@ class EventRepository:
                 except Exception as e:
                     # Event could have already been deleted from Zoom.
                     logging.error(f'Error updating Zoom meeting: {e}')
+
+        return zoomMeetingId
 
     def _deleteConferenceData(self, event: Event):
         """Deletes the conference data for the event if it is a Zoom meeting that we manage."""
@@ -1055,6 +1098,8 @@ def createOrUpdateEvent(
 ) -> Event:
     """Create a new event or update (PUT) an existing event by copying the properties from the view model
     to the event model.
+
+    # TODO: Add extended properties
     """
     recurrences = None if eventVM.recurring_event_id else eventVM.recurrences
 
@@ -1221,3 +1266,17 @@ def getRRule(
         rule = rrule(dtstart=startDate, freq=freq, interval=interval, until=until)
 
     return rule
+
+
+def updatedNestedDict(data1: dict, data2: dict):
+    """Updates nested dictionaries without overwriting existing values."""
+    """Merges two JSON objects where the values within a common key are also JSON objects."""
+    result = data1.copy()
+
+    for key, value in data2.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = updatedNestedDict(result[key], value)  # Recurse if nested dictionaries
+        else:
+            result[key] = value
+
+    return result
