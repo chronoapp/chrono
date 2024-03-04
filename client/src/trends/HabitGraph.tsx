@@ -81,8 +81,8 @@ function HabitGraph(props: IProps) {
             dayIdx < week.length - 1 ? trendMap.get(format(week[dayIdx + 1], 'YYYY-MM-DD')) || 0 : 0
           const renderLink = dayValue > 0 && nextDayValue > 0
 
-          let color
-          if (dayValue) {
+          let color = '#E0E0E0'
+          if (dayValue > 0) {
             let addLight = 0
             if (maxDuration > 0) {
               const ratio = dayValue / maxDuration
@@ -90,9 +90,7 @@ function HabitGraph(props: IProps) {
               addLight = (1 - ratio) * remainingLight
             }
 
-            if (dayValue > 0) {
-              color = `hsl(${h}, ${s}%, ${l + addLight}%)`
-            }
+            color = `hsl(${h}, ${s}%, ${l + addLight}%)`
           }
 
           return (
@@ -102,11 +100,12 @@ function HabitGraph(props: IProps) {
                   className="habit-chart-day"
                   backgroundColor={color}
                   height="20"
+                  width="20"
                   alignItems="flex-start"
                   justifyContent="flex-end"
                   border="1px solid rgba(230, 230, 230)"
                   borderRadius="md"
-                  flex={1}
+                  flex="none"
                   m="1"
                   position="relative"
                 >
