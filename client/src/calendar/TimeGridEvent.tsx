@@ -208,12 +208,7 @@ function TimeGridEvent(props: IProps) {
 
   const color = ['needsAction', 'declined'].includes(responseStatus)
     ? backgroundColor
-    : Event.getForegroundColor(
-        event.end,
-        props.now,
-        event.foregroundColor,
-        calendar.backgroundColor
-      )
+    : Event.getForegroundColor(event.end, props.now, calendar.backgroundColor)
 
   const textDecoration = responseStatus === 'declined' ? 'line-through' : undefined
 

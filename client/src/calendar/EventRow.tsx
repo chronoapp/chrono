@@ -30,7 +30,7 @@ export function EventItem(props: {
 
   const eventTitle = Event.getDefaultTitle(event.title_short)
   const backgroundColor = Event.getBackgroundColor(event.end, calendar.backgroundColor, props.now)
-
+  const foregroundColor = Event.getForegroundColor(event.end, props.now, calendar.backgroundColor)
   function handleStartDragging(e) {
     if (e.button === 0 && calendar?.isWritable()) {
       eventActions.onBeginAction(event, 'MOVE', null)
@@ -57,12 +57,7 @@ export function EventItem(props: {
         style={{
           position: 'relative',
           backgroundColor: isEditing ? backgroundColor : adjustHSLABrightness(backgroundColor, +20),
-          color: Event.getForegroundColor(
-            event.end,
-            props.now,
-            event.foregroundColor,
-            calendar.backgroundColor
-          ),
+          color: isEditing ? adjustHSLABrightness(foregroundColor, -20) : foregroundColor,
           height: '23px',
           padding: 0,
         }}
@@ -85,12 +80,7 @@ export function EventItem(props: {
         className={clsx('cal-event-row', props.isPreview && 'cal-event-preview')}
         style={{
           alignItems: 'center',
-          color: Event.getForegroundColor(
-            event.end,
-            props.now,
-            event.foregroundColor,
-            calendar.backgroundColor
-          ),
+          color: Event.getForegroundColor(event.end, props.now, calendar.backgroundColor),
         }}
         onMouseDown={handleStartDragging}
         onTouchStart={handleStartDragging}

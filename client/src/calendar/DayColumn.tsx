@@ -402,7 +402,6 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
           color: Event.getForegroundColor(
             selectRange.endDate,
             props.now,
-            'white',
             props.primaryCalendar.backgroundColor
           ),
           backgroundColor: adjustHSLABrightness(backgroundColor, +20),
