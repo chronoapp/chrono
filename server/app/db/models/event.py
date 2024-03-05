@@ -260,6 +260,7 @@ class Event(Base):
         status: EventStatus = 'active',
         recurringEventId: Optional[str] = None,
         recurringEventCalendarId: Optional[uuid.UUID] = None,
+        extendedProperties: dict | None = None,
     ):
         if overrideId:
             self.id = overrideId
@@ -319,6 +320,7 @@ class Event(Base):
         self.original_start = originalStart
         self.original_start_day = originalStartDay
         self.original_timezone = originalTimezone
+        self.extended_properties = extendedProperties
 
     def __repr__(self) -> str:
         return f'<Event {self.id} {self.title} start:{self.start} end:{self.end} {self.status}/>'

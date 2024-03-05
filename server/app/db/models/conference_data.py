@@ -90,7 +90,7 @@ class ConferenceData(Base):
         self,
         conferenceId: str | None,
         conferenceSolution: Optional['ConferenceSolution'],
-        type: ChronoConferenceType = ChronoConferenceType.Google,
+        type: ChronoConferenceType,
     ):
         self.conference_id = conferenceId
         self.conference_solution = conferenceSolution

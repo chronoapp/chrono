@@ -329,7 +329,7 @@ class EventRepository:
         userCalendar: UserCalendar,
         eventId: str,
         event: EventBaseVM,
-    ) -> EventInDBVM:
+    ) -> Event:
         curEvent = self.getEvent(userCalendar, eventId)
         self.verifyPermissions(userCalendar, curEvent, event)
 
@@ -612,8 +612,6 @@ class EventRepository:
 
         2) Current event has managed conference data.
         - Delete the current event's linked zoom conference data if it's a different meeting.
-
-        # TODO: Delete conference data from extended properties
         """
 
         def createZoomMeetingProperties(conferenceId: str):
@@ -629,42 +627,55 @@ class EventRepository:
             }
 
         # 1) New event with new conference data.
-        if newEvent and newEvent.conference_data:
-            isManagedZoomMeet = (
-                newEvent.conference_data
-                and newEvent.conference_data.type == ChronoConferenceType.Zoom
-            )
-            if isManagedZoomMeet:
-                createZoomMeeting = newEvent.conference_data.create_request is not None
-                updateZoomMeeting = newEvent.conference_data.conference_id is not None
+        isManagedZoomMeet = (
+            newEvent.conference_data is not None
+            and newEvent.conference_data.type == ChronoConferenceType.Zoom
+        )
+        if isManagedZoomMeet:
+            assert newEvent.conference_data  # for type check
 
-                updatedExtendedProperties = newEvent.extended_properties or {}
-                if createZoomMeeting:
-                    conferenceDataVM = self._createConferenceData(newEvent)
-                    assert conferenceDataVM.conference_id, 'Invalid conference data.'
+            createZoomMeeting = newEvent.conference_data.create_request is not None
+            updateZoomMeeting = newEvent.conference_data.conference_id is not None
 
-                    # Store the conference data in the extended properties.
-                    zoomProperties = createZoomMeetingProperties(conferenceDataVM.conference_id)
+            updatedExtendedProperties = newEvent.extended_properties or {}
+            if createZoomMeeting:
+                conferenceDataVM = self._createConferenceData(newEvent)
+                assert conferenceDataVM.conference_id, 'Invalid conference data.'
+
+                # Store the conference data in the extended properties.
+                zoomProperties = createZoomMeetingProperties(conferenceDataVM.conference_id)
+                updatedExtendedProperties = updatedNestedDict(
+                    updatedExtendedProperties, zoomProperties
+                )
+                newEvent = newEvent.model_copy(
+                    update={
+                        'conference_data': conferenceDataVM,
+                        'extended_properties': updatedExtendedProperties,
+                    }
+                )
+
+            elif updateZoomMeeting:
+                updatedMeetingId = self._updateConferenceData(newEvent)
+                if updatedMeetingId:
+                    zoomProperties = createZoomMeetingProperties(updatedMeetingId)
                     updatedExtendedProperties = updatedNestedDict(
                         updatedExtendedProperties, zoomProperties
                     )
                     newEvent = newEvent.model_copy(
-                        update={
-                            'conference_data': conferenceDataVM,
-                            'extended_properties': updatedExtendedProperties,
-                        }
+                        update={'extended_properties': updatedExtendedProperties}
                     )
 
-                elif updateZoomMeeting:
-                    updatedMeetingId = self._updateConferenceData(newEvent)
-                    if updatedMeetingId:
-                        zoomProperties = createZoomMeetingProperties(updatedMeetingId)
-                        updatedExtendedProperties = updatedNestedDict(
-                            updatedExtendedProperties, zoomProperties
-                        )
-                        newEvent = newEvent.model_copy(
-                            update={'extended_properties': updatedExtendedProperties}
-                        )
+        else:
+            # Remove the existing event's private properties if it has been removed.
+            if prevEvent:
+                # Need to copy the extended properties to a new dict to avoid SQLAlchemy errors.
+                existingProperties = json.loads(
+                    json.dumps(dict(prevEvent.extended_properties or {}))
+                )
+                if existingProperties.get('private', {}).get('chrono_conference'):
+                    del existingProperties['private']['chrono_conference']
+
+                newEvent = newEvent.model_copy(update={'extended_properties': existingProperties})
 
         # 2) Prev event with managed Zoom meeting: Delete if it's a different meeting.
         if prevEvent and prevEvent.conference_data:
@@ -1098,8 +1109,6 @@ def createOrUpdateEvent(
 ) -> Event:
     """Create a new event or update (PUT) an existing event by copying the properties from the view model
     to the event model.
-
-    # TODO: Add extended properties
     """
     recurrences = None if eventVM.recurring_event_id else eventVM.recurrences
 
@@ -1155,6 +1164,7 @@ def createOrUpdateEvent(
             recurringEventId=eventVM.recurring_event_id,
             recurringEventCalendarId=userCalendar.id,
             overrideId=overrideId,
+            extendedProperties=eventVM.extended_properties,
         )
 
         userCalendar.calendar.events.append(event)
@@ -1199,6 +1209,8 @@ def createOrUpdateEvent(
         if reminders is not None:
             eventDb.reminders = reminders
 
+        eventDb.extended_properties = eventVM.extended_properties
+
         return eventDb
 
 
@@ -1217,7 +1229,7 @@ def createConferenceData(conferenceDataVM: ConferenceDataBaseVM | None) -> Confe
                 if conferenceDataVM.conference_solution
                 else None
             ),
-            type=conferenceDataVM.type,
+            conferenceDataVM.type,
         )
         conferenceData.entry_points = [
             ConferenceEntryPoint(

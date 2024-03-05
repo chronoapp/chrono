@@ -848,6 +848,15 @@ def test_event_repo_populateEventConferenceData(user: User, session: Session):
     assert conferenceData['type'] == 'zoom'
     assert conferenceData['id'] == str(createdZoomMeeting.id)
 
+    # 4) Remove conference data from the event.
+    # Ensure that the extended properties are removed.
+
+    updatedEventVM = eventRepo._populateEventConferenceData(
+        event, updatedEventVM.model_copy(update={'conference_data': None})
+    )
+
+    assert updatedEventVM.extended_properties == {'private': {'foo': 'bar'}}
+
 
 def test_event_repo_createConferenceData(user: User, session: Session):
     """Makes sure the Zoom API is called to create a meeting

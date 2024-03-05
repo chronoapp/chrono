@@ -106,11 +106,11 @@ def chronoToGoogleEvent(event: Event, timeZone: str):
                 for entrypoint in event.conference_data.entry_points
             ]
 
-        extendedProperties = event.extended_properties or {'private': {}}
+        extendedProperties = event.extended_properties or {}
         eventBody['extendedProperties'] = extendedProperties
-
     else:
         eventBody['conferenceData'] = None
+        eventBody['extendedProperties'] = event.extended_properties or {}
 
     if event.all_day:
         eventBody['start'] = {'date': event.start_day, 'timeZone': timeZone, 'dateTime': None}
