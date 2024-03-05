@@ -99,8 +99,8 @@ function HabitGraph(props: IProps) {
                 <Flex
                   className="habit-chart-day"
                   backgroundColor={color}
-                  height="20"
-                  width="20"
+                  height="120px"
+                  width="120px"
                   alignItems="flex-start"
                   justifyContent="flex-end"
                   border="1px solid rgba(230, 230, 230)"
