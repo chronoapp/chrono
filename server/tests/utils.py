@@ -32,6 +32,7 @@ def createEvent(
     timezone: Optional[str] = None,
     recurrences: Optional[List[str]] = None,
     title: Optional[str] = 'Event',
+    description: Optional[str] = 'Event description',
 ) -> Event:
     originalStart = None
     if recurrences:
@@ -40,7 +41,7 @@ def createEvent(
     event = Event(
         googleId,
         title,
-        f'Event description',
+        description,
         start,
         end,
         None,
@@ -50,7 +51,7 @@ def createEvent(
         originalStart,
         None,
         None,
-        EventCreator('test-user@chrono.so', 'Test User', None),
+        EventCreator('test@rechrono.com', 'Test User', None),
         EventOrganizer(userCalendar.email, userCalendar.summary, None),
         False,
         True,

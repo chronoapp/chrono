@@ -12,6 +12,8 @@ from app.db.models import ZoomConnection
 class ZoomMeetingInput(BaseModel):
     topic: str
     agenda: str
+    start_time: str  # date in isoformat
+    duration: int  # duration in minutes
 
 
 class ZoomMeeting(BaseModel):
@@ -48,14 +50,14 @@ class ZoomAPI:
 
         return ZoomMeetingDetail(**result)
 
-    def updateMeeting(self, meetingId: int, meeting: ZoomMeetingInput):
+    def updateMeeting(self, meetingId: str, meeting: ZoomMeetingInput):
         url = f"{self.baseUrl}/meetings/{meetingId}"
 
         jsonReq = meeting.model_dump()
 
         return self._makeRequest(requests.patch, url, jsonReq)
 
-    def deleteMeeting(self, meetingId: int):
+    def deleteMeeting(self, meetingId: str):
         url = f"{self.baseUrl}/meetings/{meetingId}"
 
         return self._makeRequest(requests.delete, url, {})

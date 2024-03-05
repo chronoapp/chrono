@@ -201,29 +201,25 @@ export default function useEventActions() {
   }
 
   /**
-   * Overrides an existing event ID when we get a successful response from the server
-   * and sets the event to Synced.
+   * Overrides an the existing event in our local state with the successful
+   * Event response from the server.
    */
-  function onSavedEventToServer(calendarId: string, eventId: string) {
+  function handleSuccessfulEventSave(calendarId: string, newEvent: Event) {
     setEvents((prevState) => {
       return {
         ...prevState,
         eventsByCalendar: produce(prevState.eventsByCalendar, (eventsByCalendar) => {
-          const event = eventsByCalendar[calendarId][eventId]
-          const updatedEvent = { ...event, syncStatus: 'SYNCED' as SyncStatus, id: eventId }
-          eventsByCalendar[calendarId][eventId] = updatedEvent
+          const updatedEvent = newEvent
+          eventsByCalendar[calendarId][newEvent.id] = updatedEvent
         }),
       }
     })
 
     setEditingEvent((editingEvent) => {
-      if (editingEvent?.id === eventId) {
+      if (editingEvent?.id === newEvent.id) {
         return {
           ...editingEvent,
-          event: {
-            ...editingEvent.event,
-            syncStatus: 'SYNCED',
-          },
+          event: newEvent,
         }
       }
       return editingEvent
@@ -352,7 +348,7 @@ export default function useEventActions() {
     updateEditMode,
     initNewEventAtDate,
     updateEvent,
-    onSavedEventToServer,
+    handleSuccessfulEventSave,
     deleteEvent,
     moveEventCalendarAction,
     showConfirmDialog,

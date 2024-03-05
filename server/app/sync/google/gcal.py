@@ -1,16 +1,15 @@
-from typing import Any, Optional, Literal, Dict
+from typing import Literal
 from uuid import uuid4
-from zoneinfo import ZoneInfo
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-from app.core import config
+from app.sync.google.converter import chronoToGoogleEvent
 from app.sync.locking import acquireLock, releaseLock
+
 from app.db.models import Event, UserCalendar, Calendar, UserAccount
-from app.db.models.conference_data import ConferenceCreateStatus
 
 """Interfaces with Google Calendar API.
 
@@ -34,7 +33,7 @@ def getGoogleEvent(userCalendar: UserCalendar, eventId: str):
     return (
         _getCalendarService(userCalendar.account)
         .events()
-        .get(calendarId=userCalendar.id, eventId=eventId)
+        .get(calendarId=userCalendar.google_id, eventId=eventId)
         .execute()
     )
 
@@ -75,7 +74,7 @@ def createGoogleEvent(
     event: Event,
     sendUpdates: SendUpdateType,
 ):
-    eventBody = _getEventBody(event, userCalendar.timezone)
+    eventBody = chronoToGoogleEvent(event, userCalendar.timezone)
 
     return (
         _getCalendarService(userCalendar.account)
@@ -123,7 +122,7 @@ def updateGoogleEvent(
     if not event.google_id:
         raise ValueError('Event must have a google_id to update')
 
-    eventBody = _getEventBody(event, userCalendar.timezone)
+    eventBody = chronoToGoogleEvent(event, userCalendar.timezone)
     lockId = acquireLock(event.google_id)
     resp = (
         _getCalendarService(userCalendar.account)
@@ -291,105 +290,3 @@ def _getCalendarService(userAccount: UserAccount):
     service = build('calendar', 'v3', credentials=credentials, cache_discovery=False)
 
     return service
-
-
-def _getEventBody(event: Event, timeZone: str):
-    """TODO: Use the Pydantic Model for validation."""
-    if event.organizer is None or event.start is None or event.end is None:
-        raise ValueError('Event missing required fields')
-
-    organizer = {'email': event.organizer.email, 'displayName': event.organizer.display_name}
-    participants = [
-        {'email': p.email, 'displayName': p.display_name, 'responseStatus': p.response_status}
-        for p in event.participants
-        if p.email
-    ]
-
-    eventBody: dict[str, Any] = {
-        'summary': event.title_short,
-        'description': event.description,
-        'recurrence': event.recurrences,
-        'organizer': organizer,
-        'attendees': participants,
-        'guestsCanModify': event.guests_can_modify,
-        'guestsCanInviteOthers': event.guests_can_invite_others,
-        'guestsCanSeeOtherGuests': event.guests_can_see_other_guests,
-        'location': event.location,
-        'visibility': event.visibility.value,
-        'transparency': event.transparency.value,
-    }
-
-    if event.use_default_reminders:
-        eventBody['reminders'] = {'useDefault': True}
-    elif event.reminders is not None:
-        eventBody['reminders'] = {
-            'useDefault': False,
-            'overrides': [
-                {'method': reminder.method.value, 'minutes': reminder.minutes}
-                for reminder in event.reminders
-            ],
-        }
-
-    # Either conferenceSolution and at least one entryPoint, or createRequest is required.
-    if event.conference_data is not None:
-        if (
-            event.conference_data.create_request
-            and event.conference_data.create_request.status == ConferenceCreateStatus.PENDING
-        ):
-            eventBody['conferenceData'] = {
-                'createRequest': {
-                    'requestId': event.conference_data.create_request.request_id,
-                    'conferenceSolutionKey': {
-                        'type': event.conference_data.create_request.conference_solution_key_type.value
-                    },
-                }
-            }
-        else:
-            eventBody['conferenceData'] = {
-                'conferenceId': event.conference_data.conference_id,
-            }
-
-            if event.conference_data.conference_solution:
-                eventBody['conferenceData']['conferenceSolution'] = {
-                    'key': {'type': event.conference_data.conference_solution.key_type.value},
-                    'name': event.conference_data.conference_solution.name,
-                    'iconUri': event.conference_data.conference_solution.icon_uri,
-                }
-
-            eventBody['conferenceData']['entryPoints'] = [
-                {
-                    'entryPointType': entrypoint.entry_point_type.value,
-                    'uri': entrypoint.uri,
-                    'label': entrypoint.label,
-                    'meetingCode': entrypoint.meeting_code,
-                    'password': entrypoint.password,
-                }
-                for entrypoint in event.conference_data.entry_points
-            ]
-    else:
-        eventBody['conferenceData'] = None
-
-    if event.all_day:
-        eventBody['start'] = {'date': event.start_day, 'timeZone': timeZone, 'dateTime': None}
-        eventBody['end'] = {'date': event.end_day, 'timeZone': timeZone, 'dateTime': None}
-    else:
-        eventBody['start'] = {
-            'dateTime': _convertToLocalTime(event.start, timeZone).isoformat(),
-            'timeZone': timeZone,
-            'date': None,
-        }
-        eventBody['end'] = {
-            'dateTime': _convertToLocalTime(event.end, timeZone).isoformat(),
-            'timeZone': timeZone,
-            'date': None,
-        }
-
-    return eventBody
-
-
-def _convertToLocalTime(dateTime: datetime, timeZone: Optional[str]):
-    if not timeZone:
-        return dateTime
-
-    localAware = dateTime.astimezone(ZoneInfo(timeZone))  # convert
-    return localAware

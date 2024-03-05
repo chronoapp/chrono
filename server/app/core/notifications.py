@@ -82,5 +82,7 @@ def sendClientNotification(clientID: str, message: NotificationType):
     Every process in the API server will receive the notification, but only
     the one that has the websocket connection will send it to the client.
     """
+    logger.debug(f"Sending notification to client {clientID}: {message.value}")
+
     r = redis.Redis(host='redis', port=6379, db=0)
     r.publish('app_notifications', json.dumps({'clientID': clientID, 'text': message.value}))

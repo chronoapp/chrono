@@ -6,6 +6,7 @@ from app.db.models.conference_data import (
     CommunicationMethod,
     ConferenceCreateStatus,
     ConferenceKeyType,
+    ChronoConferenceType,
 )
 from app.db.models.event import EventStatus, Transparency, Visibility
 from app.db.models.event_participant import ResponseStatus
@@ -80,7 +81,9 @@ class ConferenceDataBaseVM(BaseModel):
     create_request: CreateConferenceRequestVM | None
 
     # Linking EntryPoint
-    entry_points: List[EntryPointBaseVM]
+    entry_points: list[EntryPointBaseVM]
+
+    type: ChronoConferenceType
 
 
 class ReminderOverrideVM(BaseModel):
@@ -140,6 +143,7 @@ class EventBaseVM(BaseModel):
     original_start_day: Optional[str] = None
     original_timezone: Optional[str] = None
 
+    extended_properties: dict | None = None
     updated_at: Optional[datetime] = None
 
     @field_validator('recurrences')
