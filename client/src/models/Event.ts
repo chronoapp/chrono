@@ -121,7 +121,7 @@ export default class Event {
   ) {
     if (endDate < today) {
       const { h, s } = hexToHSL(backgroundColor)
-      const hsl = `hsla(${h}, ${s}%, 15%, 0.5)`
+      const hsl = `hsla(${h}, ${s}%, 65%, 0.5)`
       return hsl
     } else {
       return foregroundColor
