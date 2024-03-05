@@ -96,7 +96,9 @@ class EventRepository:
         self.user = user
 
         if self.user.zoom_connection:
-            self.zoomAPI = ZoomAPI(self.session, self.user.zoom_connection)
+            self.zoomAPI: ZoomAPI | None = ZoomAPI(self.session, self.user.zoom_connection)
+        else:
+            self.zoomAPI: ZoomAPI | None = None
 
     def getRecurringEvents(self, calendarId: uuid.UUID, endDate: datetime) -> list[Event]:
         stmt = (
@@ -636,6 +638,7 @@ class EventRepository:
 
             createZoomMeeting = newEvent.conference_data.create_request is not None
             updateZoomMeeting = newEvent.conference_data.conference_id is not None
+            logging.info(f'{updateZoomMeeting=}')
 
             updatedExtendedProperties = newEvent.extended_properties or {}
             if createZoomMeeting:
@@ -665,17 +668,14 @@ class EventRepository:
                         update={'extended_properties': updatedExtendedProperties}
                     )
 
-        else:
+        elif prevEvent:
             # Remove the existing event's private properties if it has been removed.
-            if prevEvent:
-                # Need to copy the extended properties to a new dict to avoid SQLAlchemy errors.
-                existingProperties = json.loads(
-                    json.dumps(dict(prevEvent.extended_properties or {}))
-                )
-                if existingProperties.get('private', {}).get('chrono_conference'):
-                    del existingProperties['private']['chrono_conference']
+            # Need to copy the extended properties to a new dict to avoid SQLAlchemy errors.
+            existingProperties = json.loads(json.dumps(dict(prevEvent.extended_properties or {})))
+            if existingProperties.get('private', {}).get('chrono_conference'):
+                del existingProperties['private']['chrono_conference']
 
-                newEvent = newEvent.model_copy(update={'extended_properties': existingProperties})
+            newEvent = newEvent.model_copy(update={'extended_properties': existingProperties})
 
         # 2) Prev event with managed Zoom meeting: Delete if it's a different meeting.
         if prevEvent and prevEvent.conference_data:
@@ -743,7 +743,7 @@ class EventRepository:
             - The updated Zoom meeting ID if the meeting was updated.
         """
         if not self.zoomAPI:
-            raise EventRepoError('User does not have a Zoom connection.')
+            return None
 
         zoomMeetingId = None
         if event.conference_data:
@@ -772,9 +772,11 @@ class EventRepository:
         return zoomMeetingId
 
     def _deleteConferenceData(self, event: Event):
-        """Deletes the conference data for the event if it is a Zoom meeting that we manage."""
+        """Deletes the conference data for the event if it is a Zoom meeting that we manage.
+        Do nothing if there is no access to the Zoom API as the user could have unlinked their zoom account.
+        """
         if not self.zoomAPI:
-            raise EventRepoError('User does not have a Zoom connection.')
+            return
 
         if event.conference_data:
             zoomMeetingId = (
