@@ -43,20 +43,21 @@ export function hexToHSL(hex: string) {
 
   return { h, s, l }
 }
-export function adjustHSLBrightness(hslColor: string, brightnessAdjustment: number) {
-  const parts = hslColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/)
+export function adjustHSLABrightness(hslaColor: string, brightnessAdjustment: number) {
+  // This regex matches HSLA color format, capturing the hue, saturation, lightness, and alpha values
+  const parts = hslaColor.match(/hsla?\((\d+),\s*(\d+)%,\s*(\d+)%\s*,?\s*(\d*\.?\d+)?\)/)
   if (!parts) {
-    console.error('Invalid HSL color format')
-    return hslColor
+    console.error('Invalid HSLA color format:', hslaColor)
+    return hslaColor // Return the original input if the format doesn't match
   }
 
-  let [_, h, s, l] = parts
-  let lightness = parseInt(l)
+  let [_, h, s, l, a = 1] = parts // Default alpha to 1 if not provided
+  let lightness = parseInt(l, 10)
 
   // Adjust lightness
   lightness += brightnessAdjustment
   // Ensure lightness remains within the 0-100% range
   lightness = Math.max(0, Math.min(100, lightness))
 
-  return `hsl(${h}, ${s}%, ${lightness}%)`
+  return `hsla(${h}, ${s}%, ${lightness}%, ${a})`
 }

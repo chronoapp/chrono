@@ -20,7 +20,7 @@ import TimeGridEvent from './TimeGridEvent'
 import EventPopover from './event-edit/EventEditPopover'
 import ResizeEventContainer from './ResizeEventContainer'
 import { EventService } from '@/calendar/event-edit/useEventService'
-import { adjustHSLBrightness } from './utils/Colors'
+import { adjustHSLABrightness } from './utils/Colors'
 import { EventVerticalIndicator } from '@/components/EventStyle'
 interface IProps {
   date: Date
@@ -405,7 +405,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
             'white',
             props.primaryCalendar.backgroundColor
           ),
-          backgroundColor: adjustHSLBrightness(backgroundColor, +20),
+          backgroundColor: adjustHSLABrightness(backgroundColor, +20),
           padding: 'unset',
         }}
       >

@@ -15,7 +15,7 @@ import EventPopover from './event-edit/EventEditPopover'
 import Event from '../models/Event'
 import { EventService } from './event-edit/useEventService'
 import { EventVerticalIndicator } from '@/components/EventStyle'
-import { adjustHSLBrightness } from './utils/Colors'
+import { adjustHSLABrightness } from './utils/Colors'
 export function EventItem(props: {
   event: Event
   isPreview: boolean
@@ -56,7 +56,7 @@ export function EventItem(props: {
         className={clsx('cal-event', props.isPreview && 'cal-event-preview-full')}
         style={{
           position: 'relative',
-          backgroundColor: isEditing ? backgroundColor : adjustHSLBrightness(backgroundColor, +20),
+          backgroundColor: isEditing ? backgroundColor : adjustHSLABrightness(backgroundColor, +20),
           color: Event.getForegroundColor(
             event.end,
             props.now,
