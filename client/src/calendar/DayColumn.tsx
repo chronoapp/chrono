@@ -404,7 +404,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
             props.now,
             props.primaryCalendar.backgroundColor
           ),
-          backgroundColor: adjustHSLABrightness(backgroundColor, +20),
+          backgroundColor: adjustHSLABrightness(backgroundColor, +30),
           padding: 'unset',
         }}
       >

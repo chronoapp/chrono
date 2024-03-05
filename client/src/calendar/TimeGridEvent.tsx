@@ -13,7 +13,7 @@ import { timeFormatShort } from '../util/localizer'
 import * as dates from '../util/dates'
 
 import { LabelTagColor } from '../components/LabelTag'
-import { adjustHSLABrightness } from '@/calendar/utils/Colors'
+import { adjustHSLABrightness, makeHSLASolid } from '@/calendar/utils/Colors'
 import { EventVerticalIndicator } from '@/components/EventStyle'
 interface IProps {
   event: Event
@@ -230,10 +230,10 @@ function TimeGridEvent(props: IProps) {
         cursor: props.isPreview ? 'move' : 'pointer',
         padding: 'unset',
         backgroundColor: isEditing
-          ? backgroundColorComputed
+          ? makeHSLASolid(backgroundColorComputed)
           : adjustHSLABrightness(backgroundColorComputed, +30),
         border: border,
-        color: isEditing ? adjustHSLABrightness(color, -30) : color,
+        color: isEditing ? adjustHSLABrightness(color, +50) : color,
         textDecoration: textDecoration,
       }}
       draggable={true}

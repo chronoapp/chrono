@@ -61,3 +61,15 @@ export function adjustHSLABrightness(hslaColor: string, brightnessAdjustment: nu
 
   return `hsla(${h}, ${s}%, ${lightness}%, ${a})`
 }
+export function makeHSLASolid(hslaColor: string) {
+  // This regex matches HSLA color format, capturing the hue, saturation, lightness, and alpha values
+  const parts = hslaColor.match(/hsla?\((\d+),\s*(\d+)%,\s*(\d+)%\s*,?\s*(\d*\.?\d+)?\)/)
+  if (!parts) {
+    console.error('Invalid HSLA color format:', hslaColor)
+    return hslaColor // Return the original input if the format doesn't match
+  }
+
+  let [_, h, s, l] = parts // Ignore the alpha part
+
+  return `hsl(${h}, ${s}%, ${l}%)`
+}

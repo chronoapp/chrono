@@ -15,7 +15,7 @@ import EventPopover from './event-edit/EventEditPopover'
 import Event from '../models/Event'
 import { EventService } from './event-edit/useEventService'
 import { EventVerticalIndicator } from '@/components/EventStyle'
-import { adjustHSLABrightness } from './utils/Colors'
+import { adjustHSLABrightness, makeHSLASolid } from './utils/Colors'
 export function EventItem(props: {
   event: Event
   isPreview: boolean
@@ -56,8 +56,10 @@ export function EventItem(props: {
         className={clsx('cal-event', props.isPreview && 'cal-event-preview-full')}
         style={{
           position: 'relative',
-          backgroundColor: isEditing ? backgroundColor : adjustHSLABrightness(backgroundColor, +20),
-          color: isEditing ? adjustHSLABrightness(foregroundColor, -20) : foregroundColor,
+          backgroundColor: isEditing
+            ? makeHSLASolid(backgroundColor)
+            : adjustHSLABrightness(backgroundColor, +30),
+          color: isEditing ? adjustHSLABrightness(foregroundColor, +50) : foregroundColor,
           height: '23px',
           padding: 0,
         }}
@@ -80,7 +82,7 @@ export function EventItem(props: {
         className={clsx('cal-event-row', props.isPreview && 'cal-event-preview')}
         style={{
           alignItems: 'center',
-          color: Event.getForegroundColor(event.end, props.now, calendar.backgroundColor),
+          color: foregroundColor,
         }}
         onMouseDown={handleStartDragging}
         onTouchStart={handleStartDragging}
