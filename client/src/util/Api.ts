@@ -162,8 +162,7 @@ export async function createCalendar(
   backgroundColor: string,
   source: CalendarProvider,
   description: string,
-  timezone?: string,
-  foregroundColor: string = '#ffffff'
+  timezone?: string
 ): Promise<Calendar> {
   return fetch(`${API_URL}/calendars/`, {
     method: 'POST',
@@ -174,7 +173,6 @@ export async function createCalendar(
       timezone,
       backgroundColor,
       source,
-      foregroundColor,
     }),
     headers: getHeaders(),
   })

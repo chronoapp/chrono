@@ -14,7 +14,8 @@ import EventPopover from './event-edit/EventEditPopover'
 
 import Event from '../models/Event'
 import { EventService } from './event-edit/useEventService'
-
+import { EventVerticalIndicator } from '@/components/EventStyle'
+import { adjustHSLABrightness, makeHSLASolid } from './utils/Colors'
 export function EventItem(props: {
   event: Event
   isPreview: boolean
@@ -28,7 +29,8 @@ export function EventItem(props: {
   const dndAction = useRecoilValue(dragDropActionState)
 
   const eventTitle = Event.getDefaultTitle(event.title_short)
-
+  const backgroundColor = Event.getBackgroundColor(event.end, calendar.backgroundColor, props.now)
+  const foregroundColor = Event.getForegroundColor(event.end, props.now, calendar.backgroundColor)
   function handleStartDragging(e) {
     if (e.button === 0 && calendar?.isWritable()) {
       eventActions.onBeginAction(event, 'MOVE', null)
@@ -41,25 +43,35 @@ export function EventItem(props: {
     }
   }
 
+  const isDragging = dndAction && dndAction.interacting && dndAction.event.id === event.id
+  const isEditing =
+    editingEvent?.id === event.id &&
+    editingEvent?.event?.calendar_id === event.calendar_id &&
+    (editingEvent?.editMode === 'READ' || editingEvent?.editMode === 'EDIT')
   let eventDisplay
+
   if (event.all_day) {
     eventDisplay = (
       <div
         className={clsx('cal-event', props.isPreview && 'cal-event-preview-full')}
         style={{
-          backgroundColor: Event.getBackgroundColor(event.end, calendar.backgroundColor, props.now),
-          color: Event.getForegroundColor(
-            event.end,
-            props.now,
-            event.foregroundColor,
-            calendar.backgroundColor
-          ),
+          position: 'relative',
+          backgroundColor: isEditing
+            ? makeHSLASolid(backgroundColor)
+            : adjustHSLABrightness(backgroundColor, +30),
+          color: isEditing ? adjustHSLABrightness(foregroundColor, +50) : foregroundColor,
+          height: '23px',
+          padding: 0,
         }}
         onMouseDown={handleStartDragging}
         onTouchStart={handleStartDragging}
         onClick={handleClickEvent}
       >
-        <div className="cal-event-content" style={{ whiteSpace: 'inherit', height: '1.5em' }}>
+        <EventVerticalIndicator backgroundColor={backgroundColor} />
+        <div
+          className="cal-event-content"
+          style={{ whiteSpace: 'inherit', height: '1.5em', paddingLeft: '10px' }}
+        >
           {eventTitle}
         </div>
       </div>
@@ -70,12 +82,7 @@ export function EventItem(props: {
         className={clsx('cal-event-row', props.isPreview && 'cal-event-preview')}
         style={{
           alignItems: 'center',
-          color: Event.getForegroundColor(
-            event.end,
-            props.now,
-            event.foregroundColor,
-            calendar.backgroundColor
-          ),
+          color: foregroundColor,
         }}
         onMouseDown={handleStartDragging}
         onTouchStart={handleStartDragging}
@@ -89,12 +96,6 @@ export function EventItem(props: {
       </div>
     )
   }
-
-  const isDragging = dndAction && dndAction.interacting && dndAction.event.id === event.id
-  const isEditing =
-    editingEvent?.id === event.id &&
-    editingEvent?.event?.calendar_id === event.calendar_id &&
-    (editingEvent?.editMode === 'READ' || editingEvent?.editMode === 'EDIT')
 
   if (isEditing && !isDragging) {
     return (

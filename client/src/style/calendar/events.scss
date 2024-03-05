@@ -10,14 +10,10 @@
   width: 100%;
   text-align: left;
   font-size: 70%;
-
+  
   .cal-slot-selecting & {
     cursor: inherit;
     pointer-events: none;
-  }
-
-  &.cal-selected {
-    background-color: darken($event-bg, 10%);
   }
 
   &:focus {
