@@ -20,6 +20,7 @@ import TimeGridEvent from './TimeGridEvent'
 import EventPopover from './event-edit/EventEditPopover'
 import ResizeEventContainer from './ResizeEventContainer'
 import { EventService } from '@/calendar/event-edit/useEventService'
+
 import { adjustHSLABrightness } from './utils/Colors'
 import { EventVerticalIndicator } from '@/components/EventStyle'
 interface IProps {

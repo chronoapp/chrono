@@ -43,6 +43,7 @@ export function hexToHSL(hex: string) {
 
   return { h, s, l }
 }
+
 export function adjustHSLABrightness(hslaColor: string, brightnessAdjustment: number) {
   // This regex matches HSLA color format, capturing the hue, saturation, lightness, and alpha values
   const parts = hslaColor.match(/hsla?\((\d+),\s*(\d+)%,\s*(\d+)%\s*,?\s*(\d*\.?\d+)?\)/)
@@ -61,6 +62,7 @@ export function adjustHSLABrightness(hslaColor: string, brightnessAdjustment: nu
 
   return `hsla(${h}, ${s}%, ${lightness}%, ${a})`
 }
+
 export function makeHSLASolid(hslaColor: string) {
   // This regex matches HSLA color format, capturing the hue, saturation, lightness, and alpha values
   const parts = hslaColor.match(/hsla?\((\d+),\s*(\d+)%,\s*(\d+)%\s*,?\s*(\d*\.?\d+)?\)/)
