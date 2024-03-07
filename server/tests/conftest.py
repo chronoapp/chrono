@@ -45,8 +45,8 @@ def test_client():
 
 
 @pytest.fixture
-def eventRepo(session):
-    yield EventRepository(session)
+def eventRepo(session, user):
+    yield EventRepository(user, session)
 
 
 @pytest.fixture

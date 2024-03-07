@@ -1,5 +1,5 @@
 import React from 'react'
-import { useToast } from '@chakra-ui/react'
+import { Box, useToast } from '@chakra-ui/react'
 import clsx from 'clsx'
 
 import { useRecoilValue } from 'recoil'
@@ -13,7 +13,8 @@ import { timeFormatShort } from '../util/localizer'
 import * as dates from '../util/dates'
 
 import { LabelTagColor } from '../components/LabelTag'
-
+import { adjustHSLABrightness, makeHSLASolid } from '@/calendar/utils/Colors'
+import { EventVerticalIndicator } from '@/components/EventStyle'
 interface IProps {
   event: Event
   style: { top: number; width: number; height: number; xOffset: number; border: string }
@@ -207,12 +208,7 @@ function TimeGridEvent(props: IProps) {
 
   const color = ['needsAction', 'declined'].includes(responseStatus)
     ? backgroundColor
-    : Event.getForegroundColor(
-        event.end,
-        props.now,
-        event.foregroundColor,
-        calendar.backgroundColor
-      )
+    : Event.getForegroundColor(event.end, props.now, calendar.backgroundColor)
 
   const textDecoration = responseStatus === 'declined' ? 'line-through' : undefined
 
@@ -233,9 +229,11 @@ function TimeGridEvent(props: IProps) {
         zIndex: isEditing ? 5 : 0,
         cursor: props.isPreview ? 'move' : 'pointer',
         padding: 'unset',
-        backgroundColor: backgroundColorComputed,
+        backgroundColor: isEditing
+          ? makeHSLASolid(backgroundColorComputed)
+          : adjustHSLABrightness(backgroundColorComputed, +30),
         border: border,
-        color: color,
+        color: isEditing ? adjustHSLABrightness(color, +50) : color,
         textDecoration: textDecoration,
       }}
       draggable={true}
@@ -259,6 +257,7 @@ function TimeGridEvent(props: IProps) {
         }
       }}
     >
+      <EventVerticalIndicator backgroundColor={backgroundColor} />
       {eventContents}
       {canEditEvent && renderAnchor('DOWN', dnd?.action == 'RESIZE' && props.isPreview)}
     </div>

@@ -12,15 +12,10 @@ import User from '@/models/User'
 import ContactInEvent from '@/models/ContactInEvent'
 import Flags from '@/models/Flags'
 
-import ConferenceData, { ConferenceSolution } from '@/models/ConferenceData'
-import ConferenceEntryPoint from '@/models/ConferenceEntrypoint'
-
 type SendUpdateType = 'none' | 'all' | 'external'
 
 export const API_URL = 'http://localhost:8888/api/v1'
 export const WEBSOCKET_URL = 'ws://localhost:8888/api/v1/ws'
-
-const ZOOM_IMAGE = 'https://lh3.googleusercontent.com/d/1HWZ0YS-xLVSAoQ2SUDuC3iFRtdm8a-FR'
 
 function handleErrors(response: any) {
   if (!response.ok) {
@@ -167,8 +162,7 @@ export async function createCalendar(
   backgroundColor: string,
   source: CalendarProvider,
   description: string,
-  timezone?: string,
-  foregroundColor: string = '#ffffff'
+  timezone?: string
 ): Promise<Calendar> {
   return fetch(`${API_URL}/calendars/`, {
     method: 'POST',
@@ -179,7 +173,6 @@ export async function createCalendar(
       timezone,
       backgroundColor,
       source,
-      foregroundColor,
     }),
     headers: getHeaders(),
   })
@@ -336,44 +329,6 @@ export async function searchEvents(query: string): Promise<Event[]> {
       // TODO: Index by calendar ID
       return resp.map((eventJson: any) => Event.fromJson(eventJson.calendar_id, eventJson))
     })
-}
-
-export async function createZoomMeeting(event: Event): Promise<ConferenceData> {
-  return fetch(`${API_URL}/conferencing/zoom`, {
-    headers: getHeaders(),
-    method: 'POST',
-    body: JSON.stringify({ topic: event.title, agenda: event.description || '' }),
-  })
-    .then(handleErrors)
-    .then((resp) => {
-      console.debug(`Created Zoom Meeting ${resp['id']}`)
-
-      return new ConferenceData(
-        resp['id'].toString(),
-        new ConferenceSolution('addOn', 'Zoom', ZOOM_IMAGE),
-        [
-          new ConferenceEntryPoint(
-            'video',
-            resp['join_url'],
-            resp['join_url'].replace('https://', ''),
-            resp['id'].toString(),
-            resp['password']
-          ),
-        ],
-        null
-      )
-    })
-}
-
-export async function deleteZoomMeeting(meetingId: string) {
-  console.debug(`Delete Zoom Meeting: ${meetingId}`)
-
-  return fetch(`${API_URL}/conferencing/zoom/${meetingId}`, {
-    headers: getHeaders(),
-    method: 'DELETE',
-  })
-    .then(handleErrors)
-    .catch((e) => {})
 }
 
 // ================== Labels ==================

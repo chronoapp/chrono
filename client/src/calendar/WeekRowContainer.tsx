@@ -191,7 +191,7 @@ class WeekRowContainer extends React.Component<IProps & InjectedEventActionsProp
       selection.on('reset', () => {
         this.reset()
         this.props.eventActions.onInteractionEnd()
-        this.props.eventService.discardEditingEvent()
+        this.props.eventActions.cancelSelect()
       })
     }
   }
@@ -217,7 +217,7 @@ class WeekRowContainer extends React.Component<IProps & InjectedEventActionsProp
         // Unselect popover on click.
         if (pointInBox(bounds, clickEvent.x, clickEvent.y)) {
           if (this.props.editingEvent) {
-            this.props.eventService.discardEditingEvent()
+            this.props.eventActions.cancelSelect()
             return
           }
         }

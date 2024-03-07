@@ -298,7 +298,6 @@ export default function CalendarAccountList() {
       />
 
       {renderEditingCalendarModal()}
-
       {renderAccountList()}
     </>
   )

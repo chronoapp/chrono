@@ -21,6 +21,8 @@ import EventPopover from './event-edit/EventEditPopover'
 import ResizeEventContainer from './ResizeEventContainer'
 import { EventService } from '@/calendar/event-edit/useEventService'
 
+import { adjustHSLABrightness } from './utils/Colors'
+import { EventVerticalIndicator } from '@/components/EventStyle'
 interface IProps {
   date: Date
   step: number
@@ -306,7 +308,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
         }
 
         if (props.editingEvent) {
-          props.eventService.discardEditingEvent()
+          props.eventActions.cancelSelect()
           hasJustCancelledEventCreateRef.current = true
         }
 
@@ -349,7 +351,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
       })
 
       selection.on('reset', () => {
-        props.eventService.discardEditingEvent()
+        props.eventActions.cancelSelect()
         setSelecting(false)
       })
 
@@ -369,7 +371,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
             diffMin <= 15 && 'cal-small-event',
             'cal-ellipsis'
           )}
-          style={{ lineHeight: '12px' }}
+          style={{ lineHeight: '12px', paddingLeft: '10px' }}
         >
           <span>{EMPTY_TITLE}</span>
           <span style={{ fontSize: '90%', flex: 1 }}>
@@ -379,15 +381,19 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
       )
     } else {
       inner = [
-        <div key="1" className="cal-event-content">
+        <div key="1" className="cal-event-content" style={{ paddingLeft: '10px' }}>
           {EMPTY_TITLE}
         </div>,
-        <div key="2" className="cal-event-label">
+        <div key="2" className="cal-event-label" style={{ paddingLeft: '10px' }}>
           {timeRangeFormat(selectRange.startDate, selectRange.endDate)}
         </div>,
       ]
     }
-
+    const backgroundColor = Event.getBackgroundColor(
+      selectRange.endDate,
+      props.primaryCalendar.backgroundColor,
+      props.now
+    )
     return (
       <div
         className={'cal-slot-selection'}
@@ -397,16 +403,13 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
           color: Event.getForegroundColor(
             selectRange.endDate,
             props.now,
-            'white',
             props.primaryCalendar.backgroundColor
           ),
-          backgroundColor: Event.getBackgroundColor(
-            selectRange.endDate,
-            props.primaryCalendar.backgroundColor,
-            props.now
-          ),
+          backgroundColor: adjustHSLABrightness(backgroundColor, +30),
+          padding: 'unset',
         }}
       >
+        <EventVerticalIndicator backgroundColor={backgroundColor} />
         {inner}
       </div>
     )

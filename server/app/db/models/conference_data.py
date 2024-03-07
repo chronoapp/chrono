@@ -31,6 +31,15 @@ class ConferenceCreateStatus(Enum):
     FAILURE = "failure"
 
 
+class ChronoConferenceType(Enum):
+    """These represents whether we have created the conference ourselves,
+    or if defer to google's conference key type.
+    """
+
+    Google = "google"
+    Zoom = "zoom"
+
+
 SQLAlchemyEnumConferenceKeyType = SQLAlchemyEnum(ConferenceKeyType, name='conferencekeytype')
 
 
@@ -72,13 +81,20 @@ class ConferenceData(Base):
         backref=backref('conference_data', lazy='joined'),
     )
 
+    # Unique to Chrono
+    type: Mapped[ChronoConferenceType] = mapped_column(
+        SQLAlchemyEnum(ChronoConferenceType, name='chronoconferencetype')
+    )
+
     def __init__(
         self,
         conferenceId: str | None,
         conferenceSolution: Optional['ConferenceSolution'],
+        type: ChronoConferenceType,
     ):
         self.conference_id = conferenceId
         self.conference_solution = conferenceSolution
+        self.type = type
 
     def __repr__(self) -> str:
         return f"<ConferenceData {self.conference_id} entrypoints=[{self.entry_points}]>"

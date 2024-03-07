@@ -81,8 +81,8 @@ def test_createEvent_single(user: User, session, test_client):
 
     assert eventResp.get('title') == event.get('title')
 
-    eventRepo = EventRepository(session)
-    userEvents = eventRepo.getSingleEvents(user, userCalendar.id)
+    eventRepo = EventRepository(user, session)
+    userEvents = eventRepo.getSingleEvents(userCalendar.id)
 
     assert len(userEvents) == 1
 
@@ -196,7 +196,7 @@ def test_createEvent_recurring(user: User, session, test_client, eventRepo: Even
     assert resp.status_code == 200
 
     eventId = resp.json()['id']
-    eventDb = eventRepo.getEvent(user, userCalendar, eventId)
+    eventDb = eventRepo.getEvent(userCalendar, eventId)
     assert eventDb is not None
 
     assert eventDb.recurrences == recurrences
@@ -229,10 +229,10 @@ def test_createEvent_allDay(user: User, session, test_client, eventRepo: EventRe
     eventResp = resp.json()
 
     assert eventResp.get('title') == event.get('title')
-    assert eventResp.get('all_day') == True
+    assert eventResp.get('all_day') is True
 
     eventId = resp.json()['id']
-    eventDb = eventRepo.getEvent(user, userCalendar, eventId)
+    eventDb = eventRepo.getEvent(userCalendar, eventId)
     assert eventDb
 
 
@@ -512,7 +512,7 @@ def test_moveEvent_single(user, session, test_client):
     assert resp.json().get('id') == event.id
 
 
-def test_deleteEvent_single(user, session, test_client):
+def test_deleteEvent_single(user: User, session, test_client):
     userCalendar = CalendarRepository(session).getPrimaryCalendar(user.id)
 
     start = datetime.now()
@@ -521,8 +521,8 @@ def test_deleteEvent_single(user, session, test_client):
     session.add(event)
     session.commit()
 
-    eventRepo = EventRepository(session)
-    events = eventRepo.getSingleEvents(user, userCalendar.id)
+    eventRepo = EventRepository(user, session)
+    events = eventRepo.getSingleEvents(userCalendar.id)
 
     assert len(events) == 1
 
@@ -533,7 +533,7 @@ def test_deleteEvent_single(user, session, test_client):
 
     assert resp.status_code == 200
 
-    events = eventRepo.getSingleEvents(user, userCalendar.id)
+    events = eventRepo.getSingleEvents(userCalendar.id)
 
     assert len(events) == 0
 
