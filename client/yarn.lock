@@ -4159,11 +4159,6 @@ globule@^1.0.0:
     lodash "^4.17.21"
     minimatch "~3.0.2"
 
-google-timezones-json@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/google-timezones-json/-/google-timezones-json-1.2.0.tgz#cf457e88a32b8d9f106c511eec6b17193795a065"
-  integrity sha512-NqhNA3tS6kiQMpmV6LyrkYPckxDpydrG09AcN5lk/grDNcihl73Q+SBUqpWOCdZ8BxFRbM7V62hpzidiYeYCEQ==
-
 gopd@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/gopd/-/gopd-1.0.1.tgz#29ff76de69dac7489b7c0918a5788e56477c332c"

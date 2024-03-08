@@ -20,7 +20,6 @@
     "date-arithmetic": "^4.1.0",
     "downshift": "^6.1.12",
     "framer-motion": "^10.12.18",
-    "google-timezones-json": "^1.2.0",
     "immer": "^8.0.1",
     "linkifyjs": "^2.1.9",
     "lodash.debounce": "^4.0.8",
