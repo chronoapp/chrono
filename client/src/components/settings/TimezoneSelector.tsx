@@ -6,38 +6,36 @@ import { Box, Text, Input, InputGroup, InputRightElement, IconButton } from '@ch
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi'
 
 import User from '@/models/User'
-import timezones from 'google-timezones-json/timezones.json'
+import { default as allTimezones, TimeZone } from 'timezones-list'
 
 interface IProps {
   user: User
 }
 
-interface TimezoneOption {
-  key: string
-  label: string
-}
-
-const allTimezones: TimezoneOption[] = Object.keys(timezones).map((key) => ({
-  key: key,
-  label: timezones[key],
-}))
-
 export default function TimezoneSelector(props: IProps) {
+  console.log(Intl.DateTimeFormat().resolvedOptions().timeZone)
+
   function estimateSize() {
-    return 30
+    return 45
   }
 
   function getTimezoneFilter(inputValue: string) {
-    return function timezoneFilter(timezone: TimezoneOption) {
-      return timezone.label.toLowerCase().includes(inputValue.toLowerCase())
+    return function timezoneFilter(timezone: TimeZone) {
+      const inputValueLowerCase = inputValue.toLowerCase()
+
+      return (
+        timezone.name.toLowerCase().includes(inputValueLowerCase) ||
+        timezone.label.toLowerCase().includes(inputValueLowerCase)
+      )
     }
   }
 
   function TimezoneComboBox() {
     const [inputValue, setInputValue] = useState('')
-    const [selectedItem, setSelectedItem] = useState<TimezoneOption | null | undefined>(
-      allTimezones.find((item) => item.key === props.user.timezone)
+    const [selectedItem, setSelectedItem] = useState<TimeZone | null | undefined>(
+      allTimezones.find((item) => item.tzCode === props.user.timezone)
     )
+
     const [timezones, setTimezones] = useState(allTimezones)
     const listRef = useRef<HTMLObjectElement>(null)
 
@@ -59,8 +57,8 @@ export default function TimezoneSelector(props: IProps) {
       openMenu,
     } = useCombobox({
       items: timezones,
-      initialSelectedItem: allTimezones[props.user.timezone],
-      itemToString: (item: TimezoneOption | null) => (item ? item.label : ''),
+      initialSelectedItem: selectedItem,
+      itemToString: (item: TimeZone | null) => (item ? item.name : ''),
       onInputValueChange: ({ inputValue }) => {
         setInputValue(inputValue || '')
 
@@ -71,7 +69,7 @@ export default function TimezoneSelector(props: IProps) {
         setTimezones(filteredTimezones)
       },
       onSelectedItemChange: ({ selectedItem: newSelectedItem }) => {
-        setInputValue(newSelectedItem ? newSelectedItem.label : '')
+        setInputValue(newSelectedItem ? newSelectedItem.name : '')
         setSelectedItem(newSelectedItem)
       },
       scrollIntoView: () => {},
@@ -83,14 +81,14 @@ export default function TimezoneSelector(props: IProps) {
     })
 
     return (
-      <Box {...getComboboxProps()} position="relative" width="18em">
+      <Box {...getComboboxProps()} position="relative" width="20em">
         <InputGroup size="sm">
           <Input
             {...getInputProps({
               onBlur: () => {
                 // Ensure the input is reset to show the selected item if it exists
                 if (selectedItem) {
-                  setInputValue(selectedItem.label)
+                  setInputValue(selectedItem.name)
                 }
               },
               value: inputValue,
@@ -145,11 +143,11 @@ export default function TimezoneSelector(props: IProps) {
                     index: virtualRow.index,
                     item: timezones[virtualRow.index],
                   })}
-                  key={timezones[virtualRow.index].key}
+                  key={timezones[virtualRow.index].tzCode}
                   bg={highlightedIndex === virtualRow.index ? 'lightgray' : 'white'}
                   fontWeight={highlightedIndex === virtualRow.index ? 'bold' : 'normal'}
                   cursor="pointer"
-                  fontSize={'small'}
+                  fontSize={'xs'}
                   p="1"
                   position="absolute"
                   top={0}
@@ -161,7 +159,7 @@ export default function TimezoneSelector(props: IProps) {
                   borderWidth="1px"
                   borderColor={'gray.100'}
                 >
-                  {timezones[virtualRow.index].label}
+                  {timezones[virtualRow.index].name}
                 </Box>
               ))}
             </>
