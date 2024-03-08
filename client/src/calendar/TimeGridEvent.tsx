@@ -229,9 +229,7 @@ function TimeGridEvent(props: IProps) {
         zIndex: isEditing ? 5 : 0,
         cursor: props.isPreview ? 'move' : 'pointer',
         padding: 'unset',
-        backgroundColor: isEditing
-          ? makeHSLASolid(backgroundColorComputed)
-          : adjustHSLABrightness(backgroundColorComputed, +30),
+        backgroundColor: isEditing ? makeHSLASolid(color) : backgroundColorComputed,
         border: border,
         color: isEditing ? adjustHSLABrightness(color, +50) : color,
         textDecoration: textDecoration,

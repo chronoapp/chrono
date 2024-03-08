@@ -406,7 +406,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
           top: `${selectRange.top}%`,
           height: `${selectRange.height}%`,
           color: forgroundColor,
-          backgroundColor: adjustHSLABrightness(backgroundColor, +30),
+          backgroundColor: backgroundColor,
           padding: 'unset',
         }}
       >

@@ -56,9 +56,7 @@ export function EventItem(props: {
         className={clsx('cal-event', props.isPreview && 'cal-event-preview-full')}
         style={{
           position: 'relative',
-          backgroundColor: isEditing
-            ? makeHSLASolid(backgroundColor)
-            : adjustHSLABrightness(backgroundColor, +30),
+          backgroundColor: isEditing ? makeHSLASolid(foregroundColor) : backgroundColor,
           color: isEditing ? adjustHSLABrightness(foregroundColor, +50) : foregroundColor,
           height: '23px',
           padding: 0,
@@ -70,7 +68,7 @@ export function EventItem(props: {
         <EventVerticalIndicator color={foregroundColor} />
         <div
           className="cal-event-content"
-          style={{ whiteSpace: 'inherit', height: '1.5em', paddingLeft: '10px' }}
+          style={{ whiteSpace: 'inherit', height: '1.5em', paddingLeft: '10px', marginTop: '2px' }}
         >
           {eventTitle}
         </div>
