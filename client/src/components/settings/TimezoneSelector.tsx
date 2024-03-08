@@ -1,18 +1,30 @@
-import { useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useCombobox } from 'downshift'
 import { useVirtual } from 'react-virtual'
+import { default as timezones, TimeZone } from 'timezones-list'
 
 import { Box, Flex, Text, Input, InputGroup, InputRightElement, IconButton } from '@chakra-ui/react'
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi'
 
 import User from '@/models/User'
-import { default as allTimezones, TimeZone } from 'timezones-list'
 
 interface IProps {
   user: User
+  onUpdateTimezone: (timezone: string) => void
 }
 
+const UTCTime = {
+  label: 'UTC (GMT±00:00)',
+  tzCode: 'UTC',
+  name: '(GMT±00:00) Coordinated Universal Time',
+  utc: '±00:00',
+} as TimeZone
+
+const allTimezones = [UTCTime, ...timezones]
+
 export default function TimezoneSelector(props: IProps) {
+  const selectedItem = allTimezones.find((item) => item.tzCode === props.user.timezone) || null
+
   function estimateSize() {
     return 45
   }
@@ -28,11 +40,13 @@ export default function TimezoneSelector(props: IProps) {
     }
   }
 
-  function TimezoneComboBox() {
+  function TimezoneComboBox(comboBoxProps: { selectedItem: TimeZone | null }) {
     const [inputValue, setInputValue] = useState('')
-    const [selectedItem, setSelectedItem] = useState<TimeZone | null | undefined>(
-      allTimezones.find((item) => item.tzCode === props.user.timezone)
-    )
+
+    useEffect(() => {
+      // This ensures the input value is updated when the selectedItem changes externally
+      setInputValue(comboBoxProps.selectedItem ? comboBoxProps.selectedItem.name : '')
+    }, [comboBoxProps.selectedItem, setInputValue])
 
     const [timezones, setTimezones] = useState(allTimezones)
     const listRef = useRef<HTMLObjectElement>(null)
@@ -55,7 +69,6 @@ export default function TimezoneSelector(props: IProps) {
       openMenu,
     } = useCombobox({
       items: timezones,
-      initialSelectedItem: selectedItem,
       itemToString: (item: TimeZone | null) => (item ? item.name : ''),
       onInputValueChange: ({ inputValue }) => {
         setInputValue(inputValue || '')
@@ -68,7 +81,10 @@ export default function TimezoneSelector(props: IProps) {
       },
       onSelectedItemChange: ({ selectedItem: newSelectedItem }) => {
         setInputValue(newSelectedItem ? newSelectedItem.name : '')
-        setSelectedItem(newSelectedItem)
+
+        if (newSelectedItem) {
+          props.onUpdateTimezone(newSelectedItem.tzCode)
+        }
       },
       scrollIntoView: () => {},
       onHighlightedIndexChange: ({ highlightedIndex, type }) => {
@@ -76,6 +92,7 @@ export default function TimezoneSelector(props: IProps) {
           rowVirtualizer.scrollToIndex(highlightedIndex)
         }
       },
+      selectedItem: comboBoxProps.selectedItem,
     })
 
     return (
@@ -100,7 +117,6 @@ export default function TimezoneSelector(props: IProps) {
               },
             })}
             variant="filled"
-            placeholder={'timezone'}
           />
 
           <InputRightElement>
@@ -174,7 +190,7 @@ export default function TimezoneSelector(props: IProps) {
         Time zone
       </Text>
 
-      <TimezoneComboBox />
+      <TimezoneComboBox selectedItem={selectedItem} />
     </Box>
   )
 }

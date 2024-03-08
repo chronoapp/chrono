@@ -52,7 +52,12 @@ function GeneralSettings() {
     <Flex direction={'column'} width={'100%'}>
       <Heading size="sm">General</Heading>
 
-      <TimezoneSelector user={user} />
+      <TimezoneSelector
+        user={user}
+        onUpdateTimezone={(timezone) => {
+          setUser({ ...user, timezone: timezone })
+        }}
+      />
       <CalendarSettings user={user} onUpdateUser={setUser} addMessage={addMessage} />
       <ConferencingSettings user={user} onUpdateUser={setUser} addMessage={addMessage} />
     </Flex>
