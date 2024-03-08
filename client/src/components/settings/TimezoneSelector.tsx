@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useCombobox } from 'downshift'
 import { useVirtual } from 'react-virtual'
 
-import { Box, Text, Input, InputGroup, InputRightElement, IconButton } from '@chakra-ui/react'
+import { Box, Flex, Text, Input, InputGroup, InputRightElement, IconButton } from '@chakra-ui/react'
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi'
 
 import User from '@/models/User'
@@ -13,8 +13,6 @@ interface IProps {
 }
 
 export default function TimezoneSelector(props: IProps) {
-  console.log(Intl.DateTimeFormat().resolvedOptions().timeZone)
-
   function estimateSize() {
     return 45
   }
@@ -138,7 +136,7 @@ export default function TimezoneSelector(props: IProps) {
             <>
               <li key="total-size" style={{ height: rowVirtualizer.totalSize }} />
               {rowVirtualizer.virtualItems.map((virtualRow) => (
-                <Box
+                <Flex
                   {...getItemProps({
                     index: virtualRow.index,
                     item: timezones[virtualRow.index],
@@ -158,9 +156,10 @@ export default function TimezoneSelector(props: IProps) {
                   borderStyle="solid none none none"
                   borderWidth="1px"
                   borderColor={'gray.100'}
+                  alignItems={'center'}
                 >
                   {timezones[virtualRow.index].name}
-                </Box>
+                </Flex>
               ))}
             </>
           )}
