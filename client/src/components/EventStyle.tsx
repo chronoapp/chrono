@@ -1,11 +1,11 @@
 import { Box } from '@chakra-ui/react'
 
 interface IndicatorColorProps {
-  backgroundColor: string
+  color: string
 }
 
 export function EventVerticalIndicator(props: IndicatorColorProps) {
-  const { backgroundColor } = props
+  const { color } = props
 
   return (
     <Box
@@ -13,7 +13,7 @@ export function EventVerticalIndicator(props: IndicatorColorProps) {
         position: 'absolute',
         height: '100%',
         width: '4px',
-        backgroundColor: backgroundColor,
+        backgroundColor: color,
         borderTopLeftRadius: '10px',
         borderBottomLeftRadius: '10px',
       }}

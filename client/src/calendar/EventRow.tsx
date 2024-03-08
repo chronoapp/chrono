@@ -15,7 +15,8 @@ import EventPopover from './event-edit/EventEditPopover'
 import Event from '../models/Event'
 import { EventService } from './event-edit/useEventService'
 import { EventVerticalIndicator } from '@/components/EventStyle'
-import { adjustHSLABrightness, makeHSLASolid } from './utils/Colors'
+import { adjustHSLABrightness, darkenColor18, makeHSLASolid } from './utils/Colors'
+
 export function EventItem(props: {
   event: Event
   isPreview: boolean
@@ -56,10 +57,10 @@ export function EventItem(props: {
         className={clsx('cal-event', props.isPreview && 'cal-event-preview-full')}
         style={{
           position: 'relative',
-          backgroundColor: isEditing
-            ? makeHSLASolid(backgroundColor)
-            : adjustHSLABrightness(backgroundColor, +30),
-          color: isEditing ? adjustHSLABrightness(foregroundColor, +50) : foregroundColor,
+          backgroundColor: isEditing ? makeHSLASolid(foregroundColor) : backgroundColor,
+          color: isEditing
+            ? adjustHSLABrightness(foregroundColor, +50)
+            : darkenColor18(foregroundColor),
           height: '23px',
           padding: 0,
         }}
@@ -67,10 +68,10 @@ export function EventItem(props: {
         onTouchStart={handleStartDragging}
         onClick={handleClickEvent}
       >
-        <EventVerticalIndicator backgroundColor={backgroundColor} />
+        <EventVerticalIndicator color={foregroundColor} />
         <div
           className="cal-event-content"
-          style={{ whiteSpace: 'inherit', height: '1.5em', paddingLeft: '10px' }}
+          style={{ whiteSpace: 'inherit', height: '1.5em', paddingLeft: '10px', marginTop: '2px' }}
         >
           {eventTitle}
         </div>

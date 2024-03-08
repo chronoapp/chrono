@@ -21,8 +21,9 @@ import EventPopover from './event-edit/EventEditPopover'
 import ResizeEventContainer from './ResizeEventContainer'
 import { EventService } from '@/calendar/event-edit/useEventService'
 
-import { adjustHSLABrightness } from './utils/Colors'
+import { darkenColor18 } from './utils/Colors'
 import { EventVerticalIndicator } from '@/components/EventStyle'
+
 interface IProps {
   date: Date
   step: number
@@ -394,22 +395,23 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
       props.primaryCalendar.backgroundColor,
       props.now
     )
+    const foregroundColor = Event.getForegroundColor(
+      selectRange.endDate,
+      props.now,
+      props.primaryCalendar.backgroundColor
+    )
     return (
       <div
         className={'cal-slot-selection'}
         style={{
           top: `${selectRange.top}%`,
           height: `${selectRange.height}%`,
-          color: Event.getForegroundColor(
-            selectRange.endDate,
-            props.now,
-            props.primaryCalendar.backgroundColor
-          ),
-          backgroundColor: adjustHSLABrightness(backgroundColor, +30),
+          color: darkenColor18(foregroundColor),
+          backgroundColor: backgroundColor,
           padding: 'unset',
         }}
       >
-        <EventVerticalIndicator backgroundColor={backgroundColor} />
+        <EventVerticalIndicator color={foregroundColor} />
         {inner}
       </div>
     )
