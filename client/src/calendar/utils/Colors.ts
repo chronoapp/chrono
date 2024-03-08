@@ -63,6 +63,13 @@ export function adjustHSLABrightness(hslaColor: string, brightnessAdjustment: nu
   return `hsla(${h}, ${s}%, ${lightness}%, ${a})`
 }
 
+/**
+ * Make the color slightly darker.
+ */
+export function darkenColor18(color: string) {
+  return adjustHSLABrightness(color, -18)
+}
+
 export function makeHSLASolid(hslaColor: string) {
   // This regex matches HSLA color format, capturing the hue, saturation, lightness, and alpha values
   const parts = hslaColor.match(/hsla?\((\d+),\s*(\d+)%,\s*(\d+)%\s*,?\s*(\d*\.?\d+)?\)/)

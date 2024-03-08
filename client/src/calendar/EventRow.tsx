@@ -15,7 +15,8 @@ import EventPopover from './event-edit/EventEditPopover'
 import Event from '../models/Event'
 import { EventService } from './event-edit/useEventService'
 import { EventVerticalIndicator } from '@/components/EventStyle'
-import { adjustHSLABrightness, makeHSLASolid } from './utils/Colors'
+import { adjustHSLABrightness, darkenColor18, makeHSLASolid } from './utils/Colors'
+
 export function EventItem(props: {
   event: Event
   isPreview: boolean
@@ -57,7 +58,9 @@ export function EventItem(props: {
         style={{
           position: 'relative',
           backgroundColor: isEditing ? makeHSLASolid(foregroundColor) : backgroundColor,
-          color: isEditing ? adjustHSLABrightness(foregroundColor, +50) : foregroundColor,
+          color: isEditing
+            ? adjustHSLABrightness(foregroundColor, +50)
+            : darkenColor18(foregroundColor),
           height: '23px',
           padding: 0,
         }}
