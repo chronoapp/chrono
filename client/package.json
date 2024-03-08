@@ -44,6 +44,7 @@
     "sass": "^1.54.9",
     "short-uuid": "^4.2.2",
     "styled-components": "^5.2.1",
+    "timezones-list": "^3.0.3",
     "tinycolor2": "^1.4.1",
     "universal-cookie": "^3.0.7",
     "utility-types": "^3.10.0",
