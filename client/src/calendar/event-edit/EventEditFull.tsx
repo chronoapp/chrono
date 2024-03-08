@@ -55,6 +55,8 @@ import { LocationInput } from './LocationInput'
 import SelectVisibilityTransparency from './SelectVisibilityTransparency'
 import SelectReminders from './SelectReminders'
 
+import TagDropdown from './TagAddDropdown'
+
 /**
  * Full view for event editing.
  */
@@ -218,7 +220,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
           <Flex alignItems="center" flexWrap="wrap">
             <Box w="1em" mr="2" />
             {eventFields.labels.map((label) => (
-              <div key={label.id} className="mt-2">
+              <div key={label.id} className="tags">
                 <LabelTag
                   label={label}
                   onClickDelete={(e) => {
@@ -231,6 +233,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                 />
               </div>
             ))}
+            <TagDropdown eventFields={eventFields} setEventFields={setEventFields} />
           </Flex>
 
           <Flex alignItems="center" mt="3" justifyContent="left" color="gray.700">

@@ -53,6 +53,7 @@ import TimeRangeSelect from './TimeRangeSelect'
 import TimeSelectFullDay from './TimeSelectFullDay'
 import SelectCalendar from './SelectCalendar'
 import TaggableInput from './TaggableInput'
+import TagDropdown from './TagAddDropdown'
 import { LocationInput } from './LocationInput'
 
 interface IProps {
@@ -97,48 +98,6 @@ export default function EventEditPartial(props: IProps) {
         props.onSaveEvent()
       }
     }
-  }
-
-  function renderAddTagDropdown() {
-    return (
-      <Menu isLazy>
-        {({ onClose }) => (
-          <>
-            <MenuButton
-              mb="2"
-              borderRadius="xs"
-              size="sm"
-              fontWeight="normal"
-              fontSize="sm"
-              as={Button}
-              variant="link"
-              justifyContent="center"
-              alignItems="center"
-            >
-              <Flex align="center">
-                <FiPlus /> add tag
-              </Flex>
-            </MenuButton>
-
-            <MenuList pl="1">
-              <LabelTree
-                allowEdit={false}
-                onSelect={(label) => {
-                  const updatedLabels = produce(eventFields.labels, (draft) => {
-                    if (!draft.find((l) => l.id == label.id)) {
-                      draft.push(label)
-                    }
-                  })
-
-                  setEventFields({ ...eventFields, labels: updatedLabels })
-                  onClose()
-                }}
-              />
-            </MenuList>
-          </>
-        )}
-      </Menu>
-    )
   }
 
   return (
@@ -200,7 +159,7 @@ export default function EventEditPartial(props: IProps) {
               />
             </Box>
           ))}
-          {renderAddTagDropdown()}
+          <TagDropdown eventFields={eventFields} setEventFields={setEventFields} />
         </Flex>
 
         <Flex mt="1" alignItems="top">
