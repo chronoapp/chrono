@@ -74,6 +74,13 @@ export function fullDayFormat(date: Date) {
   return moment(date).format(moment.HTML5_FMT.DATE)
 }
 
+/**
+ * Converts a date string (YYYY-MM-DD) into a Date object.
+ */
+export function yearStringToDate(value: string): Date {
+  return moment(value, 'YYYY-MM-DD').toDate()
+}
+
 export function getWorkWeekRange(date: Date) {
   return getWeekRange(date).filter((d) => !isWeekend(d))
 }

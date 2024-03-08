@@ -36,7 +36,7 @@ import useEventActions from '@/state/useEventActions'
 import { displayState, editingEventState, EventUpdateContext } from '@/state/EventsState'
 import { userState } from '@/state/UserState'
 
-import { format, fullDayFormat } from '@/util/localizer'
+import { format, fullDayFormat, yearStringToDate } from '@/util/localizer'
 import { addNewLabels } from '@/calendar/utils/LabelUtils'
 import ContentEditable from '@/lib/ContentEditable'
 import { LabelTag } from '@/components/LabelTag'
@@ -247,9 +247,8 @@ export default function EventEditFull(props: { event: Event; eventService: Event
               mr="2"
               value={format(eventFields.start, 'YYYY-MM-DD')}
               onChange={(e) => {
-                const m = moment(e.target.value, 'YYYY-MM-DD')
                 const duration = dates.diff(eventFields.end, eventFields.start, 'minutes')
-                const start = dates.merge(m.toDate(), eventFields.start)
+                const start = dates.merge(yearStringToDate(e.target.value), eventFields.start)
                 const end = dates.add(start, duration, 'minutes')
 
                 const updatedFields = eventFields.allDay
