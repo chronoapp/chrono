@@ -257,7 +257,7 @@ function TimeGridEvent(props: IProps) {
         }
       }}
     >
-      <EventVerticalIndicator backgroundColor={backgroundColor} />
+      <EventVerticalIndicator color={color} />
       {eventContents}
       {canEditEvent && renderAnchor('DOWN', dnd?.action == 'RESIZE' && props.isPreview)}
     </div>

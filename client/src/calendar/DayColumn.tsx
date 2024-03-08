@@ -394,22 +394,23 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
       props.primaryCalendar.backgroundColor,
       props.now
     )
+    const forgroundColor = Event.getForegroundColor(
+      selectRange.endDate,
+      props.now,
+      props.primaryCalendar.backgroundColor
+    )
     return (
       <div
         className={'cal-slot-selection'}
         style={{
           top: `${selectRange.top}%`,
           height: `${selectRange.height}%`,
-          color: Event.getForegroundColor(
-            selectRange.endDate,
-            props.now,
-            props.primaryCalendar.backgroundColor
-          ),
+          color: forgroundColor,
           backgroundColor: adjustHSLABrightness(backgroundColor, +30),
           padding: 'unset',
         }}
       >
-        <EventVerticalIndicator backgroundColor={backgroundColor} />
+        <EventVerticalIndicator color={forgroundColor} />
         {inner}
       </div>
     )

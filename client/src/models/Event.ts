@@ -104,11 +104,11 @@ export default class Event {
   static getBackgroundColor(endDate: Date, defaultColor: string, today: Date) {
     if (endDate < today) {
       const { h, s } = hexToHSL(defaultColor)
-      const hsla = `hsla(${h}, ${s}%, 65%, 0.70)`
+      const hsla = `hsla(${h}, ${s}%, 75%, 0.75)`
       return hsla
     } else {
       const { h, s, l } = hexToHSL(defaultColor)
-      const defaultColorAsHSLA = `hsl(${h}, ${s}%, ${l}%, 0.75)`
+      const defaultColorAsHSLA = `hsl(${h}, ${s}%, 85%, 0.75)`
       return defaultColorAsHSLA
     }
   }

@@ -67,7 +67,7 @@ export function EventItem(props: {
         onTouchStart={handleStartDragging}
         onClick={handleClickEvent}
       >
-        <EventVerticalIndicator backgroundColor={backgroundColor} />
+        <EventVerticalIndicator color={foregroundColor} />
         <div
           className="cal-event-content"
           style={{ whiteSpace: 'inherit', height: '1.5em', paddingLeft: '10px' }}
