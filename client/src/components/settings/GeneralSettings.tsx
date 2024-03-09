@@ -55,7 +55,9 @@ function GeneralSettings() {
       <TimezoneSelector
         user={user}
         onUpdateTimezone={(timezone) => {
-          setUser({ ...user, timezone: timezone })
+          const updatedUser = { ...user, timezone: timezone }
+          setUser(updatedUser)
+          API.updateUser(updatedUser)
         }}
       />
       <CalendarSettings user={user} onUpdateUser={setUser} addMessage={addMessage} />
