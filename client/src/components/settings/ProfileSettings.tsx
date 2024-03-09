@@ -57,24 +57,24 @@ function ProfileSettings() {
       <Flex direction={'column'}>
         <Heading size="sm">Account Information</Heading>
 
-        <Text fontSize="sm" mt="3">
+        <Text fontSize="sm" mt="3" fontWeight={500}>
           Profile picture
         </Text>
         <Avatar src={user?.picture_url} mt="1" />
 
-        <Text fontSize="sm" mt="3">
+        <Text fontSize="sm" mt="3" fontWeight={500}>
           Email
         </Text>
         <Text fontSize="sm" color="gray.500">
           {user?.email}
         </Text>
 
-        <Text fontSize="sm" mt="3">
+        <Text fontSize="sm" mt="3" fontWeight={500}>
           Full name
         </Text>
         <Input size="sm" mt="1" placeholder="Full name" value={name} onChange={handleNameChange} />
 
-        <Text fontSize="sm" mt="3">
+        <Text fontSize="sm" mt="3" fontWeight={500}>
           Username
         </Text>
         <Input

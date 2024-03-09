@@ -101,7 +101,9 @@ export default function CalendarSettings(props: {
         </SimpleGrid>
 
         <Box mt="4">
-          <Text fontSize={'sm'}>Default Calendar</Text>
+          <Text fontSize={'sm'} fontWeight={500}>
+            Default Calendar
+          </Text>
 
           <SelectCalendar
             accounts={props.user.accounts}

@@ -28,7 +28,7 @@ import {
 
 import ContentEditable from '@/lib/ContentEditable'
 import { addNewLabels } from '@/calendar/utils/LabelUtils'
-import { format, fullDayFormat } from '@/util/localizer'
+import { format, fullDayFormat, yearStringToDate } from '@/util/localizer'
 import * as dates from '@/util/dates'
 
 import { labelsState } from '@/state/LabelsState'
@@ -176,9 +176,8 @@ export default function EventEditPartial(props: IProps) {
               variant="flushed"
               value={format(eventFields.start, 'YYYY-MM-DD')}
               onChange={(e) => {
-                const m = moment(e.target.value, 'YYYY-MM-DD')
                 const duration = dates.diff(eventFields.end, eventFields.start, 'minutes')
-                const start = dates.merge(m.toDate(), eventFields.start)
+                const start = dates.merge(yearStringToDate(e.target.value), eventFields.start)
                 const end = dates.add(start, duration, 'minutes')
 
                 const updatedFields = eventFields.allDay

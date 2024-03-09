@@ -67,7 +67,9 @@ export default function ConferencingSettings(props: {
       </Box>
 
       <Box mt="4">
-        <Text fontSize={'sm'}>Default Conferencing</Text>
+        <Text fontSize={'sm'} fontWeight={500}>
+          Default Conferencing
+        </Text>
         <Menu>
           <MenuButton
             as={Button}

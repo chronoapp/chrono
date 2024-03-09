@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useRecoilState } from 'recoil'
 
-import { Flex, Box, Text, Heading, useToast, ToastId } from '@chakra-ui/react'
+import { Flex, Heading, useToast, ToastId } from '@chakra-ui/react'
 
 import { userState } from '@/state/UserState'
 import { InfoAlert } from '@/components/Alert'
@@ -9,6 +9,7 @@ import { InfoAlert } from '@/components/Alert'
 import * as API from '@/util/Api'
 import CalendarSettings from './CalendarSettings'
 import ConferencingSettings from './ConferencingSettings'
+import TimezoneSelector from './TimezoneSelector'
 
 function GeneralSettings() {
   const [user, setUser] = useRecoilState(userState)
@@ -50,10 +51,15 @@ function GeneralSettings() {
   return (
     <Flex direction={'column'} width={'100%'}>
       <Heading size="sm">General</Heading>
-      <Box mt="2">
-        <Text fontSize={'sm'}>Timezone</Text>
-      </Box>
 
+      <TimezoneSelector
+        user={user}
+        onUpdateTimezone={(timezone) => {
+          const updatedUser = { ...user, timezone: timezone }
+          setUser(updatedUser)
+          API.updateUser(updatedUser)
+        }}
+      />
       <CalendarSettings user={user} onUpdateUser={setUser} addMessage={addMessage} />
       <ConferencingSettings user={user} onUpdateUser={setUser} addMessage={addMessage} />
     </Flex>
