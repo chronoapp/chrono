@@ -10,6 +10,8 @@ import EventEndingRow from './EventEndingRow'
 import { EventService } from './event-edit/useEventService'
 
 import { primaryCalendarSelector } from '@/state/CalendarState'
+
+import { Box } from '@chakra-ui/react'
 interface IProps {
   range: DateTime[]
   events: Event[]
@@ -18,8 +20,6 @@ interface IProps {
   now: DateTime
   onShowMore: () => void
 }
-
-const CELL_WRAPPER_CLS = 'cal-allday-cell'
 
 /**
  * Top of week view. Similar to WeekRow except there is no limit for number of rows.
@@ -33,23 +33,40 @@ function WeekHeaderRow(props: IProps) {
 
   function renderBackgroundCells() {
     return (
-      <div className="cal-row-bg">
-        {props.range.map((date, index) => {
-          return <div key={index} className={clsx('cal-day-bg')}></div>
-        })}
-      </div>
+      <Box
+        className="cal-row-bg"
+        display="flex"
+        flexDirection="row"
+        flex="1 0 0%"
+        overflow="hidden"
+        position="absolute"
+        top="0"
+        left="0"
+        right="0"
+        bottom="0"
+      >
+        {props.range.map((date, index) => (
+          <Box
+            key={index}
+            className="cal-day-bg"
+            flex="1 0 0%"
+            borderLeft="1px solid"
+            borderColor="rgb(235, 235, 235)"
+          />
+        ))}
+      </Box>
     )
   }
 
   return (
-    <div className={CELL_WRAPPER_CLS}>
+    <Box className="cal-allday-cell" boxSizing="content-box" w="100%" h="100%" position="relative">
       {renderBackgroundCells()}
-      <div className="cal-row-content">
+      <Box className="cal-row-content">
         <WeekRowContainer
           primaryCalendar={primaryCalendar!}
           dayMetrics={dayMetrics}
-          rowClassname={CELL_WRAPPER_CLS}
-          wrapperClassname={'cal-time-header-content'}
+          rowClassname="cal-allday-cell"
+          wrapperClassname="cal-time-header-content"
           ignoreNewEventYBoundCheck={true}
           eventService={props.eventService}
           now={props.now}
@@ -75,8 +92,8 @@ function WeekHeaderRow(props: IProps) {
             />
           )}
         </WeekRowContainer>
-      </div>
-    </div>
+      </Box>
+    </Box>
   )
 }
 
