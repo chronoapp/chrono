@@ -25,6 +25,7 @@ interface IProps {
   marginRight: number
   eventService: EventService
   now: DateTime
+  addGutter: any
 }
 
 function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
@@ -57,6 +58,19 @@ function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
   }
 }
 
+function ToogleAdditionalTimezone({ addGutter }) {
+  return (
+    <IconButton
+      size={'xs'}
+      variant="ghost"
+      aria-label="adding additional timezones"
+      icon={<FiPlus />}
+      onClick={() => addGutter()}
+      width="4"
+      mt="8"
+    />
+  )
+}
 function TimeGridHeader(props: IProps) {
   const { expandAllDayEvents, updateExpandAllDayEvents } = useUserFlags()
   const calendarViewState = useRecoilValue(calendarViewStateUserTimezone)
@@ -118,6 +132,7 @@ function TimeGridHeader(props: IProps) {
         margin-right="-1px"
       >
         <ToggleExpandWeeklyRows expanded={expandAllDayEvents} />
+        <ToogleAdditionalTimezone addGutter={props.addGutter} />
       </Flex>
       <Flex
         className="cal-time-header-content"

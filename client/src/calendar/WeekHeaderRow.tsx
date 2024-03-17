@@ -12,7 +12,6 @@ import { EventService } from './event-edit/useEventService'
 import { primaryCalendarSelector } from '@/state/CalendarState'
 
 import { Box } from '@chakra-ui/react'
-
 interface IProps {
   range: DateTime[]
   events: Event[]
@@ -21,6 +20,7 @@ interface IProps {
   now: DateTime
   onShowMore: () => void
 }
+
 /**
  * Top of week view. Similar to WeekRow except there is no limit for number of rows.
  *
