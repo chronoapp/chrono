@@ -42,8 +42,14 @@ function preventScroll(e) {
 }
 
 function TimeGrid(props: IProps) {
+  const [intitalGutterHeaderWidth, setIntitalGutterHeaderWidth] = useState(0)
   const [gutterWidth, setGutterWidth] = useState(0)
   const [scrollbarSize, setScrollbarSize] = useState(0)
+  const [gutterCount, setGutterCount] = useState(1)
+
+  const addGutter = () => {
+    setGutterCount((currentCount) => currentCount + 1)
+  }
 
   const slotMetrics = useRef<SlotMetrics>(
     new SlotMetrics(props.min, props.max, props.step, props.timeslots)
@@ -60,8 +66,10 @@ function TimeGrid(props: IProps) {
 
     // Adjust gutter width to account for scrollbar.
     if (gutterRef.current) {
-      const width = remToPixels(GUTTER_LINE_WIDTH) + gutterRef.current.getBoundingClientRect().width
-      setGutterWidth(width)
+      const gutterWidth = gutterRef.current.getBoundingClientRect().width
+      const gutterAndScrollbar = remToPixels(GUTTER_LINE_WIDTH) + gutterWidth
+      setIntitalGutterHeaderWidth(gutterAndScrollbar)
+      setGutterWidth(gutterWidth)
       setScrollbarSize(scrollbarSize)
     }
 
@@ -227,18 +235,20 @@ function TimeGrid(props: IProps) {
       <TimeGridHeader
         events={allDayEvents}
         range={props.range}
-        leftPad={gutterWidth}
+        leftPad={intitalGutterHeaderWidth + (gutterCount - 1) * gutterWidth}
         marginRight={scrollbarSize}
         eventService={props.eventService}
+        addGutter={addGutter}
       />
 
       <div ref={contentRef} className="cal-time-content">
-        <div ref={gutterRef} className="cal-time-gutter">
-          {slotMetrics.current.groups.map((group, idx) => {
-            return renderDateLabel(group, idx)
-          })}
-        </div>
-
+        {[...Array(gutterCount)].map((_, index) => (
+          <div key={index} ref={gutterRef} className="cal-time-gutter">
+            {slotMetrics.current.groups.map((group, idx) => {
+              return renderDateLabel(group, idx)
+            })}
+          </div>
+        ))}
         <div className="cal-time-gutter">
           {slotMetrics.current.groups.map((_group, idx) => {
             return renderDateTick(idx)
