@@ -26,6 +26,7 @@ interface IProps {
   eventService: EventService
   now: DateTime
   addGutter: any
+  today: Date
 }
 
 function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
