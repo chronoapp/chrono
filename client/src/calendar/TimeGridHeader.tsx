@@ -25,6 +25,7 @@ interface IProps {
   marginRight: number
   eventService: EventService
   addGutter: any
+  today: Date
 }
 
 function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
@@ -74,12 +75,10 @@ function TimeGridHeader(props: IProps) {
   const { expandAllDayEvents, updateExpandAllDayEvents } = useUserFlags()
 
   function renderHeaderCells() {
-    const today = DateTime.now()
-
     return props.range.map((date, i) => {
       const dayNumber = formatDayOfMonth(date)
       const dateString = formatThreeLetterWeekday(date)
-      const isToday = dates.eq(date, today, 'day')
+      const isToday = dates.eq(date, props.today, 'day')
 
       return (
         <Box

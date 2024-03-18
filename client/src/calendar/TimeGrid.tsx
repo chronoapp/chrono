@@ -35,6 +35,7 @@ interface IProps {
   now: DateTime
   eventService: EventService
   primaryCalendar: Calendar
+  today: Date
 }
 
 const GUTTER_LINE_WIDTH = 0.5
@@ -241,6 +242,7 @@ function TimeGrid(props: IProps) {
         marginRight={scrollbarSize}
         eventService={props.eventService}
         addGutter={addGutter}
+        today={props.today}
       />
 
       <div ref={contentRef} className="cal-time-content">
