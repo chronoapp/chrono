@@ -157,6 +157,7 @@ function Calendar() {
           events={allVisibleEvents}
           range={[display.selectedDate]}
           primaryCalendar={primaryCalendar}
+          today={today}
         />
       )
     } else if (display.view == 'Week') {
@@ -166,6 +167,7 @@ function Calendar() {
           events={allVisibleEvents}
           eventService={eventService}
           primaryCalendar={primaryCalendar}
+          today={today}
         />
       )
     } else if (display.view == 'WorkWeek') {
@@ -175,6 +177,7 @@ function Calendar() {
           events={allVisibleEvents}
           eventService={eventService}
           primaryCalendar={primaryCalendar}
+          today={today}
         />
       )
     } else if (display.view == 'Month') {
