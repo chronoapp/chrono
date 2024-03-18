@@ -13,7 +13,11 @@ interface IProps {
   now: DateTime
   eventService: EventService
   primaryCalendar: Calendar
+<<<<<<< HEAD
   today: DateTime
+=======
+  today: Date
+>>>>>>> 0ad60e1 (pass in today as prop from calender component)
 }
 
 function Week(props: IProps) {
