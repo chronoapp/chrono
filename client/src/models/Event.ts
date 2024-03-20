@@ -3,7 +3,7 @@ import { makeShortId } from '@/lib/js-lib/makeId'
 
 import { Label } from './Label'
 import { hexToHSL } from '../calendar/utils/Colors'
-import { localFullDate, fullDayFormat } from '../util/localizer'
+import { localFullDate, formatFullDay } from '../util/localizer'
 import EventParticipant, { ResponseStatus } from './EventParticipant'
 import Calendar from './Calendar'
 import ConferenceData from './ConferenceData'
@@ -130,8 +130,8 @@ export default class Event {
       '',
       startDate,
       endDate,
-      allDay ? fullDayFormat(startDate) : null,
-      allDay ? fullDayFormat(endDate) : null,
+      allDay ? formatFullDay(startDate) : null,
+      allDay ? formatFullDay(endDate) : null,
       [],
       allDay,
       '',
