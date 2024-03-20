@@ -18,6 +18,7 @@ import Calendar from '@/models/Calendar'
 
 import { editingEventState } from '@/state/EventsState'
 import { dragDropActionState } from '@/state/EventsState'
+import GutterDragDropZone from './GutterDragDropZone'
 
 import { DndContext, closestCorners, DragOverlay, MouseSensor } from '@dnd-kit/core'
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable'
