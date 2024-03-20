@@ -63,10 +63,8 @@ def sendEmail(
 ):
     """TODO: Use SMTP instead of API Key to support email providers."""
     if config.EMAIL_PROVIDER == 'mailgun':
-        logger.info('Sending email via Mailgun.')
         return _sendEmailMailgun(subject, body, recipient)
     elif config.EMAIL_PROVIDER == 'postmark':
-        logger.info('Sending email via Postmark.')
         return _sendEmailPostmark(subject, body, recipient)
     else:
         logger.warning('No email provider configured.')
