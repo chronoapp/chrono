@@ -1,9 +1,30 @@
-import { DateTime } from 'luxon'
+import { DateTime, DateTimeUnit, DurationUnit } from 'luxon'
+
+export const MILLI = {
+  seconds: 1000,
+  minutes: 1000 * 60,
+  hours: 1000 * 60 * 60,
+  day: 1000 * 60 * 60 * 24,
+}
 
 const MONTHS: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
 export function monthsInYear(year: number): number[] {
   return MONTHS.map((month) => DateTime.local(year, month).month)
+}
+
+export function startOfWeek(date: DateTime, firstOfWeek: number) {
+  return date
+    .startOf('week')
+    .minus({ days: 1 }) // Sunday
+    .plus({ days: firstOfWeek % 7 })
+}
+
+export function endOfWeek(date: DateTime, firstOfWeek: number) {
+  return date
+    .endOf('week')
+    .minus({ days: 1 }) // Saturday
+    .plus({ days: firstOfWeek % 7 })
 }
 
 export function firstVisibleDay(date: DateTime, startOfWeek: number): DateTime {
@@ -73,8 +94,12 @@ export function merge(date: DateTime, time: DateTime): DateTime {
   })
 }
 
-export function diff(dateA: DateTime, dateB: DateTime, unit: string = 'milliseconds'): number {
-  return Math.abs(dateA.diff(dateB, unit as keyof DateTime).as(unit))
+export function diff(
+  dateA: DateTime,
+  dateB: DateTime,
+  unit: DurationUnit = 'milliseconds'
+): number {
+  return Math.abs(dateA.diff(dateB, unit).as(unit))
 }
 
 /**
@@ -89,4 +114,75 @@ export function round(date: DateTime): DateTime {
     // Just set seconds and milliseconds to 0 if not rounding up
     return date.startOf('minute')
   }
+}
+
+export function gt(date1: DateTime, date2: DateTime, unit: DateTimeUnit = 'minute'): boolean {
+  // Adjust both dates to the start of the specified unit before comparing
+  const adjustedDate1 = date1.startOf(unit)
+  const adjustedDate2 = date2.startOf(unit)
+
+  return adjustedDate1 > adjustedDate2
+}
+
+export function lt(date1: DateTime, date2: DateTime, unit: DateTimeUnit = 'minute'): boolean {
+  // Adjust both dates to the start of the specified unit before comparing
+  const adjustedDate1 = date1.startOf(unit)
+  const adjustedDate2 = date2.startOf(unit)
+
+  return adjustedDate1 < adjustedDate2
+}
+
+export function gte(date1: DateTime, date2: DateTime, unit: DateTimeUnit = 'minute'): boolean {
+  // Adjust both dates to the start of the specified unit before comparing
+  const adjustedDate1 = date1.startOf(unit)
+  const adjustedDate2 = date2.startOf(unit)
+
+  return adjustedDate1 >= adjustedDate2
+}
+
+export function lte(date1: DateTime, date2: DateTime, unit: DateTimeUnit = 'minute'): boolean {
+  // Adjust both dates to the start of the specified unit before comparing
+  const adjustedDate1 = date1.startOf(unit)
+  const adjustedDate2 = date2.startOf(unit)
+
+  return adjustedDate1 <= adjustedDate2
+}
+
+export function inRange(
+  date: DateTime,
+  start: DateTime,
+  end: DateTime,
+  unit: DateTimeUnit = 'minute'
+): boolean {
+  // Normalize dates to the start of the specified unit
+  const normalizedDate = date.startOf(unit)
+  const normalizedStart = start.startOf(unit)
+  const normalizedEnd = end.startOf(unit)
+
+  // Compare the normalized dates
+  return normalizedDate >= normalizedStart && normalizedDate < normalizedEnd
+}
+
+export function max(date1: DateTime, date2: DateTime): DateTime {
+  return date1 > date2 ? date1 : date2
+}
+
+export function min(date1: DateTime, date2: DateTime): DateTime {
+  return date1 < date2 ? date1 : date2
+}
+
+export function eq(date1: DateTime, date2: DateTime, unit: DateTimeUnit = 'minute'): boolean {
+  return date1.hasSame(date2, unit)
+}
+
+export function startOf(date: DateTime, unit: DateTimeUnit) {
+  return date.startOf(unit)
+}
+
+export function endOf(date: DateTime, unit: DateTimeUnit) {
+  return date.endOf(unit)
+}
+
+export function add(date: DateTime, value: number, unit: DateTimeUnit) {
+  return date.plus({ [unit]: value })
 }
