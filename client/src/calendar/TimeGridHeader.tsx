@@ -7,7 +7,7 @@ import Event from '../models/Event'
 import WeekHeaderRow from './WeekHeaderRow'
 import { EventService } from './event-edit/useEventService'
 
-import { IconButton, Flex, Box, Text, VStack, Divider } from '@chakra-ui/react'
+import { IconButton, Flex } from '@chakra-ui/react'
 import { FiChevronUp, FiChevronDown, FiPlus } from 'react-icons/fi'
 import { userState } from '@/state/UserState'
 import { useRecoilState } from 'recoil'
@@ -78,73 +78,41 @@ function TimeGridHeader(props: IProps) {
       const isToday = dates.eq(date, props.today, 'day')
 
       return (
-        <Box
+        <div
           key={i}
-          display="flex"
-          flexDirection="column"
-          alignItems="center"
-          p={2}
-          className={isToday ? 'cal-today' : ''}
+          className={clsx('cal-header', dates.eq(date, props.today, 'day') && 'cal-today')}
         >
-          <VStack spacing={1}>
-            <Box
-              borderRadius="full"
-              bg={isToday ? '#5c6bc0' : 'transparent'}
-              color={isToday ? 'white' : 'gray.600'}
-              px={2}
-              py={1}
+          <span className={clsx(isToday && 'cal-header-day-selected', 'cal-header-day')}>
+            <div
+              className={clsx(
+                'cal-header-day-rectangle',
+                !isToday && 'has-text-grey-dark',
+                isToday && 'cal-today-bg'
+              )}
             >
-              <Text fontSize="sm">{dayNumber}</Text>
-              <Text fontSize="xs">{dateString}</Text>
-            </Box>
-          </VStack>
-        </Box>
+              <span className="is-size-6">{dayNumber}</span>{' '}
+              <span className="is-size-7">{dateString}</span>
+            </div>
+          </span>
+          <span className="cal-divider"></span>
+        </div>
       )
     })
   }
-
   return (
-    <Flex
-      className="cal-time-header"
-      style={{ marginRight: props.marginRight }}
-      display="flex"
-      flex="0 0 auto"
-      flexDirection="row"
-    >
+    <div style={{ marginRight: props.marginRight }} className={clsx('cal-time-header', 'mt-2')}>
       <Flex
-        className="rbc-label cal-time-header-gutter"
         width={props.leftPad}
         direction={'column'}
         justifyContent={'flex-start'}
         alignItems={'center'}
-        position="sticky"
-        left="0"
-        background-color="white"
-        z-index="10"
-        margin-right="-1px"
+        className="rbc-label cal-time-header-gutter"
       >
         <ToggleExpandWeeklyRows expanded={expandAllDayEvents} />
         <ToogleAdditionalTimezone addGutter={props.addGutter} />
       </Flex>
-      <Flex
-        className="cal-time-header-content"
-        flex={1}
-        minWidth="0"
-        flexDirection="column"
-        borderLeft="1px solid"
-        borderColor="rgb(235, 235, 235)"
-        boxShadow="-2px 2px 3px 0 lightgrey"
-      >
-        <Flex
-          className="cal-row"
-          display="flex"
-          flex-direction="row"
-          justifyContent="space-around"
-          borderLeft="1px solid"
-          borderColor="rgb(235, 235, 235)"
-        >
-          {renderHeaderCells()}
-        </Flex>
+      <div className="cal-time-header-content">
+        <div className="cal-row">{renderHeaderCells()}</div>
         <WeekHeaderRow
           range={props.range}
           events={props.events}
@@ -152,8 +120,8 @@ function TimeGridHeader(props: IProps) {
           expandRows={expandAllDayEvents}
           onShowMore={() => updateExpandAllDayEvents(true)}
         />
-      </Flex>
-    </Flex>
+      </div>
+    </div>
   )
 }
 
