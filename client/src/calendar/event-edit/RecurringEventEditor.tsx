@@ -33,7 +33,14 @@ import { BsArrowRepeat } from 'react-icons/bs'
 import { FiChevronDown } from 'react-icons/fi'
 
 import * as dates from '@/util/dates'
-import { fullDayFormat, format, getWeekRange, localFullDate } from '@/util/localizer'
+import {
+  fullDayFormat,
+  formatDayOfWeekNumeric,
+  formatTwoLetterWeekday,
+  getWeekRange,
+  localFullDate,
+} from '@/util/localizer'
+
 import { Frequency as RRuleFreq, RRule, RRuleSet, Weekday, rrulestr, Options } from 'rrule'
 
 enum EndCondition {
@@ -151,7 +158,7 @@ function RecurringEventEditor(props: IProps) {
           byweekday: [],
         })
       } else if (recurringOptions?.freq == RRuleFreq.WEEKLY) {
-        const dayNo = parseInt(format(props.initialDate, 'd'))
+        const dayNo = parseInt(formatDayOfWeekNumeric(props.initialDate))
         const rruleDay = new Weekday(dayNo)
         setRecurringOptions({
           ...recurringOptions,
@@ -267,7 +274,7 @@ function RecurringEventEditor(props: IProps) {
 
           <Flex mt="1">
             {weekRange.map((day, idx) => {
-              const dayNumber = (parseInt(format(day, 'd')) + 6) % 7
+              const dayNumber = (parseInt(formatDayOfWeekNumeric(day)) + 6) % 7
               const isSelected = weekdays.includes(dayNumber)
 
               return (
@@ -310,7 +317,7 @@ function RecurringEventEditor(props: IProps) {
                   }}
                 >
                   <Text fontSize="2xs" color={isSelected ? 'white' : 'gray.700'}>
-                    {format(day, 'dd')}
+                    {formatTwoLetterWeekday(day)}
                   </Text>
                 </Flex>
               )

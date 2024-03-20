@@ -4,7 +4,7 @@ import { Box, Flex, Icon } from '@chakra-ui/react'
 
 import { FiArrowRight } from 'react-icons/fi'
 
-import { format } from '../../util/localizer'
+import { formatTimeHmma } from '../../util/localizer'
 import * as dates from '../../util/dates'
 import { getDstOffset } from '../utils/SlotMetrics'
 
@@ -64,7 +64,7 @@ interface DateSelectorProps {
 }
 
 function DateSelector(props: DateSelectorProps) {
-  const selectedLabel = format(props.date, 'h:mm A')
+  const selectedLabel = formatTimeHmma(props.date)
   const defaultItem = props.timeOptions.find((item) => item.label == selectedLabel)
 
   function itemToString(item) {
@@ -113,7 +113,7 @@ function DateSelector(props: DateSelectorProps) {
         p="0.5"
         fontSize={'sm'}
       >
-        {format(props.date, 'h:mm A')}
+        {formatTimeHmma(props.date)}
       </Box>
       <Box
         {...getMenuProps()}
@@ -178,7 +178,7 @@ export function getStartTimeOptions(dayStart: Date, end: Date): TimeOption[] {
 
     const option = {
       value: i,
-      label: `${format(date, 'h:mm A')}`,
+      label: `${formatTimeHmma(date)}`,
       dst: getDstOffset(dayStart, date),
     }
     startTimeOptions.push(option)
@@ -219,7 +219,7 @@ export function getEndTimeOptions(start: Date, dayEnd: Date): TimeOption[] {
       0
     )
 
-    const option = { value: i, label: `${format(date, 'h:mm A')}` }
+    const option = { value: i, label: `${formatTimeHmma(date)}` }
     endTimeOptions.push(option)
   }
 

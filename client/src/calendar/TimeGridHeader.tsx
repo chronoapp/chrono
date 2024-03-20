@@ -1,7 +1,6 @@
-import React from 'react'
 import clsx from 'clsx'
 
-import { format } from '../util/localizer'
+import { formatDayOfMonth, formatThreeLetterWeekday } from '../util/localizer'
 import * as dates from '../util/dates'
 
 import Event from '../models/Event'
@@ -61,8 +60,8 @@ function TimeGridHeader(props: IProps) {
     const today = new Date() // TODO: pass via props.
 
     return props.range.map((date, i) => {
-      const dayNumber = format(date, 'D')
-      const dateString = format(date, 'ddd')
+      const dayNumber = formatDayOfMonth(date)
+      const dateString = formatThreeLetterWeekday(date)
       const isToday = dates.eq(date, today, 'day')
 
       return (

@@ -10,7 +10,7 @@ import {
   PopoverHeader,
 } from '@chakra-ui/react'
 
-import { format } from '../util/localizer'
+import { formatFullDate } from '@/util/localizer'
 import { eventLevels, EventSegment } from './utils/eventLevels'
 import { renderSpan, EventItem } from './EventRow'
 import { EventService } from './event-edit/useEventService'
@@ -42,7 +42,7 @@ function InnerPopoverContent(props: {
 
   return (
     <>
-      <PopoverHeader fontSize="sm">{format(events[0].start, 'dddd, MMMM DD')}</PopoverHeader>
+      <PopoverHeader fontSize="sm">{formatFullDate(events[0].start)}</PopoverHeader>
       <PopoverArrow />
       <PopoverCloseButton />
       <Flex direction="column" pb="1" pt="1">

@@ -28,7 +28,7 @@ import {
   FiArrowLeft,
 } from 'react-icons/fi'
 
-import { format } from '@/util/localizer'
+import { formatLocaleDateString } from '@/util/localizer'
 import { GlobalEvent } from '@/util/global'
 import * as dates from '@/util/dates'
 
@@ -284,7 +284,7 @@ export default function Header(props: { search: string }) {
 
   function getViewTitle(displayView: DisplayView) {
     if (displayView == 'Day') {
-      return format(display.selectedDate, 'LL')
+      return formatLocaleDateString(display.selectedDate)
     } else if (displayView == 'Week') {
       return Week.getTitle(display.selectedDate)
     } else if (displayView == 'WorkWeek') {

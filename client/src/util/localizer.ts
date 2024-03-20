@@ -44,10 +44,6 @@ export function startOfWeek() {
   return data ? data.firstDayOfWeek() : 0
 }
 
-export function format(value: any, format: string) {
-  return moment(value).format(format)
-}
-
 export function formatDateTime(value: any) {
   return moment(value).format()
 }
@@ -67,11 +63,63 @@ export function formatDuration(durationInMinutes: number) {
   return `${hours}h ${minutes}m`
 }
 
+export function format(value: any, format: string) {
+  return moment(value).format(format)
+}
+
 /**
  * Date into a full day string (YYYY-MM-DD)
  */
 export function fullDayFormat(date: Date) {
   return moment(date).format(moment.HTML5_FMT.DATE)
+}
+
+export function formatLocaleDateString(date: Date) {
+  return moment(date).format('LL')
+}
+
+export function formatMonthAndYear(date: Date) {
+  return moment(date).format('MMMM YYYY')
+}
+
+export function formatTwoLetterWeekday(date: Date) {
+  return moment(date).format('dd')
+}
+
+export function formatDayOfMonth(date: Date) {
+  return moment(date).format('D')
+}
+
+export function formatThreeLetterWeekday(date: Date) {
+  return moment(date).format('ddd')
+}
+
+export function formatTwoDigitDay(date: Date) {
+  return moment(date).format('DD')
+}
+
+export function formatAmPm(date: Date) {
+  return moment(date).format('A')
+}
+
+/**
+ * includes the full day name, full month name, and day in two digits.
+ * Eg. "Sunday, January 01".
+ */
+export function formatFullDate(date: Date) {
+  return moment(date).format('dddd, MMMM DD')
+}
+
+export function formatTimeHmma(date: Date) {
+  return moment(date).format('h:mm A')
+}
+
+export function formatDayOfWeekNumeric(date: Date) {
+  return moment(date).format('d')
+}
+
+export function formatTime24Hour(date: Date) {
+  return moment(date).format('HH:mm')
 }
 
 /**

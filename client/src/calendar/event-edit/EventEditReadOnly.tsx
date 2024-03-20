@@ -4,7 +4,7 @@ import { FiCalendar, FiClock, FiAlignLeft, FiTrash, FiMail, FiMapPin, FiBell } f
 import { MdClose } from 'react-icons/md'
 import linkifyHtml from 'linkifyjs/html'
 
-import { fullDayFormat, format, formatDuration } from '@/util/localizer'
+import { fullDayFormat, formatTime24Hour, formatAmPm, formatDuration } from '@/util/localizer'
 import * as dates from '@/util/dates'
 
 import { LabelTag } from '@/components/LabelTag'
@@ -91,9 +91,9 @@ export default function EventEditReadOnly(props: IProps) {
             <FiClock />
           </Box>
           <Text fontSize={'sm'}>
-            {fullDayFormat(eventFields.start)} {format(eventFields.start, 'hh:mm')} -{' '}
-            {format(eventFields.end, 'hh:mm')}
-            {format(eventFields.end, 'A')}
+            {fullDayFormat(eventFields.start)} {formatTime24Hour(eventFields.start)} -{' '}
+            {formatTime24Hour(eventFields.end)}
+            {formatAmPm(eventFields.end)}
           </Text>
           {!event.all_day && (
             <Text fontSize="xs" color="gray.500" pl="1">
