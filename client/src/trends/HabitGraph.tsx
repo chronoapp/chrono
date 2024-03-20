@@ -200,7 +200,7 @@ function HabitGraph(props: IProps) {
             aria-label="right"
             variant="ghost"
             icon={<FiChevronRight />}
-            onClick={() => setViewDate(viewDate.add({ months: 1 }))}
+            onClick={() => setViewDate(viewDate.plus({ months: 1 }))}
           />
 
           <Text ml="2">{formatMonthTitle(viewDate)}</Text>
