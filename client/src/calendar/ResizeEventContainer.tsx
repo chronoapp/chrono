@@ -4,12 +4,12 @@ import { DragDropAction } from '@/state/EventsState'
 import { withEventActions, InjectedEventActionsProps } from '@/state/withEventActions'
 import Event from '@/models/Event'
 
-import * as dates from '../util/dates'
-import { timeRangeFormat } from '../util/localizer'
-import SlotMetrics from './utils/SlotMetrics'
-import { GlobalEvent } from '../util/global'
-import { Selection, Rect, EventData, getBoundsForNode, SelectRect } from '../util/Selection'
+import * as dates from '@/util/dates'
+import { timeRangeFormat } from '@/util/localizer'
+import { GlobalEvent } from '@/util/global'
+import { Selection, Rect, EventData, getBoundsForNode, SelectRect } from '@/util/Selection'
 
+import SlotMetrics from './utils/SlotMetrics'
 import TimeGridEvent from './TimeGridEvent'
 
 const GRID_WRAPPER_SELECTOR = '.cal-time-view'
