@@ -2,8 +2,8 @@ import React from 'react'
 import clsx from 'clsx'
 import { Button, Center, Flex, Box, Text } from '@chakra-ui/react'
 import { Bar } from 'react-chartjs-2'
+import { DateTime } from 'luxon'
 
-import * as dates from '@/util/dates'
 import { getTrends } from '@/util/Api'
 import { Label, TimePeriod } from '@/models/Label'
 
@@ -36,15 +36,15 @@ function TrendChart(props: IProps) {
 
   async function updateTrendsData() {
     if (props.selectedLabel) {
-      const end = new Date()
+      const end = DateTime.now()
       let start
 
       if (selectedTimePeriod === 'MONTH') {
-        start = dates.subtract(end, 12, 'month')
+        start = end.minus({ months: 12 })
       } else if (selectedTimePeriod === 'WEEK') {
-        start = dates.subtract(end, 12, 'week')
+        start = end.minus({ weeks: 12 })
       } else if (selectedTimePeriod === 'DAY') {
-        start = dates.subtract(end, 30, 'day')
+        start = end.minus({ days: 30 })
       }
 
       const trends = await getTrends(props.selectedLabel.id, selectedTimePeriod, start, end)

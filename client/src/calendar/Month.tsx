@@ -3,7 +3,7 @@ import chunk from '@/lib/js-lib/chunk'
 
 import Event from '../models/Event'
 import * as dates from '../util/dates'
-import { startOfWeek, monthTitleFormat } from '../util/localizer'
+import { startOfWeek, formatMonthTitle } from '../util/localizer'
 import { inRange, sortEvents } from './utils/eventLevels'
 import WeekRow from './WeekRow'
 import Calendar from '@/models/Calendar'
@@ -44,6 +44,6 @@ function Month(props: IProps) {
   return <div className="cal-month-view">{weeks.map(renderWeek)}</div>
 }
 
-Month.getTitle = monthTitleFormat
+Month.getTitle = formatMonthTitle
 
 export default Month

@@ -34,7 +34,7 @@ import { FiChevronDown } from 'react-icons/fi'
 
 import * as dates from '@/util/dates'
 import {
-  fullDayFormat,
+  formatFullDay,
   formatDayOfWeekNumeric,
   formatTwoLetterWeekday,
   getWeekRange,
@@ -358,7 +358,7 @@ function RecurringEventEditor(props: IProps) {
                   size="xs"
                   type="date"
                   isDisabled={endCondition != EndCondition.ByEndDate}
-                  value={fullDayFormat(recurringOptions.until!)}
+                  value={formatFullDay(recurringOptions.until!)}
                   onChange={(e) => {
                     setRecurringOptions({
                       ...recurringOptions,

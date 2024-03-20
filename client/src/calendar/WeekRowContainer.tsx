@@ -16,7 +16,7 @@ import {
   isEvent,
 } from '../util/Selection'
 import { pointInBox, getSlotAtX } from '../util/selection-utils'
-import { fullDayFormat } from '../util/localizer'
+import { formatFullDay } from '../util/localizer'
 import { EventService } from './event-edit/useEventService'
 import Calendar from '@/models/Calendar'
 
@@ -116,7 +116,7 @@ class WeekRowContainer extends React.Component<IProps & InjectedEventActionsProp
 
     if (event.all_day) {
       let endDay = dates.add(startDay, dates.diff(event.start, event.end, 'day'), 'day')
-      this.updateEvent(event, start, end, fullDayFormat(startDay), fullDayFormat(endDay))
+      this.updateEvent(event, start, end, formatFullDay(startDay), formatFullDay(endDay))
     } else {
       this.updateEvent(event, start, end, null, null)
     }

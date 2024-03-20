@@ -9,7 +9,7 @@ import useEventActions from '@/state/useEventActions'
 
 import { ToastTag } from '@/components/Toast'
 import Event from '../models/Event'
-import { timeFormatShort } from '../util/localizer'
+import { formatTimeShort } from '../util/localizer'
 import * as dates from '../util/dates'
 
 import { LabelTagColor } from '../components/LabelTag'
@@ -162,7 +162,7 @@ function TimeGridEvent(props: IProps) {
         style={{ display: 'flex', lineHeight: '12px' }}
       >
         <span>{displayTitle}</span>
-        <span style={{ fontSize: '90%', flex: 1 }}>{`, ${timeFormatShort(event.start)}`}</span>
+        <span style={{ fontSize: '90%', flex: 1 }}>{`, ${formatTimeShort(event.start)}`}</span>
         <span style={{ display: 'flex', alignItems: 'center' }}>{tagColors}</span>
       </div>
     )

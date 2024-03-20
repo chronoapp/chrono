@@ -9,7 +9,7 @@ import { dragDropActionState, editingEventState } from '@/state/EventsState'
 
 import { EventSegment } from './utils/eventLevels'
 import DateSlotMetrics from './utils/DateSlotMetrics'
-import { timeFormatShort } from '../util/localizer'
+import { formatTimeShort } from '../util/localizer'
 import EventPopover from './event-edit/EventEditPopover'
 
 import Event from '../models/Event'
@@ -90,7 +90,7 @@ export function EventItem(props: {
         onClick={handleClickEvent}
       >
         <div className="cal-label-circle" />
-        {timeFormatShort(event.start)}
+        {formatTimeShort(event.start)}
         <div className="cal-event-content" style={{ width: 0 }}>
           {eventTitle}
         </div>

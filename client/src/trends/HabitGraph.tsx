@@ -12,17 +12,17 @@ import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 import { useRecoilValue } from 'recoil'
 import chunk from '@/lib/js-lib/chunk'
 
+import { DateTime } from 'luxon'
+import * as dates from '@/util/dates-luxon'
 import {
   startOfWeek,
   getWeekRange,
-  fullDayFormat,
+  formatFullDay,
   formatThreeLetterWeekday,
   formatDayOfMonth,
   formatMonthDay,
-  monthTitleFormat,
-} from '@/util/localizer'
-
-import * as dates from '@/util/dates'
+  formatMonthTitle,
+} from '@/util/localizer-luxon'
 
 import { hexToHSL } from '@/calendar/utils/Colors'
 import { Label } from '@/models/Label'
@@ -44,9 +44,11 @@ function HabitGraph(props: IProps) {
   const [trendMap, setTrendMap] = useState<Map<string, number>>(undefined!)
   const [maxDuration, setMaxDuration] = useState(0)
 
-  const curDate = new Date()
-  const [viewDate, setViewDate] = useState(curDate)
+  const curDate: DateTime = DateTime.now()
+  const [viewDate, setViewDate] = useState<DateTime>(curDate)
   const month = dates.visibleDays(viewDate, startOfWeek(), true)
+  console.log(month)
+
   const weeks = chunk(month, 7)
 
   useEffect(() => {
@@ -80,16 +82,16 @@ function HabitGraph(props: IProps) {
     ))
   }
 
-  function renderWeek(week: Date[], idx: number) {
+  function renderWeek(week: DateTime[], idx: number) {
     const { h, s, l } = hexToHSL(props.selectedLabel!.color_hex)
 
     return (
       <Flex key={idx}>
-        {week.map((day: Date, idx: number) => {
+        {week.map((day: DateTime, idx: number) => {
           const label = formatDayOfMonth(day)
-          const dayKey = fullDayFormat(day)
+          const dayKey = formatFullDay(day)
           const dayValue = day > curDate ? 0 : trendMap.get(dayKey)
-          const isToday = dates.eq(day, curDate)
+          const isToday = curDate.hasSame(day, 'day')
 
           let color
           if (dayValue) {
@@ -192,16 +194,16 @@ function HabitGraph(props: IProps) {
             aria-label="left"
             variant="ghost"
             icon={<FiChevronLeft />}
-            onClick={() => setViewDate(dates.subtract(viewDate, 1, 'month'))}
+            onClick={() => setViewDate(viewDate.minus({ months: 1 }))}
           />
           <IconButton
             aria-label="right"
             variant="ghost"
             icon={<FiChevronRight />}
-            onClick={() => setViewDate(dates.add(viewDate, 1, 'month'))}
+            onClick={() => setViewDate(viewDate.add({ months: 1 }))}
           />
 
-          <Text ml="2">{monthTitleFormat(viewDate)}</Text>
+          <Text ml="2">{formatMonthTitle(viewDate)}</Text>
         </Flex>
         <ViewSelector setSelectedView={props.setSelectedView} selectedView={'HABIT_GRAPH'} />
       </Flex>

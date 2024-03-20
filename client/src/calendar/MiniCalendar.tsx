@@ -8,7 +8,7 @@ import chunk from '@/lib/js-lib/chunk'
 import { displayState } from '@/state/EventsState'
 import * as dates from '@/util/dates'
 import { startOfWeek, getWeekRange } from '@/util/localizer'
-import { formatTwoLetterWeekday, formatDayOfMonth, monthTitleFormat } from '@/util/localizer'
+import { formatTwoLetterWeekday, formatDayOfMonth, formatMonthTitle } from '@/util/localizer'
 
 type AnimateDirection = 'NONE' | 'FROM_BOTTOM' | 'FROM_TOP'
 
@@ -87,7 +87,7 @@ export default function MiniCalendar() {
   return (
     <Box mt="1" pr="2">
       <Flex pl="1" justifyContent="space-between">
-        <Text>{monthTitleFormat(viewDate)}</Text>
+        <Text>{formatMonthTitle(viewDate)}</Text>
         <Flex>
           <span
             className="icon-button"

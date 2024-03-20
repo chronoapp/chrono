@@ -1,9 +1,17 @@
 import { DateTime } from 'luxon'
 
 /**
- * Wrapper for date localization.
+ * Wrapper for date localization and formatting.
  */
-export function timeFormatShort(date: DateTime, space: boolean = false): string {
+
+/**
+ * This will depend on the locale; for ISO standard, it's 1 (Monday). TODO: Make this into a config.
+ */
+export function startOfWeek(): number {
+  return 0
+}
+
+export function formatTimeShort(date: DateTime, space: boolean = false): string {
   const hour = date.toFormat('h')
   const minutes = date.minute
   const meridian = date.toFormat('a').toLowerCase()
@@ -15,26 +23,8 @@ export function timeFormatShort(date: DateTime, space: boolean = false): string 
   }
 }
 
-export function timeRangeFormat(start: DateTime, end: DateTime): string {
-  return `${timeFormatShort(start)} – ${timeFormatShort(end)}`
-}
-
-/**
- * Two letter day followed by day of month.
- * E.g. Su 02
- */
-export function dayFormat(date: DateTime): string {
-  const dayOfMonth = date.toFormat('dd')
-
-  return `${formatTwoLetterWeekday(date)} ${dayOfMonth}`
-}
-
-export function startOfWeek(): number {
-  // This will depend on the locale; for ISO standard, it's 1 (Monday)
-  // For US locale, Sunday (0) is often considered the start of the week
-  // TODO: Make this into a config.
-
-  return 0
+export function formatTimeRange(start: DateTime, end: DateTime): string {
+  return `${formatTimeShort(start)} – ${formatTimeShort(end)}`
 }
 
 export function formatDateTime(value: DateTime): string {
@@ -56,16 +46,16 @@ export function formatDuration(durationInMinutes: number) {
   return `${hours}h ${minutes}m`
 }
 
-export function monthTitleFormat(date: DateTime): string {
+export function formatMonthTitle(date: DateTime): string {
   return date.toFormat('MMMM yyyy')
 }
 
-export function weekRangeFormat(start: DateTime, end: DateTime): string {
+export function formatWeekRange(start: DateTime, end: DateTime): string {
   const sameMonth = start.month === end.month
   return `${start.toFormat('MMMM dd')} – ${end.toFormat(sameMonth ? 'dd' : 'MMMM dd')}`
 }
 
-export function fullDayFormat(date: DateTime): string {
+export function formatFullDay(date: DateTime): string {
   return date.toFormat('yyyy-MM-dd')
 }
 

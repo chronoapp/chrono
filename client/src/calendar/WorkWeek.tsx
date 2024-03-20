@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { weekRangeFormat, getWorkWeekRange } from '@/util/localizer'
+import { formatWeekRange, getWorkWeekRange } from '@/util/localizer'
 import Event from '@/models/Event'
 import Calendar from '@/models/Calendar'
 
@@ -31,7 +31,7 @@ function WorkWeek(props: IProps) {
 
 WorkWeek.getTitle = function (date: Date): string {
   const [start, ...rest] = getWorkWeekRange(date)
-  return weekRangeFormat(start, rest.pop()!)
+  return formatWeekRange(start, rest.pop()!)
 }
 
 export default WorkWeek

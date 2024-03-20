@@ -6,7 +6,12 @@ import moment from 'moment'
  * TODO: Replace moment with date-fns / luxon.
  */
 
-export function timeFormatShort(date: Date, space: boolean = false) {
+export function startOfWeek() {
+  let data = moment.localeData()
+  return data ? data.firstDayOfWeek() : 0
+}
+
+export function formatTimeShort(date: Date, space: boolean = false) {
   const m = moment(date)
   const hour = m.format('h')
   const minutes = date.getMinutes()
@@ -19,17 +24,8 @@ export function timeFormatShort(date: Date, space: boolean = false) {
   }
 }
 
-export function timeRangeFormat(start: Date, end: Date) {
-  return timeFormatShort(start) + ' – ' + timeFormatShort(end)
-}
-
-export function dayFormat(date: Date) {
-  return moment(date).format('dd DD')
-}
-
-export function startOfWeek() {
-  let data = moment.localeData()
-  return data ? data.firstDayOfWeek() : 0
+export function formatTimeRange(start: Date, end: Date) {
+  return formatTimeShort(start) + ' – ' + formatTimeShort(end)
 }
 
 export function formatDateTime(value: any) {
@@ -51,11 +47,11 @@ export function formatDuration(durationInMinutes: number) {
   return `${hours}h ${minutes}m`
 }
 
-export function monthTitleFormat(date: Date): string {
+export function formatMonthTitle(date: Date): string {
   return moment(date).format('MMMM YYYY')
 }
 
-export function weekRangeFormat(start: Date, end: Date) {
+export function formatWeekRange(start: Date, end: Date) {
   return (
     moment(start).format('MMMM DD') +
     ' – ' +
@@ -66,7 +62,7 @@ export function weekRangeFormat(start: Date, end: Date) {
 /**
  * Date into a full day string (YYYY-MM-DD)
  */
-export function fullDayFormat(date: Date) {
+export function formatFullDay(date: Date) {
   return moment(date).format(moment.HTML5_FMT.DATE)
 }
 

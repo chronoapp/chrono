@@ -5,7 +5,7 @@ import { withEventActions, InjectedEventActionsProps } from '@/state/withEventAc
 import Event from '@/models/Event'
 
 import * as dates from '@/util/dates'
-import { timeRangeFormat } from '@/util/localizer'
+import { formatTimeRange } from '@/util/localizer'
 import { GlobalEvent } from '@/util/global'
 import { Selection, Rect, EventData, getBoundsForNode, SelectRect } from '@/util/Selection'
 
@@ -229,7 +229,7 @@ class ResizeEventContainer extends React.Component<IProps & InjectedEventActions
             <TimeGridEvent
               now={today}
               event={draggingEvent}
-              label={timeRangeFormat(draggingEvent.start, draggingEvent.end)}
+              label={formatTimeRange(draggingEvent.start, draggingEvent.end)}
               style={{ top, height, width: 100, xOffset: 0, border: 'none' }}
               isPreview={true}
               getContainerRef={this.getContainerRef}

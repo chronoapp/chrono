@@ -12,7 +12,7 @@ import { editingEventState } from '@/state/EventsState'
 import EventPopover from '@/calendar/event-edit/EventEditPopover'
 import { sortEvents } from '@/calendar/utils/eventLevels'
 
-import { formatDayMonthYearWeekday, timeRangeFormat } from '@/util/localizer'
+import { formatDayMonthYearWeekday, formatTimeRange } from '@/util/localizer'
 import { LabelTag } from '@/components/LabelTag'
 import Event from '@/models/Event'
 import { EventService } from './event-edit/useEventService'
@@ -78,7 +78,7 @@ function EventItem(props: { event: Event; eventService: EventService }) {
             </Flex>
           </Flex>
           <Flex alignItems={'center'}>
-            <Text fontSize="xs">{timeRangeFormat(props.event.start, props.event.end)}</Text>
+            <Text fontSize="xs">{formatTimeRange(props.event.start, props.event.end)}</Text>
             {props.event.recurring_event_id && (
               <Box ml="2">
                 <FiRepeat size={'0.8em'} />

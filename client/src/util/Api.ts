@@ -1,6 +1,7 @@
-import { getLocalStorageItem, setLocalStorageItem } from '@/lib/local-storage'
+import { DateTime } from 'luxon'
+import { formatDateTime } from '@/util/localizer-luxon'
 
-import { formatDateTime } from '@/util/localizer'
+import { getLocalStorageItem, setLocalStorageItem } from '@/lib/local-storage'
 import Event from '@/models/Event'
 import { Label, TimePeriod } from '@/models/Label'
 import { LabelRule } from '@/models/LabelRule'
@@ -428,7 +429,12 @@ export async function getContact(contactId: string): Promise<Contact> {
 
 // ================== Plugins: Trends ==================
 
-export async function getTrends(labelId: string, timePeriod: TimePeriod, start: Date, end: Date) {
+export async function getTrends(
+  labelId: string,
+  timePeriod: TimePeriod,
+  start: DateTime,
+  end: DateTime
+) {
   const params = {
     start: formatDateTime(start),
     end: formatDateTime(end),
