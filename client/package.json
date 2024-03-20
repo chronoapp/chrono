@@ -23,6 +23,7 @@
     "immer": "^8.0.1",
     "linkifyjs": "^2.1.9",
     "lodash.debounce": "^4.0.8",
+    "luxon": "^3.4.4",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.45",
     "next": "^12.3.1",
