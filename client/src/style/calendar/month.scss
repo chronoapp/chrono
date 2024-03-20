@@ -16,6 +16,19 @@
   border-top: 1px solid $cell-border;
 }
 
+.cal-row-bg {
+  @extend .cal-abs-full;
+  display: flex;
+  flex-direction: row;
+  flex: 1 0 0;
+  overflow: hidden;
+}
+
+.cal-day-bg {
+  flex: 1 0 0%;
+  border-left: 1px solid $cell-border;
+}
+
 .cal-row-content {
   z-index: 1;
   user-select: none;
