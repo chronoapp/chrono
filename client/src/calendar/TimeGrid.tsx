@@ -20,6 +20,7 @@ import Calendar from '@/models/Calendar'
 
 import { editingEventState } from '@/state/EventsState'
 import { dragDropActionState } from '@/state/EventsState'
+import GutterDragDropZone from './GutterDragDropZone'
 
 function remToPixels(rem) {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
@@ -48,12 +49,18 @@ function TimeGrid(props: IProps) {
   const [intitalGutterHeaderWidth, setIntitalGutterHeaderWidth] = useState(0)
   const [gutterWidth, setGutterWidth] = useState(0)
   const [scrollbarSize, setScrollbarSize] = useState(0)
-  const [gutterCount, setGutterCount] = useState(1)
+  const [gutters, setGutters] = useState([{ id: 1, content: 'Gutter 1' }])
+
+  const getNextId = () => gutters.reduce((max, gutter) => Math.max(max, gutter.id), 0) + 1
 
   const addGutter = () => {
-    setGutterCount((currentCount) => currentCount + 1)
+    const newGutter = { id: getNextId(), content: `Gutter ${gutters.length + 1}` }
+    setGutters([...gutters, newGutter])
   }
 
+  const removeGutter = (id) => {
+    setGutters(gutters.filter((gutter) => gutter.id !== id))
+  }
   const slotMetrics = useRef<SlotMetrics>(
     new SlotMetrics(props.min, props.max, props.step, props.timeslots)
   )
@@ -238,7 +245,7 @@ function TimeGrid(props: IProps) {
       <TimeGridHeader
         events={allDayEvents}
         range={props.range}
-        leftPad={intitalGutterHeaderWidth + (gutterCount - 1) * gutterWidth}
+        leftPad={intitalGutterHeaderWidth + (gutters.length - 1) * gutterWidth}
         marginRight={scrollbarSize}
         eventService={props.eventService}
         addGutter={addGutter}
@@ -246,13 +253,24 @@ function TimeGrid(props: IProps) {
       />
 
       <div ref={contentRef} className="cal-time-content">
-        {[...Array(gutterCount)].map((_, index) => (
-          <div key={index} ref={gutterRef} className="cal-time-gutter">
-            {slotMetrics.current.groups.map((group, idx) => {
-              return renderDateLabel(group, idx)
-            })}
-          </div>
-        ))}
+        <GutterDragDropZone>
+          {gutters.map((_, index) => (
+            <div
+              key={index}
+              ref={gutterRef}
+              className="cal-time-gutter"
+              draggable="true"
+              onDragStart={(e) => {
+                e.dataTransfer.setData('text/plain', index.toString())
+              }}
+            >
+              {slotMetrics.current.groups.map((group, idx) => {
+                return renderDateLabel(group, idx)
+              })}
+            </div>
+          ))}
+        </GutterDragDropZone>
+
         <div className="cal-time-gutter">
           {slotMetrics.current.groups.map((_group, idx) => {
             return renderDateTick(idx)
