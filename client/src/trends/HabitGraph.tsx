@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import chunk from '@/lib/js-lib/chunk'
 import { Flex, Box, Text, IconButton } from '@chakra-ui/react'
 import {
   Popover,
@@ -10,16 +9,28 @@ import {
 } from '@chakra-ui/react'
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 
-import { Label } from '@/models/Label'
-import { startOfWeek, format, getWeekRange, fullDayFormat } from '@/util/localizer'
+import { useRecoilValue } from 'recoil'
+import chunk from '@/lib/js-lib/chunk'
+
+import {
+  startOfWeek,
+  getWeekRange,
+  fullDayFormat,
+  formatThreeLetterWeekday,
+  formatDayOfMonth,
+  formatMonthDay,
+  monthTitleFormat,
+} from '@/util/localizer'
+
+import * as dates from '@/util/dates'
 
 import { hexToHSL } from '@/calendar/utils/Colors'
-import * as dates from '@/util/dates'
+import { Label } from '@/models/Label'
 import { getTrends } from '@/util/Api'
+
+import { labelsState } from '@/state/LabelsState'
 import ViewSelector, { TrendView } from './ViewSelector'
 import TagDropdown from './TagDropdown'
-import { useRecoilValue } from 'recoil'
-import { labelsState } from '@/state/LabelsState'
 
 interface IProps {
   setSelectedView: (v: TrendView) => void
@@ -32,8 +43,8 @@ function HabitGraph(props: IProps) {
 
   const [trendMap, setTrendMap] = useState<Map<string, number>>(undefined!)
   const [maxDuration, setMaxDuration] = useState(0)
-  const curDate = new Date()
 
+  const curDate = new Date()
   const [viewDate, setViewDate] = useState(curDate)
   const month = dates.visibleDays(viewDate, startOfWeek(), true)
   const weeks = chunk(month, 7)
@@ -64,7 +75,7 @@ function HabitGraph(props: IProps) {
     const range = getWeekRange(viewDate)
     return range.map((day, idx) => (
       <Flex key={idx} flex="1" justifyContent={'center'}>
-        <Text color="gray.600">{format(day, 'ddd')}</Text>
+        <Text color="gray.600">{formatThreeLetterWeekday(day)}</Text>
       </Flex>
     ))
   }
@@ -75,7 +86,7 @@ function HabitGraph(props: IProps) {
     return (
       <Flex key={idx}>
         {week.map((day: Date, idx: number) => {
-          const label = format(day, 'D')
+          const label = formatDayOfMonth(day)
           const dayKey = fullDayFormat(day)
           const dayValue = day > curDate ? 0 : trendMap.get(dayKey)
           const isToday = dates.eq(day, curDate)
@@ -113,8 +124,8 @@ function HabitGraph(props: IProps) {
                 <PopoverArrow bg="gray.600" borderColor="gray.600" />
                 <PopoverBody textAlign={'center'}>
                   {dayValue && dayValue > 0
-                    ? `${dayValue} hours on ${format(day, 'MMMM D')}`
-                    : `No activity on ${format(day, 'MMMM D')}`}
+                    ? `${dayValue} hours on ${formatMonthDay(day)}`
+                    : `No activity on ${formatMonthDay(day)}`}
                 </PopoverBody>
               </PopoverContent>
             </Popover>
@@ -190,7 +201,7 @@ function HabitGraph(props: IProps) {
             onClick={() => setViewDate(dates.add(viewDate, 1, 'month'))}
           />
 
-          <Text ml="2">{format(viewDate, 'MMMM YYYY')}</Text>
+          <Text ml="2">{monthTitleFormat(viewDate)}</Text>
         </Flex>
         <ViewSelector setSelectedView={props.setSelectedView} selectedView={'HABIT_GRAPH'} />
       </Flex>

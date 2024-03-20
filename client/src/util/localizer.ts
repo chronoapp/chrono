@@ -19,18 +19,6 @@ export function timeFormatShort(date: Date, space: boolean = false) {
   }
 }
 
-export function monthTitleFormat(date: Date): string {
-  return moment(date).format('MMMM YYYY')
-}
-
-export function weekRangeFormat(start: Date, end: Date) {
-  return (
-    moment(start).format('MMMM DD') +
-    ' – ' +
-    moment(end).format(dates.eq(start, end, 'month') ? 'DD' : 'MMMM DD')
-  )
-}
-
 export function timeRangeFormat(start: Date, end: Date) {
   return timeFormatShort(start) + ' – ' + timeFormatShort(end)
 }
@@ -63,8 +51,16 @@ export function formatDuration(durationInMinutes: number) {
   return `${hours}h ${minutes}m`
 }
 
-export function format(value: any, format: string) {
-  return moment(value).format(format)
+export function monthTitleFormat(date: Date): string {
+  return moment(date).format('MMMM YYYY')
+}
+
+export function weekRangeFormat(start: Date, end: Date) {
+  return (
+    moment(start).format('MMMM DD') +
+    ' – ' +
+    moment(end).format(dates.eq(start, end, 'month') ? 'DD' : 'MMMM DD')
+  )
 }
 
 /**
@@ -76,10 +72,6 @@ export function fullDayFormat(date: Date) {
 
 export function formatLocaleDateString(date: Date) {
   return moment(date).format('LL')
-}
-
-export function formatMonthAndYear(date: Date) {
-  return moment(date).format('MMMM YYYY')
 }
 
 export function formatTwoLetterWeekday(date: Date) {
@@ -120,6 +112,17 @@ export function formatDayOfWeekNumeric(date: Date) {
 
 export function formatTime24Hour(date: Date) {
   return moment(date).format('HH:mm')
+}
+
+export function formatMonthDay(date: Date) {
+  return moment(date).format('MMMM D')
+}
+
+/**
+ * E.g. 17 Mar 2025, Mon
+ */
+export function formatDayMonthYearWeekday(date: Date) {
+  return moment(date).format('D MMM YYYY, ddd')
 }
 
 /**

@@ -12,7 +12,7 @@ import { editingEventState } from '@/state/EventsState'
 import EventPopover from '@/calendar/event-edit/EventEditPopover'
 import { sortEvents } from '@/calendar/utils/eventLevels'
 
-import { format, timeRangeFormat } from '@/util/localizer'
+import { formatDayMonthYearWeekday, timeRangeFormat } from '@/util/localizer'
 import { LabelTag } from '@/components/LabelTag'
 import Event from '@/models/Event'
 import { EventService } from './event-edit/useEventService'
@@ -29,7 +29,7 @@ function EventItem(props: { event: Event; eventService: EventService }) {
   const calendar = useRecoilValue(calendarWithDefault(props.event.calendar_id))
   const editingEvent = useRecoilValue(editingEventState)
 
-  const dateDisplay = format(props.event.start, 'D MMM YYYY, ddd')
+  const dateDisplay = formatDayMonthYearWeekday(props.event.start)
   const isEditing = editingEvent?.id === props.event.id && editingEvent?.editMode !== 'FULL_EDIT'
 
   function onSelectEvent() {
