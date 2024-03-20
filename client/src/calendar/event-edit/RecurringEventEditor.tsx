@@ -32,8 +32,8 @@ import produce from 'immer'
 import { BsArrowRepeat } from 'react-icons/bs'
 import { FiChevronDown } from 'react-icons/fi'
 
-import * as dates from '../../util/dates'
-import { format, getWeekRange, localFullDate } from '../../util/localizer'
+import * as dates from '@/util/dates'
+import { fullDayFormat, format, getWeekRange, localFullDate } from '@/util/localizer'
 import { Frequency as RRuleFreq, RRule, RRuleSet, Weekday, rrulestr, Options } from 'rrule'
 
 enum EndCondition {
@@ -351,7 +351,7 @@ function RecurringEventEditor(props: IProps) {
                   size="xs"
                   type="date"
                   isDisabled={endCondition != EndCondition.ByEndDate}
-                  value={format(recurringOptions?.until, 'YYYY-MM-DD')}
+                  value={fullDayFormat(recurringOptions.until!)}
                   onChange={(e) => {
                     setRecurringOptions({
                       ...recurringOptions,

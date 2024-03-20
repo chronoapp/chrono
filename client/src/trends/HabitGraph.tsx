@@ -11,7 +11,7 @@ import {
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 
 import { Label } from '@/models/Label'
-import { startOfWeek, format, getWeekRange } from '@/util/localizer'
+import { startOfWeek, format, getWeekRange, fullDayFormat } from '@/util/localizer'
 
 import { hexToHSL } from '@/calendar/utils/Colors'
 import * as dates from '@/util/dates'
@@ -76,7 +76,7 @@ function HabitGraph(props: IProps) {
       <Flex key={idx}>
         {week.map((day: Date, idx: number) => {
           const label = format(day, 'D')
-          const dayKey = format(day, 'YYYY-MM-DD')
+          const dayKey = fullDayFormat(day)
           const dayValue = day > curDate ? 0 : trendMap.get(dayKey)
           const isToday = dates.eq(day, curDate)
 
