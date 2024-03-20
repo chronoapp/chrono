@@ -27,7 +27,7 @@ export function formatTimeRange(start: DateTime, end: DateTime): string {
   return `${formatTimeShort(start)} – ${formatTimeShort(end)}`
 }
 
-export function formatDateTime(value: DateTime): string {
+export function formatDateTime(value: DateTime): string | null {
   return value.toISO()
 }
 
@@ -121,7 +121,8 @@ export function formatDayMonthYearWeekday(date: DateTime) {
 
 export function roundNext15Min(date: DateTime): DateTime {
   let rounded = date.plus({ minutes: 15 - (date.minute % 15) })
-  return rounded.set({ seconds: 0 })
+
+  return rounded.set({ second: 0 })
 }
 
 export function localFullDate(dateStr: string): DateTime {
@@ -145,10 +146,11 @@ export function getWeekRange(date: DateTime) {
 
 export function getDurationDisplay(start: DateTime, end: DateTime): string {
   const duration = end.diff(start, ['hours', 'minutes']).toObject()
-  if (duration.hours === 0 && duration.minutes < 60) {
+
+  if ((duration.hours === 0 && duration.minutes) || 0 < 60) {
     return `${duration.minutes}m`
   } else {
-    return `${duration.hours}h ${duration.minutes > 0 ? `${duration.minutes}m` : ''}`.trim()
+    return `${duration.hours}h ${duration.minutes || 0 > 0 ? `${duration.minutes}m` : ''}`.trim()
   }
 }
 
