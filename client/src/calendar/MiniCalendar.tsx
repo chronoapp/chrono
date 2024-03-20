@@ -6,9 +6,9 @@ import clsx from 'clsx'
 import chunk from '@/lib/js-lib/chunk'
 
 import { displayState } from '@/state/EventsState'
-import * as dates from '../util/dates'
-import { startOfWeek, getWeekRange } from '../util/localizer'
-import { format } from '../util/localizer'
+import * as dates from '@/util/dates'
+import { startOfWeek, getWeekRange } from '@/util/localizer'
+import { formatTwoLetterWeekday, formatDayOfMonth, formatMonthTitle } from '@/util/localizer'
 
 type AnimateDirection = 'NONE' | 'FROM_BOTTOM' | 'FROM_TOP'
 
@@ -34,7 +34,7 @@ export default function MiniCalendar() {
     const range = getWeekRange(viewDate)
     return range.map((day, idx) => (
       <Text key={idx} className="cal-mini-month-day" fontSize={'xs'} size="xs">
-        {format(day, 'dd')}
+        {formatTwoLetterWeekday(day)}
       </Text>
     ))
   }
@@ -52,7 +52,7 @@ export default function MiniCalendar() {
         className={clsx(highlightWeek && 'cal-mini-week-selected')}
       >
         {week.map((day: Date, idx) => {
-          const label = format(day, 'D')
+          const label = formatDayOfMonth(day)
           const isToday = dates.eq(day, today, 'day')
           const isOffRange = dates.month(viewDate) !== dates.month(day)
           const isSelected = dates.eq(day, display.selectedDate, 'day')
@@ -87,7 +87,7 @@ export default function MiniCalendar() {
   return (
     <Box mt="1" pr="2">
       <Flex pl="1" justifyContent="space-between">
-        <Text>{format(viewDate, 'MMMM YYYY')}</Text>
+        <Text>{formatMonthTitle(viewDate)}</Text>
         <Flex>
           <span
             className="icon-button"

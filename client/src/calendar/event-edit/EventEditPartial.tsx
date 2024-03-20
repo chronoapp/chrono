@@ -28,7 +28,7 @@ import {
 
 import ContentEditable from '@/lib/ContentEditable'
 import { addNewLabels } from '@/calendar/utils/LabelUtils'
-import { format, fullDayFormat, yearStringToDate } from '@/util/localizer'
+import { formatFullDay, yearStringToDate } from '@/util/localizer'
 import * as dates from '@/util/dates'
 
 import { labelsState } from '@/state/LabelsState'
@@ -174,7 +174,7 @@ export default function EventEditPartial(props: IProps) {
               width="fit-content"
               border="0"
               variant="flushed"
-              value={format(eventFields.start, 'YYYY-MM-DD')}
+              value={formatFullDay(eventFields.start)}
               onChange={(e) => {
                 const duration = dates.diff(eventFields.end, eventFields.start, 'minutes')
                 const start = dates.merge(yearStringToDate(e.target.value), eventFields.start)
@@ -185,8 +185,8 @@ export default function EventEditPartial(props: IProps) {
                       ...eventFields,
                       start,
                       end,
-                      startDay: fullDayFormat(start),
-                      endDay: fullDayFormat(end),
+                      startDay: formatFullDay(start),
+                      endDay: formatFullDay(end),
                     }
                   : { ...eventFields, start, end }
 
@@ -207,7 +207,7 @@ export default function EventEditPartial(props: IProps) {
                     const updatedEventFields = {
                       ...eventFields,
                       end: endDate,
-                      endDay: fullDayFormat(endDate),
+                      endDay: formatFullDay(endDate),
                     }
                     setEventFields(updatedEventFields)
                   }}
@@ -244,8 +244,8 @@ export default function EventEditPartial(props: IProps) {
                       allDay: isAllDay,
                       start,
                       end,
-                      startDay: fullDayFormat(start),
-                      endDay: fullDayFormat(end),
+                      startDay: formatFullDay(start),
+                      endDay: formatFullDay(end),
                     }
                   } else {
                     const start = dates.startOf(eventFields.start, 'day')

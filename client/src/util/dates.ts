@@ -54,6 +54,7 @@ export function lastVisibleDay(date: Date, startOfWeek: number) {
 export function visibleDays(date: Date, startOfWeek: number, fillDates: boolean = false) {
   let current = firstVisibleDay(date, startOfWeek),
     last = lastVisibleDay(date, startOfWeek)
+
   const days: Date[] = []
 
   while (dates.lte(current, last, 'day')) {
@@ -69,12 +70,6 @@ export function visibleDays(date: Date, startOfWeek: number, fillDates: boolean 
   }
 
   return days
-}
-
-export function ceil(date: Date, unit: string): Date {
-  let floor = dates.startOf(date, unit)
-
-  return dates.eq(floor, date) ? floor : dates.add(floor, 1, unit)
 }
 
 export function range(start: Date, end: Date, unit = 'day') {
@@ -106,30 +101,6 @@ export function merge(date, time) {
   return dates.milliseconds(date, dates.milliseconds(time))
 }
 
-export function eqTime(dateA, dateB) {
-  return (
-    dates.hours(dateA) === dates.hours(dateB) &&
-    dates.minutes(dateA) === dates.minutes(dateB) &&
-    dates.seconds(dateA) === dates.seconds(dateB)
-  )
-}
-
-export function isJustDate(date) {
-  return (
-    dates.hours(date) === 0 &&
-    dates.minutes(date) === 0 &&
-    dates.seconds(date) === 0 &&
-    dates.milliseconds(date) === 0
-  )
-}
-
-export function duration(start, end, unit, firstOfWeek) {
-  if (unit === 'day') unit = 'date'
-  return Math.abs(
-    dates[unit](start, undefined, firstOfWeek) - dates[unit](end, undefined, firstOfWeek)
-  )
-}
-
 export function diff(dateA: Date, dateB: Date, unit = 'milliseconds') {
   if (unit === 'milliseconds') return Math.abs(+dateA - +dateB)
 
@@ -139,45 +110,6 @@ export function diff(dateA: Date, dateB: Date, unit = 'milliseconds') {
   return Math.round(
     Math.abs(+dates.startOf(dateA, unit) / MILLI[unit] - +dates.startOf(dateB, unit) / MILLI[unit])
   )
-}
-
-export function total(date, unit) {
-  let ms = date.getTime(),
-    div = 1
-
-  switch (unit) {
-    case 'week':
-      div *= 7
-      break
-    case 'day':
-      div *= 24
-      break
-    case 'hours':
-      div *= 60
-      break
-    case 'minutes':
-      div *= 60
-      break
-    case 'seconds':
-      div *= 1000
-      break
-    default:
-      throw new Error(`Unexpecetd unit ${unit}`)
-  }
-
-  return ms / div
-}
-
-export function today() {
-  return dates.startOf(new Date(), 'day')
-}
-
-export function yesterday() {
-  return dates.add(dates.startOf(new Date(), 'day'), -1, 'day')
-}
-
-export function tomorrow() {
-  return dates.add(dates.startOf(new Date(), 'day'), 1, 'day')
 }
 
 export function round(date: Date) {

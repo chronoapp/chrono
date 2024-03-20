@@ -4,12 +4,12 @@ import { DragDropAction } from '@/state/EventsState'
 import { withEventActions, InjectedEventActionsProps } from '@/state/withEventActions'
 import Event from '@/models/Event'
 
-import * as dates from '../util/dates'
-import { timeRangeFormat } from '../util/localizer'
-import SlotMetrics from './utils/SlotMetrics'
-import { GlobalEvent } from '../util/global'
-import { Selection, Rect, EventData, getBoundsForNode, SelectRect } from '../util/Selection'
+import * as dates from '@/util/dates'
+import { formatTimeRange } from '@/util/localizer'
+import { GlobalEvent } from '@/util/global'
+import { Selection, Rect, EventData, getBoundsForNode, SelectRect } from '@/util/Selection'
 
+import SlotMetrics from './utils/SlotMetrics'
 import TimeGridEvent from './TimeGridEvent'
 
 const GRID_WRAPPER_SELECTOR = '.cal-time-view'
@@ -229,7 +229,7 @@ class ResizeEventContainer extends React.Component<IProps & InjectedEventActions
             <TimeGridEvent
               now={today}
               event={draggingEvent}
-              label={timeRangeFormat(draggingEvent.start, draggingEvent.end)}
+              label={formatTimeRange(draggingEvent.start, draggingEvent.end)}
               style={{ top, height, width: 100, xOffset: 0, border: 'none' }}
               isPreview={true}
               getContainerRef={this.getContainerRef}

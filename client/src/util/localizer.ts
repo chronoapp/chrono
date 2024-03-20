@@ -6,7 +6,12 @@ import moment from 'moment'
  * TODO: Replace moment with date-fns / luxon.
  */
 
-export function timeFormatShort(date: Date, space: boolean = false) {
+export function startOfWeek() {
+  let data = moment.localeData()
+  return data ? data.firstDayOfWeek() : 0
+}
+
+export function formatTimeShort(date: Date, space: boolean = false) {
   const m = moment(date)
   const hour = m.format('h')
   const minutes = date.getMinutes()
@@ -19,33 +24,8 @@ export function timeFormatShort(date: Date, space: boolean = false) {
   }
 }
 
-export function monthTitleFormat(date: Date): string {
-  return moment(date).format('MMMM YYYY')
-}
-
-export function weekRangeFormat(start: Date, end: Date) {
-  return (
-    moment(start).format('MMMM DD') +
-    ' – ' +
-    moment(end).format(dates.eq(start, end, 'month') ? 'DD' : 'MMMM DD')
-  )
-}
-
-export function timeRangeFormat(start: Date, end: Date) {
-  return timeFormatShort(start) + ' – ' + timeFormatShort(end)
-}
-
-export function dayFormat(date: Date) {
-  return moment(date).format('dd DD')
-}
-
-export function startOfWeek() {
-  let data = moment.localeData()
-  return data ? data.firstDayOfWeek() : 0
-}
-
-export function format(value: any, format: string) {
-  return moment(value).format(format)
+export function formatTimeRange(start: Date, end: Date) {
+  return formatTimeShort(start) + ' – ' + formatTimeShort(end)
 }
 
 export function formatDateTime(value: any) {
@@ -67,11 +47,78 @@ export function formatDuration(durationInMinutes: number) {
   return `${hours}h ${minutes}m`
 }
 
+export function formatMonthTitle(date: Date): string {
+  return moment(date).format('MMMM YYYY')
+}
+
+export function formatWeekRange(start: Date, end: Date) {
+  return (
+    moment(start).format('MMMM DD') +
+    ' – ' +
+    moment(end).format(dates.eq(start, end, 'month') ? 'DD' : 'MMMM DD')
+  )
+}
+
 /**
  * Date into a full day string (YYYY-MM-DD)
  */
-export function fullDayFormat(date: Date) {
+export function formatFullDay(date: Date) {
   return moment(date).format(moment.HTML5_FMT.DATE)
+}
+
+export function formatLocaleDateString(date: Date) {
+  return moment(date).format('LL')
+}
+
+export function formatTwoLetterWeekday(date: Date) {
+  return moment(date).format('dd')
+}
+
+export function formatDayOfMonth(date: Date) {
+  return moment(date).format('D')
+}
+
+export function formatThreeLetterWeekday(date: Date) {
+  return moment(date).format('ddd')
+}
+
+export function formatTwoDigitDay(date: Date) {
+  return moment(date).format('DD')
+}
+
+export function formatAmPm(date: Date) {
+  return moment(date).format('A')
+}
+
+/**
+ * includes the full day name, full month name, and day in two digits.
+ * Eg. "Sunday, January 01".
+ */
+export function formatFullDate(date: Date) {
+  return moment(date).format('dddd, MMMM DD')
+}
+
+export function formatTimeHmma(date: Date) {
+  return moment(date).format('h:mm A')
+}
+
+export function formatDayOfWeekNumeric(date: Date) {
+  return moment(date).format('d')
+}
+
+export function formatTime24Hour(date: Date) {
+  return moment(date).format('HH:mm')
+}
+
+export function formatMonthDay(date: Date) {
+  return moment(date).format('MMMM D')
+}
+
+/**
+ * E.g. 17 Mar 2025, Mon
+ */
+export function formatDayMonthYearWeekday(date: Date) {
+  return moment(date).format('D MMM YYYY, ddd')
 }
 
 /**

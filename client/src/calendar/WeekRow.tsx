@@ -1,8 +1,7 @@
-import React from 'react'
 import clsx from 'clsx'
 
 import * as dates from '../util/dates'
-import { format } from '../util/localizer'
+import { formatTwoDigitDay, formatThreeLetterWeekday } from '../util/localizer'
 import DateSlotMetrics from './utils/DateSlotMetrics'
 
 import Event from '../models/Event'
@@ -48,13 +47,13 @@ function WeekRow(props: IProps) {
   }
 
   function renderHeadingCell(date: Date, index: number) {
-    const label = format(date, 'DD')
+    const label = formatTwoDigitDay(date)
     const isOffRange = dates.month(props.date) !== dates.month(date)
     let isCurrent = dates.eq(date, props.today, 'day')
 
     return (
       <div key={`header_${index}`} className={clsx('cal-date-cell', isOffRange && 'cal-off-range')}>
-        {props.showDatesOfWeek && <div>{format(date, 'ddd')}</div>}
+        {props.showDatesOfWeek && <div>{formatThreeLetterWeekday(date)}</div>}
         <div className={clsx(isCurrent && 'cal-today-bg-month')}>{label}</div>
       </div>
     )

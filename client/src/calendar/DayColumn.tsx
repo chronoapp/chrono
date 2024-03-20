@@ -7,7 +7,7 @@ import clsx from 'clsx'
 import { Box } from '@chakra-ui/react'
 import { withEventActions, InjectedEventActionsProps } from '@/state/withEventActions'
 
-import { timeRangeFormat, timeFormatShort } from '@/util/localizer'
+import { formatTimeRange, formatTimeShort } from '@/util/localizer'
 import * as dates from '@/util/dates'
 import { Selection, SelectRect, EventData, getBoundsForNode, isEvent } from '@/util/Selection'
 import Event, { EMPTY_TITLE } from '@/models/Event'
@@ -197,7 +197,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
     const editingEvent = props.editingEvent
 
     return styledEvents.map(({ event, style }, idx) => {
-      const label = timeRangeFormat(event.start, event.end)
+      const label = formatTimeRange(event.start, event.end)
       const isInteracting =
         dnd &&
         dnd.interacting &&
@@ -376,7 +376,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
         >
           <span>{EMPTY_TITLE}</span>
           <span style={{ fontSize: '90%', flex: 1 }}>
-            {`, ${timeFormatShort(selectRange.startDate)}`}
+            {`, ${formatTimeShort(selectRange.startDate)}`}
           </span>
         </div>
       )
@@ -386,7 +386,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
           {EMPTY_TITLE}
         </div>,
         <div key="2" className="cal-event-label" style={{ paddingLeft: '10px' }}>
-          {timeRangeFormat(selectRange.startDate, selectRange.endDate)}
+          {formatTimeRange(selectRange.startDate, selectRange.endDate)}
         </div>,
       ]
     }

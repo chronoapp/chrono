@@ -18,7 +18,6 @@ import {
 } from '@chakra-ui/react'
 
 import produce from 'immer'
-import moment from 'moment'
 import { FiMail, FiVideo, FiMapPin, FiBriefcase, FiBell } from 'react-icons/fi'
 import { FiCalendar, FiAlignLeft, FiClock } from 'react-icons/fi'
 
@@ -36,7 +35,7 @@ import useEventActions from '@/state/useEventActions'
 import { displayState, editingEventState, EventUpdateContext } from '@/state/EventsState'
 import { userState } from '@/state/UserState'
 
-import { format, fullDayFormat, yearStringToDate } from '@/util/localizer'
+import { formatFullDay, yearStringToDate } from '@/util/localizer'
 import { addNewLabels } from '@/calendar/utils/LabelUtils'
 import ContentEditable from '@/lib/ContentEditable'
 import { LabelTag } from '@/components/LabelTag'
@@ -245,7 +244,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
               border="0"
               variant="flushed"
               mr="2"
-              value={format(eventFields.start, 'YYYY-MM-DD')}
+              value={formatFullDay(eventFields.start)}
               onChange={(e) => {
                 const duration = dates.diff(eventFields.end, eventFields.start, 'minutes')
                 const start = dates.merge(yearStringToDate(e.target.value), eventFields.start)
@@ -256,8 +255,8 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                       ...eventFields,
                       start,
                       end,
-                      startDay: fullDayFormat(start),
-                      endDay: fullDayFormat(end),
+                      startDay: formatFullDay(start),
+                      endDay: formatFullDay(end),
                     }
                   : { ...eventFields, start, end }
 
@@ -283,7 +282,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                   setEventFields({
                     ...eventFields,
                     end: endDate,
-                    endDay: fullDayFormat(endDate),
+                    endDay: formatFullDay(endDate),
                   })
                 }}
               />
@@ -333,8 +332,8 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                     allDay: isAllDay,
                     start,
                     end,
-                    startDay: fullDayFormat(start),
-                    endDay: fullDayFormat(end),
+                    startDay: formatFullDay(start),
+                    endDay: formatFullDay(end),
                   }
                 } else {
                   const start = dates.startOf(eventFields.start, 'day')

@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { EventService } from './event-edit/useEventService'
-import { weekRangeFormat, getWeekRange } from '../util/localizer'
+import { formatWeekRange, getWeekRange } from '../util/localizer'
 import TimeGrid from './TimeGrid'
 import Event from '../models/Event'
 import Calendar from '@/models/Calendar'
@@ -30,7 +30,7 @@ function Week(props: IProps) {
 
 Week.getTitle = function (date: Date): string {
   const [start, ...rest] = getWeekRange(date)
-  return weekRangeFormat(start, rest.pop()!)
+  return formatWeekRange(start, rest.pop()!)
 }
 
 export default Week

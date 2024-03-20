@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import chunk from '@/lib/js-lib/chunk'
 import { Flex, Box, Text, IconButton } from '@chakra-ui/react'
 import {
   Popover,
@@ -10,16 +9,28 @@ import {
 } from '@chakra-ui/react'
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 
-import { Label } from '@/models/Label'
-import { startOfWeek, format, getWeekRange } from '@/util/localizer'
+import { useRecoilValue } from 'recoil'
+import chunk from '@/lib/js-lib/chunk'
+
+import { DateTime } from 'luxon'
+import * as dates from '@/util/dates-luxon'
+import {
+  startOfWeek,
+  getWeekRange,
+  formatFullDay,
+  formatThreeLetterWeekday,
+  formatDayOfMonth,
+  formatMonthDay,
+  formatMonthTitle,
+} from '@/util/localizer-luxon'
 
 import { hexToHSL } from '@/calendar/utils/Colors'
-import * as dates from '@/util/dates'
+import { Label } from '@/models/Label'
 import { getTrends } from '@/util/Api'
+
+import { labelsState } from '@/state/LabelsState'
 import ViewSelector, { TrendView } from './ViewSelector'
 import TagDropdown from './TagDropdown'
-import { useRecoilValue } from 'recoil'
-import { labelsState } from '@/state/LabelsState'
 
 interface IProps {
   setSelectedView: (v: TrendView) => void
@@ -32,10 +43,12 @@ function HabitGraph(props: IProps) {
 
   const [trendMap, setTrendMap] = useState<Map<string, number>>(undefined!)
   const [maxDuration, setMaxDuration] = useState(0)
-  const curDate = new Date()
 
-  const [viewDate, setViewDate] = useState(curDate)
+  const curDate: DateTime = DateTime.now()
+  const [viewDate, setViewDate] = useState<DateTime>(curDate)
   const month = dates.visibleDays(viewDate, startOfWeek(), true)
+  console.log(month)
+
   const weeks = chunk(month, 7)
 
   useEffect(() => {
@@ -64,21 +77,21 @@ function HabitGraph(props: IProps) {
     const range = getWeekRange(viewDate)
     return range.map((day, idx) => (
       <Flex key={idx} flex="1" justifyContent={'center'}>
-        <Text color="gray.600">{format(day, 'ddd')}</Text>
+        <Text color="gray.600">{formatThreeLetterWeekday(day)}</Text>
       </Flex>
     ))
   }
 
-  function renderWeek(week: Date[], idx: number) {
+  function renderWeek(week: DateTime[], idx: number) {
     const { h, s, l } = hexToHSL(props.selectedLabel!.color_hex)
 
     return (
       <Flex key={idx}>
-        {week.map((day: Date, idx: number) => {
-          const label = format(day, 'D')
-          const dayKey = format(day, 'YYYY-MM-DD')
+        {week.map((day: DateTime, idx: number) => {
+          const label = formatDayOfMonth(day)
+          const dayKey = formatFullDay(day)
           const dayValue = day > curDate ? 0 : trendMap.get(dayKey)
-          const isToday = dates.eq(day, curDate)
+          const isToday = curDate.hasSame(day, 'day')
 
           let color
           if (dayValue) {
@@ -113,8 +126,8 @@ function HabitGraph(props: IProps) {
                 <PopoverArrow bg="gray.600" borderColor="gray.600" />
                 <PopoverBody textAlign={'center'}>
                   {dayValue && dayValue > 0
-                    ? `${dayValue} hours on ${format(day, 'MMMM D')}`
-                    : `No activity on ${format(day, 'MMMM D')}`}
+                    ? `${dayValue} hours on ${formatMonthDay(day)}`
+                    : `No activity on ${formatMonthDay(day)}`}
                 </PopoverBody>
               </PopoverContent>
             </Popover>
@@ -181,16 +194,16 @@ function HabitGraph(props: IProps) {
             aria-label="left"
             variant="ghost"
             icon={<FiChevronLeft />}
-            onClick={() => setViewDate(dates.subtract(viewDate, 1, 'month'))}
+            onClick={() => setViewDate(viewDate.minus({ months: 1 }))}
           />
           <IconButton
             aria-label="right"
             variant="ghost"
             icon={<FiChevronRight />}
-            onClick={() => setViewDate(dates.add(viewDate, 1, 'month'))}
+            onClick={() => setViewDate(viewDate.add({ months: 1 }))}
           />
 
-          <Text ml="2">{format(viewDate, 'MMMM YYYY')}</Text>
+          <Text ml="2">{formatMonthTitle(viewDate)}</Text>
         </Flex>
         <ViewSelector setSelectedView={props.setSelectedView} selectedView={'HABIT_GRAPH'} />
       </Flex>

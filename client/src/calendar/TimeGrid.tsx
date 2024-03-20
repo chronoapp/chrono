@@ -10,7 +10,7 @@ import DayColumn from './DayColumn'
 import TimeGridHeader from './TimeGridHeader'
 import DragDropZone from './DragDropZone'
 import SlotMetrics from './utils/SlotMetrics'
-import { timeFormatShort } from '../util/localizer'
+import { formatTimeShort } from '../util/localizer'
 import { inRange, sortEvents } from './utils/eventLevels'
 import { GlobalEvent } from '../util/global'
 import { EventService } from '@/calendar/event-edit/useEventService'
@@ -203,7 +203,7 @@ function TimeGrid(props: IProps) {
   }
 
   function renderDateLabel(group: Date[], idx: number) {
-    const timeRange = timeFormatShort(group[0], true).toUpperCase()
+    const timeRange = formatTimeShort(group[0], true).toUpperCase()
 
     return (
       <div className="cal-time-gutter-box" key={idx}>
