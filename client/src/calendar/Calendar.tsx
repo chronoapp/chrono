@@ -10,7 +10,7 @@ import { GlobalEvent } from '@/util/global'
 import useKeyPress from '@/lib/hooks/useKeyPress'
 
 import * as dates from '@/util/dates-luxon'
-import { startOfWeek } from '@/util/localizer-luxon'
+import { firstDayOfWeek } from '@/util/localizer-luxon'
 
 import { generateGuid } from '@/lib/uuid'
 import useGlobalEventListener from '@/util/useGlobalEventListener'
@@ -36,7 +36,7 @@ import {
  * The main calendar component.
  */
 function Calendar() {
-  const firstOfWeek = startOfWeek()
+  const firstOfWeek = firstDayOfWeek()
   const today = DateTime.now()
   const eventService: EventService = useEventService()
 

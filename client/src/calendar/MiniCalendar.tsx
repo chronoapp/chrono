@@ -9,7 +9,7 @@ import chunk from '@/lib/js-lib/chunk'
 
 import { visibleDays } from '@/util/dates-luxon'
 import {
-  startOfWeek,
+  firstDayOfWeek,
   getWeekRange,
   formatTwoLetterWeekday,
   formatDayOfMonth,
@@ -29,7 +29,7 @@ export default function MiniCalendar() {
   // Current view date (represents a month) of the calendar.
   const [viewDate, setViewDate] = useState<DateTime>(display.selectedDate)
 
-  const month = visibleDays(viewDate, startOfWeek(), true)
+  const month = visibleDays(viewDate, firstDayOfWeek(), true)
   const weeks = chunk(month, 7)
   const [animateDirection, setAnimateDirection] = useState<AnimateDirection>('NONE')
   const today = DateTime.now()

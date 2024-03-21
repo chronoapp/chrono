@@ -2,7 +2,7 @@ import { DateTime } from 'luxon'
 import chunk from '@/lib/js-lib/chunk'
 
 import * as dates from '@/util/dates-luxon'
-import { startOfWeek, formatMonthTitle } from '@/util/localizer-luxon'
+import { firstDayOfWeek, formatMonthTitle } from '@/util/localizer-luxon'
 
 import Event from '@/models/Event'
 import Calendar from '@/models/Calendar'
@@ -21,7 +21,7 @@ interface IProps {
 }
 
 function Month(props: IProps) {
-  const month = dates.visibleDays(props.date, startOfWeek())
+  const month = dates.visibleDays(props.date, firstDayOfWeek())
   const weeks = chunk(month, 7)
 
   function renderWeek(week: DateTime[], weekIdx: number) {

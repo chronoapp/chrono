@@ -13,6 +13,9 @@ export function monthsInYear(year: number): number[] {
   return MONTHS.map((month) => DateTime.local(year, month).month)
 }
 
+/**
+ * Start of week, assuming that the week starts on Sunday.
+ */
 export function startOfWeek(date: DateTime, firstOfWeek: number) {
   return date
     .startOf('week')
@@ -20,6 +23,9 @@ export function startOfWeek(date: DateTime, firstOfWeek: number) {
     .plus({ days: firstOfWeek % 7 })
 }
 
+/**
+ * End of week, assuming that the week starts on Sunday (ends on Saturday).
+ */
 export function endOfWeek(date: DateTime, firstOfWeek: number) {
   return date
     .endOf('week')
