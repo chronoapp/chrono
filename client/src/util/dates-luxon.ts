@@ -160,7 +160,7 @@ export function inRange(
   const normalizedEnd = end.startOf(unit)
 
   // Compare the normalized dates
-  return normalizedDate >= normalizedStart && normalizedDate < normalizedEnd
+  return normalizedDate >= normalizedStart && normalizedDate <= normalizedEnd
 }
 
 export function max(date1: DateTime, date2: DateTime): DateTime {
@@ -185,4 +185,8 @@ export function endOf(date: DateTime, unit: DateTimeUnit) {
 
 export function add(date: DateTime, value: number, unit: DateTimeUnit) {
   return date.plus({ [unit]: value })
+}
+
+export function subtract(date: DateTime, value: number, unit: DateTimeUnit) {
+  return date.minus({ [unit]: value })
 }

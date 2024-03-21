@@ -1,19 +1,21 @@
-import React from 'react'
+import { DateTime } from 'luxon'
+
 import { useSelect } from 'downshift'
 import { Box, Flex, Icon } from '@chakra-ui/react'
-
 import { FiArrowRight } from 'react-icons/fi'
 
-import { formatTimeHmma } from '../../util/localizer'
-import * as dates from '../../util/dates'
+import { formatTimeHmma } from '@/util/localizer-luxon'
+import * as dates from '@/util/dates-luxon'
+
 import { getDstOffset } from '../utils/SlotMetrics'
 
 const INTERVAL = 15
+
 interface TimeRangeSelectProps {
-  start: Date
-  end: Date
-  onSelectStartDate: (date: Date) => void
-  onSelectEndDate: (date: Date) => void
+  start: DateTime
+  end: DateTime
+  onSelectStartDate: (date: DateTime) => void
+  onSelectEndDate: (date: DateTime) => void
 }
 
 interface TimeOption {
@@ -26,8 +28,8 @@ interface TimeOption {
  * Renders the start and end time selectors.
  */
 function TimeRangeSelect(props: TimeRangeSelectProps) {
-  const dayStart: Date = dates.startOf(props.start, 'day')
-  const dayEnd: Date = dates.endOf(props.end, 'day')
+  const dayStart = dates.startOf(props.start, 'day')
+  const dayEnd = dates.endOf(props.end, 'day')
 
   const startTimeOptions = getStartTimeOptions(dayStart, props.end)
   const endTimeOptions = getEndTimeOptions(props.start, dayEnd)
@@ -38,7 +40,7 @@ function TimeRangeSelect(props: TimeRangeSelectProps) {
         timeOptions={startTimeOptions}
         date={props.start}
         onSelect={(idx) => {
-          const date = dates.add(dayStart, idx * INTERVAL, 'minutes')
+          const date = dates.add(dayStart, idx * INTERVAL, 'minute')
           props.onSelectStartDate(date)
         }}
       />
@@ -49,7 +51,7 @@ function TimeRangeSelect(props: TimeRangeSelectProps) {
         timeOptions={endTimeOptions}
         date={props.end}
         onSelect={(idx) => {
-          const date = dates.add(props.start, (idx + 1) * INTERVAL, 'minutes')
+          const date = dates.add(props.start, (idx + 1) * INTERVAL, 'minute')
           props.onSelectEndDate(date)
         }}
       />
@@ -59,7 +61,7 @@ function TimeRangeSelect(props: TimeRangeSelectProps) {
 
 interface DateSelectorProps {
   timeOptions: TimeOption[]
-  date: Date
+  date: DateTime
   onSelect: (idx: number) => void
 }
 
@@ -156,7 +158,7 @@ export function formatDuration(duration: number) {
   return `${hours}h`
 }
 
-export function getStartTimeOptions(dayStart: Date, end: Date): TimeOption[] {
+export function getStartTimeOptions(dayStart: DateTime, end: DateTime): TimeOption[] {
   const startTimeOptions: TimeOption[] = []
   const daystartdstoffset = getDstOffset(dayStart, end)
 
@@ -165,16 +167,7 @@ export function getStartTimeOptions(dayStart: Date, end: Date): TimeOption[] {
 
   for (let i = 0; i < numOptions - 1; i++) {
     const minFromStart = i * INTERVAL
-
-    let date = new Date(
-      dayStart.getFullYear(),
-      dayStart.getMonth(),
-      dayStart.getDate(),
-      0,
-      minFromStart,
-      0,
-      0
-    )
+    const date = dayStart.set({ hour: 0, minute: minFromStart, second: 0, millisecond: 0 })
 
     const option = {
       value: i,
@@ -194,9 +187,9 @@ export function getStartTimeOptions(dayStart: Date, end: Date): TimeOption[] {
  * Have to construct the date objects from scratch to prevent
  * the DST infinite loop from incrementing dates.
  */
-export function getEndTimeOptions(start: Date, dayEnd: Date): TimeOption[] {
+export function getEndTimeOptions(start: DateTime, dayEnd: DateTime): TimeOption[] {
   const endTimeOptions: TimeOption[] = []
-  let endDate: Date = dates.add(start, INTERVAL, 'minutes')
+  let endDate = dates.add(start, INTERVAL, 'minute')
 
   const daystart = dates.startOf(start, 'day')
   const daystartdstoffset = getDstOffset(daystart, start)
@@ -208,16 +201,7 @@ export function getEndTimeOptions(start: Date, dayEnd: Date): TimeOption[] {
 
   for (let i = 0; i < numOptions + 1; i++) {
     const minFromStart = minutesFromMidnight + (i + 1) * INTERVAL
-
-    const date = new Date(
-      endDate.getFullYear(),
-      endDate.getMonth(),
-      endDate.getDate(),
-      0,
-      minFromStart,
-      0,
-      0
-    )
+    const date = endDate.set({ hour: 0, minute: minFromStart, second: 0, millisecond: 0 })
 
     const option = { value: i, label: `${formatTimeHmma(date)}` }
     endTimeOptions.push(option)

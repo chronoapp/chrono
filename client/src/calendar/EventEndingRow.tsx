@@ -10,7 +10,8 @@ import {
   PopoverHeader,
 } from '@chakra-ui/react'
 
-import { formatFullDate } from '@/util/localizer'
+import { DateTime } from 'luxon'
+import { formatFullDate } from '@/util/localizer-luxon'
 import { eventLevels, EventSegment } from './utils/eventLevels'
 import { renderSpan, EventItem } from './EventRow'
 import { EventService } from './event-edit/useEventService'
@@ -19,7 +20,7 @@ import useEventActions from '@/state/useEventActions'
 interface IProps {
   segments: EventSegment[]
   slots: number
-  now: Date
+  now: DateTime
   eventService: EventService
   onShowMore?: () => void
 }
@@ -35,7 +36,7 @@ function range(start: number, count: number) {
 function InnerPopoverContent(props: {
   segments: EventSegment[]
   slot: number
-  now: Date
+  now: DateTime
   eventService: EventService
 }) {
   const events = eventsInSlot(props.segments, props.slot).map((seg) => seg.event)

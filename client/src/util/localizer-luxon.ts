@@ -27,8 +27,8 @@ export function formatTimeRange(start: DateTime, end: DateTime): string {
   return `${formatTimeShort(start)} – ${formatTimeShort(end)}`
 }
 
-export function formatDateTime(value: DateTime): string | null {
-  return value.toISO()
+export function formatDateTime(value: DateTime): string {
+  return value.toISO()!
 }
 
 export function formatDuration(durationInMinutes: number) {
@@ -75,7 +75,7 @@ export function formatDayOfMonth(date: DateTime): string {
 }
 
 export function formatThreeLetterWeekday(date: DateTime): string {
-  return date.toFormat('ccc')
+  return date.plus(0).toFormat('ccc')
 }
 
 export function formatTwoDigitDay(date: DateTime): string {
@@ -123,6 +123,10 @@ export function roundNext15Min(date: DateTime): DateTime {
   let rounded = date.plus({ minutes: 15 - (date.minute % 15) })
 
   return rounded.set({ second: 0 })
+}
+
+export function yearStringToDate(value: string): DateTime {
+  return DateTime.fromISO(value)
 }
 
 export function localFullDate(dateStr: string): DateTime {

@@ -1,5 +1,6 @@
+import { DateTime, DateTimeUnit } from 'luxon'
 import Event from '../../models/Event'
-import * as dates from '../../util/dates'
+import * as dates from '../../util/dates-luxon'
 
 export class EventSegment {
   constructor(
@@ -10,14 +11,14 @@ export class EventSegment {
   ) {}
 }
 
-export function endOfRange(dateRange: Date[], unit = 'day') {
+export function endOfRange(dateRange: DateTime[], unit: DateTimeUnit = 'day') {
   return {
     first: dateRange[0],
     last: dates.add(dateRange[dateRange.length - 1], 1, unit),
   }
 }
 
-export function eventSegments(event: Event, range: Date[]): EventSegment {
+export function eventSegments(event: Event, range: DateTime[]): EventSegment {
   const { first, last } = endOfRange(range)
   const slots = dates.diff(first, last, 'day')
 
@@ -65,15 +66,15 @@ export function eventLevels(
   }
 }
 
-export function inRange(e: Event, start: Date, end: Date) {
+export function inRange(e: Event, start: DateTime, end: DateTime) {
   let eStart = dates.startOf(e.start, 'day')
   let eEnd = e.end
 
   let startsBeforeEnd = dates.lte(eStart, end, 'day')
   // when the event is zero duration we need to handle a bit differently
-  let endsAfterStart = !dates.eq(eStart, eEnd, 'minutes')
-    ? dates.gt(eEnd, start, 'minutes')
-    : dates.gte(eEnd, start, 'minutes')
+  let endsAfterStart = !dates.eq(eStart, eEnd, 'minute')
+    ? dates.gt(eEnd, start, 'minute')
+    : dates.gte(eEnd, start, 'minute')
 
   return startsBeforeEnd && endsAfterStart
 }

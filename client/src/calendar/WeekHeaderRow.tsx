@@ -1,5 +1,7 @@
-import { useRecoilValue, useSetRecoilState } from 'recoil'
+import { useRecoilValue } from 'recoil'
+import { DateTime } from 'luxon'
 import clsx from 'clsx'
+
 import DateSlotMetrics from './utils/DateSlotMetrics'
 import EventRow from './EventRow'
 import Event from '../models/Event'
@@ -11,7 +13,7 @@ import { EventService } from './event-edit/useEventService'
 import { primaryCalendarSelector } from '@/state/CalendarState'
 
 interface IProps {
-  range: Date[]
+  range: DateTime[]
   events: Event[]
   eventService: EventService
   expandRows: boolean
@@ -66,7 +68,7 @@ function WeekHeaderRow(props: IProps) {
             <EventEndingRow
               segments={dayMetrics.extra}
               slots={dayMetrics.slots}
-              now={new Date()}
+              now={DateTime.now()}
               eventService={props.eventService}
               onShowMore={() => props.onShowMore()}
             />

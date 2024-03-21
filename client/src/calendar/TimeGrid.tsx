@@ -1,16 +1,18 @@
 import { useRef, useState, useEffect } from 'react'
 import { useRecoilValue } from 'recoil'
+import { DateTime } from 'luxon'
 
 import getScrollbarSize from 'dom-helpers/scrollbarSize'
 import { Box } from '@chakra-ui/react'
 
-import * as dates from '../util/dates'
+import { formatTimeShort } from '../util/localizer-luxon'
+import * as dates from '../util/dates-luxon'
+
 import Event from '../models/Event'
 import DayColumn from './DayColumn'
 import TimeGridHeader from './TimeGridHeader'
 import DragDropZone from './DragDropZone'
 import SlotMetrics from './utils/SlotMetrics'
-import { formatTimeShort } from '../util/localizer'
 import { inRange, sortEvents } from './utils/eventLevels'
 import { GlobalEvent } from '../util/global'
 import { EventService } from '@/calendar/event-edit/useEventService'
@@ -26,11 +28,11 @@ function remToPixels(rem) {
 interface IProps {
   step: number
   timeslots: number
-  min: Date
-  max: Date
-  range: Date[]
+  min: DateTime
+  max: DateTime
+  range: DateTime[]
   events: Event[]
-  now: Date
+  now: DateTime
   eventService: EventService
   primaryCalendar: Calendar
 }
@@ -111,7 +113,7 @@ function TimeGrid(props: IProps) {
     const scrollToDate = event.detail ? event.detail : now
 
     const totalMillis = dates.diff(max, min)
-    const diffMillis = scrollToDate.getTime() - dates.startOf(scrollToDate, 'day').getTime()
+    const diffMillis = dates.diff(scrollToDate, dates.startOf(scrollToDate, 'day'), 'millisecond')
     const scrollTopRatio = diffMillis / totalMillis
 
     const content = contentRef.current!
@@ -129,7 +131,7 @@ function TimeGrid(props: IProps) {
     const totalMillis = dates.diff(max, min)
 
     if (now >= range[0] && now <= range[range.length - 1]) {
-      const diffMillis = (now.getTime() - dates.startOf(now, 'day').getTime()) / 1.1
+      const diffMillis = dates.diff(now, dates.startOf(now, 'day')) / 1.1
       scrollTopRatio.current = diffMillis / totalMillis
     }
 
@@ -141,7 +143,7 @@ function TimeGrid(props: IProps) {
     let avgFromTop = 0
     for (let i = 0; i < sampleSize; i++) {
       const scrollToTime = events[i].start
-      const diffMillis = scrollToTime.getTime() - dates.startOf(scrollToTime, 'day').getTime()
+      const diffMillis = dates.diff(scrollToTime, dates.startOf(scrollToTime, 'day'), 'millisecond')
       const scrollTop = diffMillis / totalMillis
       avgFromTop += scrollTop
     }
@@ -161,7 +163,7 @@ function TimeGrid(props: IProps) {
     }
   }
 
-  function renderDays(range: Date[]) {
+  function renderDays(range: DateTime[]) {
     return range.map((date, jj) => {
       const startOfDay = dates.merge(date, props.min)
       const dayEvents = props.events.filter(
@@ -202,7 +204,7 @@ function TimeGrid(props: IProps) {
     )
   }
 
-  function renderDateLabel(group: Date[], idx: number) {
+  function renderDateLabel(group: DateTime[], idx: number) {
     const timeRange = formatTimeShort(group[0], true).toUpperCase()
 
     return (
@@ -260,8 +262,8 @@ function TimeGrid(props: IProps) {
 TimeGrid.defaultProps = {
   step: 15,
   timeslots: 4,
-  min: dates.startOf(new Date(), 'day'),
-  max: dates.endOf(new Date(), 'day'),
+  min: dates.startOf(DateTime.now(), 'day'),
+  max: dates.endOf(DateTime.now(), 'day'),
 }
 
 export default TimeGrid

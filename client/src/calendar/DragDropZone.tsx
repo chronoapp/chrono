@@ -1,4 +1,5 @@
 import React from 'react'
+import { DateTime } from 'luxon'
 import { useRecoilValue } from 'recoil'
 import { Box } from '@chakra-ui/react'
 
@@ -8,7 +9,7 @@ import { dragDropActionState } from '@/state/EventsState'
 import { getBoundsForNode } from '@/util/Selection'
 import { EventService } from './event-edit/useEventService'
 
-import * as dates from '@/util/dates'
+import * as dates from '@/util/dates-luxon'
 
 class DropRect {
   constructor(
@@ -16,7 +17,7 @@ class DropRect {
     readonly left: number,
     readonly width: number,
     readonly height: number,
-    readonly date: Date
+    readonly date: DateTime
   ) {}
 }
 
@@ -27,7 +28,7 @@ const MINUTES_IN_DAY = dates.MILLI.day / dates.MILLI.minutes
 
 interface IProps {
   children: any
-  range: Date[]
+  range: DateTime[]
   scrollContainerRef: React.RefObject<HTMLInputElement>
   eventService: EventService
 }
@@ -110,7 +111,7 @@ export default function DragDropZone(props: IProps) {
           const heightPx = eventMins * pxPerMin
 
           // Offset for the click position within the event.
-          const clickOffsetMins = dates.diff(event.start, dragPointerDate, 'minutes')
+          const clickOffsetMins = dates.diff(event.start, dragPointerDate, 'minute')
           const clickOffsetPx = clickOffsetMins * pxPerMin
 
           const top = e.clientY - bounds.top - clickOffsetPx
@@ -118,10 +119,10 @@ export default function DragDropZone(props: IProps) {
           const roundedTop = intervalHeight * Math.round(top / intervalHeight)
 
           // Find out the start and end date of the dragged event
-          const rangeStart = dates.startOf(props.range[0])
+          const rangeStart = dates.startOf(props.range[0], 'day')
           const columnStart = dates.add(rangeStart, colNum, 'day')
           const minutesFromTop = (MINUTES_IN_DAY * roundedTop) / totalHeight
-          const startDate = dates.add(columnStart, minutesFromTop, 'minutes')
+          const startDate = dates.add(columnStart, minutesFromTop, 'minute')
 
           setDropRect(
             new DropRect(roundedTop, colNum * columnWidth, columnWidth, heightPx, startDate)
@@ -142,7 +143,7 @@ export default function DragDropZone(props: IProps) {
         const updatedEvent = {
           ...event,
           start: dropDateStart,
-          end: dates.add(dropDateStart, eventMins, 'minutes'),
+          end: dates.add(dropDateStart, eventMins, 'minute'),
         }
 
         const isOriginalPosition =

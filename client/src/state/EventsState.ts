@@ -1,5 +1,5 @@
 import { atom, selector } from 'recoil'
-
+import { DateTime } from 'luxon'
 import { produce } from 'immer'
 
 import Event from '@/models/Event'
@@ -27,7 +27,7 @@ export interface EventUpdateContext {
 export interface DragDropAction {
   action: Action
   event: Event
-  pointerDate: Date | null
+  pointerDate: DateTime | null
   interacting: boolean | undefined
   direction: Direction | undefined
 }
@@ -67,7 +67,7 @@ export const displayState = atom({
   key: 'display-state',
   default: {
     view: 'Week' as DisplayView,
-    selectedDate: new Date(),
+    selectedDate: DateTime.now(),
   },
 })
 

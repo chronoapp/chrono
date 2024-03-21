@@ -1,4 +1,5 @@
-import * as dates from '@/util/dates'
+import { DateTime } from 'luxon'
+import * as dates from '@/util/dates-luxon'
 import { produce } from 'immer'
 
 import { getRecurrenceRules } from '@/calendar/event-edit/RecurringEventEditor'
@@ -19,9 +20,9 @@ import { RRule, datetime } from 'rrule'
  */
 export function getSplitRRules(
   recurrenceStr: string,
-  originalStartDt: Date,
-  splitDateOriginalStart: Date,
-  splitDateNewStart: Date,
+  originalStartDt: DateTime,
+  splitDateOriginalStart: DateTime,
+  splitDateNewStart: DateTime,
   isAllDay: boolean
 ) {
   if (!dates.lte(originalStartDt, splitDateOriginalStart)) {
@@ -32,19 +33,19 @@ export function getSplitRRules(
 
   let splitDate
   if (isAllDay) {
-    const year = splitDateNewStart.getUTCFullYear()
-    const month = splitDateNewStart.getUTCMonth() + 1
-    const day = splitDateNewStart.getUTCDate() - 1 // stop one day before
+    const year = splitDateNewStart.year
+    const month = splitDateNewStart.month
+    const day = splitDateNewStart.day - 1 // stop one day before
     splitDate = datetime(year, month, day)
   } else {
-    splitDate = dates.subtract(splitDateOriginalStart, 1, 'seconds')
+    splitDate = dates.subtract(splitDateOriginalStart, 1, 'second')
   }
 
   if (ruleOptions.count) {
     const upToThisEventRules = produce(ruleOptions, (draft) => {
       delete draft['count']
       draft.until = splitDate
-      draft.dtstart = originalStartDt
+      draft.dtstart = originalStartDt.toJSDate()
     })
 
     const upToThisRRule = new RRule(upToThisEventRules)
@@ -76,7 +77,7 @@ export function getSplitRRules(
     const endRule = new RRule({
       ...ruleOptions,
       until: ruleOptions.until
-        ? dates.max(ruleOptions.until, splitDateNewStart)
+        ? dates.max(DateTime.fromJSDate(ruleOptions.until), splitDateNewStart).toJSDate()
         : ruleOptions.until,
     })
 

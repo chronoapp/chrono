@@ -1,35 +1,14 @@
 import { createRef, useEffect, useRef } from 'react'
 import { useRecoilValue, useSetRecoilState } from 'recoil'
 import produce from 'immer'
-import moment from 'moment'
 
-import {
-  Box,
-  Flex,
-  Button,
-  Input,
-  Checkbox,
-  Menu,
-  MenuButton,
-  MenuList,
-  IconButton,
-} from '@chakra-ui/react'
-
-import {
-  FiCalendar,
-  FiClock,
-  FiAlignLeft,
-  FiMail,
-  FiMapPin,
-  FiX,
-  FiPlus,
-  FiVideo,
-} from 'react-icons/fi'
+import { Box, Flex, Button, Input, Checkbox, IconButton } from '@chakra-ui/react'
+import { FiCalendar, FiClock, FiAlignLeft, FiMail, FiMapPin, FiX, FiVideo } from 'react-icons/fi'
 
 import ContentEditable from '@/lib/ContentEditable'
 import { addNewLabels } from '@/calendar/utils/LabelUtils'
-import { formatFullDay, yearStringToDate } from '@/util/localizer'
-import * as dates from '@/util/dates'
+import { formatFullDay, yearStringToDate } from '@/util/localizer-luxon'
+import * as dates from '@/util/dates-luxon'
 
 import { labelsState } from '@/state/LabelsState'
 import { displayState } from '@/state/EventsState'
@@ -178,7 +157,7 @@ export default function EventEditPartial(props: IProps) {
               onChange={(e) => {
                 const duration = dates.diff(eventFields.end, eventFields.start, 'minutes')
                 const start = dates.merge(yearStringToDate(e.target.value), eventFields.start)
-                const end = dates.add(start, duration, 'minutes')
+                const end = dates.add(start, duration, 'minute')
 
                 const updatedFields = eventFields.allDay
                   ? {
@@ -249,7 +228,7 @@ export default function EventEditPartial(props: IProps) {
                     }
                   } else {
                     const start = dates.startOf(eventFields.start, 'day')
-                    const end = dates.add(start, 1, 'hours')
+                    const end = dates.add(start, 1, 'hour')
 
                     updatedFields = {
                       ...eventFields,

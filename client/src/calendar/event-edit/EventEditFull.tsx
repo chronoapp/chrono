@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useRecoilValue, useSetRecoilState } from 'recoil'
 
 import {
@@ -21,7 +21,9 @@ import produce from 'immer'
 import { FiMail, FiVideo, FiMapPin, FiBriefcase, FiBell } from 'react-icons/fi'
 import { FiCalendar, FiAlignLeft, FiClock } from 'react-icons/fi'
 
-import * as dates from '@/util/dates'
+import * as dates from '@/util/dates-luxon'
+import { formatFullDay, yearStringToDate } from '@/util/localizer-luxon'
+
 import Event from '@/models/Event'
 import Contact from '@/models/Contact'
 import Calendar from '@/models/Calendar'
@@ -35,7 +37,6 @@ import useEventActions from '@/state/useEventActions'
 import { displayState, editingEventState, EventUpdateContext } from '@/state/EventsState'
 import { userState } from '@/state/UserState'
 
-import { formatFullDay, yearStringToDate } from '@/util/localizer'
 import { addNewLabels } from '@/calendar/utils/LabelUtils'
 import ContentEditable from '@/lib/ContentEditable'
 import { LabelTag } from '@/components/LabelTag'
@@ -248,7 +249,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
               onChange={(e) => {
                 const duration = dates.diff(eventFields.end, eventFields.start, 'minutes')
                 const start = dates.merge(yearStringToDate(e.target.value), eventFields.start)
-                const end = dates.add(start, duration, 'minutes')
+                const end = dates.add(start, duration, 'minute')
 
                 const updatedFields = eventFields.allDay
                   ? {
@@ -337,7 +338,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                   }
                 } else {
                   const start = dates.startOf(eventFields.start, 'day')
-                  const end = dates.add(start, 1, 'hours')
+                  const end = dates.add(start, 1, 'hour')
 
                   newEventFields = {
                     ...eventFields,

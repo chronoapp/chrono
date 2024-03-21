@@ -1,19 +1,21 @@
-import React from 'react'
+import { DateTime } from 'luxon'
 import chunk from '@/lib/js-lib/chunk'
 
-import Event from '../models/Event'
-import * as dates from '../util/dates'
-import { startOfWeek, formatMonthTitle } from '../util/localizer'
+import * as dates from '@/util/dates-luxon'
+import { startOfWeek, formatMonthTitle } from '@/util/localizer-luxon'
+
+import Event from '@/models/Event'
+import Calendar from '@/models/Calendar'
+
 import { inRange, sortEvents } from './utils/eventLevels'
 import WeekRow from './WeekRow'
-import Calendar from '@/models/Calendar'
 import { EventService } from './event-edit/useEventService'
 
 interface IProps {
   events: Event[]
   loading: boolean
-  date: Date
-  today: Date
+  date: DateTime
+  today: DateTime
   eventService: EventService
   primaryCalendar: Calendar
 }
@@ -22,7 +24,7 @@ function Month(props: IProps) {
   const month = dates.visibleDays(props.date, startOfWeek())
   const weeks = chunk(month, 7)
 
-  function renderWeek(week: Date[], weekIdx: number) {
+  function renderWeek(week: DateTime[], weekIdx: number) {
     const eventsForWeek = props.events.filter((e) => inRange(e, week[0], week[week.length - 1]))
     eventsForWeek.sort((a, b) => sortEvents(a, b))
 

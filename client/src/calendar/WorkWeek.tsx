@@ -1,6 +1,7 @@
-import React from 'react'
+import { DateTime } from 'luxon'
 
-import { formatWeekRange, getWorkWeekRange } from '@/util/localizer'
+import { formatWeekRange, getWorkWeekRange } from '@/util/localizer-luxon'
+
 import Event from '@/models/Event'
 import Calendar from '@/models/Calendar'
 
@@ -9,14 +10,14 @@ import { EventService } from './event-edit/useEventService'
 
 interface IProps {
   events: Event[]
-  date: Date
+  date: DateTime
   eventService: EventService
   primaryCalendar: Calendar
 }
 
 function WorkWeek(props: IProps) {
   const range = getWorkWeekRange(props.date)
-  const now = new Date()
+  const now = DateTime.now()
 
   return (
     <TimeGrid
@@ -29,7 +30,7 @@ function WorkWeek(props: IProps) {
   )
 }
 
-WorkWeek.getTitle = function (date: Date): string {
+WorkWeek.getTitle = function (date: DateTime): string {
   const [start, ...rest] = getWorkWeekRange(date)
   return formatWeekRange(start, rest.pop()!)
 }

@@ -1,14 +1,22 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
+import { DateTime } from 'luxon'
+
 import { useRecoilState } from 'recoil'
 import { Box, Flex, Text } from '@chakra-ui/react'
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi'
 import clsx from 'clsx'
 import chunk from '@/lib/js-lib/chunk'
 
+import { visibleDays } from '@/util/dates-luxon'
+import {
+  startOfWeek,
+  getWeekRange,
+  formatTwoLetterWeekday,
+  formatDayOfMonth,
+  formatMonthTitle,
+} from '@/util/localizer-luxon'
+
 import { displayState } from '@/state/EventsState'
-import * as dates from '@/util/dates'
-import { startOfWeek, getWeekRange } from '@/util/localizer'
-import { formatTwoLetterWeekday, formatDayOfMonth, formatMonthTitle } from '@/util/localizer'
 
 type AnimateDirection = 'NONE' | 'FROM_BOTTOM' | 'FROM_TOP'
 
@@ -19,12 +27,12 @@ export default function MiniCalendar() {
   const [display, setDisplay] = useRecoilState(displayState)
 
   // Current view date (represents a month) of the calendar.
-  const [viewDate, setViewDate] = useState<Date>(display.selectedDate)
+  const [viewDate, setViewDate] = useState<DateTime>(display.selectedDate)
 
-  const month = dates.visibleDays(viewDate, startOfWeek(), true)
+  const month = visibleDays(viewDate, startOfWeek(), true)
   const weeks = chunk(month, 7)
   const [animateDirection, setAnimateDirection] = useState<AnimateDirection>('NONE')
-  const today = new Date()
+  const today = DateTime.now()
 
   useEffect(() => {
     setViewDate(display.selectedDate)
@@ -39,9 +47,9 @@ export default function MiniCalendar() {
     ))
   }
 
-  function renderWeek(week: Date[], idx: number) {
+  function renderWeek(week: DateTime[], idx: number) {
     const highlightWeek =
-      display.view === 'Week' && week.find((day) => dates.eq(day, display.selectedDate, 'day'))
+      display.view === 'Week' && week.find((day) => day.hasSame(display.selectedDate, 'day'))
 
     return (
       <Flex
@@ -51,11 +59,11 @@ export default function MiniCalendar() {
         mb="1"
         className={clsx(highlightWeek && 'cal-mini-week-selected')}
       >
-        {week.map((day: Date, idx) => {
+        {week.map((day: DateTime, idx) => {
           const label = formatDayOfMonth(day)
-          const isToday = dates.eq(day, today, 'day')
-          const isOffRange = dates.month(viewDate) !== dates.month(day)
-          const isSelected = dates.eq(day, display.selectedDate, 'day')
+          const isToday = day.hasSame(today, 'day')
+          const isOffRange = viewDate.month !== day.month
+          const isSelected = day.hasSame(display.selectedDate, 'day')
 
           return (
             <Text
@@ -93,7 +101,7 @@ export default function MiniCalendar() {
             className="icon-button"
             onClick={() => {
               setAnimateDirection('FROM_TOP')
-              setViewDate(dates.subtract(viewDate, 1, 'month'))
+              setViewDate(viewDate.minus({ months: 1 }))
               setTimeout(() => setAnimateDirection('NONE'), 200)
             }}
           >
@@ -102,7 +110,7 @@ export default function MiniCalendar() {
           <span
             onClick={() => {
               setAnimateDirection('FROM_BOTTOM')
-              setViewDate(dates.add(viewDate, 1, 'month'))
+              setViewDate(viewDate.plus({ months: 1 }))
               setTimeout(() => setAnimateDirection('NONE'), 200)
             }}
           >

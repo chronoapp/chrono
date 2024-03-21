@@ -4,8 +4,8 @@ import { FiCalendar, FiClock, FiAlignLeft, FiTrash, FiMail, FiMapPin, FiBell } f
 import { MdClose } from 'react-icons/md'
 import linkifyHtml from 'linkifyjs/html'
 
-import { formatFullDay, formatTime24Hour, formatAmPm, formatDuration } from '@/util/localizer'
-import * as dates from '@/util/dates'
+import { formatFullDay, formatTime24Hour, formatAmPm, formatDuration } from '@/util/localizer-luxon'
+import * as dates from '@/util/dates-luxon'
 
 import { LabelTag } from '@/components/LabelTag'
 import Calendar from '@/models/Calendar'

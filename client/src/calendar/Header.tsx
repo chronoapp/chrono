@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useRecoilState, useRecoilValue } from 'recoil'
+import { DateTime } from 'luxon'
 
 import {
   Flex,
@@ -28,9 +29,9 @@ import {
   FiArrowLeft,
 } from 'react-icons/fi'
 
-import { formatLocaleDateString } from '@/util/localizer'
+import { formatLocaleDateString } from '@/util/localizer-luxon'
 import { GlobalEvent } from '@/util/global'
-import * as dates from '@/util/dates'
+import * as dates from '@/util/dates-luxon'
 
 import Week from './Week'
 import Month from './Month'
@@ -304,7 +305,7 @@ export default function Header(props: { search: string }) {
   }
 
   function onSelectToday() {
-    const today = new Date()
+    const today = DateTime.now()
 
     if (dates.eq(display.selectedDate, today, 'day')) {
       document.dispatchEvent(new Event(GlobalEvent.scrollToEvent))

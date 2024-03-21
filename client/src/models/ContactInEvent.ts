@@ -1,3 +1,5 @@
+import { DateTime } from 'luxon'
+
 import { immerable } from 'immer'
 import Contact from './Contact'
 
@@ -8,13 +10,13 @@ export default class ContactInEvent {
     return new ContactInEvent(
       Contact.fromJson(json.contact),
       json.total_time_spent_in_seconds,
-      new Date(json.last_seen)
+      DateTime.fromISO(json.last_seen)
     )
   }
 
   constructor(
     readonly contact: Contact,
     readonly total_time_spent_in_seconds: number,
-    readonly last_seen: Date
+    readonly last_seen: DateTime
   ) {}
 }

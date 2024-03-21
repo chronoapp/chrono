@@ -1,4 +1,5 @@
 import React from 'react'
+import { DateTime } from 'luxon'
 import { useRecoilValue } from 'recoil'
 import clsx from 'clsx'
 import { Portal, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from '@chakra-ui/react'
@@ -9,18 +10,18 @@ import { dragDropActionState, editingEventState } from '@/state/EventsState'
 
 import { EventSegment } from './utils/eventLevels'
 import DateSlotMetrics from './utils/DateSlotMetrics'
-import { formatTimeShort } from '../util/localizer'
+import { formatTimeShort } from '@/util/localizer-luxon'
 import EventPopover from './event-edit/EventEditPopover'
-
-import Event from '../models/Event'
-import { EventService } from './event-edit/useEventService'
 import { EventVerticalIndicator } from '@/components/EventStyle'
+
+import Event from '@/models/Event'
+import { EventService } from './event-edit/useEventService'
 import { adjustHSLABrightness, darkenColor18, makeHSLASolid } from './utils/Colors'
 
 export function EventItem(props: {
   event: Event
   isPreview: boolean
-  now: Date
+  now: DateTime
   eventService: EventService
 }) {
   const { event } = props
@@ -142,7 +143,7 @@ export function renderSpan(slots: number, len: number, key: string, content?: Re
 export default function EventRow(props: IProps) {
   let lastEnd = 1
   const numSlots = props.slotMetrics.range.length
-  const now = new Date()
+  const now = DateTime.now()
 
   return (
     <div className={clsx(props.className, 'cal-row')}>
