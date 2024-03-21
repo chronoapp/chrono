@@ -99,7 +99,9 @@ export function diff(
   dateB: DateTime,
   unit: DurationUnit = 'milliseconds'
 ): number {
-  return Math.abs(dateA.diff(dateB, unit).as(unit))
+  const difference = dateA.diff(dateB, unit).as(unit)
+
+  return Math.floor(Math.abs(difference))
 }
 
 /**

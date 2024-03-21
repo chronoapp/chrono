@@ -98,6 +98,7 @@ function TimeGridHeader(props: IProps) {
       >
         <ToggleExpandWeeklyRows expanded={expandAllDayEvents} />
       </Flex>
+
       <div className="cal-time-header-content">
         <div className="cal-row">{renderHeaderCells()}</div>
         <WeekHeaderRow
