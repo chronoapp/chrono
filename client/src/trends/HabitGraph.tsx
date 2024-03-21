@@ -15,7 +15,7 @@ import chunk from '@/lib/js-lib/chunk'
 import { DateTime } from 'luxon'
 import * as dates from '@/util/dates-luxon'
 import {
-  startOfWeek,
+  firstDayOfWeek,
   getWeekRange,
   formatFullDay,
   formatThreeLetterWeekday,
@@ -46,7 +46,7 @@ function HabitGraph(props: IProps) {
 
   const curDate: DateTime = DateTime.now()
   const [viewDate, setViewDate] = useState<DateTime>(curDate)
-  const month = dates.visibleDays(viewDate, startOfWeek(), true)
+  const month = dates.visibleDays(viewDate, firstDayOfWeek(), true)
   console.log(month)
 
   const weeks = chunk(month, 7)
@@ -60,8 +60,8 @@ function HabitGraph(props: IProps) {
       return
     }
 
-    const start = dates.firstVisibleDay(viewDate, startOfWeek())
-    const end = dates.lastVisibleDay(viewDate, startOfWeek())
+    const start = dates.firstVisibleDay(viewDate, firstDayOfWeek())
+    const end = dates.lastVisibleDay(viewDate, firstDayOfWeek())
     const trends = await getTrends(props.selectedLabel.id, 'DAY', start, end)
 
     const trendMap = new Map<string, number>()

@@ -55,7 +55,7 @@ export default function useEventService() {
    */
   async function loadAllEvents(start: DateTime, end: DateTime, signal: AbortSignal) {
     eventActions.initEmptyEvents()
-    console.log(`Loading events from ${start} to ${end}`)
+    console.debug(`Loading events from ${start} to ${end}`)
 
     const eventPromises = Object.values(calendars.calendarsById)
       .filter((cal) => cal.selected)

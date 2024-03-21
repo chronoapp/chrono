@@ -1,4 +1,5 @@
 import { DateTime } from 'luxon'
+import * as dates from '@/util/dates-luxon'
 
 /**
  * Wrapper for date localization and formatting.
@@ -7,7 +8,7 @@ import { DateTime } from 'luxon'
 /**
  * This will depend on the locale; for ISO standard, it's 1 (Monday). TODO: Make this into a config.
  */
-export function startOfWeek(): number {
+export function firstDayOfWeek(): number {
   return 0
 }
 
@@ -138,13 +139,15 @@ export function getWorkWeekRange(date: DateTime) {
 }
 
 export function getWeekRange(date: DateTime) {
-  let start = date.startOf('week')
-  let end = date.endOf('week')
+  let start = dates.startOfWeek(date, firstDayOfWeek())
+  let end = dates.endOfWeek(date, firstDayOfWeek())
+
   let days: DateTime[] = []
   while (start <= end) {
     days.push(start)
     start = start.plus({ days: 1 })
   }
+
   return days
 }
 
