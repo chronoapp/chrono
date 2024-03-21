@@ -1,11 +1,12 @@
 import React from 'react'
+import { DateTime } from 'luxon'
 
 import { DragDropAction } from '@/state/EventsState'
 import { withEventActions, InjectedEventActionsProps } from '@/state/withEventActions'
 import Event from '@/models/Event'
 
-import * as dates from '@/util/dates'
-import { formatTimeRange } from '@/util/localizer'
+import * as dates from '@/util/dates-luxon'
+import { formatTimeRange } from '@/util/localizer-luxon'
 import { GlobalEvent } from '@/util/global'
 import { Selection, Rect, EventData, getBoundsForNode, SelectRect } from '@/util/Selection'
 
@@ -21,8 +22,8 @@ interface IProps {
 }
 
 interface IState {
-  dragStart: Date | null
-  dragEnd: Date | null
+  dragStart: DateTime | null
+  dragEnd: DateTime | null
   top: number
   height: number
 }
@@ -68,7 +69,7 @@ class ResizeEventContainer extends React.Component<IProps & InjectedEventActions
     return this.containerRef
   }
 
-  private updateEvent(startDate: Date, endDate: Date, top: number, height: number) {
+  private updateEvent(startDate: DateTime, endDate: DateTime, top: number, height: number) {
     const { dragStart: lastDragStart, dragEnd: lastDragEnd } = this.state
     if (lastDragStart && startDate === lastDragStart && endDate === lastDragEnd) {
       return
@@ -217,7 +218,7 @@ class ResizeEventContainer extends React.Component<IProps & InjectedEventActions
   public render() {
     const events = this.props.children.props.children
     const { top, height } = this.state
-    const today = new Date()
+    const today = DateTime.now()
     const draggingEvent = this.getDraggingEvent()
 
     return React.cloneElement(this.props.children, {

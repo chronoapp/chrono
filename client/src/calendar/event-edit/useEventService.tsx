@@ -1,4 +1,4 @@
-import React from 'react'
+import { DateTime } from 'luxon'
 import { produce } from 'immer'
 import { useRecoilState } from 'recoil'
 
@@ -7,10 +7,10 @@ import { GlobalEvent } from '@/util/global'
 import { InfoAlert } from '@/components/Alert'
 
 import * as API from '@/util/Api'
-import { formatDateTime } from '@/util/localizer'
-import Event from '@/models/Event'
-import * as dates from '@/util/dates'
+import { formatDateTime } from '@/util/localizer-luxon'
+import * as dates from '@/util/dates-luxon'
 
+import Event from '@/models/Event'
 import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 import {
   eventsState,
@@ -53,7 +53,7 @@ export default function useEventService() {
   /**
    * Loads all events from all selected calendars from the server.
    */
-  async function loadAllEvents(start: Date, end: Date, signal: AbortSignal) {
+  async function loadAllEvents(start: DateTime, end: DateTime, signal: AbortSignal) {
     eventActions.initEmptyEvents()
     console.log(`Loading events from ${start} to ${end}`)
 

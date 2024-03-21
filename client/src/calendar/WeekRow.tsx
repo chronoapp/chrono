@@ -1,7 +1,8 @@
 import clsx from 'clsx'
+import { DateTime } from 'luxon'
 
-import * as dates from '../util/dates'
-import { formatTwoDigitDay, formatThreeLetterWeekday } from '../util/localizer'
+import * as dates from '@/util/dates-luxon'
+import { formatTwoDigitDay, formatThreeLetterWeekday } from '@/util/localizer-luxon'
 import DateSlotMetrics from './utils/DateSlotMetrics'
 
 import Event from '../models/Event'
@@ -13,9 +14,9 @@ import Calendar from '@/models/Calendar'
 
 interface IProps {
   key: number
-  today: Date
-  date: Date
-  range: Date[]
+  today: DateTime
+  date: DateTime
+  range: DateTime[]
   events: Event[]
   loading: boolean
   showDatesOfWeek: boolean
@@ -37,7 +38,7 @@ function WeekRow(props: IProps) {
     return (
       <div className="cal-row-bg">
         {props.range.map((date, index) => {
-          const isOffRange = dates.month(props.date) !== dates.month(date)
+          const isOffRange = props.date.month !== date.month
           return (
             <div key={index} className={clsx('cal-day-bg', isOffRange && 'cal-off-range-bg')}></div>
           )
@@ -46,9 +47,9 @@ function WeekRow(props: IProps) {
     )
   }
 
-  function renderHeadingCell(date: Date, index: number) {
+  function renderHeadingCell(date: DateTime, index: number) {
     const label = formatTwoDigitDay(date)
-    const isOffRange = dates.month(props.date) !== dates.month(date)
+    const isOffRange = props.date.month !== date.month
     let isCurrent = dates.eq(date, props.today, 'day')
 
     return (

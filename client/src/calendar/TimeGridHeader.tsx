@@ -1,22 +1,25 @@
 import clsx from 'clsx'
+import { useRecoilState } from 'recoil'
 
-import { formatDayOfMonth, formatThreeLetterWeekday } from '../util/localizer'
-import * as dates from '../util/dates'
+import { DateTime } from 'luxon'
+import { IconButton, Flex } from '@chakra-ui/react'
+import { FiChevronUp, FiChevronDown } from 'react-icons/fi'
 
-import Event from '../models/Event'
+import { formatDayOfMonth, formatThreeLetterWeekday } from '@/util/localizer-luxon'
+import * as dates from '@/util/dates-luxon'
+
+import User from '@/models/User'
+import Event from '@/models/Event'
+
 import WeekHeaderRow from './WeekHeaderRow'
 import { EventService } from './event-edit/useEventService'
 
-import { IconButton, Flex } from '@chakra-ui/react'
-import { FiChevronUp, FiChevronDown } from 'react-icons/fi'
 import { userState } from '@/state/UserState'
-import { useRecoilState } from 'recoil'
-import User from '@/models/User'
 
 import * as API from '@/util/Api'
 
 interface IProps {
-  range: Date[]
+  range: DateTime[]
   events: Event[]
   leftPad: number
   marginRight: number
@@ -57,7 +60,7 @@ function TimeGridHeader(props: IProps) {
   const { expandAllDayEvents, updateExpandAllDayEvents } = useUserFlags()
 
   function renderHeaderCells() {
-    const today = new Date() // TODO: pass via props.
+    const today = DateTime.now()
 
     return props.range.map((date, i) => {
       const dayNumber = formatDayOfMonth(date)

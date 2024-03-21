@@ -1,13 +1,16 @@
+import { DateTime } from 'luxon'
+
 import Event from '../../models/Event'
 import { eventSegments, endOfRange, eventLevels, EventSegment } from './eventLevels'
 
 let isSegmentInSlot = (seg, slot) => seg.left <= slot && seg.right >= slot
+
 const isEqual = (a, b) => a[0].range === b[0].range && a[0].events === b[0].events
 
 export default class DateSlotMetrics {
-  readonly first: Date
-  readonly last: Date
-  readonly range: Date[]
+  readonly first: DateTime
+  readonly last: DateTime
+  readonly range: DateTime[]
   readonly segments: EventSegment[]
   readonly slots: number
   readonly extra: EventSegment[]
@@ -15,7 +18,7 @@ export default class DateSlotMetrics {
   // 2d array of levels of events.
   readonly levels: EventSegment[][]
 
-  constructor(range: Date[], events: Event[], maxRows: number, minRows: number) {
+  constructor(range: DateTime[], events: Event[], maxRows: number, minRows: number) {
     const { first, last } = endOfRange(range)
 
     const segments = events.map((evt) => eventSegments(evt, range))

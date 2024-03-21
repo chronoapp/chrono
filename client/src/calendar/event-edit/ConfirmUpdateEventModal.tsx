@@ -27,7 +27,7 @@ import { eventsState, EditRecurringAction, EventUpdateContext } from '@/state/Ev
 import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 
 import * as API from '@/util/Api'
-import * as dates from '@/util/dates'
+import * as dates from '@/util/dates-luxon'
 import { makeShortId } from '@/lib/js-lib/makeId'
 
 interface IProps {
@@ -60,12 +60,12 @@ function ConfirmUpdateEventModal(props: IProps) {
     const endOffset = dates.diff(child.end, originalChild.end, 'minutes')
 
     const updatedStart = dates.gte(child.start, originalChild.start)
-      ? dates.add(parent.start, startOffset, 'minutes')
-      : dates.subtract(parent.start, startOffset, 'minutes')
+      ? dates.add(parent.start, startOffset, 'minute')
+      : dates.subtract(parent.start, startOffset, 'minute')
 
     const updatedEnd = dates.gte(child.end, originalChild.end)
-      ? dates.add(parent.end, endOffset, 'minutes')
-      : dates.subtract(parent.end, endOffset, 'minutes')
+      ? dates.add(parent.end, endOffset, 'minute')
+      : dates.subtract(parent.end, endOffset, 'minute')
 
     return produce(parent, (event) => {
       event.title = child.title
@@ -98,7 +98,7 @@ function ConfirmUpdateEventModal(props: IProps) {
   async function updateThisAndFutureRecurringEvents(sendUpdates: boolean) {
     const parent = await API.getEvent(props.event.calendar_id, props.event.recurring_event_id!)
 
-    if (dates.eq(parent.start, props.event.original_start)) {
+    if (dates.eq(parent.start, props.event.original_start!)) {
       return await updateAllRecurringEvents(parent, sendUpdates)
     } else {
       // 1) Update the base event's recurrence, cut off at the current event's original start date.

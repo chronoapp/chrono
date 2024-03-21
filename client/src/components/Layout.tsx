@@ -1,4 +1,5 @@
 import React from 'react'
+import { DateTime } from 'luxon'
 import { useRecoilValue, useSetRecoilState, useRecoilState } from 'recoil'
 import { useParams, useNavigate } from 'react-router-dom'
 
@@ -17,7 +18,7 @@ import { Modal, ModalOverlay, ModalContent, ModalCloseButton } from '@chakra-ui/
 
 import { FiSettings, FiLogOut } from 'react-icons/fi'
 
-import { roundNext15Min } from '@/util/localizer'
+import { roundNext15Min } from '@/util/localizer-luxon'
 import { GlobalEvent } from '@/util/global'
 import { generateGuid } from '@/lib/uuid'
 
@@ -59,7 +60,7 @@ function NewEventButton() {
       onClick={() => {
         // TODO: Create the event on the current view if current day is not in view.
         document.dispatchEvent(new Event(GlobalEvent.scrollToEvent))
-        eventActions.initNewEventAtDate(primaryCalendar!, false, roundNext15Min(new Date()))
+        eventActions.initNewEventAtDate(primaryCalendar!, false, roundNext15Min(DateTime.now()))
       }}
     >
       New Event

@@ -1,18 +1,19 @@
 import React, { useEffect } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
-import useQuery from '@/lib/hooks/useQuery'
+import { DateTime } from 'luxon'
 
+import useQuery from '@/lib/hooks/useQuery'
 import useEventService, { EventService } from './event-edit/useEventService'
 import SearchResults from '@/calendar/SearchResults'
 
 import { GlobalEvent } from '@/util/global'
-import { startOfWeek, formatDateTime } from '@/util/localizer'
 import useKeyPress from '@/lib/hooks/useKeyPress'
-import * as dates from '@/util/dates'
-import * as API from '@/util/Api'
+
+import * as dates from '@/util/dates-luxon'
+import { startOfWeek } from '@/util/localizer-luxon'
+
 import { generateGuid } from '@/lib/uuid'
 import useGlobalEventListener from '@/util/useGlobalEventListener'
-import useEventActions from '@/state/useEventActions'
 
 import TimeGrid from './TimeGrid'
 import Week from './Week'
@@ -36,7 +37,7 @@ import {
  */
 function Calendar() {
   const firstOfWeek = startOfWeek()
-  const today = new Date()
+  const today = DateTime.now()
   const eventService: EventService = useEventService()
 
   const calendars = useRecoilValue(calendarsState)
@@ -90,26 +91,26 @@ function Calendar() {
 
     if (display.view == 'Day') {
       if (e.key === 'ArrowLeft') {
-        const prevDay = dates.subtract(display.selectedDate, 1, 'day')
+        const prevDay = display.selectedDate.minus({ days: 1 })
         setDisplay((state) => ({ ...state, selectedDate: prevDay }))
       } else if (e.key === 'ArrowRight') {
-        const nextDay = dates.add(display.selectedDate, 1, 'day')
+        const nextDay = display.selectedDate.plus({ days: 1 })
         setDisplay((state) => ({ ...state, selectedDate: nextDay }))
       }
     } else if (display.view == 'Week' || display.view == 'WorkWeek') {
       if (e.key === 'ArrowLeft') {
-        const prevWeek = dates.subtract(display.selectedDate, 1, 'week')
+        const prevWeek = display.selectedDate.minus({ weeks: 1 })
         setDisplay((state) => ({ ...state, selectedDate: prevWeek }))
       } else if (e.key === 'ArrowRight') {
-        const nextWeek = dates.add(display.selectedDate, 1, 'week')
+        const nextWeek = display.selectedDate.plus({ weeks: 1 })
         setDisplay((state) => ({ ...state, selectedDate: nextWeek }))
       }
     } else if (display.view == 'Month') {
       if (e.key === 'ArrowLeft') {
-        const prevMonth = dates.subtract(display.selectedDate, 1, 'month')
+        const prevMonth = display.selectedDate.minus({ months: 1 })
         setDisplay((state) => ({ ...state, selectedDate: prevMonth }))
       } else if (e.key === 'ArrowRight') {
-        const nextMonth = dates.add(display.selectedDate, 1, 'month')
+        const nextMonth = display.selectedDate.plus({ months: 1 })
         setDisplay((state) => ({ ...state, selectedDate: nextMonth }))
       }
     }
@@ -117,16 +118,17 @@ function Calendar() {
 
   async function loadCurrentViewEvents(signal: AbortSignal) {
     if (display.view == 'Day') {
-      const start = dates.startOf(display.selectedDate, 'day')
-      const end = dates.endOf(display.selectedDate, 'day')
+      const start = display.selectedDate.startOf('day')
+      const end = display.selectedDate.endOf('day')
 
       eventService.loadAllEvents(start, end, signal)
     } else if (display.view == 'Week' || display.view == 'WorkWeek') {
-      const lastWeek = dates.subtract(display.selectedDate, 1, 'week')
-      const nextWeek = dates.add(display.selectedDate, 1, 'week')
+      const lastWeek = display.selectedDate.minus({ weeks: 1 })
+      const nextWeek = display.selectedDate.plus({ weeks: 1 })
 
-      const start = dates.startOf(lastWeek, 'week', firstOfWeek)
-      const end = dates.endOf(nextWeek, 'week', firstOfWeek)
+      const start = dates.startOfWeek(lastWeek, firstOfWeek)
+      const end = dates.endOfWeek(nextWeek, firstOfWeek)
+
       eventService.loadAllEvents(start, end, signal)
     } else if (display.view == 'Month') {
       const month = dates.visibleDays(display.selectedDate, firstOfWeek)

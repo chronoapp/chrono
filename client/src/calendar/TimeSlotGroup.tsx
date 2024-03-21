@@ -1,9 +1,9 @@
-import React from 'react'
+import { DateTime } from 'luxon'
 
 /**
  * Displays lines between one hour chunks.
  */
-function TimeSlotGroup(props: { group: Date[] }) {
+function TimeSlotGroup(props: { group: DateTime[] }) {
   return (
     <div className="cal-timeslot-group">
       {props.group.map((val, idx) => {

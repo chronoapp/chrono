@@ -1,10 +1,11 @@
-import React from 'react'
+import { DateTime } from 'luxon'
+
 import { Button, Text, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react'
 import { FiChevronDown } from 'react-icons/fi'
 
 interface IProps {
   days: number
-  startDate: Date
+  startDate: DateTime
   onSelectNumDays: (days: number) => void
 }
 

@@ -1,3 +1,5 @@
+import { DateTime } from 'luxon'
+
 import { Label } from '@/models/Label'
 import Event, { Transparency, Visibility } from '@/models/Event'
 import EventParticipant from '@/models/EventParticipant'
@@ -17,8 +19,8 @@ export default class EventFields {
   public constructor(
     readonly title: string,
     readonly description: string,
-    readonly start: Date,
-    readonly end: Date,
+    readonly start: DateTime,
+    readonly end: DateTime,
     readonly labels: Label[],
     readonly calendarId: string,
     readonly allDay: boolean,

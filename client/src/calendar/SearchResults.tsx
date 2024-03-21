@@ -12,7 +12,7 @@ import { editingEventState } from '@/state/EventsState'
 import EventPopover from '@/calendar/event-edit/EventEditPopover'
 import { sortEvents } from '@/calendar/utils/eventLevels'
 
-import { formatDayMonthYearWeekday, formatTimeRange } from '@/util/localizer'
+import { formatDayMonthYearWeekday, formatTimeRange } from '@/util/localizer-luxon'
 import { LabelTag } from '@/components/LabelTag'
 import Event from '@/models/Event'
 import { EventService } from './event-edit/useEventService'

@@ -1,10 +1,12 @@
+import { DateTime } from 'luxon'
+
 import { produce } from 'immer'
 import { normalizeArr } from '@/lib/normalizer'
 import { useRecoilState } from 'recoil'
 
 import Event, { SyncStatus } from '@/models/Event'
 import Calendar from '@/models/Calendar'
-import * as dates from '@/util/dates'
+import * as dates from '@/util/dates-luxon'
 
 import {
   dragDropActionState,
@@ -289,10 +291,10 @@ export default function useEventActions() {
   function initNewEventAtDate(
     calendar: Calendar,
     allDay: boolean,
-    startDate: Date,
-    endDate?: Date
+    startDate: DateTime,
+    endDate?: DateTime
   ) {
-    const end = endDate || dates.add(startDate, 1, allDay ? 'day' : 'hours')
+    const end = endDate || dates.add(startDate, 1, allDay ? 'day' : 'hour')
     const event = Event.newDefaultEvent(calendar, startDate, end, allDay)
 
     setEditingEvent({
@@ -326,7 +328,7 @@ export default function useEventActions() {
   function onBeginAction(
     event: Event,
     action: Action,
-    pointerDate: Date | null,
+    pointerDate: DateTime | null,
     direction?: Direction
   ) {
     let interacting = dragDropAction?.interacting || false

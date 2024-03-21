@@ -28,18 +28,19 @@ import {
   Divider,
 } from '@chakra-ui/react'
 
+import { DateTime } from 'luxon'
 import produce from 'immer'
 import { BsArrowRepeat } from 'react-icons/bs'
 import { FiChevronDown } from 'react-icons/fi'
 
-import * as dates from '@/util/dates'
+import * as dates from '@/util/dates-luxon'
 import {
   formatFullDay,
   formatDayOfWeekNumeric,
   formatTwoLetterWeekday,
   getWeekRange,
   localFullDate,
-} from '@/util/localizer'
+} from '@/util/localizer-luxon'
 
 import { Frequency as RRuleFreq, RRule, RRuleSet, Weekday, rrulestr, Options } from 'rrule'
 
@@ -50,12 +51,12 @@ enum EndCondition {
 }
 
 interface IProps {
-  initialDate: Date
+  initialDate: DateTime
   initialRulestr: string | null
   onChange?: (rule: RRule | undefined) => void
 }
 
-function getDefaultOptions(initialDate: Date) {
+function getDefaultOptions(initialDate: DateTime) {
   const defaultOptions = {
     freq: RRuleFreq.WEEKLY,
     interval: 1,
@@ -67,7 +68,7 @@ function getDefaultOptions(initialDate: Date) {
 /**
  * Get default rule parts from a recurrence string.
  */
-export function getRecurrenceRules(rulestr: string, initialDate: Date): Partial<Options> {
+export function getRecurrenceRules(rulestr: string, initialDate: DateTime): Partial<Options> {
   const ruleset = rrulestr(rulestr, { forceset: true }) as RRuleSet
 
   const rules = ruleset.rrules()
@@ -142,7 +143,7 @@ function RecurringEventEditor(props: IProps) {
   )
   const [isRecurring, setIsRecurring] = useState<boolean>(props.initialRulestr !== null)
 
-  const weekRange = getWeekRange(new Date())
+  const weekRange = getWeekRange(DateTime.now())
   const rule: RRule | undefined = getRRule(recurringOptions, endCondition)
 
   /**
@@ -153,30 +154,31 @@ function RecurringEventEditor(props: IProps) {
       if (recurringOptions?.freq == RRuleFreq.DAILY) {
         setRecurringOptions({
           ...recurringOptions,
-          until: dates.add(props.initialDate, 30, 'day'),
+          until: dates.add(props.initialDate, 30, 'day').toJSDate(),
           count: 30,
           byweekday: [],
         })
       } else if (recurringOptions?.freq == RRuleFreq.WEEKLY) {
-        const dayNo = parseInt(formatDayOfWeekNumeric(props.initialDate))
+        const dayNo = formatDayOfWeekNumeric(props.initialDate)
         const rruleDay = new Weekday(dayNo)
+
         setRecurringOptions({
           ...recurringOptions,
-          until: dates.add(props.initialDate, 13, 'week'),
+          until: dates.add(props.initialDate, 13, 'week').toJSDate(),
           count: 13,
           byweekday: [rruleDay],
         })
       } else if (recurringOptions?.freq == RRuleFreq.MONTHLY) {
         setRecurringOptions({
           ...recurringOptions,
-          until: dates.add(props.initialDate, 12, 'month'),
+          until: dates.add(props.initialDate, 12, 'month').toJSDate(),
           count: 12,
           byweekday: [],
         })
       } else if (recurringOptions?.freq == RRuleFreq.YEARLY) {
         setRecurringOptions({
           ...recurringOptions,
-          until: dates.add(props.initialDate, 5, 'year'),
+          until: dates.add(props.initialDate, 5, 'year').toJSDate(),
           count: 5,
           byweekday: [],
         })
@@ -274,7 +276,7 @@ function RecurringEventEditor(props: IProps) {
 
           <Flex mt="1">
             {weekRange.map((day, idx) => {
-              const dayNumber = (parseInt(formatDayOfWeekNumeric(day)) + 6) % 7
+              const dayNumber = (formatDayOfWeekNumeric(day) + 6) % 7
               const isSelected = weekdays.includes(dayNumber)
 
               return (
@@ -358,11 +360,11 @@ function RecurringEventEditor(props: IProps) {
                   size="xs"
                   type="date"
                   isDisabled={endCondition != EndCondition.ByEndDate}
-                  value={formatFullDay(recurringOptions.until!)}
+                  value={formatFullDay(DateTime.fromJSDate(recurringOptions.until!))}
                   onChange={(e) => {
                     setRecurringOptions({
                       ...recurringOptions,
-                      until: localFullDate(e.target.value),
+                      until: localFullDate(e.target.value).toJSDate(),
                     })
                   }}
                 />

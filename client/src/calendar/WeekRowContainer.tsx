@@ -1,22 +1,17 @@
 import React from 'react'
+import { DateTime } from 'luxon'
 import { withEventActions, InjectedEventActionsProps } from '@/state/withEventActions'
 
-import * as dates from '@/util/dates'
 import Event from '@/models/Event'
 import DateSlotMetrics from './utils/DateSlotMetrics'
 import { EventSegment, eventSegments } from './utils/eventLevels'
 import EventRow from './EventRow'
 
-import {
-  Selection,
-  SelectRect,
-  Rect,
-  getBoundsForNode,
-  EventData,
-  isEvent,
-} from '../util/Selection'
-import { pointInBox, getSlotAtX } from '../util/selection-utils'
-import { formatFullDay } from '../util/localizer'
+import { Selection, SelectRect, Rect, getBoundsForNode, EventData, isEvent } from '@/util/Selection'
+import { pointInBox, getSlotAtX } from '@/util/selection-utils'
+import { formatFullDay } from '@/util/localizer-luxon'
+import * as dates from '@/util/dates-luxon'
+
 import { EventService } from './event-edit/useEventService'
 import Calendar from '@/models/Calendar'
 
@@ -69,8 +64,8 @@ class WeekRowContainer extends React.Component<IProps & InjectedEventActionsProp
 
   private updateEvent(
     event: Event,
-    start: Date,
-    end: Date,
+    start: DateTime,
+    end: DateTime,
     startDay: string | null,
     endDay: string | null
   ) {
@@ -112,7 +107,7 @@ class WeekRowContainer extends React.Component<IProps & InjectedEventActionsProp
       getSlotAtX(bounds, point.x, false, this.props.dayMetrics.slots)
     )
     let start = dates.merge(startDay, event.start)
-    let end = dates.add(start, dates.diff(event.start, event.end, 'minutes'), 'minutes')
+    let end = dates.add(start, dates.diff(event.start, event.end, 'minutes'), 'minute')
 
     if (event.all_day) {
       let endDay = dates.add(startDay, dates.diff(event.start, event.end, 'day'), 'day')

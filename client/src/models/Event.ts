@@ -1,9 +1,11 @@
+import { DateTime } from 'luxon'
 import { immerable } from 'immer'
 import { makeShortId } from '@/lib/js-lib/makeId'
+import { localFullDate, formatFullDay } from '../util/localizer-luxon'
 
 import { Label } from './Label'
 import { hexToHSL } from '../calendar/utils/Colors'
-import { localFullDate, formatFullDay } from '../util/localizer'
+
 import EventParticipant, { ResponseStatus } from './EventParticipant'
 import Calendar from './Calendar'
 import ConferenceData from './ConferenceData'
@@ -32,8 +34,8 @@ export default class Event {
     readonly title: string,
     readonly title_short: string,
     readonly description: string,
-    readonly start: Date,
-    readonly end: Date,
+    readonly start: DateTime,
+    readonly end: DateTime,
     readonly start_day: string | null,
     readonly end_day: string | null,
     readonly labels: Label[],
@@ -41,7 +43,7 @@ export default class Event {
     readonly backgroundColor: string,
     readonly foregroundColor: string,
     readonly recurrences: string[] | null,
-    readonly original_start: Date | null,
+    readonly original_start: DateTime | null,
     readonly original_start_day: string | null,
     readonly original_timezone: string | null,
     readonly creator: Partial<EventParticipant> | null,
@@ -69,8 +71,8 @@ export default class Event {
       eventJson.title,
       eventJson.title_short,
       eventJson.description,
-      eventJson.all_day ? localFullDate(eventJson.start_day) : new Date(eventJson.start),
-      eventJson.all_day ? localFullDate(eventJson.end_day) : new Date(eventJson.end),
+      eventJson.all_day ? localFullDate(eventJson.start_day) : DateTime.fromISO(eventJson.start),
+      eventJson.all_day ? localFullDate(eventJson.end_day) : DateTime.fromISO(eventJson.end),
       eventJson.start_day,
       eventJson.end_day,
       eventJson.labels.map((labelJson) => Label.fromJson(labelJson)),
@@ -81,7 +83,7 @@ export default class Event {
       eventJson.original_start &&
         (eventJson.all_day
           ? localFullDate(eventJson.original_start_day)
-          : new Date(eventJson.original_start)),
+          : DateTime.fromISO(eventJson.original_start)),
       eventJson.original_start_day,
       eventJson.original_timezone,
       EventParticipant.fromJson(eventJson.creator),
@@ -101,13 +103,13 @@ export default class Event {
     )
   }
 
-  static getBackgroundColor(endDate: Date, defaultColor: string, today: Date) {
+  static getBackgroundColor(endDate: DateTime, defaultColor: string, today: DateTime) {
     const { h, s, l } = hexToHSL(defaultColor)
     const hsla = `hsla(${h}, ${s}%, 90%, 0.75)`
     return hsla
   }
 
-  static getForegroundColor(endDate: Date, today: Date, defaultColor: string) {
+  static getForegroundColor(endDate: DateTime, today: DateTime, defaultColor: string) {
     if (endDate < today) {
       const { h, s } = hexToHSL(defaultColor)
       const hsla = `hsla(${h}, ${s}%, 80%, 0.9)`
@@ -119,7 +121,12 @@ export default class Event {
     }
   }
 
-  static newDefaultEvent(calendar: Calendar, startDate: Date, endDate: Date, allDay: boolean) {
+  static newDefaultEvent(
+    calendar: Calendar,
+    startDate: DateTime,
+    endDate: DateTime,
+    allDay: boolean
+  ) {
     const tempId = makeShortId()
 
     return new Event(

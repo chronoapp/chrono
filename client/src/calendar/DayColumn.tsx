@@ -1,4 +1,5 @@
 import ReactDOM from 'react-dom'
+import { DateTime } from 'luxon'
 import { useRef, useState, useEffect } from 'react'
 import { usePopper } from 'react-popper'
 
@@ -7,8 +8,9 @@ import clsx from 'clsx'
 import { Box } from '@chakra-ui/react'
 import { withEventActions, InjectedEventActionsProps } from '@/state/withEventActions'
 
-import { formatTimeRange, formatTimeShort } from '@/util/localizer'
-import * as dates from '@/util/dates'
+import { formatTimeRange, formatTimeShort } from '@/util/localizer-luxon'
+import * as dates from '@/util/dates-luxon'
+
 import { Selection, SelectRect, EventData, getBoundsForNode, isEvent } from '@/util/Selection'
 import Event, { EMPTY_TITLE } from '@/models/Event'
 import Calendar from '@/models/Calendar'
@@ -25,14 +27,14 @@ import { darkenColor18 } from './utils/Colors'
 import { EventVerticalIndicator } from '@/components/EventStyle'
 
 interface IProps {
-  date: Date
+  date: DateTime
   step: number
   timeslots: number
-  min: Date
-  max: Date
+  min: DateTime
+  max: DateTime
   events: Event[]
   isCurrentDay: boolean
-  now: Date
+  now: DateTime
   eventService: EventService
   primaryCalendar: Calendar
 }
@@ -42,9 +44,9 @@ class SelectRange {
     readonly top: number,
     readonly height: number,
     readonly start: number,
-    readonly startDate: Date,
+    readonly startDate: DateTime,
     readonly end: number,
-    readonly endDate: Date
+    readonly endDate: DateTime
   ) {}
 }
 
@@ -66,7 +68,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
   )
   const dayRef = useRef<HTMLDivElement>(null)
 
-  const initialSlotRef = useRef<Date>()
+  const initialSlotRef = useRef<DateTime>()
   const selectionRef = useRef<Selection>()
   const timeIndicatorTimeoutRef = useRef<number>()
   const intervalTriggeredRef = useRef(false)
@@ -144,7 +146,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
 
   function updatePositionTimeIndicator() {
     const { min, max } = props
-    const current = new Date()
+    const current = DateTime.now()
 
     if (current >= min && current <= max) {
       const top = slotMetricsRef.current.getCurrentTimePosition(current)
@@ -361,7 +363,8 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
   }
 
   function renderSelection(selectRange: SelectRange) {
-    const diffMin = (selectRange.endDate.getTime() - selectRange.startDate.getTime()) / 60000
+    const diffMin = dates.diff(selectRange.endDate, selectRange.startDate, 'minute')
+
     let inner
     if (diffMin <= 30) {
       inner = (

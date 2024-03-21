@@ -1,5 +1,7 @@
 import React from 'react'
 import { Box, useToast } from '@chakra-ui/react'
+
+import { DateTime } from 'luxon'
 import clsx from 'clsx'
 
 import { useRecoilValue } from 'recoil'
@@ -9,8 +11,8 @@ import useEventActions from '@/state/useEventActions'
 
 import { ToastTag } from '@/components/Toast'
 import Event from '../models/Event'
-import { formatTimeShort } from '../util/localizer'
-import * as dates from '../util/dates'
+import { formatTimeShort } from '@/util/localizer-luxon'
+import * as dates from '@/util/dates-luxon'
 
 import { LabelTagColor } from '../components/LabelTag'
 import { adjustHSLABrightness, darkenColor18, makeHSLASolid } from '@/calendar/utils/Colors'
@@ -21,7 +23,7 @@ interface IProps {
   style: { top: number; width: number; height: number; xOffset: number; border: string }
   label: string
   isPreview: boolean
-  now: Date
+  now: DateTime
   isTailSegment?: boolean
   innerRef?: React.Ref<HTMLDivElement>
   getContainerRef: () => React.RefObject<HTMLDivElement>
@@ -112,11 +114,11 @@ function TimeGridEvent(props: IProps) {
    */
   function getEventDurationMinutes(): number {
     if (props.isTailSegment || props.style.top == 0) {
-      const startOfDay: Date = dates.startOf(event.end, 'day')
-      return (event.end.getTime() - startOfDay.getTime()) / 60000
+      const startOfDay = dates.startOf(event.end, 'day')
+      return dates.diff(event.end, startOfDay, 'minute')
     } else {
-      const displayEnd: Date = dates.min(event.end, dates.endOf(event.start, 'day'))
-      return (displayEnd.getTime() - event.start.getTime()) / 60000
+      const displayEnd = dates.min(event.end, dates.endOf(event.start, 'day'))
+      return dates.diff(displayEnd, event.start, 'minute')
     }
   }
 
@@ -136,7 +138,7 @@ function TimeGridEvent(props: IProps) {
       : dates.startOf(event.start, 'day')
 
     const minutes = ((dates.MILLI.day / dates.MILLI.minutes) * offsetTop) / totalHeight
-    const dateOfDrag = dates.add(startOfDay, minutes, 'minutes')
+    const dateOfDrag = dates.add(startOfDay, minutes, 'minute')
 
     return dateOfDrag
   }
