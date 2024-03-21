@@ -151,16 +151,6 @@ export function getWeekRange(date: DateTime) {
   return days
 }
 
-export function getDurationDisplay(start: DateTime, end: DateTime): string {
-  const duration = end.diff(start, ['hours', 'minutes']).toObject()
-
-  if ((duration.hours === 0 && duration.minutes) || 0 < 60) {
-    return `${duration.minutes}m`
-  } else {
-    return `${duration.hours}h ${duration.minutes || 0 > 0 ? `${duration.minutes}m` : ''}`.trim()
-  }
-}
-
 function isWeekend(date: DateTime): boolean {
   return date.weekday === 6 || date.weekday === 7
 }
