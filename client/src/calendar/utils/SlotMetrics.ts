@@ -36,6 +36,7 @@ export default class SlotMetrics {
     const daystart = start.startOf('day')
     const daystartdstoffset = getDstOffset(daystart, start)
     const totalMin = 1 + dates.diff(start, end, 'minutes') + getDstOffset(start, end)
+
     const minutesFromMidnight = dates.diff(daystart, start, 'minutes') + daystartdstoffset
     const numGroups = Math.ceil(totalMin / (step * timeslots))
     const numSlots = numGroups * timeslots
