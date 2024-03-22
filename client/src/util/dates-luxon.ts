@@ -17,19 +17,27 @@ export function monthsInYear(year: number): number[] {
  * Start of week, assuming that the week starts on Sunday.
  */
 export function startOfWeek(date: DateTime, firstOfWeek: number) {
-  return date
-    .startOf('week')
-    .minus({ days: 1 }) // Sunday
-    .plus({ days: firstOfWeek % 7 })
+  // hack for `weekData is read-only` when using recoil
+  const weekDay = date.plus(0).weekday
+  if (weekDay == 7) {
+    return date.startOf('day').plus({ days: firstOfWeek % 7 })
+  } else {
+    return date
+      .startOf('week')
+      .minus({ days: 1 }) // Sunday
+      .plus({ days: firstOfWeek % 7 })
+  }
 }
 
 /**
  * End of week, assuming that the week starts on Sunday (ends on Saturday).
  */
 export function endOfWeek(date: DateTime, firstOfWeek: number) {
-  return date
-    .endOf('week')
-    .minus({ days: 1 }) // Saturday
+  // Calculate the start of the week as Sunday, then add 6 days to get to Saturday.
+  const weekStart = startOfWeek(date, firstOfWeek)
+  return weekStart
+    .plus({ days: 6 })
+    .endOf('day')
     .plus({ days: firstOfWeek % 7 })
 }
 
