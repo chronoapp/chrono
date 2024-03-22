@@ -1,6 +1,21 @@
 import { DateTime } from 'luxon'
 import * as datesLuxon from './dates-luxon'
 
+test('startOfWeek is sunday', () => {
+  const startOfWeek = datesLuxon.startOfWeek(DateTime.fromISO('2024-03-10'), 0)
+  expect(startOfWeek).toEqual(DateTime.fromISO('2024-03-10'))
+})
+
+test('endOfWeek is saturday', () => {
+  // ensure that endOfWeek(Monday) is the end of Saturday
+  const endOfWeekMonday = datesLuxon.endOfWeek(DateTime.fromISO('2024-03-11'), 0)
+  expect(endOfWeekMonday).toEqual(DateTime.fromISO('2024-03-16').endOf('day'))
+
+  // ensure that endOfWeek(Sunday) is the end of Saturday
+  const endOfWeekSunday = datesLuxon.endOfWeek(DateTime.fromISO('2024-03-10'), 0)
+  expect(endOfWeekSunday).toEqual(DateTime.fromISO('2024-03-16').endOf('day'))
+})
+
 test('firstVisibleDay returns next month, start of last week', () => {
   const firstVisibleDay = datesLuxon.firstVisibleDay(DateTime.fromISO('2024-03-10'), 0)
   expect(firstVisibleDay).toEqual(DateTime.fromISO('2024-02-25'))
