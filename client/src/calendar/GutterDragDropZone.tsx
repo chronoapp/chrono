@@ -20,17 +20,12 @@ function GutterDragDropZone({ children, removeGutter }) {
 
   const handleDrop = (e) => {
     e.preventDefault()
-    const index = parseInt(e.dataTransfer.getData('text/plain'), 10)
-
-    // Assuming the logic to determine if it's outside bounds goes here.
-    // For simplicity, let's assume you've defined a function `isDropOutsideBounds(e, containerRef)`
-    // that returns true if the drop is outside the desired bounds.
+    const gutterId = parseInt(e.dataTransfer.getData('text/plain'), 10)
 
     if (isDropOutsideBounds(e, containerRef)) {
-      removeGutter(index)
+      removeGutter(gutterId)
     }
   }
-
   return (
     <Flex
       ref={containerRef}

@@ -16,6 +16,8 @@ import { FiChevronUp, FiChevronDown, FiPlus } from 'react-icons/fi'
 import { userState } from '@/state/UserState'
 import { calendarViewStateUserTimezone } from '@/state/CalendarViewState'
 
+import TimezoneLabel from './TimezoneLabel'
+
 import * as API from '@/util/Api'
 
 interface IProps {
@@ -41,7 +43,7 @@ function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
         icon={<FiChevronUp />}
         onClick={() => updateExpandAllDayEvents(false)}
         width="4"
-        mt="8"
+        mt="2"
       />
     )
   } else {
@@ -53,7 +55,7 @@ function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
         icon={<FiChevronDown />}
         onClick={() => updateExpandAllDayEvents(true)}
         width="4"
-        mt="8"
+        mt="2"
       />
     )
   }
@@ -68,7 +70,6 @@ function ToogleAdditionalTimezone({ addGutter }) {
       icon={<FiPlus />}
       onClick={() => addGutter()}
       width="4"
-      mt="8"
     />
   )
 }
@@ -116,8 +117,11 @@ function TimeGridHeader(props: IProps) {
         alignItems={'center'}
         className="rbc-label cal-time-header-gutter"
       >
+        <Flex>
+          <ToogleAdditionalTimezone addGutter={props.addGutter} />
+          <TimezoneLabel />
+        </Flex>
         <ToggleExpandWeeklyRows expanded={expandAllDayEvents} />
-        <ToogleAdditionalTimezone addGutter={props.addGutter} />
       </Flex>
       <div className="cal-time-header-content">
         <div className="cal-row">{renderHeaderCells()}</div>
