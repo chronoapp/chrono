@@ -253,7 +253,7 @@ function TimeGrid(props: IProps) {
       />
 
       <div ref={contentRef} className="cal-time-content">
-        <GutterDragDropZone>
+        <GutterDragDropZone removeGutter={removeGutter}>
           {gutters.map((_, index) => (
             <div
               key={index}
