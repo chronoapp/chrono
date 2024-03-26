@@ -3,9 +3,7 @@ import { useRecoilValue } from 'recoil'
 import { DateTime } from 'luxon'
 
 import getScrollbarSize from 'dom-helpers/scrollbarSize'
-import { Box } from '@chakra-ui/react'
 
-import { formatTimeShort } from '../util/localizer-luxon'
 import * as dates from '../util/dates-luxon'
 
 import Event from '../models/Event'
@@ -20,6 +18,7 @@ import Calendar from '@/models/Calendar'
 
 import { editingEventState } from '@/state/EventsState'
 import { dragDropActionState } from '@/state/EventsState'
+import Gutter from './Gutter'
 import GutterDragDropZone from './GutterDragDropZone'
 
 function remToPixels(rem) {
@@ -220,20 +219,6 @@ function TimeGrid(props: IProps) {
     )
   }
 
-  function renderDateLabel(group: DateTime[], idx: number) {
-    const timeRange = formatTimeShort(group[0], true).toUpperCase()
-
-    return (
-      <div className="cal-time-gutter-box" key={idx}>
-        {idx === 0 ? null : (
-          <Box className="cal-time-gutter-label" color="gray.600">
-            {timeRange}
-          </Box>
-        )}
-      </div>
-    )
-  }
-
   const start = props.range[0]
   const end = props.range[props.range.length - 1]
   const allDayEvents = props.events
@@ -254,20 +239,14 @@ function TimeGrid(props: IProps) {
 
       <div ref={contentRef} className="cal-time-content">
         <GutterDragDropZone removeGutter={removeGutter}>
-          {gutters.map((_, index) => (
-            <div
-              key={index}
-              ref={gutterRef}
-              className="cal-time-gutter"
-              draggable="true"
-              onDragStart={(e) => {
-                e.dataTransfer.setData('text/plain', index.toString())
-              }}
-            >
-              {slotMetrics.current.groups.map((group, idx) => {
-                return renderDateLabel(group, idx)
-              })}
-            </div>
+          {gutters.map((gutter, index) => (
+            <Gutter
+              key={gutter.id}
+              id={gutter.id}
+              content={`Gutter ${index + 1}`}
+              slotMetrics={slotMetrics}
+              gutterRef={gutterRef}
+            />
           ))}
         </GutterDragDropZone>
 

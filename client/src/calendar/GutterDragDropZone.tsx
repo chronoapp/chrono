@@ -1,38 +1,27 @@
 import React, { useRef } from 'react'
+import { useDrop } from 'react-dnd'
 import { Flex } from '@chakra-ui/react'
-import { getBoundsForNode } from '@/util/Selection'
 
-function GutterDragDropZone({ children, removeGutter }) {
-  const containerRef = useRef(null)
-  function isDropOutsideBounds(e, containerRef) {
-    if (!containerRef.current) return true // Assume out of bounds if no container
+interface GutterDragDropZoneProps {
+  removeGutter: (id: number) => void
+  children: React.ReactNode
+}
 
-    const { left, top, right, bottom } = getBoundsForNode(containerRef.current)
-    const { clientX, clientY } = e
+const GutterDragDropZone: React.FC<GutterDragDropZoneProps> = ({ children, removeGutter }) => {
+  const ref = useRef<HTMLDivElement>(null)
+  const [, drop] = useDrop({
+    accept: 'GUTTER',
+    drop: (item: { id: number }, monitor) => {
+      if (!monitor.didDrop()) {
+        removeGutter(item.id)
+      }
+    },
+  })
 
-    // Check if the drop is outside the container's bounds
-    return clientX < left || clientX > right || clientY < top || clientY > bottom
-  }
+  drop(ref) // Connect the drop target
 
-  const handleDragOver = (e) => {
-    e.preventDefault() // Always call this to allow dropping.
-  }
-
-  const handleDrop = (e) => {
-    e.preventDefault()
-    const gutterId = parseInt(e.dataTransfer.getData('text/plain'), 10)
-
-    if (isDropOutsideBounds(e, containerRef)) {
-      removeGutter(gutterId)
-    }
-  }
   return (
-    <Flex
-      ref={containerRef}
-      className="gutter-drag-drop-zone"
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-    >
+    <Flex ref={ref} className="gutter-drag-drop-zone">
       {children}
     </Flex>
   )
