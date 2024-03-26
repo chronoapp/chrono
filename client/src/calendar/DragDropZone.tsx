@@ -91,6 +91,7 @@ export default function DragDropZone(props: IProps) {
         }
       }}
       onDragOver={(e) => {
+        console.log(e.dataTransfer.getData('text/plain'))
         const container = containerRef.current
 
         if (container) {
