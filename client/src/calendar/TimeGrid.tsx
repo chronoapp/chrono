@@ -19,7 +19,6 @@ import Calendar from '@/models/Calendar'
 import { editingEventState } from '@/state/EventsState'
 import { dragDropActionState } from '@/state/EventsState'
 import Gutter from './Gutter'
-import GutterDragDropZone from './GutterDragDropZone'
 
 function remToPixels(rem) {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
@@ -33,7 +32,7 @@ interface IProps {
   now: DateTime
   eventService: EventService
   primaryCalendar: Calendar
-  today: Date
+  today: DateTime
 }
 
 const GUTTER_LINE_WIDTH = 0.5
@@ -46,12 +45,12 @@ function TimeGrid(props: IProps) {
   const [intitalGutterHeaderWidth, setIntitalGutterHeaderWidth] = useState(0)
   const [gutterWidth, setGutterWidth] = useState(0)
   const [scrollbarSize, setScrollbarSize] = useState(0)
-  const [gutters, setGutters] = useState([{ id: 1, content: 'Gutter 1' }])
+  const [gutters, setGutters] = useState([{ id: 1 }])
 
   const getNextId = () => gutters.reduce((max, gutter) => Math.max(max, gutter.id), 0) + 1
 
   const addGutter = () => {
-    const newGutter = { id: getNextId(), content: `Gutter ${gutters.length + 1}` }
+    const newGutter = { id: getNextId() }
     setGutters([...gutters, newGutter])
   }
 
@@ -243,17 +242,9 @@ function TimeGrid(props: IProps) {
       />
 
       <div ref={contentRef} className="cal-time-content">
-        <GutterDragDropZone removeGutter={removeGutter}>
-          {gutters.map((gutter, index) => (
-            <Gutter
-              key={gutter.id}
-              id={gutter.id}
-              content={`Gutter ${index + 1}`}
-              slotMetrics={slotMetrics}
-              gutterRef={gutterRef}
-            />
-          ))}
-        </GutterDragDropZone>
+        {gutters.map((gutter) => (
+          <Gutter key={gutter.id} id={gutter.id} slotMetrics={slotMetrics} />
+        ))}
 
         <div className="cal-time-gutter">
           {slotMetrics.current.groups.map((_group, idx) => {
