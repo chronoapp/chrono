@@ -1,30 +1,18 @@
 import React from 'react'
-import { useDrag } from 'react-dnd'
-import { RefObject } from 'react'
 import { DateTime } from 'luxon'
 import { formatTimeShort } from '../util/localizer-luxon'
 import { Box } from '@chakra-ui/react'
 
 interface GutterProps {
   id: number
-  content: string
   slotMetrics: {
     current: {
-      groups: any[] // Adjust the type based on your actual data structure
+      groups: any[]
     }
   }
-  gutterRef: RefObject<HTMLDivElement>
 }
 
-const Gutter: React.FC<GutterProps> = ({ id, content, slotMetrics, gutterRef }) => {
-  const [{ isDragging }, drag] = useDrag(() => ({
-    type: 'GUTTER',
-    item: { id },
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging(),
-    }),
-  }))
-
+const Gutter: React.FC<GutterProps> = ({ id, slotMetrics }) => {
   function renderDateLabel(group: DateTime[], idx: number) {
     const timeRange = formatTimeShort(group[0], true).toUpperCase()
 
@@ -40,7 +28,7 @@ const Gutter: React.FC<GutterProps> = ({ id, content, slotMetrics, gutterRef }) 
   }
 
   return (
-    <div ref={drag} key={id} className="cal-time-gutter" style={{ opacity: isDragging ? 0.5 : 1 }}>
+    <div key={id} className="cal-time-gutter">
       {slotMetrics.current.groups.map((group, idx) => {
         return renderDateLabel(group, idx)
       })}
