@@ -27,7 +27,7 @@ interface IProps {
   marginRight: number
   eventService: EventService
   addGutter: any
-  today: Date
+  today: DateTime
 }
 
 function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
@@ -114,7 +114,6 @@ function TimeGridHeader(props: IProps) {
       >
         <Flex>
           <ToogleAdditionalTimezone addGutter={props.addGutter} />
-          <TimezoneLabel />
         </Flex>
         <ToggleExpandWeeklyRows expanded={expandAllDayEvents} />
       </Flex>

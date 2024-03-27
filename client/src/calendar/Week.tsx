@@ -12,7 +12,7 @@ interface IProps {
   date: DateTime
   eventService: EventService
   primaryCalendar: Calendar
-  today: Date
+  today: DateTime
 }
 
 function Week(props: IProps) {
