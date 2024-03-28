@@ -19,11 +19,8 @@ import Calendar from '@/models/Calendar'
 import { editingEventState } from '@/state/EventsState'
 import { dragDropActionState } from '@/state/EventsState'
 
-import { formatTimeShort } from '../util/localizer-luxon'
-import { Box } from '@chakra-ui/react'
-
-import { DndContext } from '@dnd-kit/core'
-import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { DndContext, closestCorners } from '@dnd-kit/core'
+import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable'
 
 import { SortableGutter } from './Gutter'
 
@@ -63,6 +60,19 @@ function TimeGrid(props: IProps) {
   const addGutter = () => {
     const newGutter = { id: getNextId(), color: getRandomColor() }
     setGutters([...gutters, newGutter])
+  }
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const oldIndex = gutters.findIndex((gutter) => gutter.id === active.id)
+      const newIndex = gutters.findIndex((gutter) => gutter.id === over.id)
+      const newGutters = [...gutters]
+      newGutters.splice(oldIndex, 1)
+      newGutters.splice(newIndex, 0, gutters[oldIndex])
+      setGutters(newGutters)
+    }
   }
 
   const slotMetrics = useRef<SlotMetrics>(
@@ -243,10 +253,10 @@ function TimeGrid(props: IProps) {
       />
 
       <div ref={contentRef} className="cal-time-content">
-        <DndContext onDragEnd={handleDragEnd}>
+        <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
           <SortableContext
             items={gutters.map((gutter) => gutter.id)}
-            strategy={verticalListSortingStrategy}
+            strategy={horizontalListSortingStrategy}
           >
             {/* Your existing component structure */}
             {gutters.map((gutter, index) => (
@@ -284,12 +294,6 @@ TimeGrid.defaultProps = {
   timeslots: 4,
   min: dates.startOf(DateTime.now(), 'day'),
   max: dates.endOf(DateTime.now(), 'day'),
-}
-
-function handleDragStart(event) {}
-
-function handleDragEnd(event) {
-  console.log('drag end called')
 }
 
 export default TimeGrid
