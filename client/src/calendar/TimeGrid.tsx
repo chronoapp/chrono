@@ -21,14 +21,10 @@ import { dragDropActionState } from '@/state/EventsState'
 
 import { DndContext, closestCorners } from '@dnd-kit/core'
 import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable'
-
 import { SortableGutter } from './Gutter'
 
 function remToPixels(rem) {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
-}
-const getRandomColor = () => {
-  return '#' + Math.floor(Math.random() * 16777215).toString(16)
 }
 interface IProps {
   step: number
@@ -51,12 +47,12 @@ function TimeGrid(props: IProps) {
   const [intitalGutterHeaderWidth, setIntitalGutterHeaderWidth] = useState(0)
   const [gutterWidth, setGutterWidth] = useState(0)
   const [scrollbarSize, setScrollbarSize] = useState(0)
-  const [gutters, setGutters] = useState([{ id: 1, color: getRandomColor() }])
+  const [gutters, setGutters] = useState([{ id: 1 }])
 
   const getNextId = () => gutters.reduce((max, gutter) => Math.max(max, gutter.id), 0) + 1
 
   const addGutter = () => {
-    const newGutter = { id: getNextId(), color: getRandomColor() }
+    const newGutter = { id: getNextId() }
     setGutters([...gutters, newGutter])
   }
 
@@ -271,7 +267,6 @@ function TimeGrid(props: IProps) {
               <SortableGutter
                 key={gutter.id}
                 id={gutter.id}
-                color={gutter.color}
                 index={index}
                 gutterRef={gutterRef}
                 slotMetrics={slotMetrics}
