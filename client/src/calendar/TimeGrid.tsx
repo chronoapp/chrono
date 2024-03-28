@@ -19,9 +19,10 @@ import Calendar from '@/models/Calendar'
 import { editingEventState } from '@/state/EventsState'
 import { dragDropActionState } from '@/state/EventsState'
 
-import { DndContext, closestCorners } from '@dnd-kit/core'
-import { SortableContext, rectSwappingStrategy } from '@dnd-kit/sortable'
+import { DndContext, closestCorners, DragOverlay } from '@dnd-kit/core'
+import { SortableContext, rectSwappingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { SortableGutter } from './Gutter'
+import GutterContent from './GutterContent'
 
 function remToPixels(rem) {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
@@ -50,7 +51,7 @@ function TimeGrid(props: IProps) {
   const [gutterWidth, setGutterWidth] = useState(0)
   const [scrollbarSize, setScrollbarSize] = useState(0)
   const [gutters, setGutters] = useState([{ id: 1 }])
-
+  const [activeId, setActiveId] = useState(null)
   const getNextId = () => gutters.reduce((max, gutter) => Math.max(max, gutter.id), 0) + 1
 
   const addGutter = () => {
@@ -58,19 +59,26 @@ function TimeGrid(props: IProps) {
     setGutters([...gutters, newGutter])
   }
 
-  const handleDragEnd = (event) => {
-    const { active, over } = event
+  function handleDragStart(event) {
+    const { active } = event
 
-    if (over && active.id !== over.id) {
-      const oldIndex = gutters.findIndex((gutter) => gutter.id === active.id)
-      const newIndex = gutters.findIndex((gutter) => gutter.id === over.id)
-      const newGutters = [...gutters]
-      newGutters.splice(oldIndex, 1)
-      newGutters.splice(newIndex, 0, gutters[oldIndex])
-      setGutters(newGutters)
-    }
+    setActiveId(active.id)
   }
 
+  function handleDragEnd(event) {
+    const { active, over } = event
+
+    if (active.id !== over.id) {
+      setGutters((items) => {
+        const oldIndex = items.indexOf(active.id)
+        const newIndex = items.indexOf(over.id)
+
+        return arrayMove(items, oldIndex, newIndex)
+      })
+    }
+
+    setActiveId(null)
+  }
   const slotMetrics = useRef<SlotMetrics>(
     new SlotMetrics(props.min, props.max, props.step, props.timeslots)
   )
@@ -249,7 +257,11 @@ function TimeGrid(props: IProps) {
       />
 
       <div ref={contentRef} className="cal-time-content">
-        <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
+        <DndContext
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
           <SortableContext
             items={gutters.map((gutter) => gutter.id)}
             strategy={rectSwappingStrategy}
@@ -259,12 +271,12 @@ function TimeGrid(props: IProps) {
               <SortableGutter
                 key={gutter.id}
                 id={gutter.id}
-                index={index}
                 gutterRef={gutterRef}
                 slotMetrics={slotMetrics}
               />
             ))}
           </SortableContext>
+          <DragOverlay>{activeId ? <GutterContent slotMetrics={slotMetrics} /> : null}</DragOverlay>
         </DndContext>
         <div className="cal-time-gutter">
           {slotMetrics.current.groups.map((_group, idx) => {
