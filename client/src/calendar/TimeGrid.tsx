@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { useRecoilValue } from 'recoil'
 import { DateTime } from 'luxon'
 
@@ -18,12 +18,21 @@ import Calendar from '@/models/Calendar'
 
 import { editingEventState } from '@/state/EventsState'
 import { dragDropActionState } from '@/state/EventsState'
-import Gutter from './Gutter'
+
+import { formatTimeShort } from '../util/localizer-luxon'
+import { Box } from '@chakra-ui/react'
+
+import { DndContext } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+
+import { SortableGutter } from './Gutter'
 
 function remToPixels(rem) {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
 }
-
+const getRandomColor = () => {
+  return '#' + Math.floor(Math.random() * 16777215).toString(16)
+}
 interface IProps {
   step: number
   timeslots: number
@@ -47,12 +56,12 @@ function TimeGrid(props: IProps) {
   const [intitalGutterHeaderWidth, setIntitalGutterHeaderWidth] = useState(0)
   const [gutterWidth, setGutterWidth] = useState(0)
   const [scrollbarSize, setScrollbarSize] = useState(0)
-  const [gutters, setGutters] = useState([{ id: 1 }])
+  const [gutters, setGutters] = useState([{ id: 1, color: getRandomColor() }])
 
   const getNextId = () => gutters.reduce((max, gutter) => Math.max(max, gutter.id), 0) + 1
 
   const addGutter = () => {
-    const newGutter = { id: getNextId() }
+    const newGutter = { id: getNextId(), color: getRandomColor() }
     setGutters([...gutters, newGutter])
   }
 
@@ -234,10 +243,24 @@ function TimeGrid(props: IProps) {
       />
 
       <div ref={contentRef} className="cal-time-content">
-        {gutters.map((gutter) => (
-          <Gutter key={gutter.id} id={gutter.id} slotMetrics={slotMetrics} />
-        ))}
-
+        <DndContext onDragEnd={handleDragEnd}>
+          <SortableContext
+            items={gutters.map((gutter) => gutter.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {/* Your existing component structure */}
+            {gutters.map((gutter, index) => (
+              <SortableGutter
+                key={gutter.id}
+                id={gutter.id}
+                color={gutter.color}
+                index={index}
+                gutterRef={gutterRef}
+                slotMetrics={slotMetrics}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
         <div className="cal-time-gutter">
           {slotMetrics.current.groups.map((_group, idx) => {
             return renderDateTick(idx)
@@ -261,6 +284,12 @@ TimeGrid.defaultProps = {
   timeslots: 4,
   min: dates.startOf(DateTime.now(), 'day'),
   max: dates.endOf(DateTime.now(), 'day'),
+}
+
+function handleDragStart(event) {}
+
+function handleDragEnd(event) {
+  console.log('drag end called')
 }
 
 export default TimeGrid
