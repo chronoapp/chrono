@@ -3,7 +3,6 @@ import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-
 import { formatTimeShort } from '../util/localizer-luxon'
 import { Box } from '@chakra-ui/react'
 import { DateTime } from 'luxon'
-import React, { useRef, useState, useEffect } from 'react'
 
 function renderDateLabel(group: DateTime[], idx: number) {
   const timeRange = formatTimeShort(group[0], true).toUpperCase()
@@ -34,9 +33,11 @@ export function SortableGutter({ id, color, index, gutterRef, slotMetrics }) {
       {...attributes}
       {...listeners}
     >
-      {slotMetrics.current.groups.map((group, idx) => {
-        return renderDateLabel(group, idx)
-      })}
+      <div key={index} ref={gutterRef} className="cal-time-gutter">
+        {slotMetrics.current.groups.map((group, idx) => {
+          return renderDateLabel(group, idx)
+        })}
+      </div>
     </div>
   )
 }
