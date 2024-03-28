@@ -20,7 +20,7 @@ import { editingEventState } from '@/state/EventsState'
 import { dragDropActionState } from '@/state/EventsState'
 
 import { DndContext, closestCorners } from '@dnd-kit/core'
-import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable'
+import { SortableContext, rectSwappingStrategy } from '@dnd-kit/sortable'
 import { SortableGutter } from './Gutter'
 
 function remToPixels(rem) {
@@ -252,7 +252,7 @@ function TimeGrid(props: IProps) {
         <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
           <SortableContext
             items={gutters.map((gutter) => gutter.id)}
-            strategy={horizontalListSortingStrategy}
+            strategy={rectSwappingStrategy}
           >
             {/* Your existing component structure */}
             {gutters.map((gutter, index) => (

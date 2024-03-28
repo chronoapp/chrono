@@ -14,7 +14,7 @@ const TimezoneLabel = () => {
     return `GMT${sign}${Math.abs(offset)}`
   }
 
-  return <Box>{formatTimezone(timezoneOffset)}</Box>
+  return <Box position="absolute">{formatTimezone(timezoneOffset)}</Box>
 }
 
 export default TimezoneLabel
