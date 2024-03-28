@@ -1,9 +1,9 @@
 import { CSS } from '@dnd-kit/utilities'
-import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { useSortable } from '@dnd-kit/sortable'
 import { formatTimeShort } from '../util/localizer-luxon'
 import { Box } from '@chakra-ui/react'
 import { DateTime } from 'luxon'
-
+import TimezoneLabel from './TimezoneLabel'
 function renderDateLabel(group: DateTime[], idx: number) {
   const timeRange = formatTimeShort(group[0], true).toUpperCase()
 
@@ -28,6 +28,7 @@ export function SortableGutter({ id, index, gutterRef, slotMetrics }) {
 
   return (
     <div ref={setNodeRef} style={{ ...style }} {...attributes} {...listeners}>
+      <TimezoneLabel />
       <div key={index} ref={gutterRef} className="cal-time-gutter">
         {slotMetrics.current.groups.map((group, idx) => {
           return renderDateLabel(group, idx)
