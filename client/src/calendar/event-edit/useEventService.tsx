@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
 import { produce } from 'immer'
-import { useRecoilState } from 'recoil'
+import { useRecoilState, useRecoilValue } from 'recoil'
 
 import { useToast } from '@chakra-ui/react'
 import { GlobalEvent } from '@/util/global'
@@ -9,7 +9,6 @@ import { InfoAlert } from '@/components/Alert'
 import * as API from '@/util/Api'
 import { formatDateTime } from '@/util/localizer-luxon'
 import * as dates from '@/util/dates-luxon'
-
 import Event from '@/models/Event'
 import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 import {
@@ -19,6 +18,7 @@ import {
   EventUpdateContext,
 } from '@/state/EventsState'
 
+import { userState } from '@/state/UserState'
 import { calendarsState } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
 import useTaskQueue from '@/lib/hooks/useTaskQueue'
@@ -41,6 +41,7 @@ import useTaskQueue from '@/lib/hooks/useTaskQueue'
  *
  */
 export default function useEventService() {
+  const user = useRecoilValue(userState)
   const [events, setEvents] = useRecoilState(eventsState)
   const [calendars, setCalendars] = useRecoilState(calendarsState)
 
@@ -66,6 +67,7 @@ export default function useEventService() {
               calendar.id,
               formatDateTime(start),
               formatDateTime(end),
+              user!.timezone,
               signal
             ),
             calendarId: calendar.id,
@@ -214,7 +216,7 @@ export default function useEventService() {
       throw Error('Invalid Recurring Event')
     }
     const calendarId = event.calendar_id
-    const parentEvent = await API.getEvent(calendarId, event.recurring_event_id)
+    const parentEvent = await API.getEvent(calendarId, event.recurring_event_id, user!.timezone)
 
     const rules = getSplitRRules(
       event.recurrences!.join('\n'),
@@ -256,7 +258,7 @@ export default function useEventService() {
     const createEventTask = () => {
       console.log(`RUN createEventTask id=${event.id} ${event.title}...`)
 
-      return API.createEvent(calendarId, event, sendUpdates)
+      return API.createEvent(calendarId, event, sendUpdates, user!.timezone)
         .then((event) => {
           console.log(`Created event id=${event.id}`)
 
@@ -300,7 +302,7 @@ export default function useEventService() {
     sendUpdates: boolean
   ) {
     const updateEventTask = () => {
-      return API.updateEvent(calendarId, event, sendUpdates).then((event) => {
+      return API.updateEvent(calendarId, event, sendUpdates, user!.timezone).then((event) => {
         // Recurring event: TODO: Only refresh if moved calendar.
         if (Event.isParentRecurringEvent(event)) {
           document.dispatchEvent(new CustomEvent(GlobalEvent.refreshCalendar))
@@ -335,9 +337,11 @@ export default function useEventService() {
     const moveEventTask = () => {
       console.log(`Moving event ${eventId} from ${fromCalendarId} to ${toCalendarId}`)
 
-      return API.moveEvent(eventId, fromCalendarId, toCalendarId, sendUpdates).then((e) => {
-        console.log(`Moved event ${e.id}`)
-      })
+      return API.moveEvent(eventId, fromCalendarId, toCalendarId, sendUpdates, user!.timezone).then(
+        (e) => {
+          console.log(`Moved event ${e.id}`)
+        }
+      )
     }
 
     taskQueue.addTask(moveEventTask)

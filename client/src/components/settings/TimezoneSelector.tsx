@@ -22,8 +22,12 @@ const UTCTime = {
 
 const allTimezones = [UTCTime, ...timezones]
 
+function getTimezone(tzCode: string): TimeZone | null {
+  return allTimezones.find((item) => item.tzCode === tzCode) || null
+}
+
 export default function TimezoneSelector(props: IProps) {
-  const selectedItem = allTimezones.find((item) => item.tzCode === props.user.timezone) || null
+  const selectedItem = getTimezone(props.user.timezone)
 
   function estimateSize() {
     return 45

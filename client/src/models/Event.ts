@@ -64,15 +64,19 @@ export default class Event {
     readonly syncStatus: SyncStatus
   ) {}
 
-  static fromJson(calendarId: string, eventJson): Event {
+  static fromJson(calendarId: string, eventJson, timezone: string): Event {
     return new Event(
       eventJson.id,
       eventJson.recurring_event_id,
       eventJson.title,
       eventJson.title_short,
       eventJson.description,
-      eventJson.all_day ? localFullDate(eventJson.start_day) : DateTime.fromISO(eventJson.start),
-      eventJson.all_day ? localFullDate(eventJson.end_day) : DateTime.fromISO(eventJson.end),
+      eventJson.all_day
+        ? localFullDate(eventJson.start_day, timezone)
+        : localFullDate(eventJson.start, timezone),
+      eventJson.all_day
+        ? localFullDate(eventJson.end_day, timezone)
+        : localFullDate(eventJson.end, timezone),
       eventJson.start_day,
       eventJson.end_day,
       eventJson.labels.map((labelJson) => Label.fromJson(labelJson)),
@@ -82,8 +86,8 @@ export default class Event {
       eventJson.recurrences,
       eventJson.original_start &&
         (eventJson.all_day
-          ? localFullDate(eventJson.original_start_day)
-          : DateTime.fromISO(eventJson.original_start)),
+          ? localFullDate(eventJson.original_start_day, timezone)
+          : localFullDate(eventJson.original_start, timezone)),
       eventJson.original_start_day,
       eventJson.original_timezone,
       EventParticipant.fromJson(eventJson.creator),

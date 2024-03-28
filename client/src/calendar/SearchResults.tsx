@@ -5,6 +5,7 @@ import { Flex, Box, Text, Center, Tooltip } from '@chakra-ui/react'
 import { Portal, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from '@chakra-ui/react'
 import { FiRepeat } from 'react-icons/fi'
 
+import { userState } from '@/state/UserState'
 import { calendarWithDefault } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
 import { editingEventState } from '@/state/EventsState'
@@ -15,6 +16,8 @@ import { sortEvents } from '@/calendar/utils/eventLevels'
 import { formatDayMonthYearWeekday, formatTimeRange } from '@/util/localizer-luxon'
 import { LabelTag } from '@/components/LabelTag'
 import Event from '@/models/Event'
+import User from '@/models/User'
+
 import { EventService } from './event-edit/useEventService'
 import * as API from '@/util/Api'
 
@@ -108,16 +111,19 @@ function EventItem(props: { event: Event; eventService: EventService }) {
 }
 
 export default function SearchResults(props: IProps) {
+  const user = useRecoilValue(userState)
   const [events, setEvents] = React.useState<Event[]>([])
   const [loading, setLoading] = React.useState<boolean>(false)
 
   React.useEffect(() => {
-    searchEvents()
-  }, [props.searchQuery])
+    if (props.searchQuery && user) {
+      searchEvents(props.searchQuery, user)
+    }
+  }, [props.searchQuery, user])
 
-  async function searchEvents() {
+  async function searchEvents(searchQuery: string, user: User) {
     setLoading(true)
-    const events = await API.searchEvents(props.searchQuery)
+    const events = await API.searchEvents(searchQuery, user.timezone)
     setEvents(events)
     setLoading(false)
   }

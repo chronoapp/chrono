@@ -34,8 +34,9 @@ import CalendarAccount from '@/models/CalendarAccount'
 import { labelsState } from '@/state/LabelsState'
 import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
-import { displayState, editingEventState, EventUpdateContext } from '@/state/EventsState'
+import { EventUpdateContext } from '@/state/EventsState'
 import { userState } from '@/state/UserState'
+import { calendarViewState } from '@/state/CalendarViewState'
 
 import { addNewLabels } from '@/calendar/utils/LabelUtils'
 import ContentEditable from '@/lib/ContentEditable'
@@ -64,7 +65,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
   const eventActions = useEventActions()
   const labelState = useRecoilValue(labelsState)
   const calendarsById = useRecoilValue(calendarsState).calendarsById
-  const setDisplay = useSetRecoilState(displayState)
+  const setCalendarView = useSetRecoilState(calendarViewState)
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
   const originalCalendarId = props.event.syncStatus === 'SYNCED' ? props.event.calendar_id : null
   const user = useRecoilValue(userState)
@@ -267,7 +268,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                   ...EventFields.getMutableEventFields(updatedFields),
                 }
 
-                setDisplay((prev) => {
+                setCalendarView((prev) => {
                   return { ...prev, selectedDate: start }
                 })
                 eventActions.updateEditingEvent(updatedEvent)

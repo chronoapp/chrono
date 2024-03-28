@@ -218,6 +218,7 @@ export async function getCalendarEvents(
   calendarId: string,
   startDate: string,
   endDate: string,
+  timezone: string,
   signal?: AbortSignal
 ): Promise<Event[]> {
   const params = {
@@ -235,24 +236,36 @@ export async function getCalendarEvents(
   })
     .then(handleErrors)
     .then((resp) => {
-      return resp.map((eventJson: any) => Event.fromJson(calendarId, eventJson))
+      return resp.map((eventJson: any) => Event.fromJson(calendarId, eventJson, timezone))
     })
 }
 
-export async function getEvent(calendarId: string, eventId: string): Promise<Event> {
+export async function getEvent(
+  calendarId: string,
+  eventId: string,
+  timezone: string
+): Promise<Event> {
   return fetch(`${API_URL}/calendars/${calendarId}/events/${eventId}`, {
     headers: getHeaders(),
   })
     .then(handleErrors)
     .then((resp) => {
-      return Event.fromJson(calendarId, resp)
+      return Event.fromJson(calendarId, resp, timezone)
     })
 }
 
+/**
+ * Creates a new event on the given calendar.
+ *
+ * The timezone parameter is used to convert the event response to a user-selected
+ * timezone. It is not used to set the timezone of the event.
+ *
+ */
 export async function createEvent(
   calendarId: string,
   event: Event,
-  sendUpdates: boolean
+  sendUpdates: boolean,
+  timezone: string
 ): Promise<Event> {
   const sendUpdateType = sendUpdates ? 'all' : 'none'
 
@@ -262,13 +275,14 @@ export async function createEvent(
     body: JSON.stringify(event),
   })
     .then(handleErrors)
-    .then((resp) => Event.fromJson(calendarId, resp))
+    .then((resp) => Event.fromJson(calendarId, resp, timezone))
 }
 
 export async function updateEvent(
   calendarId: string,
   event: Partial<Event>,
-  sendUpdates: boolean
+  sendUpdates: boolean,
+  timezone: string
 ): Promise<Event> {
   const sendUpdateType = sendUpdates ? 'all' : 'none'
 
@@ -281,14 +295,15 @@ export async function updateEvent(
     }
   )
     .then(handleErrors)
-    .then((resp) => Event.fromJson(calendarId, resp))
+    .then((resp) => Event.fromJson(calendarId, resp, timezone))
 }
 
 export async function moveEvent(
   eventId: string,
   fromCalendarId: string,
   toCalendarId: string,
-  sendUpdates: boolean
+  sendUpdates: boolean,
+  timezone: string
 ): Promise<Event> {
   const sendUpdateType = sendUpdates ? 'all' : 'none'
 
@@ -301,7 +316,7 @@ export async function moveEvent(
     }
   )
     .then(handleErrors)
-    .then((resp) => Event.fromJson(toCalendarId, resp))
+    .then((resp) => Event.fromJson(toCalendarId, resp, timezone))
 }
 
 export async function deleteEvent(
@@ -321,14 +336,16 @@ export async function deleteEvent(
   ).then(handleErrors)
 }
 
-export async function searchEvents(query: string): Promise<Event[]> {
+export async function searchEvents(query: string, timezone: string): Promise<Event[]> {
   return fetch(`${API_URL}/events/?query=${query}`, {
     headers: getHeaders(),
   })
     .then(handleErrors)
     .then((resp) => {
       // TODO: Index by calendar ID
-      return resp.map((eventJson: any) => Event.fromJson(eventJson.calendar_id, eventJson))
+      return resp.map((eventJson: any) =>
+        Event.fromJson(eventJson.calendar_id, eventJson, timezone)
+      )
     })
 }
 
