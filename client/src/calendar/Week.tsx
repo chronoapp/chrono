@@ -10,17 +10,17 @@ import Calendar from '@/models/Calendar'
 interface IProps {
   events: Event[]
   date: DateTime
+  now: DateTime
   eventService: EventService
   primaryCalendar: Calendar
 }
 
 function Week(props: IProps) {
   const range = getWeekRange(props.date)
-  const now = DateTime.now()
 
   return (
     <TimeGrid
-      now={now}
+      now={props.now}
       events={props.events}
       range={range}
       eventService={props.eventService}

@@ -130,8 +130,8 @@ export function yearStringToDate(value: string): DateTime {
   return DateTime.fromISO(value)
 }
 
-export function localFullDate(dateStr: string): DateTime {
-  return DateTime.fromISO(dateStr)
+export function localFullDate(dateStr: string, timezone: string): DateTime {
+  return DateTime.fromISO(dateStr).setZone(timezone)
 }
 
 export function getWorkWeekRange(date: DateTime) {

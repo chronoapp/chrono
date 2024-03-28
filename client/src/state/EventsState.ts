@@ -4,10 +4,10 @@ import { produce } from 'immer'
 
 import Event from '@/models/Event'
 import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
+import { userState } from '@/state/UserState'
 
 export type Action = 'MOVE' | 'RESIZE'
 export type Direction = 'UP' | 'DOWN'
-export type DisplayView = 'Day' | 'Week' | 'WorkWeek' | 'Month'
 
 export type EditRecurringAction = 'SINGLE' | 'THIS_AND_FOLLOWING' | 'ALL'
 export type EditMode = 'READ' | 'EDIT' | 'FULL_EDIT' | 'MOVE_RESIZE'
@@ -61,14 +61,6 @@ export const eventsState = atom({
 export const editingEventState = atom({
   key: 'editing-event-state',
   default: null as EditingEvent | null,
-})
-
-export const displayState = atom({
-  key: 'display-state',
-  default: {
-    view: 'Week' as DisplayView,
-    selectedDate: DateTime.now(),
-  },
 })
 
 export const dragDropActionState = atom({

@@ -11,12 +11,10 @@ import { formatFullDay, yearStringToDate } from '@/util/localizer-luxon'
 import * as dates from '@/util/dates-luxon'
 
 import { labelsState } from '@/state/LabelsState'
-import { displayState } from '@/state/EventsState'
-import { calendarsState } from '@/state/CalendarState'
 import { userState } from '@/state/UserState'
+import { calendarViewState } from '@/state/CalendarViewState'
 
 import { LabelTag } from '@/components/LabelTag'
-import LabelTree from '@/components/LabelTree'
 
 import Calendar from '@/models/Calendar'
 import Event from '@/models/Event'
@@ -54,7 +52,7 @@ interface IProps {
 export default function EventEditPartial(props: IProps) {
   const { eventFields, selectedCalendar, participants, setEventFields, setParticipants } = props
 
-  const setDisplay = useSetRecoilState(displayState)
+  const setCalendarView = useSetRecoilState(calendarViewState)
   const contentEditableRef = createRef<HTMLInputElement>()
   const labelState = useRecoilValue(labelsState)
   const labels: Label[] = Object.values(labelState.labelsById)
@@ -170,7 +168,7 @@ export default function EventEditPartial(props: IProps) {
                   : { ...eventFields, start, end }
 
                 setEventFields(updatedFields)
-                setDisplay((prevState) => {
+                setCalendarView((prevState) => {
                   return { ...prevState, selectedDate: start }
                 })
               }}

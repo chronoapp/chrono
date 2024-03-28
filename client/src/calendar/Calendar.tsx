@@ -25,31 +25,30 @@ import ConfirmUpdateEventModal from './event-edit/ConfirmUpdateEventModal'
 import ConfirmCreateEventModal from './event-edit/ConfirmCreateEventModal'
 
 import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
-import {
-  eventsState,
-  displayState,
-  editingEventState,
-  allVisibleEventsSelector,
-} from '@/state/EventsState'
+import { eventsState, editingEventState, allVisibleEventsSelector } from '@/state/EventsState'
+import { calendarViewState, calendarViewStateUserTz } from '@/state/CalendarViewState'
 
 /**
  * The main calendar component.
  */
 function Calendar() {
-  const firstOfWeek = firstDayOfWeek()
-  const today = DateTime.now()
   const eventService: EventService = useEventService()
 
   const calendars = useRecoilValue(calendarsState)
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
 
   const events = useRecoilValue(eventsState)
-  const [display, setDisplay] = useRecoilState(displayState)
+
+  const [calendarView, setCalendarView] = useRecoilState(calendarViewState)
+  const calendarViewTz = useRecoilValue(calendarViewStateUserTz)
+
   const editingEvent = useRecoilValue(editingEventState)
   const allVisibleEvents = useRecoilValue(allVisibleEventsSelector)
 
   const queryParams = useQuery()
   const searchQuery = (queryParams.get('search') as string) || ''
+
+  const firstOfWeek = firstDayOfWeek()
 
   useKeyPress(['ArrowLeft', 'ArrowRight'], onKeyPress)
 
@@ -73,7 +72,7 @@ function Calendar() {
     return () => {
       controller.abort()
     }
-  }, [display, calendars.calendarsById, refreshId])
+  }, [calendarView, calendars.calendarsById, refreshId])
 
   /**
    * Keyboard shortcuts.
@@ -89,49 +88,51 @@ function Calendar() {
 
     e.preventDefault()
 
-    if (display.view == 'Day') {
+    if (calendarView.view == 'Day') {
       if (e.key === 'ArrowLeft') {
-        const prevDay = display.selectedDate.minus({ days: 1 })
-        setDisplay((state) => ({ ...state, selectedDate: prevDay }))
+        const prevDay = calendarViewTz.selectedDate.minus({ days: 1 })
+        setCalendarView((state) => ({ ...state, selectedDate: prevDay }))
+
+        // setDisplay((state) => ({ ...state, selectedDate: prevDay }))
       } else if (e.key === 'ArrowRight') {
-        const nextDay = display.selectedDate.plus({ days: 1 })
-        setDisplay((state) => ({ ...state, selectedDate: nextDay }))
+        const nextDay = calendarViewTz.selectedDate.plus({ days: 1 })
+        setCalendarView((state) => ({ ...state, selectedDate: nextDay }))
       }
-    } else if (display.view == 'Week' || display.view == 'WorkWeek') {
+    } else if (calendarView.view == 'Week' || calendarView.view == 'WorkWeek') {
       if (e.key === 'ArrowLeft') {
-        const prevWeek = display.selectedDate.minus({ weeks: 1 })
-        setDisplay((state) => ({ ...state, selectedDate: prevWeek }))
+        const prevWeek = calendarViewTz.selectedDate.minus({ weeks: 1 })
+        setCalendarView((state) => ({ ...state, selectedDate: prevWeek }))
       } else if (e.key === 'ArrowRight') {
-        const nextWeek = display.selectedDate.plus({ weeks: 1 })
-        setDisplay((state) => ({ ...state, selectedDate: nextWeek }))
+        const nextWeek = calendarViewTz.selectedDate.plus({ weeks: 1 })
+        setCalendarView((state) => ({ ...state, selectedDate: nextWeek }))
       }
-    } else if (display.view == 'Month') {
+    } else if (calendarView.view == 'Month') {
       if (e.key === 'ArrowLeft') {
-        const prevMonth = display.selectedDate.minus({ months: 1 })
-        setDisplay((state) => ({ ...state, selectedDate: prevMonth }))
+        const prevMonth = calendarViewTz.selectedDate.minus({ months: 1 })
+        setCalendarView((state) => ({ ...state, selectedDate: prevMonth }))
       } else if (e.key === 'ArrowRight') {
-        const nextMonth = display.selectedDate.plus({ months: 1 })
-        setDisplay((state) => ({ ...state, selectedDate: nextMonth }))
+        const nextMonth = calendarViewTz.selectedDate.plus({ months: 1 })
+        setCalendarView((state) => ({ ...state, selectedDate: nextMonth }))
       }
     }
   }
 
   async function loadCurrentViewEvents(signal: AbortSignal) {
-    if (display.view == 'Day') {
-      const start = display.selectedDate.startOf('day')
-      const end = display.selectedDate.endOf('day')
+    if (calendarView.view == 'Day') {
+      const start = calendarViewTz.selectedDate.startOf('day')
+      const end = calendarViewTz.selectedDate.endOf('day')
 
       eventService.loadAllEvents(start, end, signal)
-    } else if (display.view == 'Week' || display.view == 'WorkWeek') {
-      const lastWeek = display.selectedDate.minus({ weeks: 1 })
-      const nextWeek = display.selectedDate.plus({ weeks: 1 })
+    } else if (calendarView.view == 'Week' || calendarView.view == 'WorkWeek') {
+      const lastWeek = calendarViewTz.selectedDate.minus({ weeks: 1 })
+      const nextWeek = calendarViewTz.selectedDate.plus({ weeks: 1 })
 
       const start = dates.startOfWeek(lastWeek, firstOfWeek)
       const end = dates.endOfWeek(nextWeek, firstOfWeek)
 
       eventService.loadAllEvents(start, end, signal)
-    } else if (display.view == 'Month') {
-      const month = dates.visibleDays(display.selectedDate, firstOfWeek)
+    } else if (calendarView.view == 'Month') {
+      const month = dates.visibleDays(calendarViewTz.selectedDate, firstOfWeek)
       const start = month[0]
       const end = month[month.length - 1]
       eventService.loadAllEvents(start, end, signal)
@@ -151,40 +152,41 @@ function Calendar() {
           eventService={eventService}
         />
       )
-    } else if (display.view == 'Day') {
+    } else if (calendarView.view == 'Day') {
       return (
         <TimeGrid
           eventService={eventService}
-          now={display.selectedDate}
+          now={calendarViewTz.selectedDate}
           events={allVisibleEvents}
-          range={[display.selectedDate]}
+          range={[calendarViewTz.selectedDate]}
           primaryCalendar={primaryCalendar}
         />
       )
-    } else if (display.view == 'Week') {
+    } else if (calendarView.view == 'Week') {
       return (
         <Week
-          date={display.selectedDate}
+          now={calendarViewTz.now}
+          date={calendarViewTz.selectedDate}
           events={allVisibleEvents}
           eventService={eventService}
           primaryCalendar={primaryCalendar}
         />
       )
-    } else if (display.view == 'WorkWeek') {
+    } else if (calendarView.view == 'WorkWeek') {
       return (
         <WorkWeek
-          date={display.selectedDate}
+          date={calendarViewTz.selectedDate}
           events={allVisibleEvents}
           eventService={eventService}
           primaryCalendar={primaryCalendar}
         />
       )
-    } else if (display.view == 'Month') {
+    } else if (calendarView.view == 'Month') {
       return (
         <Month
-          today={today}
+          now={calendarViewTz.now}
           loading={events.loading}
-          date={display.selectedDate}
+          date={calendarViewTz.selectedDate}
           events={allVisibleEvents}
           eventService={eventService}
           primaryCalendar={primaryCalendar}

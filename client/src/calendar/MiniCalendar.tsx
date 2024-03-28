@@ -16,7 +16,7 @@ import {
   formatMonthTitle,
 } from '@/util/localizer-luxon'
 
-import { displayState } from '@/state/EventsState'
+import { calendarViewState } from '@/state/CalendarViewState'
 
 type AnimateDirection = 'NONE' | 'FROM_BOTTOM' | 'FROM_TOP'
 
@@ -24,10 +24,10 @@ type AnimateDirection = 'NONE' | 'FROM_BOTTOM' | 'FROM_TOP'
  * Mini calendar for date selection.
  */
 export default function MiniCalendar() {
-  const [display, setDisplay] = useRecoilState(displayState)
+  const [calendarView, setCalendarView] = useRecoilState(calendarViewState)
 
   // Current view date (represents a month) of the calendar.
-  const [viewDate, setViewDate] = useState<DateTime>(display.selectedDate)
+  const [viewDate, setViewDate] = useState<DateTime>(calendarView.selectedDate)
 
   const month = visibleDays(viewDate, firstDayOfWeek(), true)
   const weeks = chunk(month, 7)
@@ -35,8 +35,8 @@ export default function MiniCalendar() {
   const today = DateTime.now()
 
   useEffect(() => {
-    setViewDate(display.selectedDate)
-  }, [display.selectedDate])
+    setViewDate(calendarView.selectedDate)
+  }, [calendarView.selectedDate])
 
   function renderHeader() {
     const range = getWeekRange(viewDate)
@@ -49,7 +49,8 @@ export default function MiniCalendar() {
 
   function renderWeek(week: DateTime[], idx: number) {
     const highlightWeek =
-      display.view === 'Week' && week.find((day) => day.hasSame(display.selectedDate, 'day'))
+      calendarView.view === 'Week' &&
+      week.find((day) => day.hasSame(calendarView.selectedDate, 'day'))
 
     return (
       <Flex
@@ -63,13 +64,13 @@ export default function MiniCalendar() {
           const label = formatDayOfMonth(day)
           const isToday = day.hasSame(today, 'day')
           const isOffRange = viewDate.month !== day.month
-          const isSelected = day.hasSame(display.selectedDate, 'day')
+          const isSelected = day.hasSame(calendarView.selectedDate, 'day')
 
           return (
             <Text
               key={idx}
               onClick={() =>
-                setDisplay((prev) => {
+                setCalendarView((prev) => {
                   return { ...prev, selectedDate: day }
                 })
               }

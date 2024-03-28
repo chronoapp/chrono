@@ -38,7 +38,9 @@ import Month from './Month'
 import WorkWeek from './WorkWeek'
 import { labelsState } from '@/state/LabelsState'
 import useEventActions from '@/state/useEventActions'
-import { displayState, editingEventState, DisplayView } from '@/state/EventsState'
+import { editingEventState } from '@/state/EventsState'
+import { DisplayView } from '@/state/CalendarViewState'
+import { calendarViewState } from '@/state/CalendarViewState'
 
 declare var ENABLE_MONTHLY_VIEW: boolean
 
@@ -214,12 +216,12 @@ export default function Header(props: { search: string }) {
   const eventActions = useEventActions()
   const navigate = useNavigate()
 
-  const [display, setDisplay] = useRecoilState(displayState)
+  const [calendarView, setCalendarView] = useRecoilState(calendarViewState)
   const editingEvent = useRecoilValue(editingEventState)
   const labels = useRecoilValue(labelsState)
   const [isSearchMode, setIsSearchMode] = React.useState<boolean>(!!props.search)
 
-  const title = getViewTitle(display.view)
+  const title = getViewTitle(calendarView.view)
 
   React.useEffect(() => {
     if (!props.search && isSearchMode) {
@@ -285,13 +287,13 @@ export default function Header(props: { search: string }) {
 
   function getViewTitle(displayView: DisplayView) {
     if (displayView == 'Day') {
-      return formatLocaleDateString(display.selectedDate)
+      return formatLocaleDateString(calendarView.selectedDate)
     } else if (displayView == 'Week') {
-      return Week.getTitle(display.selectedDate)
+      return Week.getTitle(calendarView.selectedDate)
     } else if (displayView == 'WorkWeek') {
-      return WorkWeek.getTitle(display.selectedDate)
+      return WorkWeek.getTitle(calendarView.selectedDate)
     } else if (displayView == 'Month') {
-      return Month.getTitle(display.selectedDate)
+      return Month.getTitle(calendarView.selectedDate)
     }
   }
 
@@ -301,34 +303,34 @@ export default function Header(props: { search: string }) {
       eventActions.initEvents({})
     }
 
-    setDisplay((display) => ({ ...display, view: view }))
+    setCalendarView((display) => ({ ...display, view: view }))
   }
 
   function onSelectToday() {
     const today = DateTime.now()
 
-    if (dates.eq(display.selectedDate, today, 'day')) {
+    if (dates.eq(calendarView.selectedDate, today, 'day')) {
       document.dispatchEvent(new Event(GlobalEvent.scrollToEvent))
     } else {
-      setDisplay((display) => ({ ...display, selectedDate: today }))
+      setCalendarView((display) => ({ ...display, selectedDate: today }))
     }
   }
 
   function onSelectPrevious() {
-    if (display.view == 'Day') {
-      setDisplay((display) => ({
+    if (calendarView.view == 'Day') {
+      setCalendarView((display) => ({
         ...display,
         selectedDate: dates.subtract(display.selectedDate, 1, 'day'),
       }))
-    } else if (display.view == 'Week' || display.view == 'WorkWeek') {
-      setDisplay((display) => ({
+    } else if (calendarView.view == 'Week' || calendarView.view == 'WorkWeek') {
+      setCalendarView((display) => ({
         ...display,
         selectedDate: dates.subtract(display.selectedDate, 7, 'day'),
       }))
-    } else if (display.view == 'Month') {
+    } else if (calendarView.view == 'Month') {
       // HACK: Prevents flicker when switching months
       eventActions.initEvents({})
-      setDisplay((display) => ({
+      setCalendarView((display) => ({
         ...display,
         selectedDate: dates.subtract(display.selectedDate, 1, 'month'),
       }))
@@ -336,19 +338,19 @@ export default function Header(props: { search: string }) {
   }
 
   function onSelectNext() {
-    if (display.view == 'Day') {
-      setDisplay((display) => ({
+    if (calendarView.view == 'Day') {
+      setCalendarView((display) => ({
         ...display,
         selectedDate: dates.add(display.selectedDate, 1, 'day'),
       }))
-    } else if (display.view == 'Week' || display.view == 'WorkWeek') {
-      setDisplay((display) => ({
+    } else if (calendarView.view == 'Week' || calendarView.view == 'WorkWeek') {
+      setCalendarView((display) => ({
         ...display,
         selectedDate: dates.add(display.selectedDate, 7, 'day'),
       }))
-    } else if (display.view == 'Month') {
+    } else if (calendarView.view == 'Month') {
       eventActions.initEvents({})
-      setDisplay((display) => ({
+      setCalendarView((display) => ({
         ...display,
         selectedDate: dates.add(display.selectedDate, 1, 'month'),
       }))
@@ -364,7 +366,7 @@ export default function Header(props: { search: string }) {
         onSelectNext={onSelectNext}
       />
     ),
-    [display]
+    [calendarView]
   )
 
   return (
@@ -392,7 +394,7 @@ export default function Header(props: { search: string }) {
             onClick={() => setIsSearchMode(true)}
           />
         )}
-        <DropdownMenu display={display.view} selectDisplay={selectDisplay} />
+        <DropdownMenu display={calendarView.view} selectDisplay={selectDisplay} />
       </Flex>
     </Flex>
   )

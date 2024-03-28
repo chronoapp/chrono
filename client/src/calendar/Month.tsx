@@ -15,7 +15,7 @@ interface IProps {
   events: Event[]
   loading: boolean
   date: DateTime
-  today: DateTime
+  now: DateTime
   eventService: EventService
   primaryCalendar: Calendar
 }
@@ -32,7 +32,7 @@ function Month(props: IProps) {
       <WeekRow
         loading={props.loading}
         range={week}
-        today={props.today}
+        today={props.now}
         date={props.date}
         key={weekIdx}
         events={eventsForWeek}

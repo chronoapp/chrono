@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useRecoilValue } from 'recoil'
 import {
   Box,
   Flex,
@@ -33,6 +34,7 @@ import produce from 'immer'
 import { BsArrowRepeat } from 'react-icons/bs'
 import { FiChevronDown } from 'react-icons/fi'
 
+import { userState } from '@/state/UserState'
 import * as dates from '@/util/dates-luxon'
 import {
   formatFullDay,
@@ -131,6 +133,8 @@ function getInitialEndCondition(recurrence: Partial<Options>): EndCondition {
  * - byweekday: RRule.FR.nth(2),
  */
 function RecurringEventEditor(props: IProps) {
+  const user = useRecoilValue(userState)
+
   const [modalEnabled, setModalEnabled] = useState<boolean>(false)
   const [recurringOptions, setRecurringOptions] = useState<Partial<Options>>(
     props.initialRulestr
@@ -364,7 +368,7 @@ function RecurringEventEditor(props: IProps) {
                   onChange={(e) => {
                     setRecurringOptions({
                       ...recurringOptions,
-                      until: localFullDate(e.target.value).toJSDate(),
+                      until: localFullDate(e.target.value, user!.timezone).toJSDate(),
                     })
                   }}
                 />
