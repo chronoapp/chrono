@@ -1,39 +1,42 @@
-import React from 'react'
-import { DateTime } from 'luxon'
+import { CSS } from '@dnd-kit/utilities'
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { formatTimeShort } from '../util/localizer-luxon'
 import { Box } from '@chakra-ui/react'
+import { DateTime } from 'luxon'
+import React, { useRef, useState, useEffect } from 'react'
 
-interface GutterProps {
-  id: number
-  slotMetrics: {
-    current: {
-      groups: any[]
-    }
-  }
+function renderDateLabel(group: DateTime[], idx: number) {
+  const timeRange = formatTimeShort(group[0], true).toUpperCase()
+
+  return (
+    <div className="cal-time-gutter-box" key={idx}>
+      {idx === 0 ? null : (
+        <Box className="cal-time-gutter-label" color="grey">
+          {timeRange}
+        </Box>
+      )}
+    </div>
+  )
 }
 
-const Gutter: React.FC<GutterProps> = ({ id, slotMetrics }) => {
-  function renderDateLabel(group: DateTime[], idx: number) {
-    const timeRange = formatTimeShort(group[0], true).toUpperCase()
+export function SortableGutter({ id, color, index, gutterRef, slotMetrics }) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id })
 
-    return (
-      <div className="cal-time-gutter-box" key={idx}>
-        {idx === 0 ? null : (
-          <Box className="cal-time-gutter-label" color="gray.600">
-            {timeRange}
-          </Box>
-        )}
-      </div>
-    )
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
   }
 
   return (
-    <div key={id} className="cal-time-gutter">
+    <div
+      ref={setNodeRef}
+      style={{ ...style, backgroundColor: color }}
+      {...attributes}
+      {...listeners}
+    >
       {slotMetrics.current.groups.map((group, idx) => {
         return renderDateLabel(group, idx)
       })}
     </div>
   )
 }
-
-export default Gutter
