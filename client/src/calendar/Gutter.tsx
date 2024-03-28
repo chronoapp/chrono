@@ -18,7 +18,7 @@ function renderDateLabel(group: DateTime[], idx: number) {
   )
 }
 
-export function SortableGutter({ id, color, index, gutterRef, slotMetrics }) {
+export function SortableGutter({ id, index, gutterRef, slotMetrics }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id })
 
   const style = {
@@ -27,12 +27,7 @@ export function SortableGutter({ id, color, index, gutterRef, slotMetrics }) {
   }
 
   return (
-    <div
-      ref={setNodeRef}
-      style={{ ...style, backgroundColor: color }}
-      {...attributes}
-      {...listeners}
-    >
+    <div ref={setNodeRef} style={{ ...style }} {...attributes} {...listeners}>
       <div key={index} ref={gutterRef} className="cal-time-gutter">
         {slotMetrics.current.groups.map((group, idx) => {
           return renderDateLabel(group, idx)
