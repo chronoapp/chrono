@@ -368,7 +368,7 @@ function RecurringEventEditor(props: IProps) {
                   onChange={(e) => {
                     setRecurringOptions({
                       ...recurringOptions,
-                      until: localFullDate(e.target.value, user!.timezone).toJSDate(),
+                      until: localFullDate(e.target.value).toJSDate(),
                     })
                   }}
                 />

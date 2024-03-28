@@ -16,7 +16,6 @@ export type DisplayView = 'Day' | 'Week' | 'WorkWeek' | 'Month'
 export const calendarViewState = atom({
   key: 'ui-state',
   default: {
-    expandWeeklyRows: false,
     view: 'Week' as DisplayView,
     selectedDate: DateTime.now(),
     now: DateTime.now(),

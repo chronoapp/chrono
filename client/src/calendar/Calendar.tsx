@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
-import { DateTime } from 'luxon'
 
 import useQuery from '@/lib/hooks/useQuery'
 import useEventService, { EventService } from './event-edit/useEventService'
@@ -36,14 +35,11 @@ function Calendar() {
 
   const calendars = useRecoilValue(calendarsState)
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
-
   const events = useRecoilValue(eventsState)
-
-  const [calendarView, setCalendarView] = useRecoilState(calendarViewState)
   const calendarViewTz = useRecoilValue(calendarViewStateUserTz)
-
   const editingEvent = useRecoilValue(editingEventState)
   const allVisibleEvents = useRecoilValue(allVisibleEventsSelector)
+  const [calendarView, setCalendarView] = useRecoilState(calendarViewState)
 
   const queryParams = useQuery()
   const searchQuery = (queryParams.get('search') as string) || ''
@@ -72,7 +68,7 @@ function Calendar() {
     return () => {
       controller.abort()
     }
-  }, [calendarView, calendars.calendarsById, refreshId])
+  }, [calendarView.view, calendarViewTz, calendars.calendarsById, refreshId])
 
   /**
    * Keyboard shortcuts.

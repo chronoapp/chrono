@@ -5,7 +5,6 @@ import { Flex, Box, Text, Center, Tooltip } from '@chakra-ui/react'
 import { Portal, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from '@chakra-ui/react'
 import { FiRepeat } from 'react-icons/fi'
 
-import { userState } from '@/state/UserState'
 import { calendarWithDefault } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
 import { editingEventState } from '@/state/EventsState'
@@ -111,19 +110,18 @@ function EventItem(props: { event: Event; eventService: EventService }) {
 }
 
 export default function SearchResults(props: IProps) {
-  const user = useRecoilValue(userState)
   const [events, setEvents] = React.useState<Event[]>([])
   const [loading, setLoading] = React.useState<boolean>(false)
 
   React.useEffect(() => {
-    if (props.searchQuery && user) {
-      searchEvents(props.searchQuery, user)
+    if (props.searchQuery) {
+      searchEvents(props.searchQuery)
     }
-  }, [props.searchQuery, user])
+  }, [props.searchQuery])
 
-  async function searchEvents(searchQuery: string, user: User) {
+  async function searchEvents(searchQuery: string) {
     setLoading(true)
-    const events = await API.searchEvents(searchQuery, user.timezone)
+    const events = await API.searchEvents(searchQuery)
     setEvents(events)
     setLoading(false)
   }
