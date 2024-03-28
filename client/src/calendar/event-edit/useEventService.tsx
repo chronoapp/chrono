@@ -55,6 +55,10 @@ export default function useEventService() {
    * Loads all events from all selected calendars from the server.
    */
   async function loadAllEvents(start: DateTime, end: DateTime, signal: AbortSignal) {
+    if (calendars.loading) {
+      return
+    }
+
     eventActions.initEmptyEvents()
     console.debug(`Loading events from ${start} to ${end}`)
 
@@ -67,7 +71,6 @@ export default function useEventService() {
               calendar.id,
               formatDateTime(start),
               formatDateTime(end),
-              user!.timezone,
               signal
             ),
             calendarId: calendar.id,
@@ -216,7 +219,7 @@ export default function useEventService() {
       throw Error('Invalid Recurring Event')
     }
     const calendarId = event.calendar_id
-    const parentEvent = await API.getEvent(calendarId, event.recurring_event_id, user!.timezone)
+    const parentEvent = await API.getEvent(calendarId, event.recurring_event_id)
 
     const rules = getSplitRRules(
       event.recurrences!.join('\n'),
@@ -258,7 +261,7 @@ export default function useEventService() {
     const createEventTask = () => {
       console.log(`RUN createEventTask id=${event.id} ${event.title}...`)
 
-      return API.createEvent(calendarId, event, sendUpdates, user!.timezone)
+      return API.createEvent(calendarId, event, sendUpdates)
         .then((event) => {
           console.log(`Created event id=${event.id}`)
 
@@ -302,7 +305,7 @@ export default function useEventService() {
     sendUpdates: boolean
   ) {
     const updateEventTask = () => {
-      return API.updateEvent(calendarId, event, sendUpdates, user!.timezone).then((event) => {
+      return API.updateEvent(calendarId, event, sendUpdates).then((event) => {
         // Recurring event: TODO: Only refresh if moved calendar.
         if (Event.isParentRecurringEvent(event)) {
           document.dispatchEvent(new CustomEvent(GlobalEvent.refreshCalendar))
@@ -337,11 +340,9 @@ export default function useEventService() {
     const moveEventTask = () => {
       console.log(`Moving event ${eventId} from ${fromCalendarId} to ${toCalendarId}`)
 
-      return API.moveEvent(eventId, fromCalendarId, toCalendarId, sendUpdates, user!.timezone).then(
-        (e) => {
-          console.log(`Moved event ${e.id}`)
-        }
-      )
+      return API.moveEvent(eventId, fromCalendarId, toCalendarId, sendUpdates).then((e) => {
+        console.log(`Moved event ${e.id}`)
+      })
     }
 
     taskQueue.addTask(moveEventTask)

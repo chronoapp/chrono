@@ -24,7 +24,6 @@ import { EventService } from './useEventService'
 import Event from '@/models/Event'
 
 import useEventActions from '@/state/useEventActions'
-import { userState } from '@/state/UserState'
 import { eventsState, EditRecurringAction, EventUpdateContext } from '@/state/EventsState'
 import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 
@@ -44,7 +43,6 @@ interface IProps {
  * 2) Notify participants of the update.
  */
 function ConfirmUpdateEventModal(props: IProps) {
-  const user = useRecoilValue(userState)
   const eventActions = useEventActions()
   const events = useRecoilValue(eventsState)
 
@@ -81,8 +79,7 @@ function ConfirmUpdateEventModal(props: IProps) {
 
   async function updateAllRecurringEvents(parentEvent: Event | null, sendUpdates: boolean) {
     const parent =
-      parentEvent ||
-      (await API.getEvent(props.event.calendar_id, props.event.recurring_event_id!, user!.timezone))
+      parentEvent || (await API.getEvent(props.event.calendar_id, props.event.recurring_event_id!))
 
     const originalChild = eventActions.getEvent(props.event.calendar_id, props.event.id)
     const updatedParent = getUpdatedParentEvent(parent, props.event, originalChild)
@@ -100,11 +97,7 @@ function ConfirmUpdateEventModal(props: IProps) {
    * 2) The recurrence from this event onwards, to create a new series of events.
    */
   async function updateThisAndFutureRecurringEvents(sendUpdates: boolean) {
-    const parent = await API.getEvent(
-      props.event.calendar_id,
-      props.event.recurring_event_id!,
-      user!.timezone
-    )
+    const parent = await API.getEvent(props.event.calendar_id, props.event.recurring_event_id!)
 
     if (dates.eq(parent.start, props.event.original_start!)) {
       return await updateAllRecurringEvents(parent, sendUpdates)

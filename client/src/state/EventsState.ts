@@ -1,9 +1,8 @@
 import { atom, selector } from 'recoil'
 import { DateTime } from 'luxon'
-import { produce } from 'immer'
 
 import Event from '@/models/Event'
-import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
+import { calendarsState } from '@/state/CalendarState'
 import { userState } from '@/state/UserState'
 
 export type Action = 'MOVE' | 'RESIZE'
@@ -68,44 +67,54 @@ export const dragDropActionState = atom({
   default: null as DragDropAction | null,
 })
 
+/**
+ * Selector to get all visible events. This includes events from all selected calendars
+ * and appends the editing event to the event list if it exists.
+ */
 export const allVisibleEventsSelector = selector({
   key: 'all-visible-events',
   get: ({ get }) => {
     const events = get(eventsState)
     const calendars = get(calendarsState)
-    const primaryCalendar = get(primaryCalendarSelector)
     const editingEvent = get(editingEventState)
+    const user = get(userState)
 
     const { eventsByCalendar } = events
     const selectedCalendarIds = Object.values(calendars.calendarsById)
       .filter((cal) => cal.selected)
       .map((cal) => cal.id)
 
-    let eventWithEditing = Object.fromEntries(
-      selectedCalendarIds.map((calId) => {
-        return [calId, eventsByCalendar[calId] || {}]
-      })
-    )
+    let allEvents: Event[] = []
 
+    selectedCalendarIds.forEach((calId) => {
+      const events = eventsByCalendar[calId]
+      if (events) {
+        Object.values(events).forEach((event) => {
+          allEvents.push(adjustEventTimezone(event, user!.timezone))
+        })
+      }
+    })
+
+    // Add the editing event to the event list if it exists.
     if (editingEvent) {
-      eventWithEditing = produce(eventWithEditing, (draft) => {
-        const calendarId = editingEvent.event.calendar_id || primaryCalendar!.id
+      // Optionally, remove the event from its original calendar if moved.
+      // This requires identifying and removing it from allEvents if necessary.
+      // Then add/update the editing event in its current or primary calendar.
 
-        if (editingEvent.originalCalendarId) {
-          delete draft[editingEvent.originalCalendarId][editingEvent.id]
-        }
+      // Find and remove the editing event if it was moved from another calendar.
+      allEvents = allEvents.filter((event) => event.id !== editingEvent.id)
 
-        draft[calendarId] = {
-          ...draft[calendarId],
-          [editingEvent.id]: editingEvent.event,
-        }
-
-        return draft
-      })
+      // Add the editing event to the list.
+      allEvents.push(adjustEventTimezone(editingEvent.event, user!.timezone))
     }
 
-    return Object.values(eventWithEditing).flatMap((eventMap) => {
-      return Object.values(eventMap)
-    })
+    return allEvents
   },
+})
+
+const adjustEventTimezone = (event, timezone: string) => ({
+  ...event,
+  start: event.start.setZone(timezone),
+  end: event.end.setZone(timezone),
+  original_start: event.original_start?.setZone(timezone),
 })
