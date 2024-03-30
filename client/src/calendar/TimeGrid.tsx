@@ -19,9 +19,9 @@ import Calendar from '@/models/Calendar'
 import { editingEventState } from '@/state/EventsState'
 import { dragDropActionState } from '@/state/EventsState'
 
-import { DndContext, closestCorners, DragOverlay } from '@dnd-kit/core'
-import { SortableContext, rectSwappingStrategy, arrayMove } from '@dnd-kit/sortable'
-import { SortableGutter } from './Gutter'
+import { DndContext, closestCorners, DragOverlay, MouseSensor } from '@dnd-kit/core'
+import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable'
+import { SortableGutter } from './SortableGutter'
 import GutterContent from './GutterContent'
 
 function remToPixels(rem) {
@@ -68,20 +68,23 @@ function TimeGrid(props: IProps) {
     setActiveId(active.id)
   }
 
+  const getGutterPos = (id) => gutters.findIndex((gutter) => gutter.id === id)
+
   function handleDragEnd(event) {
     const { active, over } = event
+    if (active.id === over.id) return
+    setGutters((gutters) => {
+      const originalPos = getGutterPos(active.id)
+      const newPos = getGutterPos(over.id)
 
-    if (active.id !== over.id) {
-      setGutters((items) => {
-        const oldIndex = items.indexOf(active.id)
-        const newIndex = items.indexOf(over.id)
-
-        return arrayMove(items, oldIndex, newIndex)
-      })
-    }
-
-    setActiveId(null)
+      return arrayMove(gutters, originalPos, newPos)
+    })
   }
+
+  const restrictToXAxis = ({ transform }) => ({
+    ...transform,
+    y: 0, // Restrict movement to the x-axis by setting the y-coordinate to 0
+  })
 
   const gutterRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLInputElement>(null)
@@ -271,10 +274,11 @@ function TimeGrid(props: IProps) {
           collisionDetection={closestCorners}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
+          modifiers={[restrictToXAxis]}
         >
           <SortableContext
             items={gutters.map((gutter) => gutter.id)}
-            strategy={rectSwappingStrategy}
+            strategy={horizontalListSortingStrategy}
           >
             {/* Your existing component structure */}
             {gutters.map((gutter, index) => (
@@ -286,7 +290,13 @@ function TimeGrid(props: IProps) {
               />
             ))}
           </SortableContext>
-          <DragOverlay>{activeId ? <GutterContent slotMetrics={slotMetrics} /> : null}</DragOverlay>
+          <DragOverlay>
+            {activeId ? (
+              <div style={{ boxShadow: '0px 0px 15px rgba(0, 0, 0, 0.2)' }}>
+                <GutterContent slotMetrics={slotMetrics} />
+              </div>
+            ) : null}
+          </DragOverlay>
         </DndContext>
         <div className="cal-time-gutter">
           {slotMetrics.current.groups.map((_group, idx) => {
