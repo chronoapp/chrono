@@ -100,9 +100,10 @@ export function formatTimeHmma(date: DateTime): string {
 }
 
 export function formatDayOfWeekNumeric(date: DateTime) {
-  const dayOfWeek = date.weekday
+  // hack for `weekData is read-only` when using recoil
+  const dayOfWeek = date.plus(0).weekday
 
-  return date.weekday == 7 ? 0 : dayOfWeek
+  return dayOfWeek == 7 ? 0 : dayOfWeek
 }
 
 export function formatTime24Hour(date: DateTime) {
