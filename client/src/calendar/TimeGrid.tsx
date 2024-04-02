@@ -235,19 +235,6 @@ function TimeGrid(props: IProps) {
     })
   }
 
-  function renderDateTick(idx: number) {
-    return (
-      <div
-        className="cal-timeslot-group"
-        key={idx}
-        style={{
-          width: `${GUTTER_LINE_WIDTH}rem`,
-          borderLeft: 0,
-        }}
-      ></div>
-    )
-  }
-
   const start = props.range[0]
   const end = props.range[props.range.length - 1]
   const allDayEvents = props.events
@@ -255,7 +242,7 @@ function TimeGrid(props: IProps) {
     .sort((a, b) => sortEvents(a, b))
 
   return (
-    <Flex className="cal-time-view" direction="row">
+    <Flex className="cal-time-view">
       <Gutter
         slotMetrics={slotMetrics}
         gutters={gutters}
