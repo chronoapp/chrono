@@ -74,6 +74,7 @@ function ConfirmUpdateEventModal(props: IProps) {
       event.labels = child.labels
       event.start = updatedStart
       event.end = updatedEnd
+      event.recurrences = child.recurrences
     })
   }
 
