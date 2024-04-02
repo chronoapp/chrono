@@ -6,6 +6,8 @@ import { DndContext, DragOverlay, closestCorners } from '@dnd-kit/core'
 import { IconButton, Flex } from '@chakra-ui/react'
 import { FiPlus } from 'react-icons/fi'
 
+const GUTTER_LINE_WIDTH = 0.5
+
 const Gutter = ({ slotMetrics, gutterRef, gutters, addGutter, width, setGutters }) => {
   const [activeId, setActiveId] = useState(null)
 
@@ -46,10 +48,9 @@ const Gutter = ({ slotMetrics, gutterRef, gutters, addGutter, width, setGutters 
   }
 
   return (
-    <>
+    <Flex direction={'column'}>
       <Flex
         width={width}
-        direction={'column'}
         justifyContent={'flex-start'}
         alignItems={'center'}
         className="rbc-label cal-time-header-gutter"
@@ -83,8 +84,26 @@ const Gutter = ({ slotMetrics, gutterRef, gutters, addGutter, width, setGutters 
           ) : null}
         </DragOverlay>
       </DndContext>
-    </>
+      <div className="cal-time-gutter">
+        {slotMetrics.current.groups.map((_group, idx) => {
+          return renderDateTick(idx)
+        })}
+      </div>
+    </Flex>
   )
 }
 
 export default Gutter
+
+function renderDateTick(idx: number) {
+  return (
+    <div
+      className="cal-timeslot-group"
+      key={idx}
+      style={{
+        width: `${GUTTER_LINE_WIDTH}rem`,
+        borderLeft: 0,
+      }}
+    ></div>
+  )
+}
