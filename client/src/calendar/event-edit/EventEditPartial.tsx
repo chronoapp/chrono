@@ -38,6 +38,7 @@ interface IProps {
   eventFields: EventFields
   selectedCalendar: Calendar
   participants: EventParticipant[]
+  updateEditingEvent: (eventFields: EventFields) => void
   setEventFields: (eventFields: EventFields) => void
   setParticipants: (participants: EventParticipant[]) => void
   onSaveEvent: () => void
@@ -107,6 +108,9 @@ export default function EventEditPartial(props: IProps) {
           title={eventFields.title}
           portalCls={'.cal-event-modal-container'}
           isHeading={false}
+          onBlur={() => {
+            props.updateEditingEvent(eventFields)
+          }}
           handleChange={(title, labelIds: string[]) => {
             const updatedLabels = addNewLabels(labelState.labelsById, eventFields.labels, labelIds)
             setEventFields({ ...eventFields, title, labels: updatedLabels })
@@ -131,7 +135,10 @@ export default function EventEditPartial(props: IProps) {
                   const updatedLabels = produce(eventFields.labels, (labels) => {
                     labels.splice(rmIdx, 1)
                   })
-                  setEventFields({ ...eventFields, labels: updatedLabels })
+
+                  const updatedEvent = { ...eventFields, labels: updatedLabels }
+                  setEventFields(updatedEvent)
+                  props.updateEditingEvent(updatedEvent)
                 }}
               />
             </Box>
@@ -171,6 +178,7 @@ export default function EventEditPartial(props: IProps) {
                 setCalendarView((prevState) => {
                   return { ...prevState, selectedDate: start }
                 })
+                props.updateEditingEvent(updatedFields)
               }}
             />
 
@@ -195,10 +203,14 @@ export default function EventEditPartial(props: IProps) {
                   start={eventFields.start}
                   end={eventFields.end}
                   onSelectStartDate={(date) => {
-                    setEventFields({ ...eventFields, start: date })
+                    const newEvent = { ...eventFields, start: date }
+                    setEventFields(newEvent)
+                    props.updateEditingEvent(newEvent)
                   }}
                   onSelectEndDate={(date) => {
-                    setEventFields({ ...eventFields, end: date })
+                    const newEvent = { ...eventFields, end: date }
+                    setEventFields(newEvent)
+                    props.updateEditingEvent(newEvent)
                   }}
                 />
               )}
@@ -239,6 +251,7 @@ export default function EventEditPartial(props: IProps) {
                   }
 
                   setEventFields(updatedFields)
+                  props.updateEditingEvent(updatedFields)
                 }}
               >
                 All Day
@@ -264,6 +277,7 @@ export default function EventEditPartial(props: IProps) {
                 calendarId: calendar.id,
               }
               setEventFields(updatedFields)
+              props.updateEditingEvent(updatedFields)
             }}
           />
         </Flex>
