@@ -26,7 +26,7 @@ export const calendarViewState = atom({
  * Selector that returns the current display state of the calendar.
  * This includes the current view and current datetime in the local timezone.
  */
-export const calendarViewStateUserTz = selector({
+export const calendarViewStateUserTimezone = selector({
   key: 'display-state',
   get: ({ get }) => {
     const user = get(userState)

@@ -25,10 +25,14 @@ import ConfirmCreateEventModal from './event-edit/ConfirmCreateEventModal'
 
 import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
 import { eventsState, editingEventState, allVisibleEventsSelector } from '@/state/EventsState'
-import { calendarViewState, calendarViewStateUserTz } from '@/state/CalendarViewState'
+import { calendarViewState, calendarViewStateUserTimezone } from '@/state/CalendarViewState'
 
 /**
- * The main calendar component.
+ * The main calendar component. This is the top level component for the calendar.
+ *
+ * It uses the timezone from the user's settings to display the calendar in the user's
+ * local timezone.
+ *
  */
 function Calendar() {
   const eventService: EventService = useEventService()
@@ -36,10 +40,11 @@ function Calendar() {
   const calendars = useRecoilValue(calendarsState)
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
   const events = useRecoilValue(eventsState)
-  const calendarViewTz = useRecoilValue(calendarViewStateUserTz)
   const editingEvent = useRecoilValue(editingEventState)
   const allVisibleEvents = useRecoilValue(allVisibleEventsSelector)
+
   const [calendarView, setCalendarView] = useRecoilState(calendarViewState)
+  const calendarViewUserTimezone = useRecoilValue(calendarViewStateUserTimezone)
 
   const queryParams = useQuery()
   const searchQuery = (queryParams.get('search') as string) || ''
@@ -68,7 +73,7 @@ function Calendar() {
     return () => {
       controller.abort()
     }
-  }, [calendarView.view, calendarViewTz, calendars.calendarsById, refreshId])
+  }, [calendarView.view, calendarViewUserTimezone, calendars.calendarsById, refreshId])
 
   /**
    * Keyboard shortcuts.
@@ -86,28 +91,28 @@ function Calendar() {
 
     if (calendarView.view == 'Day') {
       if (e.key === 'ArrowLeft') {
-        const prevDay = calendarViewTz.selectedDate.minus({ days: 1 })
+        const prevDay = calendarViewUserTimezone.selectedDate.minus({ days: 1 })
         setCalendarView((state) => ({ ...state, selectedDate: prevDay }))
 
         // setDisplay((state) => ({ ...state, selectedDate: prevDay }))
       } else if (e.key === 'ArrowRight') {
-        const nextDay = calendarViewTz.selectedDate.plus({ days: 1 })
+        const nextDay = calendarViewUserTimezone.selectedDate.plus({ days: 1 })
         setCalendarView((state) => ({ ...state, selectedDate: nextDay }))
       }
     } else if (calendarView.view == 'Week' || calendarView.view == 'WorkWeek') {
       if (e.key === 'ArrowLeft') {
-        const prevWeek = calendarViewTz.selectedDate.minus({ weeks: 1 })
+        const prevWeek = calendarViewUserTimezone.selectedDate.minus({ weeks: 1 })
         setCalendarView((state) => ({ ...state, selectedDate: prevWeek }))
       } else if (e.key === 'ArrowRight') {
-        const nextWeek = calendarViewTz.selectedDate.plus({ weeks: 1 })
+        const nextWeek = calendarViewUserTimezone.selectedDate.plus({ weeks: 1 })
         setCalendarView((state) => ({ ...state, selectedDate: nextWeek }))
       }
     } else if (calendarView.view == 'Month') {
       if (e.key === 'ArrowLeft') {
-        const prevMonth = calendarViewTz.selectedDate.minus({ months: 1 })
+        const prevMonth = calendarViewUserTimezone.selectedDate.minus({ months: 1 })
         setCalendarView((state) => ({ ...state, selectedDate: prevMonth }))
       } else if (e.key === 'ArrowRight') {
-        const nextMonth = calendarViewTz.selectedDate.plus({ months: 1 })
+        const nextMonth = calendarViewUserTimezone.selectedDate.plus({ months: 1 })
         setCalendarView((state) => ({ ...state, selectedDate: nextMonth }))
       }
     }
@@ -115,20 +120,20 @@ function Calendar() {
 
   async function loadCurrentViewEvents(signal: AbortSignal) {
     if (calendarView.view == 'Day') {
-      const start = calendarViewTz.selectedDate.startOf('day')
-      const end = calendarViewTz.selectedDate.endOf('day')
+      const start = calendarViewUserTimezone.selectedDate.startOf('day')
+      const end = calendarViewUserTimezone.selectedDate.endOf('day')
 
       eventService.loadAllEvents(start, end, signal)
     } else if (calendarView.view == 'Week' || calendarView.view == 'WorkWeek') {
-      const lastWeek = calendarViewTz.selectedDate.minus({ weeks: 1 })
-      const nextWeek = calendarViewTz.selectedDate.plus({ weeks: 1 })
+      const lastWeek = calendarViewUserTimezone.selectedDate.minus({ weeks: 1 })
+      const nextWeek = calendarViewUserTimezone.selectedDate.plus({ weeks: 1 })
 
       const start = dates.startOfWeek(lastWeek, firstOfWeek)
       const end = dates.endOfWeek(nextWeek, firstOfWeek)
 
       eventService.loadAllEvents(start, end, signal)
     } else if (calendarView.view == 'Month') {
-      const month = dates.visibleDays(calendarViewTz.selectedDate, firstOfWeek)
+      const month = dates.visibleDays(calendarViewUserTimezone.selectedDate, firstOfWeek)
       const start = month[0]
       const end = month[month.length - 1]
       eventService.loadAllEvents(start, end, signal)
@@ -152,17 +157,17 @@ function Calendar() {
       return (
         <TimeGrid
           eventService={eventService}
-          now={calendarViewTz.selectedDate}
+          now={calendarViewUserTimezone.selectedDate}
           events={allVisibleEvents}
-          range={[calendarViewTz.selectedDate]}
+          range={[calendarViewUserTimezone.selectedDate]}
           primaryCalendar={primaryCalendar}
         />
       )
     } else if (calendarView.view == 'Week') {
       return (
         <Week
-          now={calendarViewTz.now}
-          date={calendarViewTz.selectedDate}
+          now={calendarViewUserTimezone.now}
+          date={calendarViewUserTimezone.selectedDate}
           events={allVisibleEvents}
           eventService={eventService}
           primaryCalendar={primaryCalendar}
@@ -171,7 +176,7 @@ function Calendar() {
     } else if (calendarView.view == 'WorkWeek') {
       return (
         <WorkWeek
-          date={calendarViewTz.selectedDate}
+          date={calendarViewUserTimezone.selectedDate}
           events={allVisibleEvents}
           eventService={eventService}
           primaryCalendar={primaryCalendar}
@@ -180,9 +185,9 @@ function Calendar() {
     } else if (calendarView.view == 'Month') {
       return (
         <Month
-          now={calendarViewTz.now}
+          now={calendarViewUserTimezone.now}
           loading={events.loading}
-          date={calendarViewTz.selectedDate}
+          date={calendarViewUserTimezone.selectedDate}
           events={allVisibleEvents}
           eventService={eventService}
           primaryCalendar={primaryCalendar}
