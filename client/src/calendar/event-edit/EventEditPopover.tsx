@@ -88,10 +88,12 @@ function EventPopover(props: IProps) {
           eventFields={eventFields}
           selectedCalendar={getSelectedCalendar(eventFields.calendarId)}
           participants={participants}
+          updateEditingEvent={(eventFields: EventFields) => {
+            eventActions.updateEditingEvent(getUpdatedEvent(props.event, eventFields, participants))
+          }}
           setEventFields={(eventFields: EventFields) => {
             // Update the mutable event fields and update the editing event.
             setEventFields(eventFields)
-            eventActions.updateEditingEvent(getUpdatedEvent(props.event, eventFields, participants))
           }}
           setParticipants={(participants: EventParticipant[]) => {
             setParticipants(participants)
