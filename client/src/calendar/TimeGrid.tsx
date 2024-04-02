@@ -18,12 +18,8 @@ import Calendar from '@/models/Calendar'
 
 import { editingEventState } from '@/state/EventsState'
 import { dragDropActionState } from '@/state/EventsState'
-import GutterDragDropZone from './GutterDragDropZone'
-
-import { DndContext, closestCorners, DragOverlay, MouseSensor } from '@dnd-kit/core'
-import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable'
-import { SortableGutter } from './SortableGutter'
-import GutterContent from './GutterContent'
+import { Flex } from '@chakra-ui/react'
+import Gutter from './Gutter'
 
 function remToPixels(rem) {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
@@ -49,8 +45,9 @@ function TimeGrid(props: IProps) {
   const [intitalGutterHeaderWidth, setIntitalGutterHeaderWidth] = useState(0)
   const [gutterWidth, setGutterWidth] = useState(0)
   const [scrollbarSize, setScrollbarSize] = useState(0)
+
   const [gutters, setGutters] = useState([{ id: 1 }])
-  const [activeId, setActiveId] = useState(null)
+
   const getNextId = () => gutters.reduce((max, gutter) => Math.max(max, gutter.id), 0) + 1
 
   const addGutter = () => {
@@ -258,62 +255,40 @@ function TimeGrid(props: IProps) {
     .sort((a, b) => sortEvents(a, b))
 
   return (
-    <div className="cal-time-view">
-      <TimeGridHeader
-        events={allDayEvents}
-        range={props.range}
-        leftPad={intitalGutterHeaderWidth + (gutters.length - 1) * gutterWidth}
-        marginRight={scrollbarSize}
-        eventService={props.eventService}
-        now={props.now}
+    <Flex className="cal-time-view" direction="row">
+      <Gutter
+        slotMetrics={slotMetrics}
+        gutters={gutters}
         addGutter={addGutter}
-        today={props.today}
+        gutterRef={gutterRef}
+        width={intitalGutterHeaderWidth + (gutters.length - 1) * gutterWidth}
+        setGutters={setGutters}
       />
 
-      <div ref={contentRef} className="cal-time-content">
-        <DndContext
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          modifiers={[restrictToXAxis]}
-        >
-          <SortableContext
-            items={gutters.map((gutter) => gutter.id)}
-            strategy={horizontalListSortingStrategy}
-          >
-            {/* Your existing component structure */}
-            {gutters.map((gutter, index) => (
-              <SortableGutter
-                key={gutter.id}
-                id={gutter.id}
-                gutterRef={gutterRef}
-                slotMetrics={slotMetrics}
-              />
-            ))}
-          </SortableContext>
-          <DragOverlay>
-            {activeId ? (
-              <div style={{ boxShadow: '0px 0px 15px rgba(0, 0, 0, 0.2)' }}>
-                <GutterContent slotMetrics={slotMetrics} />
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
-        <div className="cal-time-gutter">
-          {slotMetrics.current.groups.map((_group, idx) => {
-            return renderDateTick(idx)
-          })}
-        </div>
-
-        <DragDropZone
-          scrollContainerRef={contentRef}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <TimeGridHeader
+          events={allDayEvents}
           range={props.range}
+          marginRight={scrollbarSize}
           eventService={props.eventService}
+          today={props.today}
+        />
+
+        <div
+          ref={contentRef}
+          className="cal-time-content"
+          style={{ flex: 1, overflowY: 'auto', position: 'relative' }}
         >
-          {renderDays(props.range)}
-        </DragDropZone>
+          <DragDropZone
+            scrollContainerRef={contentRef}
+            range={props.range}
+            eventService={props.eventService}
+          >
+            {renderDays(props.range)}
+          </DragDropZone>
+        </div>
       </div>
-    </div>
+    </Flex>
   )
 }
 
