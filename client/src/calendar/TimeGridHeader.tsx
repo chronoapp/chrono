@@ -112,10 +112,8 @@ function TimeGridHeader(props: IProps) {
         alignItems={'center'}
         className="rbc-label cal-time-header-gutter"
       >
-        <Flex>
-          <ToogleAdditionalTimezone addGutter={props.addGutter} />
-        </Flex>
         <ToggleExpandWeeklyRows expanded={expandAllDayEvents} />
+        <ToogleAdditionalTimezone addGutter={props.addGutter} />
       </Flex>
       <div className="cal-time-header-content">
         <div className="cal-row">{renderHeaderCells()}</div>
