@@ -50,10 +50,16 @@ const Gutter = ({ slotMetrics, gutterRef, gutters, addGutter, width, setGutters 
   return (
     <Flex direction={'column'}>
       <Flex
+        className="rbc-label cal-time-header-gutter"
         width={width}
+        direction={'column'}
         justifyContent={'flex-start'}
         alignItems={'center'}
-        className="rbc-label cal-time-header-gutter"
+        position="sticky"
+        left="0"
+        background-color="white"
+        z-index="10"
+        margin-right="-1px"
       >
         <ToogleAdditionalTimezone addGutter={addGutter} />
       </Flex>
