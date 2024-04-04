@@ -8,15 +8,7 @@ import { FiPlus } from 'react-icons/fi'
 
 const GUTTER_LINE_WIDTH = 0.5
 
-const Gutter = ({
-  slotMetrics,
-  gutterRef,
-  gutters,
-  addGutter,
-  width,
-  setGutters,
-  headerHeight,
-}) => {
+const Gutter = ({ slotMetrics, gutterRef, gutters, setGutters }) => {
   const [activeId, setActiveId] = useState(null)
 
   const getGutterPos = (id) => gutters.findIndex((gutter) => gutter.id === id)
@@ -56,56 +48,39 @@ const Gutter = ({
   }
 
   return (
-    <Flex direction="column">
-      <Flex
-        className="rbc-label cal-time-header-gutter"
-        width={width}
-        height={headerHeight}
-        direction={'column'}
-        justifyContent={'flex-start'}
-        alignItems={'center'}
-        position="sticky"
-        left="0"
-        background-color="white"
-        z-index="10"
-        margin-right="-1px"
+    <Flex direction={'row'}>
+      <DndContext
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        modifiers={[restrictToXAxis]}
       >
-        <ToogleAdditionalTimezone addGutter={addGutter} />
-      </Flex>
-      <Flex direction={'row'}>
-        <DndContext
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          modifiers={[restrictToXAxis]}
+        <SortableContext
+          items={gutters.map((gutter) => gutter.id)}
+          strategy={horizontalListSortingStrategy}
         >
-          <SortableContext
-            items={gutters.map((gutter) => gutter.id)}
-            strategy={horizontalListSortingStrategy}
-          >
-            {gutters.map((gutter) => (
-              <SortableGutter
-                key={gutter.id}
-                id={gutter.id}
-                slotMetrics={slotMetrics}
-                gutterRef={gutterRef}
-              />
-            ))}
-          </SortableContext>
-          <DragOverlay>
-            {activeId ? (
-              <div style={{ boxShadow: '0px 0px 15px rgba(0, 0, 0, 0.2)' }}>
-                <GutterContent slotMetrics={slotMetrics} />
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
-        <div className="cal-time-gutter">
-          {slotMetrics.current.groups.map((_group, idx) => {
-            return renderDateTick(idx)
-          })}
-        </div>
-      </Flex>
+          {gutters.map((gutter) => (
+            <SortableGutter
+              key={gutter.id}
+              id={gutter.id}
+              slotMetrics={slotMetrics}
+              gutterRef={gutterRef}
+            />
+          ))}
+        </SortableContext>
+        <DragOverlay>
+          {activeId ? (
+            <div style={{ boxShadow: '0px 0px 15px rgba(0, 0, 0, 0.2)' }}>
+              <GutterContent slotMetrics={slotMetrics} />
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+      <div className="cal-time-gutter">
+        {slotMetrics.current.groups.map((_group, idx) => {
+          return renderDateTick(idx)
+        })}
+      </div>
     </Flex>
   )
 }

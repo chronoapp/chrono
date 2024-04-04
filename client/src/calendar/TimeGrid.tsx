@@ -20,6 +20,7 @@ import { editingEventState } from '@/state/EventsState'
 import { dragDropActionState } from '@/state/EventsState'
 import { Flex } from '@chakra-ui/react'
 import Gutter from './Gutter'
+import GutterHeader from './GutterHeader'
 
 function remToPixels(rem) {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
@@ -247,40 +248,35 @@ function TimeGrid(props: IProps) {
     .sort((a, b) => sortEvents(a, b))
 
   return (
-    <Flex className="cal-time-view" direction="row">
-      <Gutter
-        slotMetrics={slotMetrics}
-        gutters={gutters}
-        addGutter={addGutter}
-        gutterRef={gutterRef}
-        width={intitalGutterHeaderWidth + (gutters.length - 1) * gutterWidth}
-        setGutters={setGutters}
-        headerHeight={headerHeight}
-      />
-
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <div ref={headerRef}>
-          <TimeGridHeader
-            events={allDayEvents}
-            range={props.range}
-            marginRight={scrollbarSize}
-            eventService={props.eventService}
-            today={props.today}
-          />
-        </div>
-        <div
-          ref={contentRef}
-          className="cal-time-content"
-          style={{ flex: 1, overflowY: 'auto', position: 'relative' }}
+    <Flex className="cal-time-view" direction="column">
+      <Flex ref={headerRef}>
+        <GutterHeader
+          addGutter={addGutter}
+          width={intitalGutterHeaderWidth + (gutters.length - 1) * gutterWidth}
+          headerHeight={headerHeight}
+        />
+        <TimeGridHeader
+          events={allDayEvents}
+          range={props.range}
+          marginRight={scrollbarSize}
+          eventService={props.eventService}
+          today={props.today}
+        />
+      </Flex>
+      <div ref={contentRef} className="cal-time-content">
+        <Gutter
+          slotMetrics={slotMetrics}
+          gutters={gutters}
+          gutterRef={gutterRef}
+          setGutters={setGutters}
+        />
+        <DragDropZone
+          scrollContainerRef={contentRef}
+          range={props.range}
+          eventService={props.eventService}
         >
-          <DragDropZone
-            scrollContainerRef={contentRef}
-            range={props.range}
-            eventService={props.eventService}
-          >
-            {renderDays(props.range)}
-          </DragDropZone>
-        </div>
+          {renderDays(props.range)}
+        </DragDropZone>
       </div>
     </Flex>
   )
