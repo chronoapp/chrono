@@ -64,7 +64,7 @@
 
   border-top: 1px solid $calendar-border;
   > * + * > * {
-    border-left: 10px solid $cell-border;
+    border-left: 1px solid $cell-border;
   }
 }
 

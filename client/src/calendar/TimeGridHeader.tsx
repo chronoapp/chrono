@@ -115,13 +115,12 @@ function TimeGridHeader(props: IProps) {
     <Flex
       className="cal-time-header"
       style={{ marginRight: props.marginRight }}
-      display="flex"
-      flex="0 0 auto"
       flexDirection="row"
+      w="100%"
+      flex="1"
     >
       <Flex
         className="cal-time-header-content"
-        flex={1}
         minWidth="0"
         flexDirection="column"
         borderLeft="1px solid"
@@ -130,11 +129,11 @@ function TimeGridHeader(props: IProps) {
       >
         <Flex
           className="cal-row"
-          display="flex"
           flex-direction="row"
           justifyContent="space-around"
           borderLeft="1px solid"
           borderColor="rgb(235, 235, 235)"
+          width="100%"
         >
           {renderHeaderCells()}
         </Flex>
