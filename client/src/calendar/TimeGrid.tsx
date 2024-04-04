@@ -44,6 +44,7 @@ function preventScroll(e) {
 function TimeGrid(props: IProps) {
   const [intitalGutterHeaderWidth, setIntitalGutterHeaderWidth] = useState(0)
   const [gutterWidth, setGutterWidth] = useState(0)
+  const [headerHeight, setHeaderHeight] = useState(0)
   const [scrollbarSize, setScrollbarSize] = useState(0)
 
   const [gutters, setGutters] = useState([{ id: 1 }])
@@ -86,6 +87,7 @@ function TimeGrid(props: IProps) {
 
   const gutterRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLInputElement>(null)
+  const headerRef = useRef<HTMLDivElement>(null)
   const scrollTopRatio = useRef<number | undefined>(undefined)
 
   const editingEvent = useRecoilValue(editingEventState)
@@ -102,7 +104,11 @@ function TimeGrid(props: IProps) {
       setGutterWidth(gutterWidth)
       setScrollbarSize(scrollbarSize)
     }
-
+    if (headerRef.current) {
+      const height = headerRef.current.getBoundingClientRect().height
+      setHeaderHeight(height)
+      console.log(height)
+    }
     // Scroll such that the screen is centered where most events are positioned.
     calculateTopScroll(props.events)
     applyTopScroll()
@@ -113,7 +119,6 @@ function TimeGrid(props: IProps) {
       document.removeEventListener(GlobalEvent.scrollToEvent, scrollToEvent)
     }
   }, [])
-
   /**
    * Disable scrolling when editing an event.
    */
@@ -242,7 +247,7 @@ function TimeGrid(props: IProps) {
     .sort((a, b) => sortEvents(a, b))
 
   return (
-    <Flex className="cal-time-view">
+    <Flex className="cal-time-view" direction="row">
       <Gutter
         slotMetrics={slotMetrics}
         gutters={gutters}
@@ -250,17 +255,19 @@ function TimeGrid(props: IProps) {
         gutterRef={gutterRef}
         width={intitalGutterHeaderWidth + (gutters.length - 1) * gutterWidth}
         setGutters={setGutters}
+        headerHeight={headerHeight}
       />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <TimeGridHeader
-          events={allDayEvents}
-          range={props.range}
-          marginRight={scrollbarSize}
-          eventService={props.eventService}
-          today={props.today}
-        />
-
+        <div ref={headerRef}>
+          <TimeGridHeader
+            events={allDayEvents}
+            range={props.range}
+            marginRight={scrollbarSize}
+            eventService={props.eventService}
+            today={props.today}
+          />
+        </div>
         <div
           ref={contentRef}
           className="cal-time-content"

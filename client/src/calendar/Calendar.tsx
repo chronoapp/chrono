@@ -39,7 +39,6 @@ import { calendarViewState, calendarViewStateUserTimezone } from '@/state/Calend
  */
 function Calendar() {
   const eventService: EventService = useEventService()
-
   const calendars = useRecoilValue(calendarsState)
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
   const events = useRecoilValue(eventsState)
@@ -53,7 +52,7 @@ function Calendar() {
   const searchQuery = (queryParams.get('search') as string) || ''
 
   const firstOfWeek = firstDayOfWeek()
-
+  const today = DateTime.now()
   useKeyPress(['ArrowLeft', 'ArrowRight'], onKeyPress)
 
   // Refresh the calendar when we receive a refresh event.
