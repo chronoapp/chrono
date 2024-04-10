@@ -60,18 +60,6 @@ function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
   }
 }
 
-function ToogleAdditionalTimezone({ addGutter }) {
-  return (
-    <IconButton
-      size={'xs'}
-      variant="ghost"
-      aria-label="adding additional timezones"
-      icon={<FiPlus />}
-      onClick={() => addGutter()}
-      width="4"
-    />
-  )
-}
 function TimeGridHeader(props: IProps) {
   const { expandAllDayEvents, updateExpandAllDayEvents } = useUserFlags()
   const calendarViewState = useRecoilValue(calendarViewStateUserTimezone)
