@@ -137,8 +137,13 @@ export default function DragDropZone(props: IProps) {
         scrollToEventIfNecessary(e.clientY)
       }}
       onDrop={(e) => {
+        if (!dropRect) {
+          resetDrag()
+          return
+        }
+
         const event = dragAndDropAction!.event
-        const dropDateStart = dropRect!.date
+        const dropDateStart = dropRect.date
         const eventMins = dates.diff(event.start, event.end, 'minutes')
         const updatedEvent = {
           ...event,
