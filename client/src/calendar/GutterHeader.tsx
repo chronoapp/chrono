@@ -62,7 +62,7 @@ const GutterHeader = ({ addTimezones, width, timezones, gutterWidth }) => {
     >
       <Flex marginLeft="-5px">
         {timezones.map((timezone) => (
-          <TimezoneLabel key={timezone.id} gutterWidth={gutterWidth} />
+          <TimezoneLabel key={timezone.id} gutterWidth={gutterWidth} id={timezone.id} />
         ))}
       </Flex>
 
