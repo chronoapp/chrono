@@ -48,14 +48,13 @@ function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
   }
 }
 
-const GutterHeader = ({ addGutter, width, headerHeight }) => {
+const GutterHeader = ({ addGutter, width }) => {
   const { expandAllDayEvents, updateExpandAllDayEvents } = useUserFlags()
 
   return (
     <Flex
       className="rbc-label cal-time-header-gutter"
       width={width}
-      height={headerHeight}
       direction={'row'}
       justifyContent={'flex-end'}
       alignItems="flex-end"

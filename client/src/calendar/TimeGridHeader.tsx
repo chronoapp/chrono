@@ -11,12 +11,9 @@ import Flags from '@/models/Flags'
 import WeekHeaderRow from './WeekHeaderRow'
 import { EventService } from './event-edit/useEventService'
 
-import { IconButton, Flex, Box, Text, VStack, Divider } from '@chakra-ui/react'
-import { FiChevronUp, FiChevronDown, FiPlus } from 'react-icons/fi'
+import { Flex, Box, Text, VStack } from '@chakra-ui/react'
 import { userState } from '@/state/UserState'
 import { calendarViewStateUserTimezone } from '@/state/CalendarViewState'
-
-import TimezoneLabel from './TimezoneLabel'
 
 import * as API from '@/util/Api'
 
@@ -28,36 +25,6 @@ interface IProps {
   now: DateTime
   addGutter: any
   today: DateTime
-}
-
-function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
-  const { updateExpandAllDayEvents } = useUserFlags()
-
-  if (props.expanded) {
-    return (
-      <IconButton
-        size={'xs'}
-        variant="ghost"
-        aria-label="collapse events"
-        icon={<FiChevronUp />}
-        onClick={() => updateExpandAllDayEvents(false)}
-        width="4"
-        mt="2"
-      />
-    )
-  } else {
-    return (
-      <IconButton
-        size={'xs'}
-        variant="ghost"
-        aria-label="expand events"
-        icon={<FiChevronDown />}
-        onClick={() => updateExpandAllDayEvents(true)}
-        width="4"
-        mt="2"
-      />
-    )
-  }
 }
 
 function TimeGridHeader(props: IProps) {

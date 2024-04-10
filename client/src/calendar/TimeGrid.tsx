@@ -45,7 +45,6 @@ function preventScroll(e) {
 function TimeGrid(props: IProps) {
   const [intitalGutterHeaderWidth, setIntitalGutterHeaderWidth] = useState(0)
   const [gutterWidth, setGutterWidth] = useState(0)
-  const [headerHeight, setHeaderHeight] = useState(0)
   const [scrollbarSize, setScrollbarSize] = useState(0)
 
   const [gutters, setGutters] = useState([{ id: 1 }])
@@ -88,7 +87,6 @@ function TimeGrid(props: IProps) {
 
   const gutterRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLInputElement>(null)
-  const headerRef = useRef<HTMLDivElement>(null)
   const scrollTopRatio = useRef<number | undefined>(undefined)
 
   const editingEvent = useRecoilValue(editingEventState)
@@ -104,11 +102,6 @@ function TimeGrid(props: IProps) {
       setIntitalGutterHeaderWidth(gutterAndScrollbar)
       setGutterWidth(gutterWidth)
       setScrollbarSize(scrollbarSize)
-    }
-    if (headerRef.current) {
-      const height = headerRef.current.getBoundingClientRect().height
-      setHeaderHeight(height)
-      console.log(height)
     }
     // Scroll such that the screen is centered where most events are positioned.
     calculateTopScroll(props.events)
@@ -249,11 +242,10 @@ function TimeGrid(props: IProps) {
 
   return (
     <Flex className="cal-time-view" direction="column">
-      <Flex ref={headerRef}>
+      <Flex>
         <GutterHeader
           addGutter={addGutter}
           width={intitalGutterHeaderWidth + (gutters.length - 1) * gutterWidth}
-          headerHeight={headerHeight}
         />
         <TimeGridHeader
           events={allDayEvents}
