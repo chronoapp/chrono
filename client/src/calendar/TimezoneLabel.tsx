@@ -1,8 +1,7 @@
-import React from 'react'
+import { Flex, Text } from '@chakra-ui/react'
 import { DateTime } from 'luxon'
-import { Box } from '@chakra-ui/react'
 
-const TimezoneLabel = () => {
+const TimezoneLabel = ({ gutterWidth }) => {
   const timezoneOffset = DateTime.local().offset / 60
 
   // Format the timezone as GMT+/-X
@@ -14,7 +13,22 @@ const TimezoneLabel = () => {
     return `GMT${sign}${Math.abs(offset)}`
   }
 
-  return <Box position="absolute">{formatTimezone(timezoneOffset)}</Box>
+  return (
+    <Flex
+      height="20px"
+      alignItems="center"
+      justifyContent="center"
+      borderRadius="sm"
+      bg="gray.200"
+      p="1px"
+      mx="1px"
+      mb="10px"
+    >
+      <Text width={gutterWidth} fontSize="9px">
+        {formatTimezone(timezoneOffset)}
+      </Text>
+    </Flex>
+  )
 }
 
 export default TimezoneLabel

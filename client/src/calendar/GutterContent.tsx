@@ -1,6 +1,5 @@
 import React, { forwardRef } from 'react'
 import { Box } from '@chakra-ui/react'
-import TimezoneLabel from './TimezoneLabel'
 import { formatTimeShort } from '../util/localizer-luxon'
 
 interface GutterContentProps {
@@ -9,7 +8,6 @@ interface GutterContentProps {
 
 const GutterContent = forwardRef<HTMLDivElement, GutterContentProps>(({ slotMetrics }, ref) => (
   <div ref={ref} className="cal-time-gutter">
-    <TimezoneLabel />
     {slotMetrics.current.groups.map((group, idx) => renderDateLabel(group, idx))}
   </div>
 ))

@@ -47,13 +47,13 @@ function TimeGrid(props: IProps) {
   const [gutterWidth, setGutterWidth] = useState(0)
   const [scrollbarSize, setScrollbarSize] = useState(0)
 
-  const [gutters, setGutters] = useState([{ id: 1 }])
+  const [timezones, setTimezones] = useState([{ id: 1 }])
 
-  const getNextId = () => gutters.reduce((max, gutter) => Math.max(max, gutter.id), 0) + 1
+  const getNextId = () => timezones.reduce((max, timezone) => Math.max(max, timezone.id), 0) + 1
 
-  const addGutter = () => {
-    const newGutter = { id: getNextId() }
-    setGutters([...gutters, newGutter])
+  const addTimezones = () => {
+    const newTimezones = { id: getNextId() }
+    setTimezones([...timezones, newTimezones])
   }
 
   const min = dates.startOf(props.now, ChronoUnit.DAYS)
@@ -244,8 +244,10 @@ function TimeGrid(props: IProps) {
     <Flex className="cal-time-view" direction="column">
       <Flex>
         <GutterHeader
-          addGutter={addGutter}
-          width={intitalGutterHeaderWidth + (gutters.length - 1) * gutterWidth}
+          addTimezones={addTimezones}
+          timezones={timezones}
+          width={intitalGutterHeaderWidth + (timezones.length - 1) * gutterWidth}
+          gutterWidth={gutterWidth}
         />
         <TimeGridHeader
           events={allDayEvents}
@@ -258,9 +260,9 @@ function TimeGrid(props: IProps) {
       <div ref={contentRef} className="cal-time-content">
         <Gutter
           slotMetrics={slotMetrics}
-          gutters={gutters}
+          timezones={timezones}
           gutterRef={gutterRef}
-          setGutters={setGutters}
+          setTimezones={setTimezones}
         />
         <DragDropZone
           scrollContainerRef={contentRef}
