@@ -3,15 +3,13 @@ import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-
 import { SortableGutter } from './SortableGutter'
 import GutterContent from './GutterContent'
 import { DndContext, DragOverlay, closestCorners } from '@dnd-kit/core'
-import { IconButton, Flex } from '@chakra-ui/react'
-import { FiPlus } from 'react-icons/fi'
-
+import { Flex } from '@chakra-ui/react'
 const GUTTER_LINE_WIDTH = 0.5
 
-const Gutter = ({ slotMetrics, gutterRef, gutters, setGutters }) => {
+const Gutter = ({ slotMetrics, gutterRef, timezones, setTimezones }) => {
   const [activeId, setActiveId] = useState(null)
 
-  const getGutterPos = (id) => gutters.findIndex((gutter) => gutter.id === id)
+  const getGutterPos = (id) => timezones.findIndex((gutter) => gutter.id === id)
   function handleDragStart(event) {
     const { active } = event
     setActiveId(active.id)
@@ -20,11 +18,11 @@ const Gutter = ({ slotMetrics, gutterRef, gutters, setGutters }) => {
   function handleDragEnd(event) {
     const { active, over } = event
     if (active.id !== over?.id) {
-      setGutters((gutters) => {
+      setTimezones((timezones) => {
         const originalPos = getGutterPos(active.id)
         const newPos = getGutterPos(over.id)
 
-        return arrayMove(gutters, originalPos, newPos)
+        return arrayMove(timezones, originalPos, newPos)
       })
     }
   }
@@ -33,19 +31,6 @@ const Gutter = ({ slotMetrics, gutterRef, gutters, setGutters }) => {
     ...transform,
     y: 0, // Restrict movement to the x-axis by setting the y-coordinate to 0
   })
-
-  function ToogleAdditionalTimezone({ addGutter }) {
-    return (
-      <IconButton
-        size={'xs'}
-        variant="ghost"
-        aria-label="adding additional timezones"
-        icon={<FiPlus />}
-        onClick={() => addGutter()}
-        width="4"
-      />
-    )
-  }
 
   return (
     <Flex direction={'row'}>
@@ -56,10 +41,10 @@ const Gutter = ({ slotMetrics, gutterRef, gutters, setGutters }) => {
         modifiers={[restrictToXAxis]}
       >
         <SortableContext
-          items={gutters.map((gutter) => gutter.id)}
+          items={timezones.map((gutter) => gutter.id)}
           strategy={horizontalListSortingStrategy}
         >
-          {gutters.map((gutter) => (
+          {timezones.map((gutter) => (
             <SortableGutter
               key={gutter.id}
               id={gutter.id}

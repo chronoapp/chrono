@@ -3,17 +3,18 @@ import User from '@/models/User'
 import { FiChevronUp, FiChevronDown, FiPlus } from 'react-icons/fi'
 import { userState } from '@/state/UserState'
 import { useRecoilState } from 'recoil'
+import TimezoneLabel from './TimezoneLabel'
 
 import * as API from '@/util/Api'
 
-function ToogleAdditionalTimezone({ addGutter }) {
+function ToogleAdditionalTimezone({ addTimezones }) {
   return (
     <IconButton
       size={'xs'}
       variant="ghost"
       aria-label="adding additional timezones"
       icon={<FiPlus />}
-      onClick={() => addGutter()}
+      onClick={() => addTimezones()}
       width="4"
     />
   )
@@ -30,7 +31,6 @@ function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
         icon={<FiChevronUp />}
         onClick={() => updateExpandAllDayEvents(false)}
         width="4"
-        mt="2"
       />
     )
   } else {
@@ -48,24 +48,28 @@ function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
   }
 }
 
-const GutterHeader = ({ addGutter, width }) => {
+const GutterHeader = ({ addTimezones, width, timezones, gutterWidth }) => {
   const { expandAllDayEvents, updateExpandAllDayEvents } = useUserFlags()
 
   return (
     <Flex
       className="rbc-label cal-time-header-gutter"
       width={width}
-      direction={'row'}
-      justifyContent={'flex-end'}
-      alignItems="flex-end"
+      justifyContent="flex-end"
       position="sticky"
-      left="0"
-      background-color="white"
       z-index="10"
-      margin-right="-1px"
+      flexDirection="column"
     >
-      <ToogleAdditionalTimezone addGutter={addGutter} />
-      <ToggleExpandWeeklyRows expanded={expandAllDayEvents} />
+      <Flex marginLeft="-5px">
+        {timezones.map((timezone) => (
+          <TimezoneLabel key={timezone.id} gutterWidth={gutterWidth} />
+        ))}
+      </Flex>
+
+      <Flex justifyContent="flex-end">
+        <ToogleAdditionalTimezone addTimezones={addTimezones} />
+        <ToggleExpandWeeklyRows expanded={expandAllDayEvents} />
+      </Flex>
     </Flex>
   )
 }
