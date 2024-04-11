@@ -29,7 +29,6 @@ const TimezoneLabel = forwardRef<HTMLDivElement, TimezoneLabelProps>(({ id, gutt
       bg="gray.200"
       p="1px"
       mx="1px"
-      mb="10px"
     >
       <Text width={gutterWidth} fontSize="9px">
         {formatTimezone(timezoneOffset)}

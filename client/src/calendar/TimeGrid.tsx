@@ -253,12 +253,16 @@ function TimeGrid(props: IProps) {
 
   function handleDragEnd(event) {
     const { active, over } = event
-    if (active.id !== over?.id) {
+
+    if (over && active.id !== over.id) {
       setTimezones((timezones) => {
         const originalPos = getGutterPos(active.id)
         const newPos = getGutterPos(over.id)
 
-        return arrayMove(timezones, originalPos, newPos)
+        if (newPos !== -1) {
+          return arrayMove(timezones, originalPos, newPos)
+        }
+        return timezones
       })
     }
     contentRef.current?.classList.remove('no-scroll')
