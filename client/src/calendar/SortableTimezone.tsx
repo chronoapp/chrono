@@ -1,12 +1,11 @@
-import { CSS } from '@dnd-kit/utilities'
 import { useSortable } from '@dnd-kit/sortable'
-import GutterContent from './GutterContent' // Make sure to import the child component
+import { CSS } from '@dnd-kit/utilities'
+import TimezoneLabel from './TimezoneLabel'
 
-export function SortableGutter({ id, gutterRef, slotMetrics }) {
+export const SortableTimezone = ({ id, gutterWidth }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
   })
-
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -16,7 +15,7 @@ export function SortableGutter({ id, gutterRef, slotMetrics }) {
 
   return (
     <div ref={setNodeRef} style={{ ...style }} {...attributes} {...listeners}>
-      <GutterContent ref={gutterRef} slotMetrics={slotMetrics} />
+      <TimezoneLabel id={id} gutterWidth={gutterWidth} />
     </div>
   )
 }

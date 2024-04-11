@@ -1,7 +1,13 @@
+import React, { forwardRef } from 'react'
 import { Flex, Text } from '@chakra-ui/react'
 import { DateTime } from 'luxon'
 
-const TimezoneLabel = ({ id, gutterWidth }) => {
+interface TimezoneLabelProps {
+  id: string
+  gutterWidth: string | number
+}
+
+const TimezoneLabel = forwardRef<HTMLDivElement, TimezoneLabelProps>(({ id, gutterWidth }, ref) => {
   const timezoneOffset = DateTime.local().offset / 60
 
   // Format the timezone as GMT+/-X
@@ -15,6 +21,7 @@ const TimezoneLabel = ({ id, gutterWidth }) => {
 
   return (
     <Flex
+      ref={ref}
       height="20px"
       alignItems="center"
       justifyContent="center"
@@ -29,6 +36,6 @@ const TimezoneLabel = ({ id, gutterWidth }) => {
       </Text>
     </Flex>
   )
-}
+})
 
 export default TimezoneLabel

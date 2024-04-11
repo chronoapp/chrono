@@ -21,7 +21,8 @@ import { dragDropActionState } from '@/state/EventsState'
 import { Flex } from '@chakra-ui/react'
 import Gutter from './Gutter'
 import GutterHeader from './GutterHeader'
-
+import { DndContext, DragOverlay, closestCorners } from '@dnd-kit/core'
+import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable'
 function remToPixels(rem) {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
 }
@@ -107,7 +108,7 @@ function TimeGrid(props: IProps) {
     calculateTopScroll(props.events)
     applyTopScroll()
 
-    document.addEventListener(GlobalEvent.scrollToEvent, scrollToEvent)
+    // document.addEventListener(GlobalEvent.scrollToEvent, scrollToEvent)
 
     return () => {
       document.removeEventListener(GlobalEvent.scrollToEvent, scrollToEvent)
@@ -136,9 +137,9 @@ function TimeGrid(props: IProps) {
     }
   }, [editingEvent])
 
-  useEffect(() => {
-    applyTopScroll()
-  })
+  // useEffect(() => {
+  //   applyTopScroll()
+  // })
 
   /**
    * Scrolls to time, defaults to now if date in event.detail is unspecified.
@@ -240,39 +241,69 @@ function TimeGrid(props: IProps) {
     .filter((event) => event.all_day && inRange(event, start, end))
     .sort((a, b) => sortEvents(a, b))
 
+  // util functions for dnd kit
+  const [activeId, setActiveId] = useState(null)
+  const getGutterPos = (id) => timezones.findIndex((gutter) => gutter.id === id)
+
+  function handleDragStart(event) {
+    contentRef.current?.classList.add('no-scroll')
+    const { active } = event
+    setActiveId(active.id)
+  }
+
+  function handleDragEnd(event) {
+    const { active, over } = event
+    if (active.id !== over?.id) {
+      setTimezones((timezones) => {
+        const originalPos = getGutterPos(active.id)
+        const newPos = getGutterPos(over.id)
+
+        return arrayMove(timezones, originalPos, newPos)
+      })
+    }
+    contentRef.current?.classList.remove('no-scroll')
+  }
+
   return (
-    <Flex className="cal-time-view" direction="column">
-      <Flex>
-        <GutterHeader
-          addTimezones={addTimezones}
-          timezones={timezones}
-          width={intitalGutterHeaderWidth + (timezones.length - 1) * gutterWidth}
-          gutterWidth={gutterWidth}
-        />
-        <TimeGridHeader
-          events={allDayEvents}
-          range={props.range}
-          marginRight={scrollbarSize}
-          eventService={props.eventService}
-          today={props.today}
-        />
+    <DndContext
+      collisionDetection={closestCorners}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <Flex className="cal-time-view" direction="column">
+        <Flex>
+          <GutterHeader
+            addTimezones={addTimezones}
+            timezones={timezones}
+            width={intitalGutterHeaderWidth + (timezones.length - 1) * gutterWidth}
+            gutterWidth={gutterWidth}
+            activeId={activeId}
+          />
+          <TimeGridHeader
+            events={allDayEvents}
+            range={props.range}
+            marginRight={scrollbarSize}
+            eventService={props.eventService}
+            today={props.today}
+          />
+        </Flex>
+        <div ref={contentRef} className="cal-time-content">
+          <Gutter
+            slotMetrics={slotMetrics}
+            timezones={timezones}
+            gutterRef={gutterRef}
+            activeId={activeId}
+          />
+          <DragDropZone
+            scrollContainerRef={contentRef}
+            range={props.range}
+            eventService={props.eventService}
+          >
+            {renderDays(props.range)}
+          </DragDropZone>
+        </div>
       </Flex>
-      <div ref={contentRef} className="cal-time-content">
-        <Gutter
-          slotMetrics={slotMetrics}
-          timezones={timezones}
-          gutterRef={gutterRef}
-          setTimezones={setTimezones}
-        />
-        <DragDropZone
-          scrollContainerRef={contentRef}
-          range={props.range}
-          eventService={props.eventService}
-        >
-          {renderDays(props.range)}
-        </DragDropZone>
-      </div>
-    </Flex>
+    </DndContext>
   )
 }
 
