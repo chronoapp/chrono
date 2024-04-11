@@ -199,6 +199,10 @@ def getUserCalendar(account: UserAccount, calendarId: str):
     return _getCalendarService(account).calendarList().get(calendarId=calendarId).execute()
 
 
+def getPrimaryCalendar(account: UserAccount):
+    return _getCalendarService(account).calendars().get(calendarId='primary').execute()
+
+
 def createCalendar(account: UserAccount, calendar: Calendar):
     """Creates a calendar and adds it to my list."""
     body = {

@@ -36,7 +36,7 @@ class UserVM(BaseModel):
     id: UUID
     flags: dict[FlagType, bool] | None
     email: str
-    timezone: str
+    timezones: list[str]
     picture_url: str | None = None
     name: str | None = None
     username: str | None = None
@@ -46,7 +46,7 @@ class UserVM(BaseModel):
 
 
 class UpdateUserVM(BaseModel):
-    timezone: str
+    timezones: list[str]
     name: str | None = None
     username: str | None = None
     default_calendar_id: UUID | None = None
@@ -59,7 +59,7 @@ async def getUser(user=Depends(get_current_user)):
 
 @router.put('/user/', response_model=UserVM)
 async def updateUser(userVM: UpdateUserVM, user=Depends(get_current_user), session=Depends(get_db)):
-    user.timezone = userVM.timezone
+    user.timezones = userVM.timezones
     user.name = userVM.name
     user.username = userVM.username
 
@@ -121,7 +121,7 @@ def _userToVM(user: User):
         default_calendar_id=user.default_calendar_id,
         flags=FlagUtils(user).getAllFlags(),
         email=user.email,
-        timezone=user.timezone,
+        timezones=user.timezones or [],
         picture_url=user.picture_url,
         name=user.name,
         username=user.username,

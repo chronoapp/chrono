@@ -12,7 +12,7 @@ export default class User {
     return new User(
       userJson.id,
       userJson.email,
-      userJson.timezone,
+      userJson.timezones,
       Flags.fromJson(userJson.flags),
       userJson.picture_url,
       userJson.name,
@@ -33,10 +33,18 @@ export default class User {
     return conferenceTypes
   }
 
+  static getPrimaryTimezone(user: User | undefined) {
+    if (!user || user.timezones.length === 0) {
+      return 'local'
+    }
+
+    return user.timezones[0]
+  }
+
   constructor(
     readonly id: string,
     readonly email: string,
-    readonly timezone: string,
+    readonly timezones: string[],
     readonly flags: Flags,
     readonly picture_url: string,
     readonly name: string,

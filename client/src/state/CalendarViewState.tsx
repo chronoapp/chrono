@@ -1,6 +1,7 @@
 import { atom, selector } from 'recoil'
 import { DateTime } from 'luxon'
 
+import User from '@/models/User'
 import { userState } from './UserState'
 
 export type DisplayView = 'Day' | 'Week' | 'WorkWeek' | 'Month'
@@ -31,7 +32,7 @@ export const calendarViewStateUserTimezone = selector({
   get: ({ get }) => {
     const user = get(userState)
     const calendarView = get(calendarViewState)
-    const timezone = user?.timezone || 'local'
+    const timezone = User.getPrimaryTimezone(user)
 
     return {
       selectedDate: calendarView.selectedDate.setZone(timezone) as DateTime,

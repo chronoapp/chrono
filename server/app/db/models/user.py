@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional, TYPE_CHECKING
 
-from sqlalchemy import String, UUID, ForeignKey
+from sqlalchemy import String, UUID, ForeignKey, ARRAY
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.orderinglist import ordering_list
 
@@ -38,7 +38,7 @@ class User(Base):
         back_populates='user',
     )
 
-    timezone: Mapped[str] = mapped_column(String(255), nullable=False, server_default='UTC')
+    timezones: Mapped[Optional[list[str]]] = mapped_column(ARRAY(String), nullable=True)
 
     labels: Mapped[list['Label']] = relationship(
         'Label',
@@ -67,6 +67,10 @@ class User(Base):
         self.email = email
         self.name = name
         self.picture_url = pictureUrl
+
+    @property
+    def timezone(self) -> str:
+        return self.timezones[0] if self.timezones else 'UTC'
 
     def getDefaultAccount(self) -> UserAccount:
         defaultAccount = next((c for c in self.accounts if c.is_default), None)
