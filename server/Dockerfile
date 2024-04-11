@@ -1,10 +1,10 @@
-FROM python:3.11-slim
+FROM python:3.12-slim-bullseye
 
 RUN apt-get update -y && apt-get install -y\
     emacs\
     supervisor\
     gcc
-    
+
 RUN python -m pip install poetry
 
 WORKDIR /app
