@@ -27,7 +27,7 @@ function getTimezone(tzCode: string): TimeZone | null {
 }
 
 export default function TimezoneSelector(props: IProps) {
-  const selectedItem = getTimezone(props.user.timezone)
+  const selectedItem = getTimezone(User.getPrimaryTimezone(props.user))
 
   function estimateSize() {
     return 45

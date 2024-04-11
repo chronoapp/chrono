@@ -2,6 +2,8 @@ import { atom, selector } from 'recoil'
 import { DateTime } from 'luxon'
 
 import Event from '@/models/Event'
+import User from '@/models/User'
+
 import { calendarsState } from '@/state/CalendarState'
 import { userState } from '@/state/UserState'
 
@@ -78,6 +80,7 @@ export const allVisibleEventsSelector = selector({
     const calendars = get(calendarsState)
     const editingEvent = get(editingEventState)
     const user = get(userState)
+    const primaryTimezone = User.getPrimaryTimezone(user!)
 
     const { eventsByCalendar } = events
     const selectedCalendarIds = Object.values(calendars.calendarsById)
@@ -90,7 +93,7 @@ export const allVisibleEventsSelector = selector({
       const events = eventsByCalendar[calId]
       if (events) {
         Object.values(events).forEach((event) => {
-          allEvents.push(adjustEventTimezone(event, user!.timezone))
+          allEvents.push(adjustEventTimezone(event, primaryTimezone))
         })
       }
     })
@@ -105,7 +108,7 @@ export const allVisibleEventsSelector = selector({
       allEvents = allEvents.filter((event) => event.id !== editingEvent.id)
 
       // Add the editing event to the list.
-      allEvents.push(adjustEventTimezone(editingEvent.event, user!.timezone))
+      allEvents.push(adjustEventTimezone(editingEvent.event, primaryTimezone))
     }
 
     return allEvents

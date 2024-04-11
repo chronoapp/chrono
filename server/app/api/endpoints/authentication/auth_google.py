@@ -21,10 +21,10 @@ from app.db.models.user import User
 from app.api.utils.db import get_db
 
 from app.core import config
-from app.core.logger import logger
 from app.utils.redis import getRedisConnection
-from app.sync.google.tasks import syncAllCalendarsTask
 from app.core.notifications import sendClientNotification, NotificationType
+from app.sync.google.tasks import syncAllCalendarsTask
+from app.sync.google import gcal
 
 """Connect Google accounts with OAuth2
 
@@ -161,10 +161,17 @@ def googleAuthToken(authData: AuthData, session: Session = Depends(get_db)):
 
     creds = _getCredentialsDict(flow.credentials)
 
+    # Add the initial account for the user.
     account = user.getAccount(CalendarProvider.Google, email)
     if not account:
         account = UserAccount(email, creds, CalendarProvider.Google)
         user.accounts.append(account)
+
+    # Set the default timezone
+    primaryCalendar = gcal.getPrimaryCalendar(account)
+    primaryTimezone = primaryCalendar['timeZone']
+    if not user.timezones:
+        user.timezones = [primaryTimezone]
 
     session.commit()
 

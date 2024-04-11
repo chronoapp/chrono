@@ -120,7 +120,7 @@ export async function updateUser(user: User): Promise<User> {
   const userUpdate = {
     name: user.name,
     username: user.username,
-    timezone: user.timezone,
+    timezones: user.timezones,
     default_calendar_id: user.defaultCalendarId,
   }
 
