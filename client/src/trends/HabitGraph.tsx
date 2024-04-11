@@ -47,7 +47,6 @@ function HabitGraph(props: IProps) {
   const curDate: DateTime = DateTime.now()
   const [viewDate, setViewDate] = useState<DateTime>(curDate)
   const month = dates.visibleDays(viewDate, firstDayOfWeek(), true)
-  console.log(month)
 
   const weeks = chunk(month, 7)
 
