@@ -135,3 +135,7 @@
   border-left: 1px solid $cell-border;
   height: 8px;
 }
+
+.no-scroll {
+  overflow: hidden;
+}

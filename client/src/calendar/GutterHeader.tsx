@@ -3,6 +3,9 @@ import User from '@/models/User'
 import { FiChevronUp, FiChevronDown, FiPlus } from 'react-icons/fi'
 import { userState } from '@/state/UserState'
 import { useRecoilState } from 'recoil'
+import { DragOverlay } from '@dnd-kit/core'
+import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable'
+import { SortableTimezone } from './SortableTimezone'
 import TimezoneLabel from './TimezoneLabel'
 
 import * as API from '@/util/Api'
@@ -48,7 +51,7 @@ function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
   }
 }
 
-const GutterHeader = ({ addTimezones, width, timezones, gutterWidth }) => {
+const GutterHeader = ({ addTimezones, width, timezones, gutterWidth, activeId }) => {
   const { expandAllDayEvents, updateExpandAllDayEvents } = useUserFlags()
 
   return (
@@ -57,13 +60,14 @@ const GutterHeader = ({ addTimezones, width, timezones, gutterWidth }) => {
       width={width}
       justifyContent="flex-end"
       position="sticky"
-      z-index="10"
       flexDirection="column"
     >
       <Flex marginLeft="-5px">
-        {timezones.map((timezone) => (
-          <TimezoneLabel key={timezone.id} gutterWidth={gutterWidth} id={timezone.id} />
-        ))}
+        <SortableContext items={timezones} strategy={horizontalListSortingStrategy}>
+          {timezones.map((timezone) => (
+            <SortableTimezone key={timezone.id} id={timezone.id} gutterWidth={gutterWidth} />
+          ))}
+        </SortableContext>
       </Flex>
 
       <Flex justifyContent="flex-end">
