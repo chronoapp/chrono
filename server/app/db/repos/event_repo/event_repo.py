@@ -2,7 +2,7 @@ import uuid
 import json
 import heapq
 
-from typing import List, Optional, Iterable, Tuple, Generator, AsyncGenerator, Dict, cast
+from typing import List, Optional, Iterable, Tuple, Generator, Dict
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from itertools import islice
@@ -10,9 +10,8 @@ from datetime import timedelta
 import logging
 from dateutil.rrule import rrule
 
-from sqlalchemy import asc, and_, select, delete, or_, update
+from sqlalchemy import asc, and_, select, or_, update, text
 from sqlalchemy.orm import selectinload, Session
-from sqlalchemy import text, asc
 from sqlalchemy.sql.selectable import Select
 
 from app.db.models.conference_data import (
@@ -27,6 +26,8 @@ from app.db.repos.event_repo.view_models import (
     EventInDBVM,
     EventParticipantVM,
     ConferenceDataBaseVM,
+    ConferenceSolutionVM,
+    EntryPointBaseVM,
     GoogleEventInDBVM,
     recurrenceToRuleSet,
 )
@@ -94,11 +95,10 @@ class EventRepository:
     def __init__(self, user: User, session: Session):
         self.session = session
         self.user = user
+        self.zoomAPI: ZoomAPI | None = None
 
         if self.user.zoom_connection:
-            self.zoomAPI: ZoomAPI | None = ZoomAPI(self.session, self.user.zoom_connection)
-        else:
-            self.zoomAPI: ZoomAPI | None = None
+            self.zoomAPI = ZoomAPI(self.session, self.user.zoom_connection)
 
     def getRecurringEvents(self, calendarId: uuid.UUID, endDate: datetime) -> list[Event]:
         stmt = (
@@ -715,18 +715,18 @@ class EventRepository:
         )
 
         conferenceDataVM = ConferenceDataBaseVM(
-            conference_solution=ConferenceSolution(
-                'Zoom',
-                ConferenceKeyType.ADD_ON,
-                ZOOM_IMAGE,
+            conference_solution=ConferenceSolutionVM(
+                name='Zoom',
+                key_type=ConferenceKeyType.ADD_ON,
+                icon_uri=ZOOM_IMAGE,
             ),
             entry_points=[
-                ConferenceEntryPoint(
-                    CommunicationMethod.VIDEO,
-                    zoomMeeting.join_url,
-                    zoomMeeting.join_url.replace('https://', ''),
-                    str(zoomMeeting.id),
-                    zoomMeeting.password,
+                EntryPointBaseVM(
+                    entry_point_type=CommunicationMethod.VIDEO,
+                    uri=zoomMeeting.join_url,
+                    label=zoomMeeting.join_url.replace('https://', ''),
+                    meeting_code=str(zoomMeeting.id),
+                    password=zoomMeeting.password,
                 )
             ],
             conference_id=str(zoomMeeting.id),
