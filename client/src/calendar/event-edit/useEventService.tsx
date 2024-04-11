@@ -64,33 +64,36 @@ export default function useEventService() {
 
     const eventPromises = Object.values(calendars.calendarsById)
       .filter((cal) => cal.selected)
-      .map((calendar) => {
+      .map(async (calendar) => {
         try {
-          return {
-            eventsPromise: API.getCalendarEvents(
-              calendar.id,
-              formatDateTime(start),
-              formatDateTime(end),
-              signal
-            ),
-            calendarId: calendar.id,
-          }
+          const events = await API.getCalendarEvents(
+            calendar.id,
+            formatDateTime(start),
+            formatDateTime(end),
+            signal
+          )
+          return { calendarId: calendar.id, events, error: null, aborted: false }
         } catch (err) {
-          return { eventsPromise: Promise.resolve([]), calendarId: calendar.id }
+          const isAbortError = err instanceof Error && err.name === 'AbortError'
+          return {
+            calendarId: calendar.id,
+            events: [],
+            error: isAbortError ? null : err,
+            aborted: isAbortError,
+          }
         }
       })
 
-    for (const e of eventPromises) {
-      try {
-        const calendarEvents = await e.eventsPromise
-        eventActions.loadEvents(e.calendarId, calendarEvents)
-      } catch (err) {
-        const isAbortError = err instanceof Error && err.name === 'AbortError'
-        if (!isAbortError) {
-          throw err
+    const results = await Promise.allSettled(eventPromises)
+
+    results.forEach((result) => {
+      if (result.status === 'fulfilled') {
+        const response = result.value
+        if (!response.aborted && !response.error) {
+          eventActions.loadEvents(response.calendarId, response.events)
         }
       }
-    }
+    })
   }
 
   /**
