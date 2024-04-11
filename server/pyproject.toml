@@ -1,8 +1,9 @@
 [tool.poetry]
-name = "app"
+name = "Chrono"
 version = "0.1.0"
 description = "Chrono API"
 authors = ["winxton <winxton@gmail.com>"]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4"
