@@ -1,7 +1,5 @@
-import { FiChevronDown } from 'react-icons/fi'
-
 import { FiTrash } from 'react-icons/fi'
-import { Menu, MenuButton, MenuList, MenuItem, Image, IconButton } from '@chakra-ui/react'
+import { Image, IconButton } from '@chakra-ui/react'
 import { Flex, Box, Text, Button, Heading } from '@chakra-ui/react'
 
 import GoogleMeetLogo from '@/assets/google-meet.svg'
@@ -64,33 +62,6 @@ export default function ConferencingSettings(props: {
         ) : (
           <ZoomNotConnected user={user} />
         )}
-      </Box>
-
-      <Box mt="4">
-        <Text fontSize={'sm'} fontWeight={500}>
-          Default Conferencing
-        </Text>
-        <Menu>
-          <MenuButton
-            as={Button}
-            size="sm"
-            borderRadius="sm"
-            variant="ghost"
-            rightIcon={<FiChevronDown />}
-          >
-            {renderConferenceType('google')}
-          </MenuButton>
-
-          <MenuList mt="-1" p="0" fontSize={'xs'}>
-            {User.getVideoMeetTypes(user).map((videoMeetType) => {
-              return (
-                <MenuItem key={videoMeetType} value={videoMeetType}>
-                  {renderConferenceType(videoMeetType)}
-                </MenuItem>
-              )
-            })}
-          </MenuList>
-        </Menu>
       </Box>
     </>
   )
