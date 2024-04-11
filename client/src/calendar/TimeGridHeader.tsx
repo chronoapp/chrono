@@ -77,14 +77,16 @@ function TimeGridHeader(props: IProps) {
           className={isToday ? 'cal-today' : ''}
         >
           <VStack spacing={1}>
-            <Box
-              borderRadius="full"
-              bg={isToday ? '#5c6bc0' : 'transparent'}
-              color={isToday ? 'white' : 'gray.600'}
-              px={2}
-              py={1}
-            >
-              <Text fontSize="sm">{dayNumber}</Text>
+            <Box px={3} py={2}>
+              <Text
+                color={isToday ? 'white' : 'gray.600'}
+                fontWeight={'500'}
+                bg={isToday ? '#5c6bc0' : 'transparent'}
+                borderRadius={5}
+                fontSize="sm"
+              >
+                {dayNumber}
+              </Text>
               <Text fontSize="xs">{dateString}</Text>
             </Box>
           </VStack>
