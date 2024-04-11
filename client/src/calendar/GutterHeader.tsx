@@ -70,7 +70,7 @@ const GutterHeader = ({ addTimezones, width, timezones, gutterWidth, activeId })
         </SortableContext>
       </Flex>
 
-      <Flex justifyContent="flex-end">
+      <Flex justifyContent="flex-end" mt="10px">
         <ToogleAdditionalTimezone addTimezones={addTimezones} />
         <ToggleExpandWeeklyRows expanded={expandAllDayEvents} />
       </Flex>
