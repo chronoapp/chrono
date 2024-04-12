@@ -1,4 +1,4 @@
-import { ZonedDateTime, ChronoUnit } from '@js-joda/core'
+import { ZonedDateTime, ChronoUnit, ChronoField } from '@js-joda/core'
 import '@js-joda/timezone' // Import for DateTime support
 
 export const MILLI = {
@@ -73,14 +73,6 @@ export function range(
   return days
 }
 
-export function diff(
-  dateA: ZonedDateTime,
-  dateB: ZonedDateTime,
-  unit: ChronoUnit = ChronoUnit.MILLIS
-): number {
-  return Math.abs(dateA.until(dateB, unit))
-}
-
 // Merge date from one ZonedDateTime with time from another
 export function merge(date: ZonedDateTime, time: ZonedDateTime): ZonedDateTime {
   const mergedDateTime = date
@@ -89,6 +81,28 @@ export function merge(date: ZonedDateTime, time: ZonedDateTime): ZonedDateTime {
     .withSecond(time.second())
     .withNano(time.nano())
   return mergedDateTime
+}
+
+export function diff(
+  dateA: ZonedDateTime,
+  dateB: ZonedDateTime,
+  unit: ChronoUnit = ChronoUnit.MILLIS
+): number {
+  return Math.abs(dateA.until(dateB, unit))
+}
+
+/**
+ * Round to the nearest minute.
+ */
+export function round(date: ZonedDateTime): ZonedDateTime {
+  // Check if seconds are 30 or more for rounding up
+  if (date.second() >= 30) {
+    // Add one minute, then truncate to start of that minute (removing seconds and nanoseconds)
+    return date.plusMinutes(1).truncatedTo(ChronoUnit.MINUTES)
+  } else {
+    // Just truncate to start of the current minute if not rounding up
+    return date.truncatedTo(ChronoUnit.MINUTES)
+  }
 }
 
 // Check if date1 is greater than date2
@@ -184,4 +198,31 @@ export function add(date: ZonedDateTime, value: number, unit: ChronoUnit): Zoned
 
 export function subtract(date: ZonedDateTime, value: number, unit: ChronoUnit): ZonedDateTime {
   return date.minus(value, unit)
+}
+
+export function hasSame(date1: ZonedDateTime, date2: ZonedDateTime, unit: ChronoUnit): boolean {
+  return date1.truncatedTo(unit).isEqual(date2.truncatedTo(unit))
+}
+
+/**
+ * Sets the given ZonedDateTime to the start of the day with specified minutes,
+ * and resets seconds and milliseconds to zero.
+ *
+ * @param {ZonedDateTime} dayStart - The original ZonedDateTime to adjust.
+ * @param {number} minFromStart - The minutes from the start of the day to set.
+ * @return {ZonedDateTime} - The adjusted ZonedDateTime.
+ */
+export function setToStartOfDayWithMinutes(
+  dayStart: ZonedDateTime,
+  minFromStart: number
+): ZonedDateTime {
+  return dayStart
+    .withHour(0)
+    .withMinute(minFromStart)
+    .withSecond(0)
+    .with(ChronoField.MILLI_OF_SECOND, 0)
+}
+
+export function toMillis(date: ZonedDateTime): number {
+  return date.toInstant().toEpochMilli()
 }

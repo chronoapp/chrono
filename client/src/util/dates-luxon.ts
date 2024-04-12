@@ -206,3 +206,11 @@ export function add(date: DateTime, value: number, unit: DateTimeUnit) {
 export function subtract(date: DateTime, value: number, unit: DateTimeUnit) {
   return date.minus({ [unit]: value })
 }
+
+export function hasSame(date1: DateTime, date2: DateTime, unit: DateTimeUnit): boolean {
+  return date1.hasSame(date2, unit)
+}
+
+export function setToStartOfDayWithMinutes(date: DateTime, minutes: number): DateTime {
+  return date.set({ hour: 0, minute: minutes, second: 0, millisecond: 0 })
+}

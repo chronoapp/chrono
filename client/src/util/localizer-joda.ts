@@ -1,4 +1,15 @@
-import { ZonedDateTime, ChronoUnit, DateTimeFormatter, LocalDate, ZoneId } from '@js-joda/core'
+import {
+  ZonedDateTime,
+  DayOfWeek,
+  ChronoUnit,
+  DateTimeFormatter,
+  LocalDate,
+  ZoneId,
+  Instant,
+} from '@js-joda/core'
+
+import * as dates from '@/util/dates-joda'
+import { Locale } from '@js-joda/locale_en-us'
 
 export function firstDayOfWeek(): number {
   return 0
@@ -21,7 +32,7 @@ export function formatTimeRange(start: ZonedDateTime, end: ZonedDateTime): strin
 }
 
 export function formatDateTime(value: ZonedDateTime): string {
-  return value.format(DateTimeFormatter.ISO_ZONED_DATE_TIME)
+  return value.format(DateTimeFormatter.ISO_INSTANT)
 }
 
 export function formatDuration(durationInMinutes: number) {
@@ -40,55 +51,57 @@ export function formatDuration(durationInMinutes: number) {
 }
 
 export function formatMonthTitle(date: ZonedDateTime): string {
-  return date.format(DateTimeFormatter.ofPattern('MMMM yyyy'))
+  return date.format(DateTimeFormatter.ofPattern('MMMM yyyy').withLocale(Locale.US))
 }
 
 export function formatWeekRange(start: ZonedDateTime, end: ZonedDateTime): string {
   const sameMonth = start.month() === end.month()
-  return `${start.format(DateTimeFormatter.ofPattern('MMMM dd'))} – ${end.format(
-    DateTimeFormatter.ofPattern(sameMonth ? 'dd' : 'MMMM dd')
+  return `${start.format(
+    DateTimeFormatter.ofPattern('MMMM dd').withLocale(Locale.US)
+  )} – ${end.format(
+    DateTimeFormatter.ofPattern(sameMonth ? 'dd' : 'MMMM dd').withLocale(Locale.US)
   )}`
 }
 
 export function formatFullDay(date: ZonedDateTime): string {
-  return date.format(DateTimeFormatter.ofPattern('yyyy-MM-dd'))
+  return date.format(DateTimeFormatter.ofPattern('yyyy-MM-dd').withLocale(Locale.US))
 }
 
 export function formatLocaleDateString(date: ZonedDateTime): string {
   // This would require specifying a pattern or using predefined formats.
-  return date.format(DateTimeFormatter.ofPattern('EEEE, MMMM d, yyyy'))
+  return date.format(DateTimeFormatter.ofPattern('EEEE, MMMM d, yyyy').withLocale(Locale.US))
 }
 
 export function formatTwoLetterWeekday(date: ZonedDateTime): string {
-  return date.format(DateTimeFormatter.ofPattern('EE')).substring(0, 2)
+  return date.format(DateTimeFormatter.ofPattern('EE').withLocale(Locale.US)).substring(0, 2)
 }
 
 export function formatDayOfMonth(date: ZonedDateTime): string {
-  return date.format(DateTimeFormatter.ofPattern('d'))
+  return date.format(DateTimeFormatter.ofPattern('d').withLocale(Locale.US))
 }
 
 export function formatThreeLetterWeekday(date: ZonedDateTime): string {
-  return date.format(DateTimeFormatter.ofPattern('ccc'))
+  return date.format(DateTimeFormatter.ofPattern('ccc').withLocale(Locale.US))
 }
 
 export function formatTwoDigitDay(date: ZonedDateTime): string {
-  return date.format(DateTimeFormatter.ofPattern('dd'))
+  return date.format(DateTimeFormatter.ofPattern('dd').withLocale(Locale.US))
 }
 
 export function formatTwelveHourTime(date: ZonedDateTime): string {
-  return date.format(DateTimeFormatter.ofPattern('hh:mm'))
+  return date.format(DateTimeFormatter.ofPattern('hh:mm').withLocale(Locale.US))
 }
 
 export function formatAmPm(date: ZonedDateTime): string {
-  return date.format(DateTimeFormatter.ofPattern('a'))
+  return date.format(DateTimeFormatter.ofPattern('a').withLocale(Locale.US))
 }
 
 export function formatFullDate(date: ZonedDateTime): string {
-  return date.format(DateTimeFormatter.ofPattern('cccc, LLLL dd'))
+  return date.format(DateTimeFormatter.ofPattern('cccc, LLLL dd').withLocale(Locale.US))
 }
 
 export function formatTimeHmma(date: ZonedDateTime): string {
-  return date.format(DateTimeFormatter.ofPattern('h:mm a'))
+  return date.format(DateTimeFormatter.ofPattern('h:mm a').withLocale(Locale.US))
 }
 
 export function formatDayOfWeekNumeric(date: ZonedDateTime): number {
@@ -97,15 +110,15 @@ export function formatDayOfWeekNumeric(date: ZonedDateTime): number {
 }
 
 export function formatTime24Hour(date: ZonedDateTime): string {
-  return date.format(DateTimeFormatter.ofPattern('HH:mm'))
+  return date.format(DateTimeFormatter.ofPattern('HH:mm').withLocale(Locale.US))
 }
 
 export function formatMonthDay(date: ZonedDateTime): string {
-  return date.format(DateTimeFormatter.ofPattern('LLLL d'))
+  return date.format(DateTimeFormatter.ofPattern('LLLL d').withLocale(Locale.US))
 }
 
 export function formatDayMonthYearWeekday(date: ZonedDateTime): string {
-  return date.format(DateTimeFormatter.ofPattern('d LLL yyyy, ccc'))
+  return date.format(DateTimeFormatter.ofPattern('d LLL yyyy, ccc').withLocale(Locale.US))
 }
 
 export function roundNext15Min(date: ZonedDateTime): ZonedDateTime {
@@ -121,8 +134,35 @@ export function yearStringToDate(value: string): ZonedDateTime {
   return LocalDate.parse(value).atStartOfDay().atZone(ZoneId.systemDefault())
 }
 
+/**
+ * Converts from the UTC date string to a ZonedDateTime.
+ * The date string should be in the format 'yyyy-MM-ddTHH:mm:ssZ'.
+ */
 export function localFullDate(dateStr: string): ZonedDateTime {
   return ZonedDateTime.parse(dateStr)
+}
+
+export function getWeekRange(date: ZonedDateTime): ZonedDateTime[] {
+  let start = dates.startOfWeek(date, firstDayOfWeek())
+  let end = dates.endOfWeek(date, firstDayOfWeek())
+
+  let days: ZonedDateTime[] = []
+  let currentDate = start
+  while (currentDate.compareTo(end) <= 0) {
+    days.push(currentDate)
+    currentDate = currentDate.plus(1, ChronoUnit.DAYS)
+  }
+
+  return days
+}
+
+export function isWeekend(date: ZonedDateTime): boolean {
+  let dayOfWeek = date.dayOfWeek().value()
+  return dayOfWeek === DayOfWeek.SATURDAY.value() || dayOfWeek === DayOfWeek.SUNDAY.value()
+}
+
+export function getWorkWeekRange(date: ZonedDateTime): ZonedDateTime[] {
+  return getWeekRange(date).filter((d) => !isWeekend(d))
 }
 
 export function formatTimeAgo(seconds: number) {
@@ -152,4 +192,19 @@ export function formatTimeAgo(seconds: number) {
 function plural(value, unit: string) {
   const unitStr = value === 1 ? unit : `${unit}s`
   return `${value} ${unitStr}`
+}
+
+export function toJsDate(date: ZonedDateTime): Date {
+  return new Date(date.toInstant().toEpochMilli())
+}
+
+export function fromJsDate(jsDate: Date, zone: ZoneId = ZoneId.systemDefault()): ZonedDateTime {
+  // Convert the JavaScript Date to the number of milliseconds since the Unix epoch
+  const epochMilli = jsDate.getTime()
+
+  // Create an Instant from the epoch milliseconds
+  const instant = Instant.ofEpochMilli(epochMilli)
+
+  // Create a ZonedDateTime from the Instant in the specified zone
+  return ZonedDateTime.ofInstant(instant, zone)
 }
