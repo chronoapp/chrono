@@ -31,6 +31,7 @@ import { getTrends } from '@/util/Api'
 import { labelsState } from '@/state/LabelsState'
 import ViewSelector, { TrendView } from './ViewSelector'
 import TagDropdown from './TagDropdown'
+import { interpolateLightness, calculateColor } from './util/color'
 
 interface IProps {
   setSelectedView: (v: TrendView) => void
@@ -47,8 +48,6 @@ function HabitGraph(props: IProps) {
   const curDate: DateTime = DateTime.now()
   const [viewDate, setViewDate] = useState<DateTime>(curDate)
   const month = dates.visibleDays(viewDate, firstDayOfWeek(), true)
-  console.log(month)
-
   const weeks = chunk(month, 7)
 
   useEffect(() => {
@@ -87,23 +86,19 @@ function HabitGraph(props: IProps) {
 
     return (
       <Flex key={idx}>
-        {week.map((day: Date, dayIdx: number) => {
-          const dayKey = format(day, 'YYYY-MM-DD')
+        {week.map((day: DateTime, dayIdx: number) => {
+          const dayKey = formatFullDay(day)
           const dayValue = day > curDate ? 0 : trendMap.get(dayKey) || 0
           const nextDayValue =
-            dayIdx < week.length - 1 ? trendMap.get(format(week[dayIdx + 1], 'YYYY-MM-DD')) || 0 : 0
+            dayIdx < week.length - 1 ? trendMap.get(formatFullDay(week[dayIdx + 1])) || 0 : 0
           const renderLink = dayValue > 0 && nextDayValue > 0
 
-          let color = '#E0E0E0'
-          if (dayValue > 0) {
-            let addLight = 0
-            if (maxDuration > 0) {
-              const ratio = dayValue / maxDuration
-              const remainingLight = 100 - l
-              addLight = (1 - ratio) * remainingLight
-            }
+          const dayColor = calculateColor(dayValue, maxDuration, h, s, l)
+          const nextDayColor = calculateColor(nextDayValue, maxDuration, h, s, l)
 
-            color = `hsl(${h}, ${s}%, ${l + addLight}%)`
+          let linkColor = dayColor
+          if (renderLink) {
+            linkColor = interpolateLightness(dayColor, nextDayColor)
           }
 
           return (
@@ -111,13 +106,13 @@ function HabitGraph(props: IProps) {
               <PopoverTrigger>
                 <Flex
                   className="habit-chart-day"
-                  backgroundColor={color}
+                  backgroundColor={dayColor}
                   height="28"
                   width="28"
                   alignItems="flex-start"
                   justifyContent="flex-end"
                   border="1px solid"
-                  borderColor={color}
+                  borderColor={dayValue > 0 ? dayColor : 'transparent'} // Adjust border color based on activity
                   borderRadius="2xl"
                   flex="none"
                   m="1"
@@ -129,10 +124,9 @@ function HabitGraph(props: IProps) {
                       position="absolute"
                       right="-9px"
                       top="50%"
-                      transform="translateY(-50%)"
                       width="2"
                       height="3"
-                      backgroundColor={`hsl(${h}, ${s}%, ${l}%)`}
+                      backgroundColor={linkColor}
                     ></Box>
                   )}
                 </Flex>
@@ -140,7 +134,7 @@ function HabitGraph(props: IProps) {
               <PopoverContent width={'xs'} color="white" bg="gray.600" borderColor="gray.600">
                 <PopoverArrow bg="gray.600" borderColor="gray.600" />
                 <PopoverBody textAlign={'center'}>
-                  {dayValue && dayValue > 0
+                  {dayValue > 0
                     ? `${dayValue} hours on ${formatMonthDay(day)}`
                     : `No activity on ${formatMonthDay(day)}`}
                 </PopoverBody>
