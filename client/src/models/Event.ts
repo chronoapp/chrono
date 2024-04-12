@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import { immerable } from 'immer'
 import { makeShortId } from '@/lib/js-lib/makeId'
-import { localFullDate, formatFullDay } from '../util/localizer-luxon'
+import { localFullDate, yearStringToDate, formatFullDay } from '../util/localizer-luxon'
 
 import { Label } from './Label'
 import { hexToHSL } from '../calendar/utils/Colors'
@@ -71,8 +71,8 @@ export default class Event {
       eventJson.title,
       eventJson.title_short,
       eventJson.description,
-      eventJson.all_day ? localFullDate(eventJson.start_day) : localFullDate(eventJson.start),
-      eventJson.all_day ? localFullDate(eventJson.end_day) : localFullDate(eventJson.end),
+      eventJson.all_day ? yearStringToDate(eventJson.start_day) : localFullDate(eventJson.start),
+      eventJson.all_day ? yearStringToDate(eventJson.end_day) : localFullDate(eventJson.end),
       eventJson.start_day,
       eventJson.end_day,
       eventJson.labels.map((labelJson) => Label.fromJson(labelJson)),
@@ -82,7 +82,7 @@ export default class Event {
       eventJson.recurrences,
       eventJson.original_start &&
         (eventJson.all_day
-          ? localFullDate(eventJson.original_start_day)
+          ? yearStringToDate(eventJson.original_start_day)
           : localFullDate(eventJson.original_start)),
       eventJson.original_start_day,
       eventJson.original_timezone,
