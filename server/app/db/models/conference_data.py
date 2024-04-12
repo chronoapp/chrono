@@ -159,7 +159,7 @@ class ConferenceEntryPoint(Base):
     entry_point_type: Mapped[CommunicationMethod] = mapped_column(
         SQLAlchemyEnum(CommunicationMethod)
     )
-    uri: Mapped[str | None] = mapped_column(String, nullable=True)
+    uri: Mapped[str] = mapped_column(String, nullable=False)
     label: Mapped[str | None] = mapped_column(String, nullable=True)
     meeting_code: Mapped[str | None] = mapped_column(String, nullable=True)
     password: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -170,7 +170,7 @@ class ConferenceEntryPoint(Base):
     def __init__(
         self,
         entryPointType: CommunicationMethod,
-        uri: str | None,
+        uri: str,
         label: str | None,
         meetingCode: str | None,
         password: str | None,

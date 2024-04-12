@@ -47,7 +47,7 @@ class ExtendedProperties(BaseModel):
 class EntryPoint(BaseModel):
     id: str | None = None
     entryPointType: str
-    uri: str | None = None
+    uri: str
     label: str | None = None
     pin: str | None = None
     accessCode: str | None = None
