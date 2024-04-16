@@ -24,6 +24,7 @@ interface IProps {
   ignoreNewEventYBoundCheck: boolean
   eventService: EventService
   primaryCalendar: Calendar
+  now: DateTime
 }
 
 interface IState {
@@ -243,6 +244,7 @@ class WeekRowContainer extends React.Component<IProps & InjectedEventActionsProp
             slotMetrics={this.props.dayMetrics}
             isPreview={true}
             eventService={this.props.eventService}
+            now={this.props.now}
           />
         )}
       </div>

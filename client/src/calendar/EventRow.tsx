@@ -34,6 +34,7 @@ export function EventItem(props: {
   const eventTitle = Event.getDefaultTitle(event.title_short)
   const backgroundColor = Event.getBackgroundColor(event.end, calendar.backgroundColor, props.now)
   const foregroundColor = Event.getForegroundColor(event.end, props.now, calendar.backgroundColor)
+
   function handleStartDragging(e) {
     if (e.button === 0 && calendar?.isWritable()) {
       eventActions.onBeginAction(event, 'MOVE', null)
@@ -117,14 +118,6 @@ export function EventItem(props: {
   }
 }
 
-interface IProps {
-  segments: EventSegment[]
-  slotMetrics: DateSlotMetrics
-  className?: string
-  isPreview: boolean
-  eventService: EventService
-}
-
 export function renderSpan(slots: number, len: number, key: string, content?: React.ReactElement) {
   const flexBasis = (Math.abs(len) / slots) * 100 + '%'
   return (
@@ -138,13 +131,21 @@ export function renderSpan(slots: number, len: number, key: string, content?: Re
   )
 }
 
+interface IProps {
+  segments: EventSegment[]
+  slotMetrics: DateSlotMetrics
+  className?: string
+  isPreview: boolean
+  eventService: EventService
+  now: DateTime
+}
+
 /**
  * An event row which can span multiple days.
  */
 export default function EventRow(props: IProps) {
   let lastEnd = 1
   const numSlots = props.slotMetrics.range.length
-  const now = DateTime.now()
 
   return (
     <div className={clsx(props.className, 'cal-row')}>
@@ -156,7 +157,7 @@ export default function EventRow(props: IProps) {
           <EventItem
             isPreview={props.isPreview}
             event={segment.event}
-            now={now}
+            now={props.now}
             eventService={props.eventService}
           />
         )

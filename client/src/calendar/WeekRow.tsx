@@ -74,6 +74,7 @@ function WeekRow(props: IProps) {
           ignoreNewEventYBoundCheck={false}
           eventService={props.eventService}
           primaryCalendar={props.primaryCalendar}
+          now={props.today}
         >
           {!props.loading && (
             <>
@@ -84,6 +85,7 @@ function WeekRow(props: IProps) {
                   slotMetrics={dayMetrics}
                   isPreview={false}
                   eventService={props.eventService}
+                  now={props.today}
                 />
               ))}
 

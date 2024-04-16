@@ -238,6 +238,7 @@ function TimeGrid(props: IProps) {
         leftPad={gutterWidth}
         marginRight={scrollbarSize}
         eventService={props.eventService}
+        now={props.now}
       />
 
       <div ref={contentRef} className="cal-time-content">

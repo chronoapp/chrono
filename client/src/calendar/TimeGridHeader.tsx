@@ -23,6 +23,7 @@ interface IProps {
   leftPad: number
   marginRight: number
   eventService: EventService
+  now: DateTime
 }
 
 function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
@@ -142,6 +143,7 @@ function TimeGridHeader(props: IProps) {
           eventService={props.eventService}
           expandRows={expandAllDayEvents}
           onShowMore={() => updateExpandAllDayEvents(true)}
+          now={props.now}
         />
       </Flex>
     </Flex>
