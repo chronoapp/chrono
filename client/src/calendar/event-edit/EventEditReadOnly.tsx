@@ -5,7 +5,7 @@ import { MdClose } from 'react-icons/md'
 import linkifyHtml from 'linkifyjs/html'
 
 import { ChronoUnit } from '@js-joda/core'
-import { formatFullDay, formatTime24Hour, formatAmPm, formatDuration } from '@/util/localizer-joda'
+import { formatFullDay, formatTimeShort, formatDuration } from '@/util/localizer-joda'
 import * as dates from '@/util/dates-joda'
 
 import { LabelTag } from '@/components/LabelTag'
@@ -92,9 +92,8 @@ export default function EventEditReadOnly(props: IProps) {
             <FiClock />
           </Box>
           <Text fontSize={'sm'}>
-            {formatFullDay(eventFields.start)} {formatTime24Hour(eventFields.start)} -{' '}
-            {formatTime24Hour(eventFields.end)}
-            {formatAmPm(eventFields.end)}
+            {formatFullDay(eventFields.start)} {formatTimeShort(eventFields.start)} -{' '}
+            {formatTimeShort(eventFields.end)}
           </Text>
           {!event.all_day && (
             <Text fontSize="xs" color="gray.500" pl="1">
