@@ -140,7 +140,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
           >
             <EventPopover event={event} eventService={props.eventService} />
           </Box>,
-          document.querySelector('.cal-calendar')!
+          document.body
         )
       }
     }
