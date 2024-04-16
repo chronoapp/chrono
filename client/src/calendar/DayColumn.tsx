@@ -385,6 +385,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
       ))}
 
       <ResizeEventContainer
+        now={props.now}
         onEventUpdated={props.eventService.moveOrResizeEvent}
         slotMetrics={slotMetricsRef.current}
       >

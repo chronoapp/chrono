@@ -86,7 +86,7 @@ function WeekHeaderRow(props: IProps) {
             <EventEndingRow
               segments={dayMetrics.extra}
               slots={dayMetrics.slots}
-              now={DateTime.now()}
+              now={props.now}
               eventService={props.eventService}
               onShowMore={() => props.onShowMore()}
             />

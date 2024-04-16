@@ -11,17 +11,17 @@ import { EventService } from './event-edit/useEventService'
 interface IProps {
   events: Event[]
   date: DateTime
+  now: DateTime
   eventService: EventService
   primaryCalendar: Calendar
 }
 
 function WorkWeek(props: IProps) {
   const range = getWorkWeekRange(props.date)
-  const now = DateTime.now()
 
   return (
     <TimeGrid
-      now={now}
+      now={props.now}
       events={props.events}
       range={range}
       eventService={props.eventService}
