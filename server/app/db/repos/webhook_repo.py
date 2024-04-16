@@ -58,7 +58,7 @@ class WebhookRepository:
     def createCalendarListWebhook(self, account: UserAccount) -> Webhook | None:
         """Create a webhook to watch for user calendar list updates."""
         if not config.API_URL:
-            raise RepoError(f'No API URL specified.')
+            raise RepoError('No API URL specified.')
 
         webhook = self.getCalendarListWebhook(account)
         if webhook:
@@ -93,7 +93,7 @@ class WebhookRepository:
         Only creates one webhook per calendar.
         """
         if not config.API_URL:
-            raise RepoError(f'No API URL specified.')
+            raise RepoError('No API URL specified.')
 
         webhook = self.getCalendarEventsWebhook(calendar.id)
         if webhook:
@@ -119,7 +119,12 @@ class WebhookRepository:
             return webhook
 
         except HttpError as e:
-            logger.error(f'Error adding webhook for {calendar.summary}: {e.reason}')
+            reason = isinstance(e.error_details, list) and e.error_details[0].get('reason')
+            # If the calendar is not pushable, we don't need to log the error.
+            # TODO: Is there another way to check if the calendar is not pushable?
+            if reason != 'pushNotSupportedForRequestedResource':
+                logger.error(f'Error adding webhook for {calendar.summary}: {e.reason}')
+
             return None
 
     def refreshExpiringWebhooks(self, user: User):
