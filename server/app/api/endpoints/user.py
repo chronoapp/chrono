@@ -58,7 +58,9 @@ async def getUser(user=Depends(get_current_user)):
 
 
 @router.put('/user/', response_model=UserVM)
-async def updateUser(userVM: UpdateUserVM, user=Depends(get_current_user), session=Depends(get_db)):
+async def updateUser(
+    userVM: UpdateUserVM, user: User = Depends(get_current_user), session=Depends(get_db)
+):
     user.timezones = userVM.timezones
     user.name = userVM.name
     user.username = userVM.username
@@ -78,18 +80,18 @@ async def updateUser(userVM: UpdateUserVM, user=Depends(get_current_user), sessi
 
 
 @router.get('/user/flags/', response_model=dict[FlagType, bool])
-async def getUserFlags(user=Depends(get_current_user)):
+async def getUserFlags(user: User = Depends(get_current_user)):
     return FlagUtils(user).getAllFlags()
 
 
 @router.put('/user/flags/', response_model=dict[FlagType, bool])
-async def setUserFlags(flags: dict[FlagType, bool], user=Depends(get_current_user)):
+async def setUserFlags(flags: dict[FlagType, bool], user: User = Depends(get_current_user)):
     return FlagUtils(user).setAllFlags(flags)
 
 
 @router.delete('/user/accounts/{account_id}')
 async def deleteUserAccount(
-    account_id: UUID, user=Depends(get_current_user), session=Depends(get_db)
+    account_id: UUID, user: User = Depends(get_current_user), session=Depends(get_db)
 ):
     account = next((a for a in user.accounts if a.id == account_id), None)
     if not account:
@@ -102,7 +104,7 @@ async def deleteUserAccount(
 
 
 @router.delete('/user/zoom-connection/')
-async def deleteUserZoomConnection(user=Depends(get_current_user), session=Depends(get_db)):
+async def deleteUserZoomConnection(user: User = Depends(get_current_user), session=Depends(get_db)):
     """Deletes the user's zoom connection."""
     if not user.zoom_connection:
         return JSONResponse(
