@@ -201,7 +201,7 @@ function getDateDisplayText(isAllDay: boolean, start: DateTime, end: DateTime) {
   if (isAllDay) {
     const days = dates.diff(end, start, ChronoUnit.DAYS)
     if (days > 1) {
-      return formatTimeRangeDays(start, end)
+      return formatTimeRangeDays(start, dates.subtract(end, 1, ChronoUnit.DAYS))
     } else {
       return formatDayMonth(start)
     }

@@ -98,10 +98,6 @@ export default function EventEditFull(props: { event: Event; eventService: Event
   )
   const [participants, setParticipants] = useState<EventParticipant[]>(props.event.participants)
 
-  const defaultDays = eventFields.allDay
-    ? Math.max(dates.diff(eventFields.start, eventFields.end, ChronoUnit.DAYS), 1)
-    : 1
-
   // Derived Properties
   const isUnsavedEvent = props.event.syncStatus === 'NOT_SYNCED'
 
@@ -291,14 +287,18 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                   width="fit-content"
                   border="0"
                   variant="flushed"
-                  value={formatFullDay(eventFields.end)}
+                  value={formatFullDay(dates.subtract(eventFields.end, 1, ChronoUnit.DAYS))}
                   onChange={(e) => {
                     const duration = dates.diff(
                       eventFields.end,
                       eventFields.start,
                       ChronoUnit.MINUTES
                     )
-                    const end = dates.merge(yearStringToDate(e.target.value), eventFields.start)
+
+                    const end = dates.merge(
+                      dates.add(yearStringToDate(e.target.value), 1, ChronoUnit.DAYS),
+                      eventFields.start
+                    )
 
                     let start
                     if (dates.lt(end, eventFields.start)) {
@@ -371,7 +371,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                 let newEventFields
                 if (isAllDay) {
                   const start = dates.startOf(eventFields.start, ChronoUnit.DAYS)
-                  const end = dates.endOf(eventFields.start, ChronoUnit.DAYS)
+                  const end = dates.add(start, 1, ChronoUnit.DAYS)
 
                   newEventFields = {
                     ...eventFields,

@@ -38,6 +38,9 @@ export function formatDateTime(value: ZonedDateTime): string {
   return value.format(DateTimeFormatter.ISO_INSTANT)
 }
 
+/**
+ * Formats a duration in minutes to a string.
+ */
 export function formatDuration(durationInMinutes: number) {
   if (durationInMinutes < 60) {
     return `${durationInMinutes}m`
@@ -66,14 +69,60 @@ export function formatWeekRange(start: ZonedDateTime, end: ZonedDateTime): strin
   )}`
 }
 
+/**
+ * Returns the full day in the format 'yyyy-MM-dd'.
+ */
 export function formatFullDay(date: ZonedDateTime): string {
   return date.format(DateTimeFormatter.ofPattern('yyyy-MM-dd').withLocale(Locale.US))
+}
+
+/**
+ * Returns the day of the week and the month.
+ * E.g. "Tuesday, April 16"
+ */
+export function formatDayMonth(date: ZonedDateTime): string {
+  return date.format(DateTimeFormatter.ofPattern('EEEE, MMMM d').withLocale(Locale.US))
 }
 
 export function formatLocaleDateString(date: ZonedDateTime): string {
   return date.format(DateTimeFormatter.ofPattern('EEEE, MMMM d, yyyy').withLocale(Locale.US))
 }
 
+/**
+ *
+ * Displays date range depending on the year, month, and day of the start and end dates.
+ *
+ * E.g. April 15 – 17, 2024
+ * E.g. April 7 – May 15, 2024
+ * E.g. April 7, 2024 - April 15, 2025
+ */
+export function formatTimeRangeDays(start: ZonedDateTime, end: ZonedDateTime) {
+  // Check if start and end dates are in the same year
+  if (start.year() === end.year()) {
+    // Check if start and end dates are in the same month
+    if (start.monthValue() === end.monthValue()) {
+      // Same month and year
+      return `${start.format(
+        DateTimeFormatter.ofPattern('MMMM d').withLocale(Locale.US)
+      )} – ${end.format(DateTimeFormatter.ofPattern('d, yyyy').withLocale(Locale.US))}`
+    } else {
+      // Different months, same year
+      return `${start.format(
+        DateTimeFormatter.ofPattern('MMMM d').withLocale(Locale.US)
+      )} – ${end.format(DateTimeFormatter.ofPattern('MMMM d, yyyy').withLocale(Locale.US))}`
+    }
+  } else {
+    // Different years
+    return `${start.format(
+      DateTimeFormatter.ofPattern('MMMM d, yyyy').withLocale(Locale.US)
+    )} - ${end.format(DateTimeFormatter.ofPattern('MMMM d, yyyy').withLocale(Locale.US))}`
+  }
+}
+
+/**
+ * Returns the two letter day of week.
+ * E.g. "Mo, Tu, We, Th, Fr, Sa, Su"
+ */
 export function formatTwoLetterWeekday(date: ZonedDateTime): string {
   return date.format(DateTimeFormatter.ofPattern('EE').withLocale(Locale.US)).substring(0, 2)
 }

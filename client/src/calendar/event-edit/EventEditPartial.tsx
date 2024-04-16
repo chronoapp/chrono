@@ -197,7 +197,7 @@ export default function EventEditPartial(props: IProps) {
                   width="fit-content"
                   border="0"
                   variant="flushed"
-                  value={formatFullDay(eventFields.end)}
+                  value={formatFullDay(dates.subtract(eventFields.end, 1, ChronoUnit.DAYS))}
                   onChange={(e) => {
                     const duration = dates.diff(
                       eventFields.end,
@@ -205,7 +205,10 @@ export default function EventEditPartial(props: IProps) {
                       ChronoUnit.MINUTES
                     )
 
-                    const end = dates.merge(yearStringToDate(e.target.value), eventFields.start)
+                    const end = dates.merge(
+                      dates.add(yearStringToDate(e.target.value), 1, ChronoUnit.DAYS),
+                      eventFields.start
+                    )
 
                     let start
                     if (dates.lt(end, eventFields.start)) {
@@ -265,7 +268,7 @@ export default function EventEditPartial(props: IProps) {
 
                   if (isAllDay) {
                     const start = dates.startOf(eventFields.start, ChronoUnit.DAYS)
-                    const end = dates.endOf(eventFields.start, ChronoUnit.DAYS)
+                    const end = dates.add(start, 1, ChronoUnit.DAYS)
 
                     updatedFields = {
                       ...eventFields,
