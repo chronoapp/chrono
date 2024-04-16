@@ -17,6 +17,7 @@ const GRID_WRAPPER_SELECTOR = '.cal-time-view'
 
 interface IProps {
   slotMetrics: SlotMetrics
+  now: DateTime
   children: any
   onEventUpdated: (event: Event) => void
 }
@@ -218,7 +219,6 @@ class ResizeEventContainer extends React.Component<IProps & InjectedEventActions
   public render() {
     const events = this.props.children.props.children
     const { top, height } = this.state
-    const today = DateTime.now()
     const draggingEvent = this.getDraggingEvent()
 
     return React.cloneElement(this.props.children, {
@@ -228,7 +228,7 @@ class ResizeEventContainer extends React.Component<IProps & InjectedEventActions
           {events}
           {draggingEvent && (
             <TimeGridEvent
-              now={today}
+              now={this.props.now}
               event={draggingEvent}
               label={formatTimeRange(draggingEvent.start, draggingEvent.end)}
               style={{ top, height, width: 100, xOffset: 0, border: 'none' }}

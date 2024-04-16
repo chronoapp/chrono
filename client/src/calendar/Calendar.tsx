@@ -8,7 +8,7 @@ import SearchResults from '@/calendar/SearchResults'
 import { GlobalEvent } from '@/util/global'
 import useKeyPress from '@/lib/hooks/useKeyPress'
 
-import { ChronoUnit } from '@js-joda/core'
+import { ChronoUnit, ZonedDateTime as DateTime } from '@js-joda/core'
 import * as dates from '@/util/dates-joda'
 import { firstDayOfWeek } from '@/util/localizer-joda'
 
@@ -64,6 +64,9 @@ function Calendar() {
 
   useGlobalEventListener(GlobalEvent.refreshCalendar, handleRefreshEvent)
 
+  /**
+   * Load events for the current view.
+   */
   useEffect(() => {
     // Aborts any pending requests after the component is unmounted.
     const controller = new AbortController()
@@ -75,6 +78,17 @@ function Calendar() {
       controller.abort()
     }
   }, [calendarView.view, calendarViewUserTimezone, calendars.calendarsById, refreshId])
+
+  /**
+   * Update the time atom every 2 minutes.
+   */
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setCalendarView((state) => ({ ...state, now: DateTime.now() }))
+    }, 60000 * 2)
+
+    return () => clearInterval(intervalId) // Clear interval on component unmount
+  }, [])
 
   /**
    * Keyboard shortcuts.
@@ -185,6 +199,7 @@ function Calendar() {
           events={allVisibleEvents}
           eventService={eventService}
           primaryCalendar={primaryCalendar}
+          now={calendarViewUserTimezone.now}
         />
       )
     } else if (calendarView.view == 'Month') {
