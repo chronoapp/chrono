@@ -8,6 +8,7 @@ export interface CalendarEditable {
   summary: string
   description: string
   source: CalendarProvider
+  foregroundColor: string
   backgroundColor: string
   timezone: string | undefined
 }

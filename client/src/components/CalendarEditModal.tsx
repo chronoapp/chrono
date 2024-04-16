@@ -47,6 +47,7 @@ export default function CalendarEditModal(props: IProps) {
       summary: props.editingCalendar?.summary || props.editingCalendar?.summary || '',
       description: props.editingCalendar?.description || '',
       source: props.editingCalendar?.source || 'google',
+      foregroundColor: props.editingCalendar?.foregroundColor || '#000000',
       backgroundColor: props.editingCalendar?.backgroundColor || DEFAULT_CALENDAR_BG_COLOR,
       timezone: props.editingCalendar?.timezone,
     }

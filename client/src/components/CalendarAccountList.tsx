@@ -198,6 +198,7 @@ export default function CalendarAccountList() {
             const calendar = await API.createCalendar(
               account.id,
               fields.summary,
+              fields.foregroundColor,
               fields.backgroundColor,
               fields.source,
               fields.description,

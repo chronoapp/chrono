@@ -160,6 +160,7 @@ export async function removeZoomConnection() {
 export async function createCalendar(
   account_id: string,
   summary: string,
+  foregroundColor: string,
   backgroundColor: string,
   source: CalendarProvider,
   description: string,
@@ -172,6 +173,7 @@ export async function createCalendar(
       summary,
       description,
       timezone,
+      foregroundColor,
       backgroundColor,
       source,
     }),
