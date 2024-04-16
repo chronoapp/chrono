@@ -111,6 +111,7 @@ export default function MiniCalendar() {
             <FiChevronUp size={'1.25em'} />
           </span>
           <span
+            className="icon-button"
             onClick={() => {
               setAnimateDirection('FROM_BOTTOM')
               setViewDate(dates.add(viewDate, 1, ChronoUnit.MONTHS))
