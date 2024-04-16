@@ -61,8 +61,6 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
   const selectRangeRef = useRef<SelectRange | undefined>(undefined)
   const [_selectRange, _setSelectRange] = useState<SelectRange | undefined>(undefined)
 
-  // const [timeIndicatorPosition, setTimeIndicatorPosition] = useState(0)
-
   const slotMetricsRef = useRef<SlotMetrics>(
     new SlotMetrics(props.min, props.max, props.step, props.timeslots)
   )
