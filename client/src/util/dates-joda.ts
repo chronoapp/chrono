@@ -223,6 +223,18 @@ export function toMillis(date: ZonedDateTime): number {
   return date.toInstant().toEpochMilli()
 }
 
+/**
+ * Returns date1 minus date2 in the specified unit,
+ * Should be negative if date1 is before date2.
+ */
+export function subDates(
+  date1: ZonedDateTime,
+  date2: ZonedDateTime,
+  unit: ChronoUnit = ChronoUnit.MILLIS
+): number {
+  return date2.until(date1, unit)
+}
+
 function endOfDay(date: ZonedDateTime): ZonedDateTime {
   return date.withHour(23).withMinute(59).withSecond(59).withNano(999999999)
 }

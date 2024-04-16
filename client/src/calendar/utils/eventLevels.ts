@@ -85,10 +85,10 @@ export function segsOverlap(seg, otherSegs) {
 }
 
 export function sortEvents(evtA: Event, evtB: Event) {
-  const startSort = dates.diff(
+  // Order by full day events first, then sort by start time
+  const startSort = dates.subDates(
     dates.startOf(evtA.start, ChronoUnit.DAYS),
-    dates.startOf(evtB.start, ChronoUnit.DAYS),
-    ChronoUnit.DAYS
+    dates.startOf(evtB.start, ChronoUnit.DAYS)
   )
 
   let durA = dates.diff(evtA.start, dates.endOf(evtA.end, ChronoUnit.DAYS), ChronoUnit.DAYS)
@@ -98,8 +98,8 @@ export function sortEvents(evtA: Event, evtB: Event) {
     startSort || // sort by start Day first
     Math.max(durB, 1) - Math.max(durA, 1) || // events spanning multiple days go first
     +evtB.all_day - +evtA.all_day || // then allDay single day events
-    dates.diff(evtA.start, evtB.start, ChronoUnit.MINUTES) || // then sort by start time
-    dates.diff(evtA.end, evtB.end, ChronoUnit.MINUTES) || // then sort by end time
+    dates.subDates(evtA.start, evtB.start) || // then sort by start time
+    dates.subDates(evtA.end, evtB.end) || // then sort by end time
     (evtA.title || '').localeCompare(evtB.title || '') // then sort by title
   )
 }

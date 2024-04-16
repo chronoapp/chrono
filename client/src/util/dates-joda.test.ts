@@ -76,3 +76,11 @@ test('diff returns rounded date', () => {
 
   expect(diff).toBe(14)
 })
+
+test('subDates subtracts two dates with sign', () => {
+  const d1 = ZonedDateTime.parse('2024-04-16T00:00:00Z')
+  const d2 = ZonedDateTime.parse('2024-04-16T01:00:00Z')
+
+  const diffMinutes = dates.subDates(d1, d2, ChronoUnit.MINUTES)
+  expect(diffMinutes).toBe(-60)
+})
