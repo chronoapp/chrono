@@ -154,52 +154,89 @@ export default function EventEditPartial(props: IProps) {
           </Box>
 
           <Flex direction="column">
-            <Input
-              type="date"
-              size="sm"
-              width="fit-content"
-              border="0"
-              variant="flushed"
-              value={formatFullDay(eventFields.start)}
-              onChange={(e) => {
-                const duration = dates.diff(eventFields.end, eventFields.start, ChronoUnit.MINUTES)
-                const start = dates.merge(yearStringToDate(e.target.value), eventFields.start)
-                const end = dates.add(start, duration, ChronoUnit.MINUTES)
+            <Flex>
+              <Input
+                type="date"
+                size="sm"
+                width="fit-content"
+                border="0"
+                variant="flushed"
+                value={formatFullDay(eventFields.start)}
+                onChange={(e) => {
+                  const duration = dates.diff(
+                    eventFields.end,
+                    eventFields.start,
+                    ChronoUnit.MINUTES
+                  )
+                  const start = dates.merge(yearStringToDate(e.target.value), eventFields.start)
+                  const end = dates.add(start, duration, ChronoUnit.MINUTES)
 
-                const updatedFields = eventFields.allDay
-                  ? {
-                      ...eventFields,
-                      start,
-                      end,
-                      startDay: formatFullDay(start),
-                      endDay: formatFullDay(end),
-                    }
-                  : { ...eventFields, start, end }
+                  const updatedFields = eventFields.allDay
+                    ? {
+                        ...eventFields,
+                        start,
+                        end,
+                        startDay: formatFullDay(start),
+                        endDay: formatFullDay(end),
+                      }
+                    : { ...eventFields, start, end }
 
-                setEventFields(updatedFields)
-                setCalendarView((prevState) => {
-                  return { ...prevState, selectedDate: start }
-                })
-                props.updateEditingEvent(updatedFields)
-              }}
-            />
+                  setEventFields(updatedFields)
+                  setCalendarView((prevState) => {
+                    return { ...prevState, selectedDate: start }
+                  })
+                  props.updateEditingEvent(updatedFields)
+                }}
+              />
 
-            <Flex mt="1">
               {eventFields.allDay && (
-                <TimeSelectFullDay
-                  days={defaultDays}
-                  startDate={eventFields.start}
-                  onSelectNumDays={(days) => {
-                    const endDate = dates.add(eventFields.start, days, ChronoUnit.DAYS)
-                    const updatedEventFields = {
-                      ...eventFields,
-                      end: endDate,
-                      endDay: formatFullDay(endDate),
+                <Input
+                  ml="2"
+                  type="date"
+                  size="sm"
+                  width="fit-content"
+                  border="0"
+                  variant="flushed"
+                  value={formatFullDay(eventFields.end)}
+                  onChange={(e) => {
+                    const duration = dates.diff(
+                      eventFields.end,
+                      eventFields.start,
+                      ChronoUnit.MINUTES
+                    )
+
+                    const end = dates.merge(yearStringToDate(e.target.value), eventFields.start)
+
+                    let start
+                    if (dates.lt(end, eventFields.start)) {
+                      // Move the start date back, keep the duration
+                      start = dates.subtract(end, duration, ChronoUnit.MINUTES)
+                    } else {
+                      // Extend the duration
+                      start = eventFields.start
                     }
-                    setEventFields(updatedEventFields)
+
+                    const updatedFields = eventFields.allDay
+                      ? {
+                          ...eventFields,
+                          start,
+                          end,
+                          startDay: formatFullDay(start),
+                          endDay: formatFullDay(end),
+                        }
+                      : { ...eventFields, start, end }
+
+                    setEventFields(updatedFields)
+                    setCalendarView((prevState) => {
+                      return { ...prevState, selectedDate: start }
+                    })
+                    props.updateEditingEvent(updatedFields)
                   }}
                 />
               )}
+            </Flex>
+
+            <Flex mt="1">
               {!eventFields.allDay && (
                 <TimeRangeSelect
                   start={eventFields.start}
