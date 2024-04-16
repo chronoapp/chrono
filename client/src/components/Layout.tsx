@@ -1,6 +1,5 @@
 import React from 'react'
-import { DateTime } from 'luxon'
-import { useRecoilValue, useSetRecoilState, useRecoilState } from 'recoil'
+import { useRecoilValue, useRecoilState } from 'recoil'
 import { useParams, useNavigate } from 'react-router-dom'
 
 import {
@@ -18,7 +17,9 @@ import { Modal, ModalOverlay, ModalContent, ModalCloseButton } from '@chakra-ui/
 
 import { FiSettings, FiLogOut } from 'react-icons/fi'
 
-import { roundNext15Min } from '@/util/localizer-luxon'
+import { ZonedDateTime as DateTime } from '@js-joda/core'
+import { roundNext15Min } from '@/util/localizer-joda'
+
 import { GlobalEvent } from '@/util/global'
 import { generateGuid } from '@/lib/uuid'
 

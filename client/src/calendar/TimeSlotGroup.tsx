@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { ZonedDateTime as DateTime } from '@js-joda/core'
 
 /**
  * Displays lines between one hour chunks.

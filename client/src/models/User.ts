@@ -35,7 +35,7 @@ export default class User {
 
   static getPrimaryTimezone(user: User | undefined) {
     if (!user || user.timezones.length === 0) {
-      return 'local'
+      return 'SYSTEM'
     }
 
     return user.timezones[0]

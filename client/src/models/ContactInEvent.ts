@@ -1,4 +1,5 @@
-import { DateTime } from 'luxon'
+import { ZonedDateTime as DateTime } from '@js-joda/core'
+import * as localizer from '@/util/localizer-joda'
 
 import { immerable } from 'immer'
 import Contact from './Contact'
@@ -10,13 +11,13 @@ export default class ContactInEvent {
     return new ContactInEvent(
       Contact.fromJson(json.contact),
       json.total_time_spent_in_seconds,
-      DateTime.fromISO(json.last_seen)
+      json.last_seen ? localizer.localFullDate(json.last_seen) : null
     )
   }
 
   constructor(
     readonly contact: Contact,
-    readonly total_time_spent_in_seconds: number,
-    readonly last_seen: DateTime
+    readonly total_time_spent_in_seconds: number | null,
+    readonly last_seen: DateTime | null
   ) {}
 }

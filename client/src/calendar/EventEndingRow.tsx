@@ -10,8 +10,8 @@ import {
   PopoverHeader,
 } from '@chakra-ui/react'
 
-import { DateTime } from 'luxon'
-import { formatFullDate } from '@/util/localizer-luxon'
+import { ZonedDateTime as DateTime } from '@js-joda/core'
+import { formatFullDate } from '@/util/localizer-joda'
 import { eventLevels, EventSegment } from './utils/eventLevels'
 import { renderSpan, EventItem } from './EventRow'
 import { EventService } from './event-edit/useEventService'

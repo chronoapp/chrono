@@ -184,3 +184,11 @@ function plural(value, unit: string) {
   const unitStr = value === 1 ? unit : `${unit}s`
   return `${value} ${unitStr}`
 }
+
+export function toJsDate(date: DateTime): Date {
+  return date.toJSDate()
+}
+
+export function fromJsDate(date: Date): DateTime {
+  return DateTime.fromJSDate(date)
+}

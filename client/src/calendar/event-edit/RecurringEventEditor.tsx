@@ -29,20 +29,23 @@ import {
   Divider,
 } from '@chakra-ui/react'
 
-import { DateTime } from 'luxon'
+import { ZonedDateTime as DateTime, ChronoUnit } from '@js-joda/core'
 import produce from 'immer'
 import { BsArrowRepeat } from 'react-icons/bs'
 import { FiChevronDown } from 'react-icons/fi'
 
 import { userState } from '@/state/UserState'
-import * as dates from '@/util/dates-luxon'
+import * as dates from '@/util/dates-joda'
+
 import {
   formatFullDay,
   formatDayOfWeekNumeric,
   formatTwoLetterWeekday,
   getWeekRange,
   localFullDate,
-} from '@/util/localizer-luxon'
+  toJsDate,
+  fromJsDate,
+} from '@/util/localizer-joda'
 
 import { Frequency as RRuleFreq, RRule, RRuleSet, Weekday, rrulestr, Options } from 'rrule'
 
@@ -158,7 +161,7 @@ function RecurringEventEditor(props: IProps) {
       if (recurringOptions?.freq == RRuleFreq.DAILY) {
         setRecurringOptions({
           ...recurringOptions,
-          until: dates.add(props.initialDate, 30, 'day').toJSDate(),
+          until: toJsDate(dates.add(props.initialDate, 30, ChronoUnit.DAYS)),
           count: 30,
           byweekday: [],
         })
@@ -168,21 +171,21 @@ function RecurringEventEditor(props: IProps) {
 
         setRecurringOptions({
           ...recurringOptions,
-          until: dates.add(props.initialDate, 13, 'week').toJSDate(),
+          until: toJsDate(dates.add(props.initialDate, 13, ChronoUnit.WEEKS)),
           count: 13,
           byweekday: [rruleDay],
         })
       } else if (recurringOptions?.freq == RRuleFreq.MONTHLY) {
         setRecurringOptions({
           ...recurringOptions,
-          until: dates.add(props.initialDate, 12, 'month').toJSDate(),
+          until: toJsDate(dates.add(props.initialDate, 12, ChronoUnit.MONTHS)),
           count: 12,
           byweekday: [],
         })
       } else if (recurringOptions?.freq == RRuleFreq.YEARLY) {
         setRecurringOptions({
           ...recurringOptions,
-          until: dates.add(props.initialDate, 5, 'year').toJSDate(),
+          until: toJsDate(dates.add(props.initialDate, 5, ChronoUnit.YEARS)),
           count: 5,
           byweekday: [],
         })
@@ -355,25 +358,27 @@ function RecurringEventEditor(props: IProps) {
               <Text fontSize={'sm'}>Never</Text>
             </Radio>
 
-            <Radio value={EndCondition.ByEndDate.toString()}>
-              <Flex alignItems={'center'}>
-                <Text fontSize={'sm'} mr="1">
-                  On
-                </Text>
-                <Input
-                  size="xs"
-                  type="date"
-                  isDisabled={endCondition != EndCondition.ByEndDate}
-                  value={formatFullDay(DateTime.fromJSDate(recurringOptions.until!))}
-                  onChange={(e) => {
-                    setRecurringOptions({
-                      ...recurringOptions,
-                      until: localFullDate(e.target.value).toJSDate(),
-                    })
-                  }}
-                />
-              </Flex>
-            </Radio>
+            {recurringOptions.until && (
+              <Radio value={EndCondition.ByEndDate.toString()}>
+                <Flex alignItems={'center'}>
+                  <Text fontSize={'sm'} mr="1">
+                    On
+                  </Text>
+                  <Input
+                    size="xs"
+                    type="date"
+                    isDisabled={endCondition != EndCondition.ByEndDate}
+                    value={formatFullDay(fromJsDate(recurringOptions.until))}
+                    onChange={(e) => {
+                      setRecurringOptions({
+                        ...recurringOptions,
+                        until: toJsDate(localFullDate(e.target.value)),
+                      })
+                    }}
+                  />
+                </Flex>
+              </Radio>
+            )}
 
             <Radio value={EndCondition.ByCount.toString()}>
               <Flex alignItems="center">

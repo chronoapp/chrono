@@ -1,16 +1,16 @@
 import ReactDOM from 'react-dom'
-import { DateTime } from 'luxon'
 import { useRef, useState, useEffect } from 'react'
 import { usePopper } from 'react-popper'
 
 import clsx from 'clsx'
 
 import { Box } from '@chakra-ui/react'
+
+import { ChronoUnit, ZonedDateTime as DateTime } from '@js-joda/core'
+import { formatTimeRange, formatTimeShort } from '@/util/localizer-joda'
+import * as dates from '@/util/dates-joda'
+
 import { withEventActions, InjectedEventActionsProps } from '@/state/withEventActions'
-
-import { formatTimeRange, formatTimeShort } from '@/util/localizer-luxon'
-import * as dates from '@/util/dates-luxon'
-
 import { Selection, SelectRect, EventData, getBoundsForNode, isEvent } from '@/util/Selection'
 import Event, { EMPTY_TITLE } from '@/models/Event'
 import Calendar from '@/models/Calendar'
@@ -61,8 +61,6 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
   const selectRangeRef = useRef<SelectRange | undefined>(undefined)
   const [_selectRange, _setSelectRange] = useState<SelectRange | undefined>(undefined)
 
-  const [timeIndicatorPosition, setTimeIndicatorPosition] = useState(0)
-
   const slotMetricsRef = useRef<SlotMetrics>(
     new SlotMetrics(props.min, props.max, props.step, props.timeslots)
   )
@@ -70,8 +68,6 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
 
   const initialSlotRef = useRef<DateTime>()
   const selectionRef = useRef<Selection>()
-  const timeIndicatorTimeoutRef = useRef<number>()
-  const intervalTriggeredRef = useRef(false)
   const hasJustCancelledEventCreateRef = useRef(false)
 
   // Event edit popover
@@ -81,6 +77,8 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
   const { styles, attributes } = usePopper(referenceElement, popperElement, {
     placement: 'auto',
   })
+
+  const timeIndicatorPosition = slotMetricsRef.current.getCurrentTimePosition(props.now)
 
   /**
    * State updater functions. Since we use Selection object which uses event listeners for Select events
@@ -104,16 +102,6 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
   }, [props.min, props.max, props.step, props.timeslots])
 
   useEffect(() => {
-    if (props.isCurrentDay) {
-      setTimeIndicatorPositionUpdateInterval()
-    }
-
-    return () => {
-      clearTimeIndicatorInterval()
-    }
-  }, [props.isCurrentDay])
-
-  useEffect(() => {
     selectionRef.current = initSelection()
 
     return () => {
@@ -125,36 +113,6 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
 
   function getContainerRef() {
     return dayRef
-  }
-
-  function clearTimeIndicatorInterval() {
-    intervalTriggeredRef.current = false
-    window.clearTimeout(timeIndicatorTimeoutRef.current)
-  }
-
-  function setTimeIndicatorPositionUpdateInterval() {
-    if (!intervalTriggeredRef.current) {
-      updatePositionTimeIndicator()
-    }
-
-    timeIndicatorTimeoutRef.current = window.setTimeout(() => {
-      intervalTriggeredRef.current = true
-      updatePositionTimeIndicator()
-      setTimeIndicatorPositionUpdateInterval()
-    }, 60000)
-  }
-
-  function updatePositionTimeIndicator() {
-    const { min, max } = props
-    const current = DateTime.now()
-
-    if (current >= min && current <= max) {
-      const top = slotMetricsRef.current.getCurrentTimePosition(current)
-      intervalTriggeredRef.current = true
-      setTimeIndicatorPosition(top)
-    } else {
-      clearTimeIndicatorInterval()
-    }
   }
 
   function renderEventEditPopover() {
@@ -182,7 +140,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
           >
             <EventPopover event={event} eventService={props.eventService} />
           </Box>,
-          document.querySelector('.cal-calendar')!
+          document.body
         )
       }
     }
@@ -236,7 +194,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
   }
 
   function isTailEndofMultiDayEvent(event: Event): boolean {
-    return event.start < props.min && event.end >= props.min
+    return dates.lt(event.start, props.min) && dates.gte(event.end, props.min)
   }
 
   function selectionState(rect: SelectRect): SelectRange | undefined {
@@ -363,7 +321,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
   }
 
   function renderSelection(selectRange: SelectRange) {
-    const diffMin = dates.diff(selectRange.endDate, selectRange.startDate, 'minute')
+    const diffMin = dates.diff(selectRange.endDate, selectRange.startDate, ChronoUnit.MINUTES)
 
     let inner
     if (diffMin <= 30) {
@@ -434,7 +392,7 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
       </ResizeEventContainer>
 
       {selectingRef.current && selectRangeRef.current && renderSelection(selectRangeRef.current)}
-      {props.isCurrentDay && intervalTriggeredRef.current && (
+      {props.isCurrentDay && (
         <div className="cal-current-time-indicator" style={{ top: `${timeIndicatorPosition}%` }}>
           <div className="cal-current-time-circle" />
         </div>

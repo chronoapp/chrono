@@ -1,11 +1,10 @@
-import { DateTime } from 'luxon'
-
 import { useSelect } from 'downshift'
 import { Box, Flex, Icon } from '@chakra-ui/react'
 import { FiArrowRight } from 'react-icons/fi'
 
-import { formatTimeHmma } from '@/util/localizer-luxon'
-import * as dates from '@/util/dates-luxon'
+import { ZonedDateTime as DateTime, ChronoUnit } from '@js-joda/core'
+import { formatTimeHmma } from '@/util/localizer-joda'
+import * as dates from '@/util/dates-joda'
 
 import { getDstOffset } from '../utils/SlotMetrics'
 
@@ -28,8 +27,8 @@ interface TimeOption {
  * Renders the start and end time selectors.
  */
 function TimeRangeSelect(props: TimeRangeSelectProps) {
-  const dayStart = dates.startOf(props.start, 'day')
-  const dayEnd = dates.endOf(props.end, 'day')
+  const dayStart = dates.startOf(props.start, ChronoUnit.DAYS)
+  const dayEnd = dates.endOf(props.end, ChronoUnit.DAYS)
 
   const startTimeOptions = getStartTimeOptions(dayStart, props.end)
   const endTimeOptions = getEndTimeOptions(props.start, dayEnd)
@@ -40,7 +39,7 @@ function TimeRangeSelect(props: TimeRangeSelectProps) {
         timeOptions={startTimeOptions}
         date={props.start}
         onSelect={(idx) => {
-          const date = dates.add(dayStart, idx * INTERVAL, 'minute')
+          const date = dates.add(dayStart, idx * INTERVAL, ChronoUnit.MINUTES)
           props.onSelectStartDate(date)
         }}
       />
@@ -51,7 +50,7 @@ function TimeRangeSelect(props: TimeRangeSelectProps) {
         timeOptions={endTimeOptions}
         date={props.end}
         onSelect={(idx) => {
-          const date = dates.add(props.start, (idx + 1) * INTERVAL, 'minute')
+          const date = dates.add(props.start, (idx + 1) * INTERVAL, ChronoUnit.MINUTES)
           props.onSelectEndDate(date)
         }}
       />
@@ -162,12 +161,12 @@ export function getStartTimeOptions(dayStart: DateTime, end: DateTime): TimeOpti
   const startTimeOptions: TimeOption[] = []
   const daystartdstoffset = getDstOffset(dayStart, end)
 
-  const totalMin = 1 + dates.diff(end, dayStart, 'minutes') + getDstOffset(dayStart, end)
+  const totalMin = 1 + dates.diff(end, dayStart, ChronoUnit.MINUTES) + getDstOffset(dayStart, end)
   const numOptions = Math.ceil(totalMin / INTERVAL)
 
   for (let i = 0; i < numOptions - 1; i++) {
     const minFromStart = i * INTERVAL
-    const date = dayStart.set({ hour: 0, minute: minFromStart, second: 0, millisecond: 0 })
+    const date = dates.setToStartOfDayWithMinutes(dayStart, minFromStart)
 
     const option = {
       value: i,
@@ -189,19 +188,19 @@ export function getStartTimeOptions(dayStart: DateTime, end: DateTime): TimeOpti
  */
 export function getEndTimeOptions(start: DateTime, dayEnd: DateTime): TimeOption[] {
   const endTimeOptions: TimeOption[] = []
-  let endDate = dates.add(start, INTERVAL, 'minute')
+  let endDate = dates.add(start, INTERVAL, ChronoUnit.MINUTES)
 
-  const daystart = dates.startOf(start, 'day')
+  const daystart = dates.startOf(start, ChronoUnit.DAYS)
   const daystartdstoffset = getDstOffset(daystart, start)
 
-  const totalMin = 1 + dates.diff(dayEnd, endDate, 'minutes') + getDstOffset(start, dayEnd)
+  const totalMin = 1 + dates.diff(dayEnd, endDate, ChronoUnit.MINUTES) + getDstOffset(start, dayEnd)
   const numOptions = Math.ceil(totalMin / INTERVAL)
 
-  const minutesFromMidnight = dates.diff(daystart, start, 'minutes') + daystartdstoffset
+  const minutesFromMidnight = dates.diff(daystart, start, ChronoUnit.MINUTES) + daystartdstoffset
 
   for (let i = 0; i < numOptions + 1; i++) {
     const minFromStart = minutesFromMidnight + (i + 1) * INTERVAL
-    const date = endDate.set({ hour: 0, minute: minFromStart, second: 0, millisecond: 0 })
+    const date = dates.setToStartOfDayWithMinutes(endDate, minFromStart)
 
     const option = { value: i, label: `${formatTimeHmma(date)}` }
     endTimeOptions.push(option)

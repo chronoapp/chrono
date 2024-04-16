@@ -21,8 +21,9 @@ import produce from 'immer'
 import { FiMail, FiVideo, FiMapPin, FiBriefcase, FiBell } from 'react-icons/fi'
 import { FiCalendar, FiAlignLeft, FiClock } from 'react-icons/fi'
 
-import * as dates from '@/util/dates-luxon'
-import { formatFullDay, yearStringToDate } from '@/util/localizer-luxon'
+import { ChronoUnit } from '@js-joda/core'
+import * as dates from '@/util/dates-joda'
+import { formatFullDay, yearStringToDate } from '@/util/localizer-joda'
 
 import Event from '@/models/Event'
 import Contact from '@/models/Contact'
@@ -98,7 +99,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
   const [participants, setParticipants] = useState<EventParticipant[]>(props.event.participants)
 
   const defaultDays = eventFields.allDay
-    ? Math.max(dates.diff(eventFields.start, eventFields.end, 'day'), 1)
+    ? Math.max(dates.diff(eventFields.start, eventFields.end, ChronoUnit.DAYS), 1)
     : 1
 
   // Derived Properties
@@ -239,56 +240,99 @@ export default function EventEditFull(props: { event: Event; eventService: Event
 
           <Flex alignItems="center" mt="3" justifyContent="left" color="gray.700">
             <FiClock className="mr-2" size={'1em'} />
-            <Input
-              type="date"
-              size="sm"
-              width="fit-content"
-              border="0"
-              variant="flushed"
-              mr="2"
-              value={formatFullDay(eventFields.start)}
-              onChange={(e) => {
-                const duration = dates.diff(eventFields.end, eventFields.start, 'minutes')
-                const start = dates.merge(yearStringToDate(e.target.value), eventFields.start)
-                const end = dates.add(start, duration, 'minute')
 
-                const updatedFields = eventFields.allDay
-                  ? {
-                      ...eventFields,
-                      start,
-                      end,
-                      startDay: formatFullDay(start),
-                      endDay: formatFullDay(end),
-                    }
-                  : { ...eventFields, start, end }
+            <Flex>
+              <Input
+                type="date"
+                size="sm"
+                width="fit-content"
+                border="0"
+                variant="flushed"
+                mr="2"
+                value={formatFullDay(eventFields.start)}
+                onChange={(e) => {
+                  const duration = dates.diff(
+                    eventFields.end,
+                    eventFields.start,
+                    ChronoUnit.MINUTES
+                  )
+                  const start = dates.merge(yearStringToDate(e.target.value), eventFields.start)
+                  const end = dates.add(start, duration, ChronoUnit.MINUTES)
 
-                setEventFields(updatedFields)
-                const updatedEvent = {
-                  ...props.event,
-                  ...EventFields.getMutableEventFields(updatedFields),
-                }
+                  const updatedFields = eventFields.allDay
+                    ? {
+                        ...eventFields,
+                        start,
+                        end,
+                        startDay: formatFullDay(start),
+                        endDay: formatFullDay(end),
+                      }
+                    : { ...eventFields, start, end }
 
-                setCalendarView((prev) => {
-                  return { ...prev, selectedDate: start }
-                })
-                eventActions.updateEditingEvent(updatedEvent)
-              }}
-              style={{ flex: 1 }}
-            />
-            {eventFields.allDay && (
-              <TimeSelectFullDay
-                days={defaultDays}
-                startDate={eventFields.start}
-                onSelectNumDays={(days) => {
-                  const endDate = dates.add(eventFields.start, days, 'day')
-                  setEventFields({
-                    ...eventFields,
-                    end: endDate,
-                    endDay: formatFullDay(endDate),
+                  setEventFields(updatedFields)
+                  const updatedEvent = {
+                    ...props.event,
+                    ...EventFields.getMutableEventFields(updatedFields),
+                  }
+
+                  setCalendarView((prev) => {
+                    return { ...prev, selectedDate: start }
                   })
+                  eventActions.updateEditingEvent(updatedEvent)
                 }}
+                style={{ flex: 1 }}
               />
-            )}
+
+              {eventFields.allDay && (
+                <Input
+                  ml="2"
+                  type="date"
+                  size="sm"
+                  width="fit-content"
+                  border="0"
+                  variant="flushed"
+                  value={formatFullDay(eventFields.end)}
+                  onChange={(e) => {
+                    const duration = dates.diff(
+                      eventFields.end,
+                      eventFields.start,
+                      ChronoUnit.MINUTES
+                    )
+                    const end = dates.merge(yearStringToDate(e.target.value), eventFields.start)
+
+                    let start
+                    if (dates.lt(end, eventFields.start)) {
+                      // Move the start date back, keep the duration
+                      start = dates.subtract(end, duration, ChronoUnit.MINUTES)
+                    } else {
+                      // Extend the duration
+                      start = eventFields.start
+                    }
+
+                    const updatedFields = eventFields.allDay
+                      ? {
+                          ...eventFields,
+                          start,
+                          end,
+                          startDay: formatFullDay(start),
+                          endDay: formatFullDay(end),
+                        }
+                      : { ...eventFields, start, end }
+
+                    setEventFields(updatedFields)
+                    const updatedEvent = {
+                      ...props.event,
+                      ...EventFields.getMutableEventFields(updatedFields),
+                    }
+
+                    setCalendarView((prev) => {
+                      return { ...prev, selectedDate: start }
+                    })
+                    eventActions.updateEditingEvent(updatedEvent)
+                  }}
+                />
+              )}
+            </Flex>
 
             {!eventFields.allDay && (
               <TimeRangeSelect
@@ -318,7 +362,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
             )}
 
             <Checkbox
-              ml="1"
+              ml="2"
               fontSize={'sm'}
               defaultChecked={eventFields.allDay}
               onChange={(e) => {
@@ -326,8 +370,8 @@ export default function EventEditFull(props: { event: Event; eventService: Event
 
                 let newEventFields
                 if (isAllDay) {
-                  const start = dates.startOf(eventFields.start, 'day')
-                  const end = dates.endOf(eventFields.start, 'day')
+                  const start = dates.startOf(eventFields.start, ChronoUnit.DAYS)
+                  const end = dates.endOf(eventFields.start, ChronoUnit.DAYS)
 
                   newEventFields = {
                     ...eventFields,
@@ -338,8 +382,8 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                     endDay: formatFullDay(end),
                   }
                 } else {
-                  const start = dates.startOf(eventFields.start, 'day')
-                  const end = dates.add(start, 1, 'hour')
+                  const start = dates.startOf(eventFields.start, ChronoUnit.DAYS)
+                  const end = dates.add(start, 1, ChronoUnit.HOURS)
 
                   newEventFields = {
                     ...eventFields,

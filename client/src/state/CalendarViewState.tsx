@@ -1,5 +1,5 @@
 import { atom, selector } from 'recoil'
-import { DateTime } from 'luxon'
+import { ZonedDateTime as DateTime, ZoneId } from '@js-joda/core'
 
 import User from '@/models/User'
 import { userState } from './UserState'
@@ -13,6 +13,9 @@ export type DisplayView = 'Day' | 'Week' | 'WorkWeek' | 'Month'
  * - current view, I.e. Day, Week, Month
  * - the selected date to view
  * - current time.
+ *
+ * Use a fixed-time offset for the selected date & current time.
+ *
  */
 export const calendarViewState = atom({
   key: 'ui-state',
@@ -21,6 +24,7 @@ export const calendarViewState = atom({
     selectedDate: DateTime.now(),
     now: DateTime.now(),
   },
+  dangerouslyAllowMutability: true,
 })
 
 /**
@@ -35,8 +39,9 @@ export const calendarViewStateUserTimezone = selector({
     const timezone = User.getPrimaryTimezone(user)
 
     return {
-      selectedDate: calendarView.selectedDate.setZone(timezone) as DateTime,
-      now: calendarView.now.setZone(timezone),
+      selectedDate: calendarView.selectedDate.withZoneSameInstant(ZoneId.of(timezone)),
+      now: calendarView.now.withZoneSameInstant(ZoneId.of(timezone)),
     }
   },
+  dangerouslyAllowMutability: true,
 })

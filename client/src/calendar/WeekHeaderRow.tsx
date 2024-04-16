@@ -1,5 +1,5 @@
 import { useRecoilValue } from 'recoil'
-import { DateTime } from 'luxon'
+import { ZonedDateTime as DateTime } from '@js-joda/core'
 
 import DateSlotMetrics from './utils/DateSlotMetrics'
 import EventRow from './EventRow'
@@ -18,6 +18,7 @@ interface IProps {
   events: Event[]
   eventService: EventService
   expandRows: boolean
+  now: DateTime
   onShowMore: () => void
 }
 /**
@@ -68,6 +69,7 @@ function WeekHeaderRow(props: IProps) {
           wrapperClassname="cal-time-header-content"
           ignoreNewEventYBoundCheck={true}
           eventService={props.eventService}
+          now={props.now}
         >
           {dayMetrics.levels.map((segments, idx) => (
             <EventRow
@@ -76,6 +78,7 @@ function WeekHeaderRow(props: IProps) {
               segments={segments}
               slotMetrics={dayMetrics}
               eventService={props.eventService}
+              now={props.now}
             />
           ))}
 

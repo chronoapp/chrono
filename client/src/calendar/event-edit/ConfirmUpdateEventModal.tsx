@@ -1,6 +1,8 @@
 import React from 'react'
 import produce from 'immer'
 import { useRecoilValue } from 'recoil'
+import { ChronoUnit } from '@js-joda/core'
+import * as dates from '@/util/dates-joda'
 
 import {
   Box,
@@ -28,7 +30,6 @@ import { eventsState, EditRecurringAction, EventUpdateContext } from '@/state/Ev
 import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 
 import * as API from '@/util/Api'
-import * as dates from '@/util/dates-luxon'
 import { makeShortId } from '@/lib/js-lib/makeId'
 
 interface IProps {
@@ -57,16 +58,16 @@ function ConfirmUpdateEventModal(props: IProps) {
    * Overrides the existing parent recurring event.
    */
   function getUpdatedParentEvent(parent: Event, child: Event, originalChild: Event) {
-    const startOffset = dates.diff(child.start, originalChild.start, 'minutes')
-    const endOffset = dates.diff(child.end, originalChild.end, 'minutes')
+    const startOffset = dates.diff(child.start, originalChild.start, ChronoUnit.MINUTES)
+    const endOffset = dates.diff(child.end, originalChild.end, ChronoUnit.MINUTES)
 
     const updatedStart = dates.gte(child.start, originalChild.start)
-      ? dates.add(parent.start, startOffset, 'minute')
-      : dates.subtract(parent.start, startOffset, 'minute')
+      ? dates.add(parent.start, startOffset, ChronoUnit.MINUTES)
+      : dates.subtract(parent.start, startOffset, ChronoUnit.MINUTES)
 
     const updatedEnd = dates.gte(child.end, originalChild.end)
-      ? dates.add(parent.end, endOffset, 'minute')
-      : dates.subtract(parent.end, endOffset, 'minute')
+      ? dates.add(parent.end, endOffset, ChronoUnit.MINUTES)
+      : dates.subtract(parent.end, endOffset, ChronoUnit.MINUTES)
 
     return produce(parent, (event) => {
       event.title = child.title

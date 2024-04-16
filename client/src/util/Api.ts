@@ -1,5 +1,5 @@
-import { DateTime } from 'luxon'
-import { formatDateTime } from '@/util/localizer-luxon'
+import { ZonedDateTime as DateTime } from '@js-joda/core'
+import { formatDateTime } from '@/util/localizer-joda'
 
 import { getLocalStorageItem, setLocalStorageItem } from '@/lib/local-storage'
 import Event from '@/models/Event'
@@ -266,7 +266,7 @@ export async function createEvent(
   return fetch(`${API_URL}/calendars/${calendarId}/events/?sendUpdateType=${sendUpdateType}`, {
     method: 'POST',
     headers: getHeaders(),
-    body: JSON.stringify(event),
+    body: eventToJSON(event),
   })
     .then(handleErrors)
     .then((resp) => Event.fromJson(calendarId, resp))
@@ -284,7 +284,7 @@ export async function updateEvent(
     {
       method: 'PUT',
       headers: getHeaders(),
-      body: JSON.stringify(event),
+      body: eventToJSON(event),
     }
   )
     .then(handleErrors)
@@ -323,7 +323,6 @@ export async function deleteEvent(
     {
       method: 'DELETE',
       headers: getHeaders(),
-      body: JSON.stringify(event),
     }
   ).then(handleErrors)
 }
@@ -465,4 +464,21 @@ export async function getContactsInEvent(): Promise<ContactInEvent[]> {
   })
     .then(handleErrors)
     .then((resp) => resp.map((contactInEventJSON) => ContactInEvent.fromJson(contactInEventJSON)))
+}
+
+/**
+ *
+ * Converts an event object to a JSON string to be consumed by the API.
+ * The start and end fields are converted to a string in ISO 8601 format.
+ *
+ */
+function eventToJSON(event: Partial<Event>) {
+  const jsonEvent = {
+    ...event,
+    start: formatDateTime(event.start!),
+    end: formatDateTime(event.end!),
+    original_start: event.original_start ? formatDateTime(event.original_start) : null,
+  }
+
+  return JSON.stringify(jsonEvent)
 }

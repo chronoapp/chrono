@@ -1,22 +1,23 @@
 import { useState, useEffect } from 'react'
-import { DateTime } from 'luxon'
 
-import { useRecoilState } from 'recoil'
+import { useRecoilState, useRecoilValue } from 'recoil'
 import { Box, Flex, Text } from '@chakra-ui/react'
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi'
 import clsx from 'clsx'
 import chunk from '@/lib/js-lib/chunk'
 
-import { visibleDays } from '@/util/dates-luxon'
+import { ChronoUnit, ZonedDateTime as DateTime } from '@js-joda/core'
+import { visibleDays } from '@/util/dates-joda'
 import {
   firstDayOfWeek,
   getWeekRange,
   formatTwoLetterWeekday,
   formatDayOfMonth,
   formatMonthTitle,
-} from '@/util/localizer-luxon'
+} from '@/util/localizer-joda'
+import * as dates from '@/util/dates-joda'
 
-import { calendarViewState } from '@/state/CalendarViewState'
+import { calendarViewState, calendarViewStateUserTimezone } from '@/state/CalendarViewState'
 
 type AnimateDirection = 'NONE' | 'FROM_BOTTOM' | 'FROM_TOP'
 
@@ -25,18 +26,19 @@ type AnimateDirection = 'NONE' | 'FROM_BOTTOM' | 'FROM_TOP'
  */
 export default function MiniCalendar() {
   const [calendarView, setCalendarView] = useRecoilState(calendarViewState)
+  const calendarViewUserTimezone = useRecoilValue(calendarViewStateUserTimezone)
+  const { selectedDate, now } = calendarViewUserTimezone
 
   // Current view date (represents a month) of the calendar.
-  const [viewDate, setViewDate] = useState<DateTime>(calendarView.selectedDate)
+  const [viewDate, setViewDate] = useState<DateTime>(selectedDate)
 
   const month = visibleDays(viewDate, firstDayOfWeek(), true)
   const weeks = chunk(month, 7)
   const [animateDirection, setAnimateDirection] = useState<AnimateDirection>('NONE')
-  const today = DateTime.now()
 
   useEffect(() => {
-    setViewDate(calendarView.selectedDate)
-  }, [calendarView.selectedDate])
+    setViewDate(selectedDate)
+  }, [selectedDate])
 
   function renderHeader() {
     const range = getWeekRange(viewDate)
@@ -50,7 +52,7 @@ export default function MiniCalendar() {
   function renderWeek(week: DateTime[], idx: number) {
     const highlightWeek =
       calendarView.view === 'Week' &&
-      week.find((day) => day.hasSame(calendarView.selectedDate, 'day'))
+      week.find((day) => dates.hasSame(day, selectedDate, ChronoUnit.DAYS))
 
     return (
       <Flex
@@ -62,9 +64,9 @@ export default function MiniCalendar() {
       >
         {week.map((day: DateTime, idx) => {
           const label = formatDayOfMonth(day)
-          const isToday = day.hasSame(today, 'day')
+          const isToday = dates.hasSame(day, now, ChronoUnit.DAYS)
           const isOffRange = viewDate.month !== day.month
-          const isSelected = day.hasSame(calendarView.selectedDate, 'day')
+          const isSelected = dates.hasSame(day, selectedDate, ChronoUnit.DAYS)
 
           return (
             <Text
@@ -102,16 +104,17 @@ export default function MiniCalendar() {
             className="icon-button"
             onClick={() => {
               setAnimateDirection('FROM_TOP')
-              setViewDate(viewDate.minus({ months: 1 }))
+              setViewDate(dates.subtract(viewDate, 1, ChronoUnit.MONTHS))
               setTimeout(() => setAnimateDirection('NONE'), 200)
             }}
           >
             <FiChevronUp size={'1.25em'} />
           </span>
           <span
+            className="icon-button"
             onClick={() => {
               setAnimateDirection('FROM_BOTTOM')
-              setViewDate(viewDate.plus({ months: 1 }))
+              setViewDate(dates.add(viewDate, 1, ChronoUnit.MONTHS))
               setTimeout(() => setAnimateDirection('NONE'), 200)
             }}
           >

@@ -4,8 +4,14 @@ import { FiCalendar, FiClock, FiAlignLeft, FiTrash, FiMail, FiMapPin, FiBell } f
 import { MdClose } from 'react-icons/md'
 import linkifyHtml from 'linkifyjs/html'
 
-import { formatFullDay, formatTime24Hour, formatAmPm, formatDuration } from '@/util/localizer-luxon'
-import * as dates from '@/util/dates-luxon'
+import { ZonedDateTime as DateTime, ChronoUnit } from '@js-joda/core'
+import {
+  formatDayMonth,
+  formatTimeShort,
+  formatTimeRangeDays,
+  formatDuration,
+} from '@/util/localizer-joda'
+import * as dates from '@/util/dates-joda'
 
 import { LabelTag } from '@/components/LabelTag'
 import Calendar from '@/models/Calendar'
@@ -47,6 +53,8 @@ export default function EventEditReadOnly(props: IProps) {
   const showReminder =
     (!props.eventFields.useDefaultReminders && eventFields.reminders.length > 0) ||
     (props.eventFields.useDefaultReminders && selectedCalendar.reminders.length > 0)
+
+  const eventDuration = getDurationText(event.all_day, event.start, event.end)
 
   return (
     <Box mt="1" pl="4">
@@ -90,14 +98,10 @@ export default function EventEditReadOnly(props: IProps) {
           <Box mr="2" color="gray.600">
             <FiClock />
           </Box>
-          <Text fontSize={'sm'}>
-            {formatFullDay(eventFields.start)} {formatTime24Hour(eventFields.start)} -{' '}
-            {formatTime24Hour(eventFields.end)}
-            {formatAmPm(eventFields.end)}
-          </Text>
-          {!event.all_day && (
+          <Text fontSize={'sm'}>{getDateDisplayText(event.all_day, event.start, event.end)}</Text>
+          {eventDuration && (
             <Text fontSize="xs" color="gray.500" pl="1">
-              {formatDuration(dates.diff(eventFields.end, eventFields.start, 'minutes'))}
+              {eventDuration}
             </Text>
           )}
         </Flex>
@@ -191,4 +195,31 @@ export default function EventEditReadOnly(props: IProps) {
       )}
     </Box>
   )
+}
+
+function getDateDisplayText(isAllDay: boolean, start: DateTime, end: DateTime) {
+  if (isAllDay) {
+    const days = dates.diff(end, start, ChronoUnit.DAYS)
+    if (days > 1) {
+      return formatTimeRangeDays(start, end)
+    } else {
+      return formatDayMonth(start)
+    }
+  } else {
+    return `${formatDayMonth(start)} · ${formatTimeShort(start)} - ${formatTimeShort(end)}`
+  }
+}
+
+function getDurationText(isAllDay: boolean, start: DateTime, end: DateTime) {
+  if (isAllDay) {
+    const numDays = dates.diff(end, start, ChronoUnit.DAYS)
+
+    if (numDays > 1) {
+      return `${dates.diff(end, start, ChronoUnit.DAYS)} days`
+    } else {
+      return null
+    }
+  } else {
+    return formatDuration(dates.diff(end, start, ChronoUnit.MINUTES))
+  }
 }

@@ -1,4 +1,3 @@
-import { DateTime } from 'luxon'
 import { produce } from 'immer'
 import { useRecoilState, useRecoilValue } from 'recoil'
 
@@ -6,9 +5,11 @@ import { useToast } from '@chakra-ui/react'
 import { GlobalEvent } from '@/util/global'
 import { InfoAlert } from '@/components/Alert'
 
+import { ZonedDateTime as DateTime } from '@js-joda/core'
+import { formatDateTime } from '@/util/localizer-joda'
+import * as dates from '@/util/dates-joda'
+
 import * as API from '@/util/Api'
-import { formatDateTime } from '@/util/localizer-luxon'
-import * as dates from '@/util/dates-luxon'
 import Event from '@/models/Event'
 import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 import {

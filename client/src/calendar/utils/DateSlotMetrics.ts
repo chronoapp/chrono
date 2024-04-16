@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { ZonedDateTime as DateTime } from '@js-joda/core'
 
 import Event from '../../models/Event'
 import { eventSegments, endOfRange, eventLevels, EventSegment } from './eventLevels'

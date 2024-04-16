@@ -1,18 +1,18 @@
 import React from 'react'
-import { Box, useToast } from '@chakra-ui/react'
-
-import { DateTime } from 'luxon'
+import { useToast } from '@chakra-ui/react'
 import clsx from 'clsx'
-
 import { useRecoilValue } from 'recoil'
+
+import { ZonedDateTime as DateTime, ChronoUnit } from '@js-joda/core'
+import { formatTimeShort } from '@/util/localizer-joda'
+import * as dates from '@/util/dates-joda'
+
 import { calendarWithDefault } from '@/state/CalendarState'
 import { dragDropActionState, editingEventState, Direction } from '@/state/EventsState'
 import useEventActions from '@/state/useEventActions'
 
 import { ToastTag } from '@/components/Toast'
 import Event from '../models/Event'
-import { formatTimeShort } from '@/util/localizer-luxon'
-import * as dates from '@/util/dates-luxon'
 
 import { LabelTagColor } from '../components/LabelTag'
 import { adjustHSLABrightness, darkenColor18, makeHSLASolid } from '@/calendar/utils/Colors'
@@ -114,11 +114,11 @@ function TimeGridEvent(props: IProps) {
    */
   function getEventDurationMinutes(): number {
     if (props.isTailSegment || props.style.top == 0) {
-      const startOfDay = dates.startOf(event.end, 'day')
-      return dates.diff(event.end, startOfDay, 'minute')
+      const startOfDay = dates.startOf(event.end, ChronoUnit.DAYS)
+      return dates.diff(event.end, startOfDay, ChronoUnit.MINUTES)
     } else {
-      const displayEnd = dates.min(event.end, dates.endOf(event.start, 'day'))
-      return dates.diff(displayEnd, event.start, 'minute')
+      const displayEnd = dates.min(event.end, dates.endOf(event.start, ChronoUnit.DAYS))
+      return dates.diff(displayEnd, event.start, ChronoUnit.MINUTES)
     }
   }
 
@@ -134,11 +134,11 @@ function TimeGridEvent(props: IProps) {
     const totalHeight = wrapper.scrollHeight
 
     const startOfDay = props.isTailSegment
-      ? dates.startOf(event.end, 'day')
-      : dates.startOf(event.start, 'day')
+      ? dates.startOf(event.end, ChronoUnit.DAYS)
+      : dates.startOf(event.start, ChronoUnit.DAYS)
 
     const minutes = ((dates.MILLI.day / dates.MILLI.minutes) * offsetTop) / totalHeight
-    const dateOfDrag = dates.add(startOfDay, minutes, 'minute')
+    const dateOfDrag = dates.add(startOfDay, minutes, ChronoUnit.MINUTES)
 
     return dateOfDrag
   }
@@ -151,7 +151,7 @@ function TimeGridEvent(props: IProps) {
       key={label.id}
       style={{ marginLeft: 1, height: 8, width: 8, borderRadius: 3 }}
       colorHex={label.color_hex}
-      lighten={event.end < props.now}
+      lighten={dates.lt(event.end, props.now)}
       title={label.title}
     />
   ))

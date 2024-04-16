@@ -1,10 +1,8 @@
-import clsx from 'clsx'
-import { useRecoilState } from 'recoil'
+import { useRecoilState, useRecoilValue } from 'recoil'
 
-import { DateTime } from 'luxon'
-
-import { formatDayOfMonth, formatThreeLetterWeekday } from '@/util/localizer-luxon'
-import * as dates from '@/util/dates-luxon'
+import { ZonedDateTime as DateTime, ChronoUnit } from '@js-joda/core'
+import { formatDayOfMonth, formatThreeLetterWeekday } from '@/util/localizer-joda'
+import * as dates from '@/util/dates-joda'
 
 import User from '@/models/User'
 import Event from '@/models/Event'
@@ -15,6 +13,7 @@ import { EventService } from './event-edit/useEventService'
 import { IconButton, Flex, Box, Text, VStack, Divider } from '@chakra-ui/react'
 import { FiChevronUp, FiChevronDown, FiPlus } from 'react-icons/fi'
 import { userState } from '@/state/UserState'
+import { calendarViewStateUserTimezone } from '@/state/CalendarViewState'
 
 import * as API from '@/util/Api'
 
@@ -24,6 +23,7 @@ interface IProps {
   leftPad: number
   marginRight: number
   eventService: EventService
+  now: DateTime
 }
 
 function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
@@ -58,14 +58,13 @@ function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
 
 function TimeGridHeader(props: IProps) {
   const { expandAllDayEvents, updateExpandAllDayEvents } = useUserFlags()
+  const calendarViewState = useRecoilValue(calendarViewStateUserTimezone)
 
   function renderHeaderCells() {
-    const today = DateTime.now()
-
     return props.range.map((date, i) => {
       const dayNumber = formatDayOfMonth(date)
       const dateString = formatThreeLetterWeekday(date)
-      const isToday = dates.eq(date, today, 'day')
+      const isToday = dates.eq(date, calendarViewState.now, ChronoUnit.DAYS)
 
       return (
         <Box
@@ -77,12 +76,14 @@ function TimeGridHeader(props: IProps) {
           className={isToday ? 'cal-today' : ''}
         >
           <VStack spacing={1}>
-            <Box px={3} py={2}>
+            <Box>
               <Text
                 color={isToday ? 'white' : 'gray.600'}
                 fontWeight={'500'}
                 bg={isToday ? '#5c6bc0' : 'transparent'}
                 borderRadius={5}
+                px={1}
+                py={'0.5'}
                 fontSize="sm"
               >
                 {dayNumber}
@@ -142,6 +143,7 @@ function TimeGridHeader(props: IProps) {
           eventService={props.eventService}
           expandRows={expandAllDayEvents}
           onShowMore={() => updateExpandAllDayEvents(true)}
+          now={props.now}
         />
       </Flex>
     </Flex>

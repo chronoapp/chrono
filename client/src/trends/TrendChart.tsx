@@ -2,15 +2,18 @@ import React from 'react'
 import clsx from 'clsx'
 import { Button, Center, Flex, Box, Text } from '@chakra-ui/react'
 import { Bar } from 'react-chartjs-2'
-import { DateTime } from 'luxon'
+import { useRecoilValue } from 'recoil'
+
+import { ChronoUnit } from '@js-joda/core'
+import * as dates from '@/util/dates-joda'
 
 import { getTrends } from '@/util/Api'
 import { Label, TimePeriod } from '@/models/Label'
 
 import ViewSelector, { TrendView } from './ViewSelector'
 import TagDropdown from './TagDropdown'
-import { useRecoilValue } from 'recoil'
 import { labelsState } from '@/state/LabelsState'
+import { calendarViewState } from '@/state/CalendarViewState'
 
 interface IProps {
   setSelectedView: (view: TrendView) => void
@@ -24,6 +27,7 @@ interface IProps {
 function TrendChart(props: IProps) {
   const [trends, setTrends] = React.useState<any>({})
   const [selectedTimePeriod, setSelectedTimePeriod] = React.useState<TimePeriod>('WEEK')
+  const calendarView = useRecoilValue(calendarViewState)
   const labelState = useRecoilValue(labelsState)
 
   React.useEffect(() => {
@@ -36,15 +40,15 @@ function TrendChart(props: IProps) {
 
   async function updateTrendsData() {
     if (props.selectedLabel) {
-      const end = DateTime.now()
-      let start
+      const end = calendarView.now
 
+      let start
       if (selectedTimePeriod === 'MONTH') {
-        start = end.minus({ months: 12 })
+        start = dates.subtract(end, 12, ChronoUnit.MONTHS)
       } else if (selectedTimePeriod === 'WEEK') {
-        start = end.minus({ weeks: 12 })
+        start = dates.subtract(end, 12, ChronoUnit.WEEKS)
       } else if (selectedTimePeriod === 'DAY') {
-        start = end.minus({ days: 30 })
+        start = dates.subtract(end, 30, ChronoUnit.DAYS)
       }
 
       const trends = await getTrends(props.selectedLabel.id, selectedTimePeriod, start, end)

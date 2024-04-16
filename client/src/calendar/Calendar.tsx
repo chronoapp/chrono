@@ -8,8 +8,9 @@ import SearchResults from '@/calendar/SearchResults'
 import { GlobalEvent } from '@/util/global'
 import useKeyPress from '@/lib/hooks/useKeyPress'
 
-import * as dates from '@/util/dates-luxon'
-import { firstDayOfWeek } from '@/util/localizer-luxon'
+import { ChronoUnit } from '@js-joda/core'
+import * as dates from '@/util/dates-joda'
+import { firstDayOfWeek } from '@/util/localizer-joda'
 
 import { generateGuid } from '@/lib/uuid'
 import useGlobalEventListener from '@/util/useGlobalEventListener'
@@ -91,28 +92,32 @@ function Calendar() {
 
     if (calendarView.view == 'Day') {
       if (e.key === 'ArrowLeft') {
-        const prevDay = calendarViewUserTimezone.selectedDate.minus({ days: 1 })
+        const prevDay = dates.subtract(calendarViewUserTimezone.selectedDate, 1, ChronoUnit.DAYS)
         setCalendarView((state) => ({ ...state, selectedDate: prevDay }))
 
         // setDisplay((state) => ({ ...state, selectedDate: prevDay }))
       } else if (e.key === 'ArrowRight') {
-        const nextDay = calendarViewUserTimezone.selectedDate.plus({ days: 1 })
+        const nextDay = dates.add(calendarViewUserTimezone.selectedDate, 1, ChronoUnit.DAYS)
         setCalendarView((state) => ({ ...state, selectedDate: nextDay }))
       }
     } else if (calendarView.view == 'Week' || calendarView.view == 'WorkWeek') {
       if (e.key === 'ArrowLeft') {
-        const prevWeek = calendarViewUserTimezone.selectedDate.minus({ weeks: 1 })
+        const prevWeek = dates.subtract(calendarViewUserTimezone.selectedDate, 1, ChronoUnit.WEEKS)
         setCalendarView((state) => ({ ...state, selectedDate: prevWeek }))
       } else if (e.key === 'ArrowRight') {
-        const nextWeek = calendarViewUserTimezone.selectedDate.plus({ weeks: 1 })
+        const nextWeek = dates.add(calendarViewUserTimezone.selectedDate, 1, ChronoUnit.WEEKS)
         setCalendarView((state) => ({ ...state, selectedDate: nextWeek }))
       }
     } else if (calendarView.view == 'Month') {
       if (e.key === 'ArrowLeft') {
-        const prevMonth = calendarViewUserTimezone.selectedDate.minus({ months: 1 })
+        const prevMonth = dates.subtract(
+          calendarViewUserTimezone.selectedDate,
+          1,
+          ChronoUnit.MONTHS
+        )
         setCalendarView((state) => ({ ...state, selectedDate: prevMonth }))
       } else if (e.key === 'ArrowRight') {
-        const nextMonth = calendarViewUserTimezone.selectedDate.plus({ months: 1 })
+        const nextMonth = dates.add(calendarViewUserTimezone.selectedDate, 1, ChronoUnit.MONTHS)
         setCalendarView((state) => ({ ...state, selectedDate: nextMonth }))
       }
     }
@@ -120,13 +125,13 @@ function Calendar() {
 
   async function loadCurrentViewEvents(signal: AbortSignal) {
     if (calendarView.view == 'Day') {
-      const start = calendarViewUserTimezone.selectedDate.startOf('day')
-      const end = calendarViewUserTimezone.selectedDate.endOf('day')
+      const start = dates.startOf(calendarViewUserTimezone.selectedDate, ChronoUnit.DAYS)
+      const end = dates.endOf(calendarViewUserTimezone.selectedDate, ChronoUnit.DAYS)
 
       eventService.loadAllEvents(start, end, signal)
     } else if (calendarView.view == 'Week' || calendarView.view == 'WorkWeek') {
-      const lastWeek = calendarViewUserTimezone.selectedDate.minus({ weeks: 1 })
-      const nextWeek = calendarViewUserTimezone.selectedDate.plus({ weeks: 1 })
+      const lastWeek = dates.subtract(calendarViewUserTimezone.selectedDate, 1, ChronoUnit.WEEKS)
+      const nextWeek = dates.add(calendarViewUserTimezone.selectedDate, 1, ChronoUnit.WEEKS)
 
       const start = dates.startOfWeek(lastWeek, firstOfWeek)
       const end = dates.endOfWeek(nextWeek, firstOfWeek)
