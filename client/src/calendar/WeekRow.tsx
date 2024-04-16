@@ -1,8 +1,8 @@
 import clsx from 'clsx'
-import { DateTime } from 'luxon'
+import { ZonedDateTime as DateTime, ChronoUnit } from '@js-joda/core'
 
-import * as dates from '@/util/dates-luxon'
-import { formatTwoDigitDay, formatThreeLetterWeekday } from '@/util/localizer-luxon'
+import * as dates from '@/util/dates-joda'
+import { formatTwoDigitDay, formatThreeLetterWeekday } from '@/util/localizer-joda'
 import DateSlotMetrics from './utils/DateSlotMetrics'
 
 import Event from '../models/Event'
@@ -50,7 +50,7 @@ function WeekRow(props: IProps) {
   function renderHeadingCell(date: DateTime, index: number) {
     const label = formatTwoDigitDay(date)
     const isOffRange = props.date.month !== date.month
-    let isCurrent = dates.eq(date, props.today, 'day')
+    let isCurrent = dates.eq(date, props.today, ChronoUnit.DAYS)
 
     return (
       <div key={`header_${index}`} className={clsx('cal-date-cell', isOffRange && 'cal-off-range')}>

@@ -11,19 +11,21 @@ import {
 } from '@chakra-ui/react'
 import { FiX } from 'react-icons/fi'
 
-import { formatTimeAgo } from '@/util/localizer-luxon'
-import * as dates from '@/util/dates-luxon'
+import { ZonedDateTime as DateTime, ChronoUnit } from '@js-joda/core'
+import { formatTimeAgo } from '@/util/localizer-joda'
+import * as dates from '@/util/dates-joda'
 
 import * as API from '@/util/Api'
 import ContactInEvent from '@/models/ContactInEvent'
-import { DateTime } from 'luxon'
 
 function ContactInEventRow(props: { contact: ContactInEvent }) {
   const { contact } = props
   const displayName = contact.contact.displayName || contact.contact.email
 
   const today = DateTime.now()
-  const lastSeenSeconds = contact.last_seen ? dates.diff(today, contact.last_seen, 'seconds') : null
+  const lastSeenSeconds = contact.last_seen
+    ? dates.diff(today, contact.last_seen, ChronoUnit.SECONDS)
+    : null
   const lastSeenAgo = lastSeenSeconds ? formatTimeAgo(lastSeenSeconds) : null
 
   return (

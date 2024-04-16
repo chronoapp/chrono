@@ -1,6 +1,9 @@
 import React from 'react'
-import { DateTime } from 'luxon'
 import { withEventActions, InjectedEventActionsProps } from '@/state/withEventActions'
+
+import { ZonedDateTime as DateTime, ChronoUnit } from '@js-joda/core'
+import { formatFullDay } from '@/util/localizer-joda'
+import * as dates from '@/util/dates-joda'
 
 import Event from '@/models/Event'
 import DateSlotMetrics from './utils/DateSlotMetrics'
@@ -9,8 +12,6 @@ import EventRow from './EventRow'
 
 import { Selection, SelectRect, Rect, getBoundsForNode, EventData, isEvent } from '@/util/Selection'
 import { pointInBox, getSlotAtX } from '@/util/selection-utils'
-import { formatFullDay } from '@/util/localizer-luxon'
-import * as dates from '@/util/dates-luxon'
 
 import { EventService } from './event-edit/useEventService'
 import Calendar from '@/models/Calendar'
@@ -107,10 +108,18 @@ class WeekRowContainer extends React.Component<IProps & InjectedEventActionsProp
       getSlotAtX(bounds, point.x, false, this.props.dayMetrics.slots)
     )
     let start = dates.merge(startDay, event.start)
-    let end = dates.add(start, dates.diff(event.start, event.end, 'minutes'), 'minute')
+    let end = dates.add(
+      start,
+      dates.diff(event.start, event.end, ChronoUnit.MINUTES),
+      ChronoUnit.MINUTES
+    )
 
     if (event.all_day) {
-      let endDay = dates.add(startDay, dates.diff(event.start, event.end, 'day'), 'day')
+      let endDay = dates.add(
+        startDay,
+        dates.diff(event.start, event.end, ChronoUnit.DAYS),
+        ChronoUnit.DAYS
+      )
       this.updateEvent(event, start, end, formatFullDay(startDay), formatFullDay(endDay))
     } else {
       this.updateEvent(event, start, end, null, null)

@@ -19,7 +19,7 @@ export function startOfWeek(date: ZonedDateTime, firstOfWeek: number = 0): Zoned
 
 // Utility function to get the end of the week for a given DateTime
 export function endOfWeek(date: ZonedDateTime, firstOfWeek: number = 0): ZonedDateTime {
-  return startOfWeek(date, firstOfWeek).plusDays(6).truncatedTo(ChronoUnit.DAYS)
+  return endOfDay(startOfWeek(date, firstOfWeek).plusDays(6))
 }
 
 export function firstVisibleDay(date: ZonedDateTime, firstOfWeek: number): ZonedDateTime {
@@ -216,13 +216,13 @@ export function setToStartOfDayWithMinutes(
   dayStart: ZonedDateTime,
   minFromStart: number
 ): ZonedDateTime {
-  return dayStart
-    .withHour(0)
-    .withMinute(minFromStart)
-    .withSecond(0)
-    .with(ChronoField.MILLI_OF_SECOND, 0)
+  return dayStart.truncatedTo(ChronoUnit.DAYS).plusMinutes(minFromStart)
 }
 
 export function toMillis(date: ZonedDateTime): number {
   return date.toInstant().toEpochMilli()
+}
+
+function endOfDay(date: ZonedDateTime): ZonedDateTime {
+  return date.withHour(23).withMinute(59).withSecond(59).withNano(999999999)
 }

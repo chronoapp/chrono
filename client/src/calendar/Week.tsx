@@ -1,7 +1,7 @@
-import { DateTime } from 'luxon'
+import { ZonedDateTime as DateTime } from '@js-joda/core'
+import { formatWeekRange, getWeekRange } from '../util/localizer-joda'
 
 import { EventService } from './event-edit/useEventService'
-import { formatWeekRange, getWeekRange } from '../util/localizer-luxon'
 
 import TimeGrid from './TimeGrid'
 import Event from '../models/Event'

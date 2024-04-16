@@ -1,8 +1,10 @@
 import React from 'react'
-import { DateTime } from 'luxon'
 import { useRecoilValue } from 'recoil'
 import clsx from 'clsx'
 import { Portal, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from '@chakra-ui/react'
+
+import { ZonedDateTime as DateTime } from '@js-joda/core'
+import { formatTimeShort } from '@/util/localizer-joda'
 
 import { calendarWithDefault } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
@@ -10,7 +12,6 @@ import { dragDropActionState, editingEventState } from '@/state/EventsState'
 
 import { EventSegment } from './utils/eventLevels'
 import DateSlotMetrics from './utils/DateSlotMetrics'
-import { formatTimeShort } from '@/util/localizer-luxon'
 import EventPopover from './event-edit/EventEditPopover'
 import { EventVerticalIndicator } from '@/components/EventStyle'
 

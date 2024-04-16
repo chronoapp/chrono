@@ -4,8 +4,9 @@ import { FiCalendar, FiClock, FiAlignLeft, FiTrash, FiMail, FiMapPin, FiBell } f
 import { MdClose } from 'react-icons/md'
 import linkifyHtml from 'linkifyjs/html'
 
-import { formatFullDay, formatTime24Hour, formatAmPm, formatDuration } from '@/util/localizer-luxon'
-import * as dates from '@/util/dates-luxon'
+import { ChronoUnit } from '@js-joda/core'
+import { formatFullDay, formatTime24Hour, formatAmPm, formatDuration } from '@/util/localizer-joda'
+import * as dates from '@/util/dates-joda'
 
 import { LabelTag } from '@/components/LabelTag'
 import Calendar from '@/models/Calendar'
@@ -97,7 +98,7 @@ export default function EventEditReadOnly(props: IProps) {
           </Text>
           {!event.all_day && (
             <Text fontSize="xs" color="gray.500" pl="1">
-              {formatDuration(dates.diff(eventFields.end, eventFields.start, 'minutes'))}
+              {formatDuration(dates.diff(eventFields.end, eventFields.start, ChronoUnit.MINUTES))}
             </Text>
           )}
         </Flex>

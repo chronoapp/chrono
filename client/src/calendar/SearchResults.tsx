@@ -12,10 +12,9 @@ import { editingEventState } from '@/state/EventsState'
 import EventPopover from '@/calendar/event-edit/EventEditPopover'
 import { sortEvents } from '@/calendar/utils/eventLevels'
 
-import { formatDayMonthYearWeekday, formatTimeRange } from '@/util/localizer-luxon'
+import { formatDayMonthYearWeekday, formatTimeRange } from '@/util/localizer-joda'
 import { LabelTag } from '@/components/LabelTag'
 import Event from '@/models/Event'
-import User from '@/models/User'
 
 import { EventService } from './event-edit/useEventService'
 import * as API from '@/util/Api'

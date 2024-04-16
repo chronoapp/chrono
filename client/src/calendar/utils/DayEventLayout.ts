@@ -1,14 +1,17 @@
+import * as dates from '@/util/dates-joda'
+import CalendarEvent from '@/models/Event'
+
 /**
  * TODO: Type this.
  */
 class Event {
-  readonly start
-  readonly end
-  readonly startMs
-  readonly endMs
-  readonly top
-  readonly height
-  readonly data
+  readonly start: number
+  readonly end: number
+  readonly startMs: number
+  readonly endMs: number
+  readonly top: number
+  readonly height: number
+  readonly data: CalendarEvent
 
   public rows
   public container
@@ -23,8 +26,8 @@ class Event {
 
     this.start = start
     this.end = end
-    this.startMs = +startDate
-    this.endMs = +endDate
+    this.startMs = dates.toMillis(startDate)
+    this.endMs = dates.toMillis(endDate)
     this.top = top
     this.height = height
     this.data = data
@@ -144,7 +147,11 @@ function sortByRender(events: Event[]) {
   return sorted
 }
 
-export default function getStyledEvents(events, minimumStartDifference, slotMetrics) {
+export default function getStyledEvents(
+  events: CalendarEvent[],
+  minimumStartDifference,
+  slotMetrics
+) {
   // Create proxy events and order them so that we don't have
   // to fiddle with z-indexes.
   const proxies = events.map((event) => new Event(event, slotMetrics))

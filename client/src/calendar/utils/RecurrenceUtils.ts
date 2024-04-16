@@ -1,5 +1,7 @@
-import { DateTime } from 'luxon'
-import * as dates from '@/util/dates-luxon'
+import { ChronoUnit, ZonedDateTime as DateTime } from '@js-joda/core'
+import * as dates from '@/util/dates-joda'
+import * as localizer from '@/util/localizer-joda'
+
 import { produce } from 'immer'
 
 import { getRecurrenceRules } from '@/calendar/event-edit/RecurringEventEditor'
@@ -33,19 +35,21 @@ export function getSplitRRules(
 
   let splitDate
   if (isAllDay) {
-    const year = splitDateNewStart.year
-    const month = splitDateNewStart.month
-    const day = splitDateNewStart.day - 1 // stop one day before
+    const year = splitDateNewStart.year()
+    const month = splitDateNewStart.monthValue()
+    const day = splitDateNewStart.dayOfMonth() - 1 // stop one day before
+
     splitDate = datetime(year, month, day)
   } else {
-    splitDate = dates.subtract(splitDateOriginalStart, 1, 'second')
+    // Subtract one second to make sure we don't include this current event.
+    splitDate = localizer.toJsDate(dates.subtract(splitDateOriginalStart, 1, ChronoUnit.SECONDS))
   }
 
   if (ruleOptions.count) {
     const upToThisEventRules = produce(ruleOptions, (draft) => {
       delete draft['count']
       draft.until = splitDate
-      draft.dtstart = originalStartDt.toJSDate()
+      draft.dtstart = localizer.toJsDate(originalStartDt)
     })
 
     const upToThisRRule = new RRule(upToThisEventRules)
@@ -77,7 +81,7 @@ export function getSplitRRules(
     const endRule = new RRule({
       ...ruleOptions,
       until: ruleOptions.until
-        ? dates.max(DateTime.fromJSDate(ruleOptions.until), splitDateNewStart).toJSDate()
+        ? localizer.toJsDate(dates.max(localizer.fromJsDate(ruleOptions.until), splitDateNewStart))
         : ruleOptions.until,
     })
 

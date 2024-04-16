@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { ChronoUnit, ZonedDateTime as DateTime } from '@js-joda/core'
 
 import { produce } from 'immer'
 import { normalizeArr } from '@/lib/normalizer'
@@ -6,7 +6,7 @@ import { useRecoilState } from 'recoil'
 
 import Event, { SyncStatus } from '@/models/Event'
 import Calendar from '@/models/Calendar'
-import * as dates from '@/util/dates-luxon'
+import * as dates from '@/util/dates-joda'
 
 import {
   dragDropActionState,
@@ -294,7 +294,7 @@ export default function useEventActions() {
     startDate: DateTime,
     endDate?: DateTime
   ) {
-    const end = endDate || dates.add(startDate, 1, allDay ? 'day' : 'hour')
+    const end = endDate || dates.add(startDate, 1, allDay ? ChronoUnit.DAYS : ChronoUnit.HOURS)
     const event = Event.newDefaultEvent(calendar, startDate, end, allDay)
 
     setEditingEvent({

@@ -1,10 +1,8 @@
-import clsx from 'clsx'
-import { useRecoilState } from 'recoil'
+import { useRecoilState, useRecoilValue } from 'recoil'
 
-import { DateTime } from 'luxon'
-
-import { formatDayOfMonth, formatThreeLetterWeekday } from '@/util/localizer-luxon'
-import * as dates from '@/util/dates-luxon'
+import { ZonedDateTime as DateTime, ChronoUnit } from '@js-joda/core'
+import { formatDayOfMonth, formatThreeLetterWeekday } from '@/util/localizer-joda'
+import * as dates from '@/util/dates-joda'
 
 import User from '@/models/User'
 import Event from '@/models/Event'
@@ -15,6 +13,7 @@ import { EventService } from './event-edit/useEventService'
 import { IconButton, Flex, Box, Text, VStack, Divider } from '@chakra-ui/react'
 import { FiChevronUp, FiChevronDown, FiPlus } from 'react-icons/fi'
 import { userState } from '@/state/UserState'
+import { calendarViewStateUserTimezone } from '@/state/CalendarViewState'
 
 import * as API from '@/util/Api'
 
@@ -58,14 +57,13 @@ function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
 
 function TimeGridHeader(props: IProps) {
   const { expandAllDayEvents, updateExpandAllDayEvents } = useUserFlags()
+  const calendarViewState = useRecoilValue(calendarViewStateUserTimezone)
 
   function renderHeaderCells() {
-    const today = DateTime.now()
-
     return props.range.map((date, i) => {
       const dayNumber = formatDayOfMonth(date)
       const dateString = formatThreeLetterWeekday(date)
-      const isToday = dates.eq(date, today, 'day')
+      const isToday = dates.eq(date, calendarViewState.now, ChronoUnit.DAYS)
 
       return (
         <Box

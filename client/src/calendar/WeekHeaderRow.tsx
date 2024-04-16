@@ -1,5 +1,5 @@
 import { useRecoilValue } from 'recoil'
-import { DateTime } from 'luxon'
+import { ZonedDateTime as DateTime } from '@js-joda/core'
 
 import DateSlotMetrics from './utils/DateSlotMetrics'
 import EventRow from './EventRow'

@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { ZonedDateTime as DateTime } from '@js-joda/core'
 
 import { Label } from '@/models/Label'
 import Event, { Transparency, Visibility } from '@/models/Event'

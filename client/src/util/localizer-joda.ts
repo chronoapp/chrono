@@ -16,9 +16,9 @@ export function firstDayOfWeek(): number {
 }
 
 export function formatTimeShort(date: ZonedDateTime, space: boolean = false): string {
-  const hour = date.hour()
+  const hour = date.format(DateTimeFormatter.ofPattern('h').withLocale(Locale.US))
   const minutes = date.minute()
-  const meridian = date.hour() < 12 ? 'am' : 'pm'
+  const meridian = formatAmPm(date).toLowerCase()
 
   if (minutes === 0) {
     return `${hour}${space ? ' ' : ''}${meridian}`
@@ -31,6 +31,9 @@ export function formatTimeRange(start: ZonedDateTime, end: ZonedDateTime): strin
   return `${formatTimeShort(start)} – ${formatTimeShort(end)}`
 }
 
+/**
+ * Formats a ZonedDateTime to a string in the format 'yyyy-MM-ddTHH:mm:ssZ'.
+ */
 export function formatDateTime(value: ZonedDateTime): string {
   return value.format(DateTimeFormatter.ISO_INSTANT)
 }
@@ -68,7 +71,6 @@ export function formatFullDay(date: ZonedDateTime): string {
 }
 
 export function formatLocaleDateString(date: ZonedDateTime): string {
-  // This would require specifying a pattern or using predefined formats.
   return date.format(DateTimeFormatter.ofPattern('EEEE, MMMM d, yyyy').withLocale(Locale.US))
 }
 

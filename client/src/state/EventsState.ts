@@ -1,5 +1,5 @@
 import { atom, selector } from 'recoil'
-import { DateTime } from 'luxon'
+import { ZonedDateTime as DateTime, ZoneId } from '@js-joda/core'
 
 import Event from '@/models/Event'
 import User from '@/models/User'
@@ -57,16 +57,23 @@ export const eventsState = atom({
     eventsByCalendar: {},
     editingEvent: null,
   } as EventState,
+
+  // Joda's ZonedDateTime, when used with a Non-System Timezone, uses property assignments,
+  // which mutates its object internally. So we need to allow mutability to make sure recoil
+  // does not deep freeze the ZonedDateTime object.
+  dangerouslyAllowMutability: true,
 })
 
 export const editingEventState = atom({
   key: 'editing-event-state',
   default: null as EditingEvent | null,
+  dangerouslyAllowMutability: true,
 })
 
 export const dragDropActionState = atom({
   key: 'drag-drop-action-state',
   default: null as DragDropAction | null,
+  dangerouslyAllowMutability: true,
 })
 
 /**
@@ -80,6 +87,10 @@ export const allVisibleEventsSelector = selector({
     const calendars = get(calendarsState)
     const editingEvent = get(editingEventState)
     const user = get(userState)
+    if (!user) {
+      return []
+    }
+
     const primaryTimezone = User.getPrimaryTimezone(user!)
 
     const { eventsByCalendar } = events
@@ -113,11 +124,14 @@ export const allVisibleEventsSelector = selector({
 
     return allEvents
   },
+  dangerouslyAllowMutability: true,
 })
 
-const adjustEventTimezone = (event, timezone: string) => ({
+const adjustEventTimezone = (event: Event, timezone: string): Event => ({
   ...event,
-  start: event.start.setZone(timezone),
-  end: event.end.setZone(timezone),
-  original_start: event.original_start?.setZone(timezone),
+  start: event.start.withZoneSameInstant(ZoneId.of(timezone)),
+  end: event.end.withZoneSameInstant(ZoneId.of(timezone)),
+  original_start: event.original_start
+    ? event.original_start.withZoneSameInstant(ZoneId.of(timezone))
+    : null,
 })

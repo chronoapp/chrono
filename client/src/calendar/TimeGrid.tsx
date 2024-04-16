@@ -1,12 +1,11 @@
 import { useRef, useState, useEffect } from 'react'
 import { useRecoilValue } from 'recoil'
-import { DateTime } from 'luxon'
-
 import getScrollbarSize from 'dom-helpers/scrollbarSize'
 import { Box } from '@chakra-ui/react'
 
-import { formatTimeShort } from '../util/localizer-luxon'
-import * as dates from '../util/dates-luxon'
+import { ZonedDateTime as DateTime, ChronoUnit } from '@js-joda/core'
+import { formatTimeShort } from '@/util/localizer-joda'
+import * as dates from '@/util/dates-joda'
 
 import Event from '../models/Event'
 import DayColumn from './DayColumn'
@@ -28,8 +27,6 @@ function remToPixels(rem) {
 interface IProps {
   step: number
   timeslots: number
-  min: DateTime
-  max: DateTime
   range: DateTime[]
   events: Event[]
   now: DateTime
@@ -47,9 +44,10 @@ function TimeGrid(props: IProps) {
   const [gutterWidth, setGutterWidth] = useState(0)
   const [scrollbarSize, setScrollbarSize] = useState(0)
 
-  const slotMetrics = useRef<SlotMetrics>(
-    new SlotMetrics(props.min, props.max, props.step, props.timeslots)
-  )
+  const min = dates.startOf(props.now, ChronoUnit.DAYS)
+  const max = dates.endOf(props.now, ChronoUnit.DAYS)
+
+  const slotMetrics = useRef<SlotMetrics>(new SlotMetrics(min, max, props.step, props.timeslots))
   const gutterRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLInputElement>(null)
   const scrollTopRatio = useRef<number | undefined>(undefined)
@@ -109,11 +107,15 @@ function TimeGrid(props: IProps) {
    * Scrolls to time, defaults to now if date in event.detail is unspecified.
    */
   function scrollToEvent(event) {
-    const { min, max, now } = props
+    const { now } = props
     const scrollToDate = event.detail ? event.detail : now
 
     const totalMillis = dates.diff(max, min)
-    const diffMillis = dates.diff(scrollToDate, dates.startOf(scrollToDate, 'day'), 'millisecond')
+    const diffMillis = dates.diff(
+      scrollToDate,
+      dates.startOf(scrollToDate, ChronoUnit.DAYS),
+      ChronoUnit.MILLIS
+    )
     const scrollTopRatio = diffMillis / totalMillis
 
     const content = contentRef.current!
@@ -127,11 +129,11 @@ function TimeGrid(props: IProps) {
    * Makes sure the content is centered at a reasonable place.
    */
   function calculateTopScroll(events: Event[]) {
-    const { min, max, now, range } = props
+    const { now, range } = props
     const totalMillis = dates.diff(max, min)
 
-    if (now >= range[0] && now <= range[range.length - 1]) {
-      const diffMillis = dates.diff(now, dates.startOf(now, 'day')) / 1.1
+    if (dates.gte(now, range[0]) && dates.lte(now, range[range.length - 1])) {
+      const diffMillis = dates.diff(now, dates.startOf(now, ChronoUnit.DAYS)) / 1.1
       scrollTopRatio.current = diffMillis / totalMillis
     }
 
@@ -143,7 +145,11 @@ function TimeGrid(props: IProps) {
     let avgFromTop = 0
     for (let i = 0; i < sampleSize; i++) {
       const scrollToTime = events[i].start
-      const diffMillis = dates.diff(scrollToTime, dates.startOf(scrollToTime, 'day'), 'millisecond')
+      const diffMillis = dates.diff(
+        scrollToTime,
+        dates.startOf(scrollToTime, ChronoUnit.DAYS),
+        ChronoUnit.MILLIS
+      )
       const scrollTop = diffMillis / totalMillis
       avgFromTop += scrollTop
     }
@@ -165,10 +171,10 @@ function TimeGrid(props: IProps) {
 
   function renderDays(range: DateTime[]) {
     return range.map((date, jj) => {
-      const startOfDay = dates.merge(date, props.min)
+      const startOfDay = dates.merge(date, min)
       const dayEvents = props.events.filter(
         (event) =>
-          dates.inRange(date, event.start, event.end, 'day') &&
+          dates.inRange(date, event.start, event.end, ChronoUnit.DAYS) &&
           !event.all_day &&
           !dates.eq(event.end, startOfDay) // Ignore if event ends exactly on start of this day.
       )
@@ -181,8 +187,8 @@ function TimeGrid(props: IProps) {
           step={props.step}
           timeslots={props.timeslots}
           min={startOfDay}
-          max={dates.merge(date, props.max)}
-          isCurrentDay={dates.eq(date, props.now, 'day')}
+          max={dates.merge(date, max)}
+          isCurrentDay={dates.eq(date, props.now, ChronoUnit.DAYS)}
           now={props.now}
           eventService={props.eventService}
           primaryCalendar={props.primaryCalendar}
@@ -262,8 +268,6 @@ function TimeGrid(props: IProps) {
 TimeGrid.defaultProps = {
   step: 15,
   timeslots: 4,
-  min: dates.startOf(DateTime.now(), 'day'),
-  max: dates.endOf(DateTime.now(), 'day'),
 }
 
 export default TimeGrid

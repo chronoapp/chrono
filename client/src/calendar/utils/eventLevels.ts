@@ -1,6 +1,7 @@
-import { DateTime, DateTimeUnit } from 'luxon'
-import Event from '../../models/Event'
-import * as dates from '../../util/dates-luxon'
+import { ZonedDateTime as DateTime, ChronoUnit } from '@js-joda/core'
+
+import Event from '@/models/Event'
+import * as dates from '@/util/dates-joda'
 
 export class EventSegment {
   constructor(
@@ -11,7 +12,7 @@ export class EventSegment {
   ) {}
 }
 
-export function endOfRange(dateRange: DateTime[], unit: DateTimeUnit = 'day') {
+export function endOfRange(dateRange: DateTime[], unit: ChronoUnit = ChronoUnit.DAYS) {
   return {
     first: dateRange[0],
     last: dates.add(dateRange[dateRange.length - 1], 1, unit),
@@ -20,13 +21,13 @@ export function endOfRange(dateRange: DateTime[], unit: DateTimeUnit = 'day') {
 
 export function eventSegments(event: Event, range: DateTime[]): EventSegment {
   const { first, last } = endOfRange(range)
-  const slots = dates.diff(first, last, 'day')
+  const slots = dates.diff(first, last, ChronoUnit.DAYS)
 
-  let start = dates.max(dates.startOf(event.start, 'day'), first)
-  let end = dates.min(dates.endOf(event.end, 'day'), last)
+  let start = dates.max(dates.startOf(event.start, ChronoUnit.DAYS), first)
+  let end = dates.min(dates.endOf(event.end, ChronoUnit.DAYS), last)
 
-  let padding = range.findIndex((x) => dates.eq(x, start, 'day'))
-  let span = dates.diff(start, end, 'day')
+  let padding = range.findIndex((x) => dates.eq(x, start, ChronoUnit.DAYS))
+  let span = dates.diff(start, end, ChronoUnit.DAYS)
 
   span = Math.min(span, slots)
   span = Math.max(span, 1)
@@ -67,14 +68,14 @@ export function eventLevels(
 }
 
 export function inRange(e: Event, start: DateTime, end: DateTime) {
-  let eStart = dates.startOf(e.start, 'day')
+  let eStart = dates.startOf(e.start, ChronoUnit.DAYS)
   let eEnd = e.end
 
-  let startsBeforeEnd = dates.lte(eStart, end, 'day')
+  let startsBeforeEnd = dates.lte(eStart, end, ChronoUnit.DAYS)
   // when the event is zero duration we need to handle a bit differently
-  let endsAfterStart = !dates.eq(eStart, eEnd, 'minute')
-    ? dates.gt(eEnd, start, 'minute')
-    : dates.gte(eEnd, start, 'minute')
+  let endsAfterStart = !dates.eq(eStart, eEnd, ChronoUnit.MINUTES)
+    ? dates.gt(eEnd, start, ChronoUnit.MINUTES)
+    : dates.gte(eEnd, start, ChronoUnit.MINUTES)
 
   return startsBeforeEnd && endsAfterStart
 }
@@ -84,17 +85,21 @@ export function segsOverlap(seg, otherSegs) {
 }
 
 export function sortEvents(evtA: Event, evtB: Event) {
-  let startSort = +dates.startOf(evtA.start, 'day') - +dates.startOf(evtB.start, 'day')
+  const startSort = dates.diff(
+    dates.startOf(evtA.start, ChronoUnit.DAYS),
+    dates.startOf(evtB.start, ChronoUnit.DAYS),
+    ChronoUnit.DAYS
+  )
 
-  let durA = dates.diff(evtA.start, dates.endOf(evtA.end, 'day'), 'day')
-  let durB = dates.diff(evtB.start, dates.endOf(evtB.end, 'day'), 'day')
+  let durA = dates.diff(evtA.start, dates.endOf(evtA.end, ChronoUnit.DAYS), ChronoUnit.DAYS)
+  let durB = dates.diff(evtB.start, dates.endOf(evtB.end, ChronoUnit.DAYS), ChronoUnit.DAYS)
 
   return (
     startSort || // sort by start Day first
     Math.max(durB, 1) - Math.max(durA, 1) || // events spanning multiple days go first
     +evtB.all_day - +evtA.all_day || // then allDay single day events
-    +evtA.start - +evtB.start || // then sort by start time
-    +evtA.end - +evtB.end || // then sort by end time
+    dates.diff(evtA.start, evtB.start, ChronoUnit.MINUTES) || // then sort by start time
+    dates.diff(evtA.end, evtB.end, ChronoUnit.MINUTES) || // then sort by end time
     (evtA.title || '').localeCompare(evtB.title || '') // then sort by title
   )
 }

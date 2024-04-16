@@ -1,12 +1,12 @@
 import React from 'react'
-import { DateTime } from 'luxon'
+import { ChronoUnit, ZonedDateTime as DateTime } from '@js-joda/core'
 
 import { DragDropAction } from '@/state/EventsState'
 import { withEventActions, InjectedEventActionsProps } from '@/state/withEventActions'
 import Event from '@/models/Event'
 
-import * as dates from '@/util/dates-luxon'
-import { formatTimeRange } from '@/util/localizer-luxon'
+import * as dates from '@/util/dates-joda'
+import { formatTimeRange } from '@/util/localizer-joda'
 import { GlobalEvent } from '@/util/global'
 import { Selection, Rect, EventData, getBoundsForNode, SelectRect } from '@/util/Selection'
 
@@ -111,10 +111,10 @@ class ResizeEventContainer extends React.Component<IProps & InjectedEventActions
     const eventTop = bounds.top
     const cutoffDate = this.props.slotMetrics.start
 
-    if (event && event.start < cutoffDate && event.end > cutoffDate) {
+    if (event && dates.lt(event.start, cutoffDate) && dates.gt(event.end, cutoffDate)) {
       const eventHeight = bounds.bottom - bounds.top
-      const totalEventMinutes = dates.diff(event.start, event.end, 'minutes')
-      const overflowMinutes = dates.diff(cutoffDate, event.start, 'minutes')
+      const totalEventMinutes = dates.diff(event.start, event.end, ChronoUnit.MINUTES)
+      const overflowMinutes = dates.diff(cutoffDate, event.start, ChronoUnit.MINUTES)
       const unitsPerMinute = eventHeight / (totalEventMinutes - overflowMinutes)
       const overflowHeight =
         unitsPerMinute * totalEventMinutes * (overflowMinutes / totalEventMinutes)
@@ -181,7 +181,7 @@ class ResizeEventContainer extends React.Component<IProps & InjectedEventActions
           this.props.onEventUpdated(updatedEvent)
 
           if (
-            updatedEvent.start < this.props.slotMetrics.start &&
+            dates.lt(updatedEvent.start, this.props.slotMetrics.start) &&
             updatedEvent.syncStatus === 'NOT_SYNCED'
           ) {
             document.dispatchEvent(

@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { ZonedDateTime as DateTime } from '@js-joda/core'
 
 import { Button, Text, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react'
 import { FiChevronDown } from 'react-icons/fi'

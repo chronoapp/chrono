@@ -12,8 +12,8 @@ import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 import { useRecoilValue } from 'recoil'
 import chunk from '@/lib/js-lib/chunk'
 
-import { DateTime } from 'luxon'
-import * as dates from '@/util/dates-luxon'
+import { ChronoUnit, ZonedDateTime as DateTime } from '@js-joda/core'
+import * as dates from '@/util/dates-joda'
 import {
   firstDayOfWeek,
   getWeekRange,
@@ -22,7 +22,7 @@ import {
   formatDayOfMonth,
   formatMonthDay,
   formatMonthTitle,
-} from '@/util/localizer-luxon'
+} from '@/util/localizer-joda'
 
 import { hexToHSL } from '@/calendar/utils/Colors'
 import { Label } from '@/models/Label'
@@ -89,8 +89,8 @@ function HabitGraph(props: IProps) {
         {week.map((day: DateTime, idx: number) => {
           const label = formatDayOfMonth(day)
           const dayKey = formatFullDay(day)
-          const dayValue = day > curDate ? 0 : trendMap.get(dayKey)
-          const isToday = curDate.hasSame(day, 'day')
+          const dayValue = dates.gt(day, curDate) ? 0 : trendMap.get(dayKey)
+          const isToday = dates.hasSame(curDate, day, ChronoUnit.DAYS)
 
           let color
           if (dayValue) {
@@ -193,13 +193,13 @@ function HabitGraph(props: IProps) {
             aria-label="left"
             variant="ghost"
             icon={<FiChevronLeft />}
-            onClick={() => setViewDate(viewDate.minus({ months: 1 }))}
+            onClick={() => setViewDate(dates.subtract(viewDate, 1, ChronoUnit.MONTHS))}
           />
           <IconButton
             aria-label="right"
             variant="ghost"
             icon={<FiChevronRight />}
-            onClick={() => setViewDate(viewDate.plus({ months: 1 }))}
+            onClick={() => setViewDate(dates.add(viewDate, 1, ChronoUnit.MONTHS))}
           />
 
           <Text ml="2">{formatMonthTitle(viewDate)}</Text>

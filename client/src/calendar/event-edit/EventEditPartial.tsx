@@ -7,8 +7,10 @@ import { FiCalendar, FiClock, FiAlignLeft, FiMail, FiMapPin, FiX, FiVideo } from
 
 import ContentEditable from '@/lib/ContentEditable'
 import { addNewLabels } from '@/calendar/utils/LabelUtils'
-import { formatFullDay, yearStringToDate } from '@/util/localizer-luxon'
-import * as dates from '@/util/dates-luxon'
+
+import { ChronoUnit } from '@js-joda/core'
+import { formatFullDay, yearStringToDate } from '@/util/localizer-joda'
+import * as dates from '@/util/dates-joda'
 
 import { labelsState } from '@/state/LabelsState'
 import { userState } from '@/state/UserState'
@@ -60,7 +62,7 @@ export default function EventEditPartial(props: IProps) {
   const user = useRecoilValue(userState)
 
   const defaultDays = eventFields.allDay
-    ? Math.max(dates.diff(eventFields.end, eventFields.start, 'day'), 1)
+    ? Math.max(dates.diff(eventFields.end, eventFields.start, ChronoUnit.DAYS), 1)
     : 1
 
   useEffect(() => {
@@ -160,9 +162,9 @@ export default function EventEditPartial(props: IProps) {
               variant="flushed"
               value={formatFullDay(eventFields.start)}
               onChange={(e) => {
-                const duration = dates.diff(eventFields.end, eventFields.start, 'minutes')
+                const duration = dates.diff(eventFields.end, eventFields.start, ChronoUnit.MINUTES)
                 const start = dates.merge(yearStringToDate(e.target.value), eventFields.start)
-                const end = dates.add(start, duration, 'minute')
+                const end = dates.add(start, duration, ChronoUnit.MINUTES)
 
                 const updatedFields = eventFields.allDay
                   ? {
@@ -188,7 +190,7 @@ export default function EventEditPartial(props: IProps) {
                   days={defaultDays}
                   startDate={eventFields.start}
                   onSelectNumDays={(days) => {
-                    const endDate = dates.add(eventFields.start, days, 'day')
+                    const endDate = dates.add(eventFields.start, days, ChronoUnit.DAYS)
                     const updatedEventFields = {
                       ...eventFields,
                       end: endDate,
@@ -225,8 +227,8 @@ export default function EventEditPartial(props: IProps) {
                   const isAllDay = e.target.checked
 
                   if (isAllDay) {
-                    const start = dates.startOf(eventFields.start, 'day')
-                    const end = dates.endOf(eventFields.start, 'day')
+                    const start = dates.startOf(eventFields.start, ChronoUnit.DAYS)
+                    const end = dates.endOf(eventFields.start, ChronoUnit.DAYS)
 
                     updatedFields = {
                       ...eventFields,
@@ -237,8 +239,8 @@ export default function EventEditPartial(props: IProps) {
                       endDay: formatFullDay(end),
                     }
                   } else {
-                    const start = dates.startOf(eventFields.start, 'day')
-                    const end = dates.add(start, 1, 'hour')
+                    const start = dates.startOf(eventFields.start, ChronoUnit.DAYS)
+                    const end = dates.add(start, 1, ChronoUnit.HOURS)
 
                     updatedFields = {
                       ...eventFields,

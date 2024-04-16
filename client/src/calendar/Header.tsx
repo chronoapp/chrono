@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useRecoilState, useRecoilValue } from 'recoil'
-import { DateTime } from 'luxon'
+import { ZonedDateTime as DateTime, ChronoUnit } from '@js-joda/core'
 
 import {
   Flex,
@@ -29,9 +29,9 @@ import {
   FiArrowLeft,
 } from 'react-icons/fi'
 
-import { formatLocaleDateString } from '@/util/localizer-luxon'
+import { formatLocaleDateString } from '@/util/localizer-joda'
 import { GlobalEvent } from '@/util/global'
-import * as dates from '@/util/dates-luxon'
+import * as dates from '@/util/dates-joda'
 
 import Week from './Week'
 import Month from './Month'
@@ -309,7 +309,7 @@ export default function Header(props: { search: string }) {
   function onSelectToday() {
     const today = DateTime.now()
 
-    if (dates.eq(calendarView.selectedDate, today, 'day')) {
+    if (dates.eq(calendarView.selectedDate, today, ChronoUnit.DAYS)) {
       document.dispatchEvent(new Event(GlobalEvent.scrollToEvent))
     } else {
       setCalendarView((display) => ({ ...display, selectedDate: today }))
@@ -320,19 +320,19 @@ export default function Header(props: { search: string }) {
     if (calendarView.view == 'Day') {
       setCalendarView((display) => ({
         ...display,
-        selectedDate: dates.subtract(display.selectedDate, 1, 'day'),
+        selectedDate: dates.subtract(display.selectedDate, 1, ChronoUnit.DAYS),
       }))
     } else if (calendarView.view == 'Week' || calendarView.view == 'WorkWeek') {
       setCalendarView((display) => ({
         ...display,
-        selectedDate: dates.subtract(display.selectedDate, 7, 'day'),
+        selectedDate: dates.subtract(display.selectedDate, 7, ChronoUnit.DAYS),
       }))
     } else if (calendarView.view == 'Month') {
       // HACK: Prevents flicker when switching months
       eventActions.initEvents({})
       setCalendarView((display) => ({
         ...display,
-        selectedDate: dates.subtract(display.selectedDate, 1, 'month'),
+        selectedDate: dates.subtract(display.selectedDate, 1, ChronoUnit.MONTHS),
       }))
     }
   }
@@ -341,18 +341,18 @@ export default function Header(props: { search: string }) {
     if (calendarView.view == 'Day') {
       setCalendarView((display) => ({
         ...display,
-        selectedDate: dates.add(display.selectedDate, 1, 'day'),
+        selectedDate: dates.add(display.selectedDate, 1, ChronoUnit.DAYS),
       }))
     } else if (calendarView.view == 'Week' || calendarView.view == 'WorkWeek') {
       setCalendarView((display) => ({
         ...display,
-        selectedDate: dates.add(display.selectedDate, 7, 'day'),
+        selectedDate: dates.add(display.selectedDate, 7, ChronoUnit.DAYS),
       }))
     } else if (calendarView.view == 'Month') {
       eventActions.initEvents({})
       setCalendarView((display) => ({
         ...display,
-        selectedDate: dates.add(display.selectedDate, 1, 'month'),
+        selectedDate: dates.add(display.selectedDate, 1, ChronoUnit.MONTHS),
       }))
     }
   }

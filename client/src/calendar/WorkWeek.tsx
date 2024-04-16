@@ -1,6 +1,6 @@
-import { DateTime } from 'luxon'
+import { ZonedDateTime as DateTime } from '@js-joda/core'
 
-import { formatWeekRange, getWorkWeekRange } from '@/util/localizer-luxon'
+import { formatWeekRange, getWorkWeekRange } from '@/util/localizer-joda'
 
 import Event from '@/models/Event'
 import Calendar from '@/models/Calendar'

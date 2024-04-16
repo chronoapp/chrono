@@ -1,8 +1,8 @@
-import { DateTime } from 'luxon'
+import { ZonedDateTime as DateTime } from '@js-joda/core'
 import chunk from '@/lib/js-lib/chunk'
 
-import * as dates from '@/util/dates-luxon'
-import { firstDayOfWeek, formatMonthTitle } from '@/util/localizer-luxon'
+import * as dates from '@/util/dates-joda'
+import { firstDayOfWeek, formatMonthTitle } from '@/util/localizer-joda'
 
 import Event from '@/models/Event'
 import Calendar from '@/models/Calendar'

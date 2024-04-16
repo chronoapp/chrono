@@ -21,8 +21,9 @@ import produce from 'immer'
 import { FiMail, FiVideo, FiMapPin, FiBriefcase, FiBell } from 'react-icons/fi'
 import { FiCalendar, FiAlignLeft, FiClock } from 'react-icons/fi'
 
-import * as dates from '@/util/dates-luxon'
-import { formatFullDay, yearStringToDate } from '@/util/localizer-luxon'
+import { ChronoUnit } from '@js-joda/core'
+import * as dates from '@/util/dates-joda'
+import { formatFullDay, yearStringToDate } from '@/util/localizer-joda'
 
 import Event from '@/models/Event'
 import Contact from '@/models/Contact'
@@ -98,7 +99,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
   const [participants, setParticipants] = useState<EventParticipant[]>(props.event.participants)
 
   const defaultDays = eventFields.allDay
-    ? Math.max(dates.diff(eventFields.start, eventFields.end, 'day'), 1)
+    ? Math.max(dates.diff(eventFields.start, eventFields.end, ChronoUnit.DAYS), 1)
     : 1
 
   // Derived Properties
@@ -248,9 +249,9 @@ export default function EventEditFull(props: { event: Event; eventService: Event
               mr="2"
               value={formatFullDay(eventFields.start)}
               onChange={(e) => {
-                const duration = dates.diff(eventFields.end, eventFields.start, 'minutes')
+                const duration = dates.diff(eventFields.end, eventFields.start, ChronoUnit.MINUTES)
                 const start = dates.merge(yearStringToDate(e.target.value), eventFields.start)
-                const end = dates.add(start, duration, 'minute')
+                const end = dates.add(start, duration, ChronoUnit.MINUTES)
 
                 const updatedFields = eventFields.allDay
                   ? {
@@ -280,7 +281,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                 days={defaultDays}
                 startDate={eventFields.start}
                 onSelectNumDays={(days) => {
-                  const endDate = dates.add(eventFields.start, days, 'day')
+                  const endDate = dates.add(eventFields.start, days, ChronoUnit.DAYS)
                   setEventFields({
                     ...eventFields,
                     end: endDate,
@@ -326,8 +327,8 @@ export default function EventEditFull(props: { event: Event; eventService: Event
 
                 let newEventFields
                 if (isAllDay) {
-                  const start = dates.startOf(eventFields.start, 'day')
-                  const end = dates.endOf(eventFields.start, 'day')
+                  const start = dates.startOf(eventFields.start, ChronoUnit.DAYS)
+                  const end = dates.endOf(eventFields.start, ChronoUnit.DAYS)
 
                   newEventFields = {
                     ...eventFields,
@@ -338,8 +339,8 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                     endDay: formatFullDay(end),
                   }
                 } else {
-                  const start = dates.startOf(eventFields.start, 'day')
-                  const end = dates.add(start, 1, 'hour')
+                  const start = dates.startOf(eventFields.start, ChronoUnit.DAYS)
+                  const end = dates.add(start, 1, ChronoUnit.HOURS)
 
                   newEventFields = {
                     ...eventFields,
