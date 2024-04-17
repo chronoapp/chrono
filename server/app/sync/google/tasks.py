@@ -8,6 +8,7 @@ from app.db.repos.user_repo import UserRepository
 from app.db.repos.calendar_repo import CalendarRepository
 from app.db.repos.webhook_repo import WebhookRepository
 from app.db.session import scoped_session
+from app.utils.flags import FlagType, FlagUtils
 
 from . import gcal
 from .calendar import (
@@ -171,6 +172,11 @@ def syncCalendarTask(
 
         numUpdates = syncCalendarEvents(calendar, session, fullSync)
         logger.info(f'Synced {numUpdates} events for {calendar.summary=}')
+
+        # If the primary calendar is synced, assume that the user has completed the initial sync.
+        if calendar.primary:
+            FlagUtils(userAccount.user).set(FlagType.INITIAL_SYNC_COMPLETE, True)
+            sendClientNotification(str(userAccount.user_id), NotificationType.REFRESH_USER)
 
         # Send notification to client
         if sendNotification and numUpdates > 0:

@@ -29,6 +29,7 @@ import CalendarAccountList from '@/components/CalendarAccountList'
 import Plugins from '@/components/Plugins'
 import Settings from '@/components/settings/Settings'
 import useNotifications from '@/util/useNotifications'
+import LoadingScreen from '@/components/LoadingScreen'
 
 import Header from '@/calendar/Header'
 import * as API from '@/util/Api'
@@ -157,6 +158,14 @@ function Layout(props: Props) {
 
     fetchUser()
   }, [refreshUserId])
+
+  if (!user) {
+    return <LoadingScreen />
+  }
+
+  if (!user.flags.INITIAL_SYNC_COMPLETE) {
+    return <LoadingScreen loadingText="Setting up calendar.." />
+  }
 
   return (
     <Box className="App">

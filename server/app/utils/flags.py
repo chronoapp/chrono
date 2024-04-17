@@ -6,6 +6,8 @@ from app.utils.redis import getRedisConnection
 
 class FlagType(Enum):
     EXPAND_ALL_DAY_EVENTS = "EXPAND_ALL_DAY_EVENTS"
+    INITIAL_SYNC_COMPLETE = "INITIAL_SYNC_COMPLETE"
+    ONBOARDING_COMPLETE = "ONBOARDING_COMPLETE"
 
 
 class FlagUtils:
