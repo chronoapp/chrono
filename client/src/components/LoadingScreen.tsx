@@ -1,8 +1,9 @@
-import { Image, Box, Flex, Text } from '@chakra-ui/react'
-import { Oval } from 'react-loader-spinner'
 import ChronoLogo from '@/assets/chrono.svg'
+import { Image, Box, Flex } from '@chakra-ui/react'
 
-export function LoadingScreen() {
+import { Oval } from 'react-loader-spinner'
+
+export default function LoadingScreen() {
   return (
     <Box position="fixed" top="40%" left="50%" transform="translate(-50%, -40%)">
       <Flex alignItems="center" justifyContent="center" direction="column">

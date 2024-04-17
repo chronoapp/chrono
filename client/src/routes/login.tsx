@@ -18,7 +18,7 @@ import { useNavigate } from 'react-router-dom'
 import { getGoogleOauthUrl, loginWithOTP, verifyOTPCode } from '@/util/Api'
 import validator from 'validator'
 import { setLocalStorageItem } from '@/lib/local-storage'
-import { LoadingScreen } from '@/routes/loading'
+import LoadingScreen from '@/components/LoadingScreen'
 
 import GoogleLogo from '@/assets/google.svg'
 import ChronoLogo from '@/assets/chrono.svg'

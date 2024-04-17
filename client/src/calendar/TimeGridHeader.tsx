@@ -6,6 +6,7 @@ import * as dates from '@/util/dates-joda'
 
 import User from '@/models/User'
 import Event from '@/models/Event'
+import Flags from '@/models/Flags'
 
 import WeekHeaderRow from './WeekHeaderRow'
 import { EventService } from './event-edit/useEventService'
@@ -155,7 +156,7 @@ function useUserFlags() {
   const expandAllDayEvents = user?.flags.EXPAND_ALL_DAY_EVENTS || false
 
   function updateExpandAllDayEvents(expand: boolean) {
-    const updatedFlags = { ...user?.flags, EXPAND_ALL_DAY_EVENTS: expand }
+    const updatedFlags = { ...user?.flags, EXPAND_ALL_DAY_EVENTS: expand } as Flags
 
     setUser((state) =>
       state

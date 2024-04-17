@@ -7,7 +7,7 @@ import { setLocalStorageItem } from '@/lib/local-storage'
 import { authenticateGoogleOauth } from '@/util/Api'
 import NProgress from 'nprogress'
 
-import { LoadingScreen } from '@/routes/loading'
+import LoadingScreen from '@/components/LoadingScreen'
 
 /**
  * Callback after Oauth redirect.
