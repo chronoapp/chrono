@@ -1,4 +1,4 @@
-import { Flex, Box, Button, Text, Image } from '@chakra-ui/react'
+import { Flex, Box, Button, Text, Image, Link } from '@chakra-ui/react'
 
 import { getGoogleOauthUrl } from '@/util/Api'
 
@@ -28,14 +28,15 @@ function SignUp() {
           w="100%"
           onClick={() => (window.location.href = getGoogleOauthUrl('sign_in'))}
         >
-          <img src={GoogleLogo} style={{ width: '40px', paddingRight: 5 }}></img>
+          <Image src={GoogleLogo} alt="Google logo" boxSize={'30px'} pr="2" />
           <Text fontSize={'sm'} fontWeight={'medium'}>
             Continue with Google
           </Text>
         </Button>
 
         <Text color="gray.500" fontSize={'sm'} mt="8">
-          By signing up, you agree to the Terms of Service.
+          By signing up, you agree to the{' '}
+          <Link href="https://rechrono.com/terms">Terms of Service</Link>.
         </Text>
       </Flex>
     </Box>

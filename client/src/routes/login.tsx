@@ -51,7 +51,7 @@ function LoginOptions(props: { onEnterEmail: (email: string) => void }) {
         w="100%"
         onClick={() => (window.location.href = getGoogleOauthUrl('sign_in'))}
       >
-        <img src={GoogleLogo} style={{ width: '40px', paddingRight: 5 }}></img>
+        <Image src={GoogleLogo} alt="Google logo" boxSize={'30px'} pr="2" />
         <Text fontSize={'sm'} fontWeight={'medium'}>
           Continue with Google
         </Text>
