@@ -4,7 +4,7 @@ import { usePopper } from 'react-popper'
 
 import clsx from 'clsx'
 
-import { Box } from '@chakra-ui/react'
+import { Box, Flex } from '@chakra-ui/react'
 
 import { ChronoUnit, ZonedDateTime as DateTime } from '@js-joda/core'
 import { formatTimeRange, formatTimeShort } from '@/util/localizer-joda'
@@ -326,20 +326,15 @@ function DayColumn(props: IProps & InjectedEventActionsProps) {
     let inner
     if (diffMin <= 30) {
       inner = (
-        <div
-          className={clsx(
-            'cal-event-content',
-            'is-flex',
-            diffMin <= 15 && 'cal-small-event',
-            'cal-ellipsis'
-          )}
+        <Flex
+          className={clsx('cal-event-content', diffMin <= 15 && 'cal-small-event', 'cal-ellipsis')}
           style={{ lineHeight: '12px', paddingLeft: '10px' }}
         >
           <span>{EMPTY_TITLE}</span>
           <span style={{ fontSize: '90%', flex: 1 }}>
             {`, ${formatTimeShort(selectRange.startDate)}`}
           </span>
-        </div>
+        </Flex>
       )
     } else {
       inner = [

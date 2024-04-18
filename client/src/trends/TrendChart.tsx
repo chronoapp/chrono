@@ -58,7 +58,7 @@ function TrendChart(props: IProps) {
 
   function renderTimePeriodSelections() {
     return (
-      <div className="ml-2 field has-addons">
+      <Box ml="2">
         <Button
           p="1"
           size="sm"
@@ -100,7 +100,7 @@ function TrendChart(props: IProps) {
         >
           Month
         </Button>
-      </div>
+      </Box>
     )
   }
 

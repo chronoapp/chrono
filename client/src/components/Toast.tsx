@@ -19,10 +19,8 @@ export function ToastTag(props: IProps) {
     <Tag pr="3" pl="3" variant="solid" className="has-background-grey has-text-white-bis">
       <TagLabel>
         <Flex alignItems="center">
-          {props.showSpinner && (
-            <CircularProgress size={'1rem'} className="mr-1 has-text-white-ter" />
-          )}
-          {props.Icon && <props.Icon className="has-text-grey-light mr-1" />}
+          {props.showSpinner && <CircularProgress size={'1rem'} className="has-text-white-ter" />}
+          {props.Icon && <props.Icon className="has-text-grey-light" />}
           <Text fontWeight="normal">{props.title}</Text>
         </Flex>
       </TagLabel>

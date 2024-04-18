@@ -185,7 +185,8 @@ export default function EventEditFull(props: { event: Event; eventService: Event
 
         <ModalBody maxHeight="3xl">
           <Flex alignItems="center">
-            <span className="mr-2" style={{ width: '1em' }} />
+            <Box mr="2" width="1em"></Box>
+
             <TaggableInput
               labels={labels}
               title={eventFields.title}
@@ -235,7 +236,9 @@ export default function EventEditFull(props: { event: Event; eventService: Event
           </Flex>
 
           <Flex alignItems="center" mt="3" justifyContent="left" color="gray.700">
-            <FiClock className="mr-2" size={'1em'} />
+            <Box mr="2">
+              <FiClock size={'1em'} />
+            </Box>
 
             <Flex>
               <Input
@@ -587,7 +590,9 @@ export default function EventEditFull(props: { event: Event; eventService: Event
           </Flex>
 
           <Flex alignItems="top" mt="3" color="gray.700">
-            <FiAlignLeft className="mr-2" size={'1em'} />
+            <Box mt="1" mr="2" color="gray.600">
+              <FiAlignLeft size={'1em'} />
+            </Box>
 
             <ContentEditable
               className="cal-event-edit-description"

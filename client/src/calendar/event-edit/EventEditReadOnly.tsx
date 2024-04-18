@@ -157,7 +157,9 @@ export default function EventEditReadOnly(props: IProps) {
 
         {event.description && (
           <Flex mt="2" alignItems={'flex-start'}>
-            <FiAlignLeft className="mr-2 is-flex-shrink-0" />
+            <Box flexShrink={0} mr="2">
+              <FiAlignLeft />
+            </Box>
             <Box
               fontSize={'sm'}
               maxW="100%"

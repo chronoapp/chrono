@@ -552,10 +552,12 @@ function RecurringEventEditor(props: IProps) {
 
   return (
     <>
-      <div className="mt-2 is-flex is-align-items-center">
-        <BsArrowRepeat className="mr-2" size={'1em'} />
+      <Flex mt="2" alignItems="center">
+        <Box mr="2">
+          <BsArrowRepeat size={'1em'} />
+        </Box>
         {renderDropdownMenu()}
-      </div>
+      </Flex>
       {renderRecurringEventModal()}
     </>
   )
