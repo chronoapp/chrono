@@ -22,7 +22,6 @@ export const LABEL_COLORS = [
   new LabelColor('graphite', '#616161'),
   new LabelColor('lavender', '#E6E6FA'),
   new LabelColor('grape', '#6f2da8'),
-  // new LabelColor('calendar', '#7CB342'),
 ]
 
 export function getSortedLabelColors() {

@@ -1,4 +1,3 @@
-import React from 'react'
 import { Box, Flex, Text, Tag, TagCloseButton, TagLabel } from '@chakra-ui/react'
 import tinycolor from 'tinycolor2'
 

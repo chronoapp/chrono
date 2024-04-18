@@ -12,27 +12,34 @@ import {
   Text,
 } from '@chakra-ui/react'
 import { Icon } from '@chakra-ui/react'
+import { useToast, ToastId } from '@chakra-ui/react'
+
 import { FiPlus } from 'react-icons/fi'
 import { FaTag } from 'react-icons/fa'
-import { normalizeArr } from '@/lib/normalizer'
 
-import { getLabels } from '@/util/Api'
-import LabelEditModal from './LabelEditModal'
-import LabelTree from './LabelTree'
-import { labelsState } from '@/state/LabelsState'
+import { InfoAlert } from '@/components/Alert'
+import LabelEditModal from '@/components/LabelEditModal'
+import LabelTree from '@/components/LabelTree'
+
+import { normalizeArr } from '@/lib/normalizer'
+import * as API from '@/util/Api'
+import { labelsState, EditingLabelState } from '@/state/LabelsState'
+import { LabelColor } from '@/models/LabelColors'
 
 /**
  * Panel with a list of labels.
  */
 function LabelPanel() {
   const [labelState, setLabelState] = useRecoilState(labelsState)
+  const toast = useToast()
+  const toastIdRef = React.useRef<ToastId>()
 
   useEffect(() => {
     async function loadLabels() {
       setLabelState((labelState) => {
         return { ...labelState, loading: true }
       })
-      const labels = await getLabels()
+      const labels = await API.getLabels()
 
       setLabelState((labelState) => {
         return { ...labelState, loading: false, labelsById: normalizeArr(labels, 'id') }
@@ -54,9 +61,61 @@ function LabelPanel() {
     })
   }
 
+  function updateLabelState(label) {
+    setLabelState((prevState) => {
+      const newLabels = { ...prevState.labelsById, [label.id]: label }
+      return {
+        ...prevState,
+        labelsById: newLabels,
+        editingLabel: { ...prevState.editingLabel, active: false, labelTitle: '' },
+      }
+    })
+
+    toastIdRef.current && toast.close(toastIdRef.current)
+    toastIdRef.current = toast({
+      render: (props) => <InfoAlert title={`Saved tag ${label.title}.`} onClose={props.onClose} />,
+    })
+  }
+
+  function onClickSaveLabel(newLabel: EditingLabelState) {
+    if (newLabel.labelId) {
+      const editLabel = labelState.labelsById[newLabel.labelId]
+      const updatedLabel = {
+        ...editLabel,
+        color_hex: newLabel.labelColor!.hex,
+        title: newLabel.labelTitle,
+      }
+
+      API.putLabel(updatedLabel).then(updateLabelState)
+    } else {
+      API.createLabel(newLabel.labelTitle, newLabel.labelColor!.hex).then(updateLabelState)
+    }
+  }
+
+  function onCloseModal() {
+    setLabelState((prevState) => {
+      return {
+        ...prevState,
+        editingLabel: {
+          ...prevState.editingLabel,
+          active: false,
+          labelTitle: '',
+          labelId: undefined,
+          labelColor: undefined,
+        },
+      }
+    })
+  }
+
   return (
     <>
-      {labelState.editingLabel?.active && <LabelEditModal />}
+      {labelState.editingLabel?.active && (
+        <LabelEditModal
+          editingLabel={labelState.editingLabel}
+          onClickSaveLabel={onClickSaveLabel}
+          onCloseModal={onCloseModal}
+        />
+      )}
 
       <Accordion allowToggle={true} defaultIndex={0}>
         <AccordionItem border="0" mt="1">
