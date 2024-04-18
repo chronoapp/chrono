@@ -10,6 +10,7 @@ const HTMLWebpackPluginConfig = new HtmlWebpackPlugin({
 
 const definePlugin = new webpack.DefinePlugin({
   ENABLE_MONTHLY_VIEW: false,
+  ENABLE_EMAIL_LOGIN: false,
 })
 
 function buildConfig(env) {

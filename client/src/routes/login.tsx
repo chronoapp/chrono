@@ -33,7 +33,36 @@ type CodeVerifyInput = {
 
 type Screen = 'login' | 'code_verification'
 
+declare var ENABLE_EMAIL_LOGIN: boolean
+
 function LoginOptions(props: { onEnterEmail: (email: string) => void }) {
+  return (
+    <Box padding="5" width="400px">
+      <Text textAlign="center" mt="2" fontSize="18" fontWeight={'medium'}>
+        Sign in to Chrono
+      </Text>
+
+      <Button
+        mt="4"
+        p="2"
+        pt="4"
+        pb="4"
+        variant="outline"
+        w="100%"
+        onClick={() => (window.location.href = getGoogleOauthUrl('sign_in'))}
+      >
+        <img src={GoogleLogo} style={{ width: '40px', paddingRight: 5 }}></img>
+        <Text fontSize={'sm'} fontWeight={'medium'}>
+          Continue with Google
+        </Text>
+      </Button>
+
+      {ENABLE_EMAIL_LOGIN && <LoginWithEmail onEnterEmail={props.onEnterEmail} />}
+    </Box>
+  )
+}
+
+function LoginWithEmail(props: { onEnterEmail: (email: string) => void }) {
   const [isSubmittingEmail, setSubmittingEmail] = React.useState<boolean>(false)
 
   const {
@@ -59,26 +88,7 @@ function LoginOptions(props: { onEnterEmail: (email: string) => void }) {
   }
 
   return (
-    <Box padding="5" width="400px">
-      <Text textAlign="center" mt="2" fontSize="18" fontWeight={'medium'}>
-        Sign in to Chrono
-      </Text>
-
-      <Button
-        mt="4"
-        p="2"
-        pt="4"
-        pb="4"
-        variant="outline"
-        w="100%"
-        onClick={() => (window.location.href = getGoogleOauthUrl('sign_in'))}
-      >
-        <img src={GoogleLogo} style={{ width: '40px', paddingRight: 5 }}></img>
-        <Text fontSize={'sm'} fontWeight={'medium'}>
-          Continue with Google
-        </Text>
-      </Button>
-
+    <>
       <Flex mt="5" mb="5" align={'center'}>
         <Divider />
       </Flex>
@@ -125,7 +135,7 @@ function LoginOptions(props: { onEnterEmail: (email: string) => void }) {
           </Text>
         </Button>
       </form>
-    </Box>
+    </>
   )
 }
 
