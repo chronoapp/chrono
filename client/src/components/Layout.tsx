@@ -46,6 +46,8 @@ interface Props {
   includeLeftPanel: boolean
 }
 
+const LEFT_PANEL_WIDTH = '235px'
+
 function NewEventButton() {
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
   const eventActions = useEventActions()
@@ -77,7 +79,7 @@ function TopNavigationBar(props: { canCreateEvent: boolean; searchQuery: string 
       height="3.25rem"
       borderBottom="1px solid #dfdfdf"
       alignItems="center"
-      className="navbar-menu"
+      minWidth={LEFT_PANEL_WIDTH}
     >
       {props.canCreateEvent && <Header search={props.searchQuery} />}
 
@@ -185,22 +187,25 @@ function Layout(props: Props) {
     <Box className="App">
       <Flex height="100vh" width="100%" overflowY={'auto'}>
         {props.includeLeftPanel && (
-          <Box className="left-section">
+          <Flex
+            pl="2"
+            pt="1"
+            direction={'column'}
+            borderRight={'1px solid'}
+            borderRightColor={'gray.200'}
+            minWidth={LEFT_PANEL_WIDTH}
+            bgColor="#f1f1f1"
+          >
             {props.canCreateEvent && <NewEventButton />}
             <Flex height="100%" flexDirection="column" pb="2" overflowY={'auto'}>
               <MiniCalendar />
 
-              <Flex
-                className="left-section-scrollable"
-                overflowY={'scroll'}
-                flexDirection={'column'}
-                height="100%"
-              >
+              <Flex overflowY={'scroll'} flexDirection={'column'} height="100%">
                 {!user.flags.DISABLE_TAGS && <LabelPanel />}
                 <CalendarAccountList />
               </Flex>
             </Flex>
-          </Box>
+          </Flex>
         )}
 
         <Flex direction="column" width="100%">

@@ -60,7 +60,8 @@ export default function MiniCalendar() {
         width={'100%'}
         mt="1"
         mb="1"
-        className={clsx(highlightWeek && 'cal-mini-week-selected')}
+        borderRadius={highlightWeek ? 'sm' : undefined}
+        bgColor={highlightWeek ? 'gray.200' : undefined}
       >
         {week.map((day: DateTime, idx) => {
           const label = formatDayOfMonth(day)
@@ -79,8 +80,8 @@ export default function MiniCalendar() {
               mt="1px"
               mb="1px"
               fontSize={'xs'}
-              _hover={{ cursor: 'pointer', bg: !isToday ? 'gray.100' : undefined }}
-              backgroundColor={!isToday && isSelected ? 'gray.100' : undefined}
+              _hover={{ cursor: 'pointer', bg: !isToday ? 'gray.200' : undefined }}
+              backgroundColor={!isToday && isSelected ? 'gray.200' : undefined}
               className={clsx(
                 'cal-mini-month-day',
                 !isToday && isOffRange && 'has-text-grey',

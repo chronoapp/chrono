@@ -8,11 +8,6 @@
   font-weight: 500;
 }
 
-.cal-mini-week-selected {
-  background-color: var(--chakra-colors-gray-100);
-  border-radius: 5px;
-}
-
 .cal-mini-month-today-bg {
   @extend .cal-today-bg;
   width: 15px;

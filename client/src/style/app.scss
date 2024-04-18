@@ -1,5 +1,3 @@
-$sidebar-width: 230px;
-
 html {
   overflow-y: auto;
 }
@@ -54,35 +52,6 @@ code {
   height: 3.25rem;
 }
 
-.navbar-menu {
-  min-width: $sidebar-width;
-}
-
-.left-section {
-  min-width: $sidebar-width;
-  display: flex;
-  flex-direction: column;
-  padding-left: 0.75em;
-  padding-top: 0.25em;
-  border-right: 1px solid $grey-lightest;
-}
-
-/* MISC: TODO: move these */
-
-.radio-list {
-  .radio {
-    display: block;
-
-    & + .radio {
-      margin-left: 0;
-      margin-top: 0.5em;
-    }
-
-    & span {
-      margin-left: 0.5em;
-    }
-  }
-}
 
 .event-label {
   border-radius: 0.4em;
@@ -116,20 +85,6 @@ code {
       border-radius: 2px;
     }
   }
-}
-
-// TODO: helper class
-
-.has-width-100 {
-  width: 100%;
-}
-
-.z-index-50 {
-  z-index: 50;
-}
-
-.has-shadow {
-  box-shadow: $event-shadow;
 }
 
 

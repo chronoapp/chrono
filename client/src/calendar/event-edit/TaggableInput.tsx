@@ -194,7 +194,11 @@ function TaggableInput(props: IProps) {
   }
 
   return (
-    <Box fontSize="md" className={clsx(props.wrapperCls, props.isHeading && 'input-heading')}>
+    <Box
+      fontSize="md"
+      className={clsx(props.wrapperCls, props.isHeading && 'input-heading')}
+      width="100%"
+    >
       <MentionsInput
         inputRef={titleInputRef}
         singleLine={true}
