@@ -1,5 +1,6 @@
 import React from 'react'
 import clsx from 'clsx'
+import { useRecoilValue } from 'recoil'
 
 import { BsBarChartFill } from 'react-icons/bs'
 import { LuContact } from 'react-icons/lu'
@@ -19,7 +20,7 @@ import {
 import Trends from '@/plugins/Trends'
 import People from '@/plugins/People'
 
-import * as API from '@/util/Api'
+import { userState } from '@/state/UserState'
 
 type PluginType = 'Trends' | 'People'
 
@@ -30,30 +31,37 @@ interface Plugin {
   Component: React.ComponentType<any>
 }
 
-const PluginList: Record<PluginType, Plugin> = {
-  Trends: {
-    name: 'Trends',
-    type: 'Trends',
-    Icon: BsBarChartFill,
-    Component: Trends,
-  },
-  People: {
+const initialList: Plugin[] = [
+  {
     name: 'People',
     type: 'People',
     Icon: LuContact,
     Component: People,
   },
-}
+]
 
 export default function Plugins() {
+  const user = useRecoilValue(userState)
   const [viewPlugin, setViewPlugin] = React.useState<PluginType | null>(null)
+
+  let pluginList: Plugin[] = initialList
+
+  if (!user?.flags.DISABLE_TAGS) {
+    const trendsPlugin = {
+      name: 'Trends',
+      type: 'Trends',
+      Icon: BsBarChartFill,
+      Component: Trends,
+    }
+    pluginList = initialList.concat(trendsPlugin as Plugin)
+  }
 
   function renderPluginView() {
     if (!viewPlugin) {
       return null
     }
 
-    const plugin = PluginList[viewPlugin]
+    const plugin = pluginList.find((plugin) => plugin.type === viewPlugin)!
 
     return (
       <Modal
@@ -66,7 +74,7 @@ export default function Plugins() {
         <ModalOverlay />
 
         <ModalContent margin={0} top="5vh">
-          <ModalHeader>{plugin.name}</ModalHeader>
+          <ModalHeader>{plugin?.name}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <plugin.Component />
@@ -87,7 +95,7 @@ export default function Plugins() {
       borderColor="gray.200"
     >
       <Flex direction={'column'}>
-        {Object.values(PluginList).map((plugin) => (
+        {pluginList.map((plugin) => (
           <Box
             key={plugin.type}
             onClick={() => setViewPlugin(plugin.type)}

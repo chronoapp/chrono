@@ -52,7 +52,8 @@ function WelcomeScreen(props: { onContinue: () => void }) {
 
 function ChooseTagsScreen(props: { user: User; onContinue: () => Promise<void> }) {
   const [editingLabel, setEditingLabel] = React.useState<EditingLabelState>(undefined!)
-  const [loading, setLoading] = useState<boolean>(false)
+  const [loadingContinue, setLoadingContinue] = useState<boolean>(false)
+  const [loadingSkip, setLoadingSkip] = useState<boolean>(false)
 
   const [labels, setLabels] = useState<Label[]>([
     new Label(makeUUID(), 'Work', 'work', '#219653', 0),
@@ -82,12 +83,21 @@ function ChooseTagsScreen(props: { user: User; onContinue: () => Promise<void> }
    * Create the initial set of tags for the user.
    */
   async function handleContinueWithTags() {
-    setLoading(true)
+    setLoadingContinue(true)
 
     await API.putLabels(labels)
     await props.onContinue()
 
-    setLoading(false)
+    setLoadingContinue(false)
+  }
+
+  async function handleDisableTags() {
+    setLoadingSkip(true)
+
+    await API.updateUserFlags('DISABLE_TAGS', true)
+    await props.onContinue()
+
+    setLoadingSkip(false)
   }
 
   return (
@@ -135,14 +145,21 @@ function ChooseTagsScreen(props: { user: User; onContinue: () => Promise<void> }
           pb="4"
           variant="outline"
           onClick={handleContinueWithTags}
-          isLoading={loading}
+          isLoading={loadingContinue}
+          isDisabled={loadingSkip}
         >
           <Text fontSize="sm" fontWeight="medium">
             Continue to Chrono
           </Text>
         </Button>
 
-        <Button mt="4" variant="ghost" onClick={props.onContinue} disabled={!loading}>
+        <Button
+          mt="4"
+          variant="ghost"
+          onClick={handleDisableTags}
+          isDisabled={loadingContinue}
+          isLoading={loadingSkip}
+        >
           <Text textColor="gray.500" fontSize="xs">
             no tags for now
           </Text>

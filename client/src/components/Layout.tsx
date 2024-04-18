@@ -196,7 +196,7 @@ function Layout(props: Props) {
                 flexDirection={'column'}
                 height="100%"
               >
-                <LabelPanel />
+                {!user.flags.DISABLE_TAGS && <LabelPanel />}
                 <CalendarAccountList />
               </Flex>
             </Flex>

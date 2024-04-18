@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useRecoilState } from 'recoil'
 
-import { Flex, Heading, useToast, ToastId } from '@chakra-ui/react'
+import { Flex, Heading, useToast, ToastId, Checkbox } from '@chakra-ui/react'
 
 import { userState } from '@/state/UserState'
 import { InfoAlert } from '@/components/Alert'
@@ -51,6 +51,20 @@ function GeneralSettings() {
   return (
     <Flex direction={'column'} width={'100%'}>
       <Heading size="sm">General</Heading>
+      <Checkbox
+        mt="2"
+        fontSize={'sm'}
+        size="sm"
+        isChecked={!user.flags.DISABLE_TAGS}
+        onChange={(e) => {
+          const disableTags = !e.target.checked
+          const flags = { ...user.flags, DISABLE_TAGS: disableTags }
+          setUser({ ...user, flags: flags })
+          API.updateUserFlags('DISABLE_TAGS', disableTags)
+        }}
+      >
+        Enable tags
+      </Checkbox>
 
       <TimezoneSelector
         user={user}
