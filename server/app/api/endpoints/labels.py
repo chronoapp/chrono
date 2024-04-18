@@ -1,6 +1,5 @@
 import uuid
 
-from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict
 
@@ -29,7 +28,7 @@ class LabelInDbVM(LabelVM):
 
 
 def createOrUpdateLabel(
-    user: User, labelId: Optional[uuid.UUID], label: LabelVM, session: Session
+    user: User, labelId: uuid.UUID | None, label: LabelVM, session: Session
 ) -> Label:
     userRepo = UserRepository(session)
 
@@ -46,7 +45,7 @@ def createOrUpdateLabel(
     return labelDb
 
 
-def combineLabels(labels: List[Label]) -> List[Label]:
+def combineLabels(labels: list[Label]) -> list[Label]:
     """Children overrides parents. Maintains the same order."""
     labelsToRemove = set()
     labelMap = {l.id: l for l in labels}
@@ -63,7 +62,7 @@ def combineLabels(labels: List[Label]) -> List[Label]:
     return res
 
 
-@router.get('/labels/', response_model=List[LabelInDbVM])
+@router.get('/labels/', response_model=list[LabelInDbVM])
 async def getLabels(user=Depends(get_current_user), session=Depends(get_db)):
     userRepo = UserRepository(session)
     labels = userRepo.getLabels(user.id)
@@ -84,9 +83,9 @@ async def createLabel(
     return labelDb
 
 
-@router.put('/labels/', response_model=List[LabelInDbVM])
+@router.put('/labels/', response_model=list[LabelInDbVM])
 async def putLabels(
-    labels: List[LabelInDbVM], user=Depends(get_current_user), session=Depends(get_db)
+    labels: list[LabelInDbVM], user=Depends(get_current_user), session=Depends(get_db)
 ):
     """TODO: Bulk update with one query."""
     updatedLabels = [createOrUpdateLabel(user, label.id, label, session) for label in labels]

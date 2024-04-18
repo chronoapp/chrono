@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 
 from pydantic import BaseModel, ConfigDict
+from pydantic import Field
 
 from app.utils.flags import FlagUtils, FlagType
 from app.api.utils.security import get_current_user
@@ -84,9 +85,18 @@ async def getUserFlags(user: User = Depends(get_current_user)):
     return FlagUtils(user).getAllFlags()
 
 
+class UpdateFlag(BaseModel):
+    flag: FlagType = Field(..., description="The flag to update")
+    value: bool = Field(..., description="The new value of the flag")
+
+
 @router.put('/user/flags/', response_model=dict[FlagType, bool])
-async def setUserFlags(flags: dict[FlagType, bool], user: User = Depends(get_current_user)):
-    return FlagUtils(user).setAllFlags(flags)
+async def setUserFlags(flag: UpdateFlag, user: User = Depends(get_current_user)):
+    flagUtils = FlagUtils(user)
+    flagType = flag.flag
+    flagUtils.set(flagType, flag.value)
+
+    return FlagUtils(user).getAllFlags()
 
 
 @router.delete('/user/accounts/{account_id}')

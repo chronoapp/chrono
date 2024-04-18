@@ -167,7 +167,7 @@ function useUserFlags() {
         : state
     )
 
-    user && API.updateUserFlags(updatedFlags)
+    user && API.updateUserFlags('EXPAND_ALL_DAY_EVENTS', expand)
   }
 
   return { expandAllDayEvents, updateExpandAllDayEvents }
