@@ -155,10 +155,12 @@ function TrendChart(props: IProps) {
 
   function renderEmpty() {
     return (
-      <Center width="80%">
-        <Box>
-          <Text fontWeight="medium">No labels</Text>
-          <Text fontSize="sm">Add labels to your events to view your trends.</Text>
+      <Center w="100%" h="2xl" overflow="auto">
+        <Box textAlign={'center'}>
+          <Text fontWeight="medium">No tags</Text>
+          <Text fontSize="sm" mt="1">
+            Create a tag and add it to your events to view your trends.
+          </Text>
         </Box>
       </Center>
     )
