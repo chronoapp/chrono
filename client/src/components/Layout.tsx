@@ -30,6 +30,7 @@ import Plugins from '@/components/Plugins'
 import Settings from '@/components/settings/Settings'
 import useNotifications from '@/util/useNotifications'
 import LoadingScreen from '@/components/LoadingScreen'
+import Onboarding from '@/components/Onboarding'
 
 import Header from '@/calendar/Header'
 import * as API from '@/util/Api'
@@ -161,6 +162,19 @@ function Layout(props: Props) {
 
   if (!user) {
     return <LoadingScreen />
+  }
+
+  if (!user.flags.ONBOARDING_COMPLETE) {
+    return (
+      <Onboarding
+        user={user}
+        onComplete={() => {
+          return API.updateUserFlags('ONBOARDING_COMPLETE', true).then((flags) => {
+            setUser({ ...user, flags: flags })
+          })
+        }}
+      />
+    )
   }
 
   if (!user.flags.INITIAL_SYNC_COMPLETE) {
