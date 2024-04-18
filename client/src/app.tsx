@@ -17,6 +17,7 @@ import Home from './routes/home'
 import Auth from './routes/auth'
 import Login from './routes/login'
 import SignUp from './routes/signup'
+import Permissions from './routes/permissions'
 
 import 'nprogress/nprogress.css'
 import './style/index.scss'
@@ -130,6 +131,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <Route path="/" element={<LoggedOutRoute />}>
             <Route path="/login" element={<Login />}></Route>
             <Route path="/signup" element={<SignUp />}></Route>
+            <Route path="/signup/permissions" element={<Permissions />}></Route>
             <Route path="/auth" element={<Auth />}></Route>
           </Route>
         </Routes>

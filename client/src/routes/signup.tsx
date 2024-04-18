@@ -1,6 +1,5 @@
 import { Flex, Box, Button, Text, Image, Link } from '@chakra-ui/react'
-
-import { getGoogleOauthUrl } from '@/util/Api'
+import { useNavigate } from 'react-router-dom'
 
 import GoogleLogo from '@/assets/google.svg'
 import ChronoLogo from '@/assets/chrono.svg'
@@ -9,6 +8,8 @@ import ChronoLogo from '@/assets/chrono.svg'
  * TODO: Add link for TOS
  */
 function SignUp() {
+  const navigate = useNavigate()
+
   return (
     <Box position="fixed" top="30%" left="50%" transform="translate(-50%, -30%)">
       <Flex alignItems="center" justifyContent="center">
@@ -26,7 +27,7 @@ function SignUp() {
           pb="4"
           variant="outline"
           w="100%"
-          onClick={() => (window.location.href = getGoogleOauthUrl('sign_in'))}
+          onClick={() => navigate('/signup/permissions')}
         >
           <Image src={GoogleLogo} alt="Google logo" boxSize={'30px'} pr="2" />
           <Text fontSize={'sm'} fontWeight={'medium'}>
