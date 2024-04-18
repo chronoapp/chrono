@@ -46,7 +46,7 @@ class UserCalendar(Base):
     background_color: Mapped[Optional[str]] = mapped_column(String(10))
     foreground_color: Mapped[Optional[str]] = mapped_column(String(10))
     selected: Mapped[bool] = mapped_column(Boolean)  # Visible in the list (checkmark)
-    access_role: Mapped[AccessRole] = mapped_column(String(50))  # AccessRole
+    access_role: Mapped[str] = mapped_column(String(50))  # AccessRole
     primary: Mapped[bool] = mapped_column(Boolean)
     deleted: Mapped[bool] = mapped_column(Boolean)
 
