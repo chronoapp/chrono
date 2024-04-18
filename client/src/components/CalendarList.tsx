@@ -55,7 +55,7 @@ function CalendarList(props: CalendarListProps) {
                     <Text
                       userSelect="none"
                       fontSize="sm"
-                      color={'gray.700'}
+                      color="gray.700"
                       pl="2"
                       overflow={'hidden'}
                     >

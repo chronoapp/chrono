@@ -60,6 +60,8 @@ export default function MiniCalendar() {
         width={'100%'}
         mt="1"
         mb="1"
+        pr="1"
+        pl="1"
         borderRadius={highlightWeek ? 'sm' : undefined}
         bgColor={highlightWeek ? 'gray.200' : undefined}
       >

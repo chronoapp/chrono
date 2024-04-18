@@ -24,8 +24,8 @@ export function LabelTagColor(props: LabelTagColorProps) {
     <Box
       onClick={props.onClick}
       title={props.title}
-      style={style}
       className={clsx('event-label', props.small && 'small')}
+      style={style}
     />
   )
 }

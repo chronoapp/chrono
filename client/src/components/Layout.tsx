@@ -46,7 +46,7 @@ interface Props {
   includeLeftPanel: boolean
 }
 
-const LEFT_PANEL_WIDTH = '235px'
+const LEFT_PANEL_WIDTH = '240px'
 
 function NewEventButton() {
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
@@ -187,20 +187,12 @@ function Layout(props: Props) {
     <Box className="App">
       <Flex height="100vh" width="100%" overflowY={'auto'}>
         {props.includeLeftPanel && (
-          <Flex
-            pl="2"
-            pt="1"
-            direction={'column'}
-            borderRight={'1px solid'}
-            borderRightColor={'gray.200'}
-            minWidth={LEFT_PANEL_WIDTH}
-            bgColor="#f1f1f1"
-          >
+          <Flex pl="2" pt="1" direction={'column'} minWidth={LEFT_PANEL_WIDTH} bgColor="#f1f1f1">
             {props.canCreateEvent && <NewEventButton />}
             <Flex height="100%" flexDirection="column" pb="2" overflowY={'auto'}>
               <MiniCalendar />
 
-              <Flex overflowY={'scroll'} flexDirection={'column'} height="100%">
+              <Flex overflowY={'scroll'} flexDirection={'column'} height="100%" pr="2">
                 {!user.flags.DISABLE_TAGS && <LabelPanel />}
                 <CalendarAccountList />
               </Flex>

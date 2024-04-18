@@ -32,7 +32,6 @@ import usePrevious from '@/lib/hooks/usePrevious'
 import { LABEL_COLORS } from '@/models/LabelColors'
 import { InfoAlert } from '@/components/Alert'
 import { Label } from '@/models/Label'
-import ColorPicker from './ColorPicker'
 import { LabelTagColor } from './LabelTag'
 
 import * as API from '@/util/Api'
@@ -175,49 +174,14 @@ function LabelTree(props: IProps) {
     setAutoExpandParent(false)
   }
 
-  async function updateLabel(label: Label) {
-    setLabelState((labelsState) => {
-      return {
-        ...labelsState,
-        labelsById: { ...labelsState.labelsById, [label.id]: label },
-      }
-    })
-    const _updatedLabel = await API.putLabel(label)
-  }
-
   function LabelView(label: Label, allowEdit: boolean) {
     return () => {
-      if (allowEdit) {
-        return (
-          <Menu isLazy={true} placement="bottom">
-            {({ onClose, isOpen }) => (
-              <>
-                <MenuButton>
-                  <LabelTagColor colorHex={label.color_hex} />
-                </MenuButton>
-                {isOpen && (
-                  <MenuList minW="0" w={'10em'}>
-                    <ColorPicker
-                      onSelectLabelColor={(color) => {
-                        const updatedLabel = { ...label, color_hex: color }
-                        updateLabel(updatedLabel)
-                        onClose()
-                      }}
-                    />
-                  </MenuList>
-                )}
-              </>
-            )}
-          </Menu>
-        )
-      } else {
-        return (
-          <LabelTagColor
-            colorHex={label.color_hex}
-            onClick={() => props.onSelect && props.onSelect(label)}
-          />
-        )
-      }
+      return (
+        <LabelTagColor
+          colorHex={label.color_hex}
+          onClick={() => props.onSelect && props.onSelect(label)}
+        />
+      )
     }
   }
 
