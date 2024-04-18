@@ -20,11 +20,12 @@ class Webhook(Base):
 
     # This ID is set to google's channel ID.
     id: Mapped[str] = mapped_column(String, primary_key=True, nullable=False)
-
     account_id: Mapped[UUID] = mapped_column(
         UUID, ForeignKey('user_credentials.id'), nullable=False
     )
-    account: Mapped['UserAccount'] = relationship('UserAccount', back_populates='webhooks')
+    account: Mapped['UserAccount'] = relationship(
+        'UserAccount', back_populates='webhooks', cascade='all, delete'
+    )
 
     calendar_id: Mapped[uuid.UUID] = mapped_column(
         UUID, ForeignKey('user_calendar.id'), nullable=True
