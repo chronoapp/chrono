@@ -39,7 +39,7 @@ function handleErrors(response: any) {
 // TODO: Log users out if response is 403.
 
 export function getAuthToken() {
-  return getLocalStorageItem('auth_token', '').token
+  return getLocalStorageItem('auth_token', '')?.token
 }
 
 export function getHeaders() {
