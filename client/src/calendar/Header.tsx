@@ -226,6 +226,8 @@ export default function Header(props: { search: string }) {
   React.useEffect(() => {
     if (!props.search && isSearchMode) {
       setIsSearchMode(false)
+    } else if (props.search) {
+      setIsSearchMode(true)
     }
   }, [props.search])
 

@@ -1,6 +1,6 @@
 import React from 'react'
 import { useRecoilValue, useRecoilState } from 'recoil'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 import {
   Box,
@@ -134,8 +134,10 @@ function SettingsMenu() {
  * Top Level Layout for the navigation and body.
  */
 function Layout(props: Props) {
-  const params = useParams()
-  const searchQuery = (params.search as string) || ''
+  const location = useLocation()
+  const queryParams = new URLSearchParams(location.search)
+  const searchQuery = queryParams.get('search') || '' // Retrieves 'abc' from '?search=abc'
+
   const [user, setUser] = useRecoilState(userState)
   const [refreshUserId, setRefreshUserId] = React.useState(generateGuid())
 
