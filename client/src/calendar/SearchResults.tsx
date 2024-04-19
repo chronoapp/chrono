@@ -1,20 +1,20 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
 
 import { useRecoilValue } from 'recoil'
-import { usePopper } from 'react-popper'
 
 import { Flex, Box, Text, Center, Tooltip } from '@chakra-ui/react'
 import { FiRepeat } from 'react-icons/fi'
 
 import { calendarWithDefault } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
-import { editingEventState } from '@/state/EventsState'
+import { ZonedDateTime as DateTime } from '@js-joda/core'
 
-import EventPopover from '@/calendar/event-edit/EventEditPopover'
-import { sortEvents } from '@/calendar/utils/eventLevels'
-
-import { formatDayMonthYearWeekday, formatTimeRange } from '@/util/localizer-joda'
+import {
+  formatDayMonthYearWeekday,
+  formatTimeRange,
+  formatFullDay,
+  yearStringToDate,
+} from '@/util/localizer-joda'
 import { LabelTag } from '@/components/LabelTag'
 import Event from '@/models/Event'
 
@@ -40,12 +40,11 @@ export default function SearchResults(props: IProps) {
   const [loading, setLoading] = React.useState<boolean>(false)
 
   // Selected Event state
-  const editingEvent = useRecoilValue(editingEventState)
-  const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null)
-  const [referenceElement, setReferenceElement] = React.useState<HTMLDivElement | null>(null)
-  const { styles, attributes } = usePopper(referenceElement, popperElement, {
-    placement: 'auto',
-  })
+  const eventActions = useEventActions()
+
+  function onSelectEvent(event: Event) {
+    eventActions.initEditEvent(event, false, 'FULL_EDIT')
+  }
 
   React.useEffect(() => {
     if (props.searchQuery) {
@@ -60,25 +59,20 @@ export default function SearchResults(props: IProps) {
     setLoading(false)
   }
 
-  function renderSelectedEventPopover() {
-    if (editingEvent?.event && referenceElement) {
-      return ReactDOM.createPortal(
-        <Box
-          ref={(node) => setPopperElement(node)}
-          style={styles.popper}
-          {...attributes.popper}
-          bg="white"
-          width="xs"
-          maxH="3xl"
-          zIndex={10}
-          border="0.5px solid rgba(82, 82, 100, 0.3)"
-          borderRadius="md"
-        >
-          <EventPopover event={editingEvent?.event} eventService={props.eventService} />
-        </Box>,
-        document.body
-      )
-    }
+  function groupEventsByDay(events: Event[]): Record<string, Event[]> {
+    const groups = events.reduce((acc, event) => {
+      const date = formatFullDay(event.start)
+
+      if (!acc[date]) {
+        acc[date] = []
+      }
+
+      acc[date].push(event)
+
+      return acc
+    }, {})
+
+    return groups
   }
 
   if (loading) {
@@ -89,102 +83,106 @@ export default function SearchResults(props: IProps) {
     )
   }
 
-  const sortedEvents = events.sort((a, b) => -sortEvents(a, b))
-  if (sortedEvents.length === 0) {
+  if (events.length === 0) {
     return (
       <Center w="100%" h="5em" overflow="auto">
         <Text color="gray.500">We couldn't find anything</Text>
       </Center>
     )
-  } else {
-    return (
-      <Box w="100%" height="calc(100vh - 3.25rem)" overflow="auto">
-        {sortedEvents.map((event, idx, arr) => {
-          const showEditingPopover =
-            editingEvent?.id === event.id &&
-            editingEvent?.event?.calendar_id === event.calendar_id &&
-            (editingEvent?.editMode == 'READ' || editingEvent?.editMode == 'EDIT')
-
-          return (
-            <EventItem
-              key={idx}
-              event={event}
-              eventService={props.eventService}
-              ref={showEditingPopover ? (node) => setReferenceElement(node) : undefined}
-            />
-          )
-        })}
-
-        {renderSelectedEventPopover()}
-      </Box>
-    )
   }
+
+  const groupedEvents = groupEventsByDay(events)
+
+  return (
+    <Box w="100%" height="calc(100vh - 3.25rem)" overflow="auto">
+      {Object.keys(groupedEvents).map((key, idx) => {
+        const events = groupedEvents[key]
+        const date = yearStringToDate(key)
+
+        return <EventGroup key={idx} events={events} date={date} onSelectEvent={onSelectEvent} />
+      })}
+    </Box>
+  )
 }
 
-interface EventItemProps {
-  event: Event
-  eventService: EventService
-}
-
-const EventItem = React.forwardRef<HTMLDivElement, EventItemProps>((props, ref) => {
-  const eventActions = useEventActions()
-  const calendar = useRecoilValue(calendarWithDefault(props.event.calendar_id))
-  const dateDisplay = formatDayMonthYearWeekday(props.event.start)
-
-  function onSelectEvent() {
-    eventActions.initEditEvent(props.event)
-  }
+function EventGroup(props: {
+  events: Event[]
+  date: DateTime
+  onSelectEvent: (event: Event) => void
+}) {
+  const dateDisplay = formatDayMonthYearWeekday(props.date)
 
   return (
     <Flex
-      ref={ref}
-      alignItems={'center'}
+      alignItems={'start'}
       borderBottom="1px solid"
       borderColor={'gray.200'}
       pl="5"
       pt="1"
       pb="1"
-      _hover={{
-        background: 'gray.100',
-        cursor: 'pointer',
-      }}
-      onClick={onSelectEvent}
     >
-      <Box w="8em" flexShrink={0}>
+      <Box w="8em" flexShrink={0} mt="1">
         <Text fontSize="sm" align="left">
           {dateDisplay}
         </Text>
       </Box>
-      <Flex direction={'column'}>
-        <Flex alignItems={'center'}>
-          <Tooltip label={calendar.summary}>
-            <Box
-              pl="1"
-              bgColor={calendar.backgroundColor}
-              w="1em"
-              h="1em"
-              borderRadius={'5'}
-              flexShrink={0}
-            ></Box>
-          </Tooltip>
-          <Text pl="2" fontSize="sm" textAlign={'left'}>
-            {props.event.title_short}
-          </Text>
-          <Flex pl="2" alignItems={'center'}>
-            {props.event.labels.map((label) => {
-              return <LabelTag key={`${props.event.id}-${label.id}`} label={label} />
-            })}
-          </Flex>
-        </Flex>
-        <Flex alignItems={'center'}>
-          <Text fontSize="xs">{formatTimeRange(props.event.start, props.event.end)}</Text>
-          {props.event.recurring_event_id && (
-            <Box ml="2">
-              <FiRepeat size={'0.8em'} />
-            </Box>
-          )}
-        </Flex>
+
+      <Flex direction="column" w="100%" mr="2">
+        {props.events.map((event, idx) => {
+          return <EventItem key={idx} idx={idx} event={event} onSelectEvent={props.onSelectEvent} />
+        })}
       </Flex>
     </Flex>
   )
-})
+}
+
+function EventItem(props: { event: Event; idx: number; onSelectEvent: (event: Event) => void }) {
+  const calendar = useRecoilValue(calendarWithDefault(props.event.calendar_id))
+
+  return (
+    <Flex
+      direction={'column'}
+      onClick={() => props.onSelectEvent(props.event)}
+      width="100%"
+      _hover={{
+        background: 'gray.100',
+        cursor: 'pointer',
+      }}
+      mt={props.idx !== 0 ? '1' : '0'}
+      borderRadius={'sm'}
+      p="1"
+    >
+      <Flex alignItems={'center'}>
+        <Tooltip label={calendar.summary}>
+          <Box
+            pl="1"
+            bgColor={calendar.backgroundColor}
+            w="1em"
+            h="1em"
+            borderRadius={'5'}
+            flexShrink={0}
+          ></Box>
+        </Tooltip>
+
+        <Text pl="2" fontSize="sm" textAlign={'left'}>
+          {props.event.title_short}
+        </Text>
+
+        <Flex pl="2" alignItems={'center'}>
+          {props.event.labels.map((label) => {
+            return <LabelTag key={`${props.event.id}-${label.id}`} label={label} />
+          })}
+        </Flex>
+      </Flex>
+
+      <Flex alignItems={'center'}>
+        <Text fontSize="xs">{formatTimeRange(props.event.start, props.event.end)}</Text>
+        {props.event.recurring_event_id && (
+          <Box ml="2">
+            <FiRepeat size={'0.8em'} />
+          </Box>
+        )}
+      </Flex>
+    </Flex>
+  )
+}
