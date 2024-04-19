@@ -7,7 +7,8 @@ import { FiRepeat } from 'react-icons/fi'
 
 import { calendarWithDefault } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
-import { ZonedDateTime as DateTime } from '@js-joda/core'
+import { ZonedDateTime as DateTime, ChronoUnit } from '@js-joda/core'
+import * as dates from '@/util/dates-joda'
 
 import {
   formatDayMonthYearWeekday,
@@ -38,9 +39,11 @@ interface IProps {
 export default function SearchResults(props: IProps) {
   const [events, setEvents] = React.useState<Event[]>([])
   const [loading, setLoading] = React.useState<boolean>(false)
+  const todayRef = React.useRef<HTMLDivElement>(null) // Ref for today's events
 
   // Selected Event state
   const eventActions = useEventActions()
+  const groupedEvents = groupEventsByDay(events)
 
   function onSelectEvent(event: Event) {
     eventActions.initEditEvent(event, false, 'FULL_EDIT')
@@ -51,6 +54,12 @@ export default function SearchResults(props: IProps) {
       searchEvents(props.searchQuery)
     }
   }, [props.searchQuery])
+
+  React.useEffect(() => {
+    if (todayRef.current) {
+      todayRef.current.scrollIntoView({ block: 'start' })
+    }
+  }, [groupedEvents])
 
   async function searchEvents(searchQuery: string) {
     setLoading(true)
@@ -72,6 +81,12 @@ export default function SearchResults(props: IProps) {
       return acc
     }, {})
 
+    // Display today as a text only.
+    const today = formatFullDay(DateTime.now())
+    if (!groups[today]) {
+      groups[today] = []
+    }
+
     return groups
   }
 
@@ -91,29 +106,39 @@ export default function SearchResults(props: IProps) {
     )
   }
 
-  const groupedEvents = groupEventsByDay(events)
-
   return (
     <Box w="100%" height="calc(100vh - 3.25rem)" overflow="auto">
-      {Object.keys(groupedEvents).map((key, idx) => {
-        const events = groupedEvents[key]
-        const date = yearStringToDate(key)
+      {Object.keys(groupedEvents)
+        .sort((a, b) => {
+          return dates.subDates(yearStringToDate(a), yearStringToDate(b))
+        })
+        .map((key, idx) => {
+          const events = groupedEvents[key]
+          const date = yearStringToDate(key)
+          const isToday = dates.hasSame(date, DateTime.now(), ChronoUnit.DAYS)
 
-        return <EventGroup key={idx} events={events} date={date} onSelectEvent={onSelectEvent} />
-      })}
+          if (isToday) {
+            return <EventGroupToday key={idx} ref={todayRef} />
+          } else {
+            return (
+              <EventGroup
+                key={idx}
+                ref={isToday ? todayRef : null}
+                events={events}
+                date={date}
+                onSelectEvent={onSelectEvent}
+              />
+            )
+          }
+        })}
     </Box>
   )
 }
 
-function EventGroup(props: {
-  events: Event[]
-  date: DateTime
-  onSelectEvent: (event: Event) => void
-}) {
-  const dateDisplay = formatDayMonthYearWeekday(props.date)
-
+const EventGroupToday = React.forwardRef((props, ref: React.Ref<HTMLDivElement>) => {
   return (
-    <Flex
+    <Box
+      ref={ref}
       alignItems={'start'}
       borderBottom="1px solid"
       borderColor={'gray.200'}
@@ -121,7 +146,36 @@ function EventGroup(props: {
       pt="1"
       pb="1"
     >
-      <Box w="8em" flexShrink={0} mt="1">
+      <Text fontSize="sm" align="left" fontWeight={'bold'}>
+        Today
+      </Text>
+    </Box>
+  )
+})
+
+interface EventGroupProps {
+  events: Event[]
+  date: DateTime
+  onSelectEvent: (event: Event) => void
+}
+
+/**
+ * Displays a group of events for a specific day.
+ */
+const EventGroup = React.forwardRef((props: EventGroupProps, ref: React.Ref<HTMLDivElement>) => {
+  const dateDisplay = formatDayMonthYearWeekday(props.date)
+
+  return (
+    <Flex
+      ref={ref}
+      alignItems={'start'}
+      borderBottom="1px solid"
+      borderColor={'gray.200'}
+      pl="5"
+      pt="1"
+      pb="1"
+    >
+      <Box w="8em" flexShrink={0} mt={'1'}>
         <Text fontSize="sm" align="left">
           {dateDisplay}
         </Text>
@@ -134,8 +188,11 @@ function EventGroup(props: {
       </Flex>
     </Flex>
   )
-}
+})
 
+/**
+ * Displays a single event.
+ */
 function EventItem(props: { event: Event; idx: number; onSelectEvent: (event: Event) => void }) {
   const calendar = useRecoilValue(calendarWithDefault(props.event.calendar_id))
 

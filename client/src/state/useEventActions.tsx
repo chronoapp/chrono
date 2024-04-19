@@ -86,11 +86,11 @@ export default function useEventActions() {
   /**
    * Starts editing an existing event.
    */
-  function initEditEvent(event: Event, selectTailSegment = false) {
+  function initEditEvent(event: Event, selectTailSegment = false, editMode?: EditMode) {
     setEditingEvent({
       id: event.id,
       originalCalendarId: event.calendar_id,
-      editMode: 'READ' as EditMode,
+      editMode: editMode ? editMode : ('READ' as EditMode),
       event: event,
       selectTailSegment: !!selectTailSegment,
       updateContext: undefined,
