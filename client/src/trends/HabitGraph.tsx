@@ -32,7 +32,7 @@ import { labelsState } from '@/state/LabelsState'
 import ViewSelector, { TrendView } from './ViewSelector'
 import TagDropdown from './TagDropdown'
 
-import { averageLightness } from './util/color'
+import { averageLightness, calculateColor } from './util/color'
 
 interface IProps {
   setSelectedView: (v: TrendView) => void
@@ -88,45 +88,62 @@ function HabitGraph(props: IProps) {
 
     return (
       <Flex key={idx}>
-        {week.map((day: DateTime, idx: number) => {
+        {week.map((day: DateTime, dayIdx: number) => {
           const label = formatDayOfMonth(day)
           const dayKey = formatFullDay(day)
-          const dayValue = dates.gt(day, curDate) ? 0 : trendMap.get(dayKey)
           const isToday = dates.hasSame(curDate, day, ChronoUnit.DAYS)
+          const dayValue = dates.gt(day, curDate) ? 0 : trendMap.get(dayKey) || 0
+          const nextDayValue =
+            dayIdx < week.length - 1
+              ? dates.gt(week[dayIdx + 1], curDate)
+                ? 0
+                : trendMap.get(formatFullDay(week[dayIdx + 1])) || 0
+              : 0
 
-          let color
-          if (dayValue) {
-            let addLight = 0
-            if (maxDuration > 0) {
-              const ratio = dayValue / maxDuration
-              const remainingLight = 100 - l
-              addLight = (1 - ratio) * remainingLight
-            }
+          const renderLink = dayValue > 0 && nextDayValue > 0
 
-            if (dayValue > 0) {
-              color = `hsl(${h}, ${s}%, ${l + addLight}%)`
-            }
+          const dayColor = calculateColor(dayValue, maxDuration, h, s, l)
+          const nextDayColor = calculateColor(nextDayValue, maxDuration, h, s, l)
+
+          let linkColor = dayColor
+          if (renderLink) {
+            linkColor = averageLightness(dayColor, nextDayColor)
           }
 
           return (
-            <Popover isLazy trigger="hover" key={idx}>
+            <Popover isLazy trigger="hover" key={dayIdx}>
               <PopoverTrigger>
                 <Flex
                   className="habit-chart-day"
-                  backgroundColor={color}
-                  height="20"
+                  backgroundColor={dayColor}
+                  height="28"
+                  width="28"
                   alignItems="flex-start"
-                  justifyContent="center"
-                  border="1px solid rgba(230, 230, 230)"
-                  borderRadius="md"
-                  flex={1}
+                  justifyContent="flex-end"
+                  border="1px solid"
+                  borderColor={dayValue > 0 ? dayColor : 'transparent'} // Adjust border color based on activity
+                  borderRadius="2xl"
+                  flex="none"
                   m="1"
-                ></Flex>
+                  position="relative"
+                >
+                  {renderLink && (
+                    <Box
+                      className="consecutive-days-link"
+                      position="absolute"
+                      right="-9px"
+                      top="50%"
+                      width="2"
+                      height="3"
+                      backgroundColor={linkColor}
+                    ></Box>
+                  )}
+                </Flex>
               </PopoverTrigger>
               <PopoverContent width={'xs'} color="white" bg="gray.600" borderColor="gray.600">
                 <PopoverArrow bg="gray.600" borderColor="gray.600" />
                 <PopoverBody textAlign={'center'}>
-                  {dayValue && dayValue > 0
+                  {dayValue > 0
                     ? `${dayValue} hours on ${formatMonthDay(day)}`
                     : `No activity on ${formatMonthDay(day)}`}
                 </PopoverBody>
