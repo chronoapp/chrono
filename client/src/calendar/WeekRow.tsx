@@ -38,7 +38,7 @@ function WeekRow(props: IProps) {
     return (
       <div className="cal-row-bg">
         {props.range.map((date, index) => {
-          const isOffRange = props.date.month !== date.month
+          const isOffRange = props.date.month() !== date.month()
           return (
             <div key={index} className={clsx('cal-day-bg', isOffRange && 'cal-off-range-bg')}></div>
           )
@@ -49,7 +49,7 @@ function WeekRow(props: IProps) {
 
   function renderHeadingCell(date: DateTime, index: number) {
     const label = formatTwoDigitDay(date)
-    const isOffRange = props.date.month !== date.month
+    const isOffRange = props.date.month() !== date.month()
     let isCurrent = dates.eq(date, props.today, ChronoUnit.DAYS)
 
     return (

@@ -68,8 +68,9 @@ export default function MiniCalendar() {
         {week.map((day: DateTime, idx) => {
           const label = formatDayOfMonth(day)
           const isToday = dates.hasSame(day, now, ChronoUnit.DAYS)
-          const isOffRange = viewDate.month !== day.month
+          const isOffRange = viewDate.month() !== day.month()
           const isSelected = dates.hasSame(day, selectedDate, ChronoUnit.DAYS)
+          const offRangeText = !isToday && isOffRange
 
           return (
             <Text
@@ -84,11 +85,8 @@ export default function MiniCalendar() {
               fontSize={'xs'}
               _hover={{ cursor: 'pointer', bg: !isToday ? 'gray.200' : undefined }}
               backgroundColor={!isToday && isSelected ? 'gray.200' : undefined}
-              className={clsx(
-                'cal-mini-month-day',
-                !isToday && isOffRange && 'has-text-grey',
-                isToday && 'cal-mini-month-today-bg'
-              )}
+              color={offRangeText ? 'gray.500' : undefined}
+              className={clsx('cal-mini-month-day', isToday && 'cal-mini-month-today-bg')}
             >
               {label}
             </Text>
