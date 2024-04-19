@@ -230,7 +230,6 @@ function LabelTree(props: IProps) {
               onMouseLeave={onMouseLeave}
               justifyContent="space-between"
               alignItems="center"
-              paddingBottom="2px"
             >
               <Text fontSize="sm" color="gray.700">
                 {item.title}
