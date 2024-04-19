@@ -23,7 +23,8 @@ const TagDropdown = ({ eventFields, setEventFields }) => {
               <FiPlus /> add tag
             </Flex>
           </MenuButton>
-          <MenuList pl="1">
+
+          <MenuList pl="1" fontSize={'sm'}>
             <LabelTree
               allowEdit={false}
               onSelect={(label) => {
