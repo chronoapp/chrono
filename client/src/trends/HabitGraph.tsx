@@ -32,6 +32,8 @@ import { labelsState } from '@/state/LabelsState'
 import ViewSelector, { TrendView } from './ViewSelector'
 import TagDropdown from './TagDropdown'
 
+import { averageLightness } from './util/color'
+
 interface IProps {
   setSelectedView: (v: TrendView) => void
   selectedLabel?: Label
