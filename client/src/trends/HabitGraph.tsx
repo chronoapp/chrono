@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Flex, Box, Text, IconButton } from '@chakra-ui/react'
 import {
   Popover,
@@ -32,7 +32,7 @@ import { labelsState } from '@/state/LabelsState'
 import ViewSelector, { TrendView } from './ViewSelector'
 import TagDropdown from './TagDropdown'
 
-import { averageLightness, calculateColor } from './util/color'
+import { calculateColor } from './util/color'
 
 interface IProps {
   setSelectedView: (v: TrendView) => void
@@ -51,6 +51,8 @@ function HabitGraph(props: IProps) {
   const month = dates.visibleDays(viewDate, firstDayOfWeek(), true)
 
   const weeks = chunk(month, 7)
+
+  const consecutiveDaysRef = useRef(0)
 
   useEffect(() => {
     updateTrendsData()
@@ -89,10 +91,16 @@ function HabitGraph(props: IProps) {
     return (
       <Flex key={idx}>
         {week.map((day: DateTime, dayIdx: number) => {
-          const label = formatDayOfMonth(day)
           const dayKey = formatFullDay(day)
-          const isToday = dates.hasSame(curDate, day, ChronoUnit.DAYS)
           const dayValue = dates.gt(day, curDate) ? 0 : trendMap.get(dayKey) || 0
+
+          // Update consecutive day count using ref
+          if (dayValue > 0) {
+            consecutiveDaysRef.current = Math.min(consecutiveDaysRef.current + 1, 5)
+          } else {
+            consecutiveDaysRef.current = 0
+          }
+
           const nextDayValue =
             dayIdx < week.length - 1
               ? dates.gt(week[dayIdx + 1], curDate)
@@ -101,13 +109,18 @@ function HabitGraph(props: IProps) {
               : 0
 
           const renderLink = dayValue > 0 && nextDayValue > 0
-
           const dayColor = calculateColor(dayValue, maxDuration, h, s, l)
-          const nextDayColor = calculateColor(nextDayValue, maxDuration, h, s, l)
 
           let linkColor = dayColor
           if (renderLink) {
-            linkColor = averageLightness(dayColor, nextDayColor)
+            // Calculate the link value based on the consecutive day count
+            linkColor = calculateColor(
+              Math.min(consecutiveDaysRef.current * (maxDuration / 5), maxDuration),
+              maxDuration,
+              h,
+              s,
+              l
+            )
           }
 
           return (
@@ -116,24 +129,23 @@ function HabitGraph(props: IProps) {
                 <Flex
                   className="habit-chart-day"
                   backgroundColor={dayColor}
-                  height="28"
-                  width="28"
+                  height="6.5rem"
+                  width="6.5rem"
                   alignItems="flex-start"
                   justifyContent="flex-end"
-                  border="1px solid"
-                  borderColor={dayValue > 0 ? dayColor : 'transparent'} // Adjust border color based on activity
                   borderRadius="2xl"
                   flex="none"
-                  m="1"
+                  my="1"
+                  mx="2"
                   position="relative"
                 >
                   {renderLink && (
                     <Box
                       className="consecutive-days-link"
                       position="absolute"
-                      right="-9px"
+                      right="-4"
                       top="50%"
-                      width="2"
+                      width="4"
                       height="3"
                       backgroundColor={linkColor}
                     ></Box>
