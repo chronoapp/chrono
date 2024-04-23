@@ -100,6 +100,7 @@ export function sortEvents(evtA: Event, evtB: Event) {
     +evtB.all_day - +evtA.all_day || // then allDay single day events
     dates.subDates(evtA.start, evtB.start) || // then sort by start time
     dates.subDates(evtA.end, evtB.end) || // then sort by end time
-    (evtA.title || '').localeCompare(evtB.title || '') // then sort by title
+    (evtA.title || '').localeCompare(evtB.title || '') || // then sort by title
+    evtA.id.localeCompare(evtB.id) // then sort by id
   )
 }

@@ -99,31 +99,34 @@ export const allVisibleEventsSelector = selector({
       .map((cal) => cal.id)
 
     let allEvents: Event[] = []
+    let replacedEditingEvent = false
 
     selectedCalendarIds.forEach((calId) => {
       const events = eventsByCalendar[calId]
       if (events) {
         Object.values(events).forEach((event) => {
-          allEvents.push(adjustEventTimezone(event, primaryTimezone))
+          // Replace the event with the same id as the editing event with the editing event.
+          // Do not check for the event's calendar ID, as the editing event may be moved to a different calendar.
+          const isEditingEvent = editingEvent && editingEvent.id === event.id
+
+          if (isEditingEvent) {
+            replacedEditingEvent = true
+            allEvents.push(adjustEventTimezone(editingEvent.event, primaryTimezone))
+          } else {
+            allEvents.push(adjustEventTimezone(event, primaryTimezone))
+          }
         })
       }
     })
 
-    // Add the editing event to the event list if it exists.
-    if (editingEvent) {
-      // Optionally, remove the event from its original calendar if moved.
-      // This requires identifying and removing it from allEvents if necessary.
-      // Then add/update the editing event in its current or primary calendar.
-
-      // Find and remove the editing event if it was moved from another calendar.
-      allEvents = allEvents.filter((event) => event.id !== editingEvent.id)
-
-      // Add the editing event to the list.
+    // Editing event is not in the list of events, so add it to the list.
+    if (editingEvent && !replacedEditingEvent) {
       allEvents.push(adjustEventTimezone(editingEvent.event, primaryTimezone))
     }
 
     return allEvents
   },
+
   dangerouslyAllowMutability: true,
 })
 
