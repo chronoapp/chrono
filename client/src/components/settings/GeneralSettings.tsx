@@ -88,9 +88,13 @@ function GeneralSettings() {
       <TimezoneSelector
         user={user}
         onUpdateTimezone={(timezone) => {
-          const updatedUser = { ...user, timezones: [timezone] }
+          // Don't prompt the user to update their timezone again.
+          const flags = { ...user.flags, LAST_PROMPTED_TIMEZONE_TO_CHANGE: timezone }
+          const updatedUser = { ...user, flags: flags, timezones: [timezone] }
           setUser(updatedUser)
+
           API.updateUser(updatedUser)
+          API.updateUserFlags('LAST_PROMPTED_TIMEZONE_TO_CHANGE', timezone)
         }}
       />
       <CalendarSettings user={user} onUpdateUser={setUser} addMessage={addMessage} />
