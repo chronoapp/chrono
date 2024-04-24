@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react'
-import { useRecoilValue } from 'recoil'
+import { useState, useEffect } from 'react'
 import {
   Box,
   Flex,
@@ -61,12 +60,17 @@ interface IProps {
   onChange?: (rule: RRule | undefined) => void
 }
 
+/**
+ * The default options for a recurring event when we have just
+ * opened the recurring event editor.
+ */
 function getDefaultOptions(initialDate: DateTime) {
   const defaultOptions = {
     freq: RRuleFreq.WEEKLY,
     interval: 1,
     byweekday: [new Weekday(0)],
   }
+
   return defaultOptions
 }
 
@@ -82,6 +86,7 @@ export function getRecurrenceRules(rulestr: string, initialDate: DateTime): Part
   }
 
   const firstRule = rules[0].origOptions
+
   return firstRule
 }
 
@@ -125,6 +130,14 @@ function getInitialEndCondition(recurrence: Partial<Options>): EndCondition {
   }
 }
 
+function getInitialOptions(initialRuleStr: string | null, initialDate: DateTime) {
+  if (initialRuleStr) {
+    return getRecurrenceRules(initialRuleStr, initialDate)
+  } else {
+    return getDefaultOptions(initialDate)
+  }
+}
+
 /**
  * UI that encapsulates the creation of an RRULE. Tightly coupled with the rrule
  * library since it uses its internals.
@@ -136,13 +149,9 @@ function getInitialEndCondition(recurrence: Partial<Options>): EndCondition {
  * - byweekday: RRule.FR.nth(2),
  */
 function RecurringEventEditor(props: IProps) {
-  const user = useRecoilValue(userState)
-
   const [modalEnabled, setModalEnabled] = useState<boolean>(false)
   const [recurringOptions, setRecurringOptions] = useState<Partial<Options>>(
-    props.initialRulestr
-      ? getRecurrenceRules(props.initialRulestr, props.initialDate)
-      : getDefaultOptions(props.initialDate)
+    getInitialOptions(props.initialRulestr, props.initialDate)
   )
 
   const [endCondition, setEndCondition] = useState<EndCondition>(
@@ -158,40 +167,45 @@ function RecurringEventEditor(props: IProps) {
    */
   useEffect(() => {
     if (modalEnabled) {
-      if (recurringOptions?.freq == RRuleFreq.DAILY) {
-        setRecurringOptions({
-          ...recurringOptions,
-          until: toJsDate(dates.add(props.initialDate, 30, ChronoUnit.DAYS)),
-          count: 30,
-          byweekday: [],
-        })
-      } else if (recurringOptions?.freq == RRuleFreq.WEEKLY) {
-        const dayNo = formatDayOfWeekNumeric(props.initialDate)
-        const rruleDay = new Weekday(dayNo)
-
-        setRecurringOptions({
-          ...recurringOptions,
-          until: toJsDate(dates.add(props.initialDate, 13, ChronoUnit.WEEKS)),
-          count: 13,
-          byweekday: [rruleDay],
-        })
-      } else if (recurringOptions?.freq == RRuleFreq.MONTHLY) {
-        setRecurringOptions({
-          ...recurringOptions,
-          until: toJsDate(dates.add(props.initialDate, 12, ChronoUnit.MONTHS)),
-          count: 12,
-          byweekday: [],
-        })
-      } else if (recurringOptions?.freq == RRuleFreq.YEARLY) {
-        setRecurringOptions({
-          ...recurringOptions,
-          until: toJsDate(dates.add(props.initialDate, 5, ChronoUnit.YEARS)),
-          count: 5,
-          byweekday: [],
-        })
+      switch (recurringOptions.freq) {
+        case RRuleFreq.DAILY:
+          setRecurringOptions({
+            ...recurringOptions,
+            until: toJsDate(dates.add(props.initialDate, 30, ChronoUnit.DAYS)),
+            count: 30,
+            byweekday: [],
+          })
+          break
+        case RRuleFreq.WEEKLY:
+          const dayNo = formatDayOfWeekNumeric(props.initialDate)
+          setRecurringOptions({
+            ...recurringOptions,
+            until: toJsDate(dates.add(props.initialDate, 13, ChronoUnit.WEEKS)),
+            count: 13,
+            byweekday: [new Weekday(dayNo)],
+          })
+          break
+        case RRuleFreq.MONTHLY:
+          setRecurringOptions({
+            ...recurringOptions,
+            until: toJsDate(dates.add(props.initialDate, 12, ChronoUnit.MONTHS)),
+            count: 12,
+            byweekday: [],
+          })
+          break
+        case RRuleFreq.YEARLY:
+          setRecurringOptions({
+            ...recurringOptions,
+            until: toJsDate(dates.add(props.initialDate, 5, ChronoUnit.YEARS)),
+            count: 5,
+            byweekday: [],
+          })
+          break
+        default:
+          break
       }
     }
-  }, [recurringOptions?.freq, modalEnabled])
+  }, [recurringOptions.freq, modalEnabled])
 
   useEffect(() => {
     if (!modalEnabled) {
