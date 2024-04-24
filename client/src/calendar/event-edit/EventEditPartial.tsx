@@ -1,4 +1,4 @@
-import { createRef, useEffect, useRef } from 'react'
+import { createRef, useEffect } from 'react'
 import { useRecoilValue, useSetRecoilState } from 'recoil'
 import produce from 'immer'
 
@@ -29,7 +29,6 @@ import ParticipantList from './ParticipantList'
 import ConferenceList from './ConferenceList'
 import { mergeParticipants } from './EventEditUtils'
 import TimeRangeSelect from './TimeRangeSelect'
-import TimeSelectFullDay from './TimeSelectFullDay'
 import SelectCalendar from './SelectCalendar'
 import TaggableInput from './TaggableInput'
 import TagDropdown from './TagAddDropdown'
@@ -60,10 +59,6 @@ export default function EventEditPartial(props: IProps) {
   const labelState = useRecoilValue(labelsState)
   const labels: Label[] = Object.values(labelState.labelsById)
   const user = useRecoilValue(userState)
-
-  const defaultDays = eventFields.allDay
-    ? Math.max(dates.diff(eventFields.end, eventFields.start, ChronoUnit.DAYS), 1)
-    : 1
 
   useEffect(() => {
     document.addEventListener('keydown', keyboardEvents)
@@ -145,7 +140,10 @@ export default function EventEditPartial(props: IProps) {
               />
             </Box>
           ))}
-          <TagDropdown eventFields={eventFields} setEventFields={setEventFields} />
+
+          {!user?.flags.DISABLE_TAGS && (
+            <TagDropdown eventFields={eventFields} setEventFields={setEventFields} />
+          )}
         </Flex>
 
         <Flex mt="1" alignItems="top">

@@ -241,7 +241,9 @@ export default function EventEditFull(props: {
                 />
               </div>
             ))}
-            <TagDropdown eventFields={eventFields} setEventFields={setEventFields} />
+            {!user?.flags.DISABLE_TAGS && (
+              <TagDropdown eventFields={eventFields} setEventFields={setEventFields} />
+            )}
           </Flex>
 
           <Flex alignItems="center" mt="3" justifyContent="left" color="gray.700">
