@@ -3,10 +3,8 @@ import User from '@/models/User'
 import { FiChevronUp, FiChevronDown, FiPlus } from 'react-icons/fi'
 import { userState } from '@/state/UserState'
 import { useRecoilState } from 'recoil'
-import { DragOverlay } from '@dnd-kit/core'
 import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable'
 import { SortableTimezone } from './SortableTimezone'
-import TimezoneLabel from './TimezoneLabel'
 
 import * as API from '@/util/Api'
 
@@ -84,6 +82,7 @@ function useUserFlags() {
   function updateExpandAllDayEvents(expand: boolean) {
     const updatedFlags = { ...user?.flags, EXPAND_ALL_DAY_EVENTS: expand }
 
+    // Update local state
     setUser((state) =>
       state
         ? ({
@@ -93,9 +92,12 @@ function useUserFlags() {
         : state
     )
 
-    user && API.updateUserFlags(updatedFlags)
+    if (user) {
+      API.updateUserFlags('EXPAND_ALL_DAY_EVENTS', expand)
+    }
   }
 
   return { expandAllDayEvents, updateExpandAllDayEvents }
 }
+
 export default GutterHeader

@@ -1,6 +1,15 @@
 import React, { forwardRef } from 'react'
 import { Box } from '@chakra-ui/react'
-import { formatTimeShort } from '../util/localizer-luxon'
+import { LocalTime, DateTimeFormatter } from '@js-joda/core'
+import { Locale } from '@js-joda/locale_en-us'
+
+import '@js-joda/locale_en-us'
+
+function formatTimeShort(time, includeMeridiem = false) {
+  const pattern = includeMeridiem ? 'h a' : 'HH'
+  const formatter = DateTimeFormatter.ofPattern(pattern).withLocale(Locale.US)
+  return time.format(formatter)
+}
 
 interface GutterContentProps {
   slotMetrics: any
