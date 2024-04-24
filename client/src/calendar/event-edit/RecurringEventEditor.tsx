@@ -33,7 +33,7 @@ import produce from 'immer'
 import { BsArrowRepeat } from 'react-icons/bs'
 import { FiChevronDown } from 'react-icons/fi'
 
-import { userState } from '@/state/UserState'
+import { getRecurrenceRules, getDefaultOptions } from '@/calendar/utils/RecurrenceUtils'
 import * as dates from '@/util/dates-joda'
 
 import {
@@ -58,36 +58,6 @@ interface IProps {
   initialDate: DateTime
   initialRulestr: string | null
   onChange?: (rule: RRule | undefined) => void
-}
-
-/**
- * The default options for a recurring event when we have just
- * opened the recurring event editor.
- */
-function getDefaultOptions(initialDate: DateTime) {
-  const defaultOptions = {
-    freq: RRuleFreq.WEEKLY,
-    interval: 1,
-    byweekday: [new Weekday(0)],
-  }
-
-  return defaultOptions
-}
-
-/**
- * Get default rule parts from a recurrence string.
- */
-export function getRecurrenceRules(rulestr: string, initialDate: DateTime): Partial<Options> {
-  const ruleset = rrulestr(rulestr, { forceset: true }) as RRuleSet
-
-  const rules = ruleset.rrules()
-  if (rules.length !== 1) {
-    return getDefaultOptions(initialDate)
-  }
-
-  const firstRule = rules[0].origOptions
-
-  return firstRule
 }
 
 /**
@@ -397,34 +367,38 @@ function RecurringEventEditor(props: IProps) {
             <Radio value={EndCondition.ByCount.toString()}>
               <Flex alignItems="center">
                 <Text fontSize={'sm'} mr="1">
-                  After
-                </Text>
-                <NumberInput
-                  size="xs"
-                  ml="1"
-                  min={1}
-                  max={99}
-                  value={recurringOptions?.count || ''}
-                  isDisabled={endCondition != EndCondition.ByCount}
-                  w="20"
-                  onChange={(val) => {
-                    setRecurringOptions({
-                      ...recurringOptions,
-                      count: parseInt(val),
-                    })
-                  }}
-                >
-                  <NumberInputField />
-                  <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                  </NumberInputStepper>
-                </NumberInput>
-                <Text ml="1" size={'sm'}>
-                  times
+                  After number of times
                 </Text>
               </Flex>
             </Radio>
+
+            <Flex alignItems="center" ml="4">
+              <NumberInput
+                size="xs"
+                ml="1"
+                min={1}
+                max={365}
+                value={recurringOptions?.count || ''}
+                isDisabled={endCondition != EndCondition.ByCount}
+                w="20"
+                onChange={(val) => {
+                  setRecurringOptions({
+                    ...recurringOptions,
+                    count: parseInt(val),
+                  })
+                }}
+              >
+                <NumberInputField />
+                <NumberInputStepper>
+                  <NumberIncrementStepper />
+                  <NumberDecrementStepper />
+                </NumberInputStepper>
+              </NumberInput>
+
+              <Text ml="1" size={'sm'}>
+                times
+              </Text>
+            </Flex>
           </Stack>
         </RadioGroup>
       </Box>
@@ -441,6 +415,7 @@ function RecurringEventEditor(props: IProps) {
         isOpen={modalEnabled}
         onClose={() => setModalEnabled(false)}
         blockScrollOnMount={false}
+        isCentered={true}
         size="xs"
       >
         <ModalOverlay />
@@ -572,6 +547,7 @@ function RecurringEventEditor(props: IProps) {
         </Box>
         {renderDropdownMenu()}
       </Flex>
+
       {renderRecurringEventModal()}
     </>
   )

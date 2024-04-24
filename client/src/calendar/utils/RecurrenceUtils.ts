@@ -3,9 +3,7 @@ import * as dates from '@/util/dates-joda'
 import * as localizer from '@/util/localizer-joda'
 
 import { produce } from 'immer'
-
-import { getRecurrenceRules } from '@/calendar/event-edit/RecurringEventEditor'
-import { RRule, datetime } from 'rrule'
+import { RRule, datetime, Frequency, RRuleSet, Weekday, rrulestr, Options } from 'rrule'
 
 /**
  * Gets the recurrence for this and following events.
@@ -87,4 +85,34 @@ export function getSplitRRules(
 
     return { start: startRule, end: endRule }
   }
+}
+
+/**
+ * Get default rule parts from a recurrence string.
+ */
+export function getRecurrenceRules(rulestr: string, initialDate: DateTime): Partial<Options> {
+  const ruleset = rrulestr(rulestr, { forceset: true }) as RRuleSet
+
+  const rules = ruleset.rrules()
+  if (rules.length !== 1) {
+    return getDefaultOptions(initialDate)
+  }
+
+  const firstRule = rules[0].origOptions
+
+  return firstRule
+}
+
+/**
+ * The default options for a recurring event when we have just
+ * opened the recurring event editor.
+ */
+export function getDefaultOptions(initialDate: DateTime) {
+  const defaultOptions = {
+    freq: Frequency.WEEKLY,
+    interval: 1,
+    byweekday: [new Weekday(0)],
+  }
+
+  return defaultOptions
 }
