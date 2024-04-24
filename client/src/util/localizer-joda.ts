@@ -84,6 +84,14 @@ export function formatDayMonth(date: ZonedDateTime): string {
   return date.format(DateTimeFormatter.ofPattern('EEEE, MMMM d').withLocale(Locale.US))
 }
 
+/**
+ * Returns the month, day of month, and year
+ * E.g. "April 16, 2024"
+ */
+export function formatMonthDayYear(date: ZonedDateTime): string {
+  return date.format(DateTimeFormatter.ofPattern('MMM d, yyyy').withLocale(Locale.US))
+}
+
 export function formatLocaleDateString(date: ZonedDateTime): string {
   return date.format(DateTimeFormatter.ofPattern('EEEE, MMMM d, yyyy').withLocale(Locale.US))
 }
@@ -164,6 +172,10 @@ export function formatTime24Hour(date: ZonedDateTime): string {
   return date.format(DateTimeFormatter.ofPattern('HH:mm').withLocale(Locale.US))
 }
 
+/**
+ * Returns the month and day of month
+ * E.g. "April 16"
+ */
 export function formatMonthDay(date: ZonedDateTime): string {
   return date.format(DateTimeFormatter.ofPattern('LLLL d').withLocale(Locale.US))
 }

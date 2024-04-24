@@ -6,6 +6,7 @@ import { useRecoilValue } from 'recoil'
 
 import { ChronoUnit } from '@js-joda/core'
 import * as dates from '@/util/dates-joda'
+import * as localizer from '@/util/localizer-joda'
 
 import { getTrends } from '@/util/Api'
 import { Label, TimePeriod } from '@/models/Label'
@@ -29,10 +30,6 @@ function TrendChart(props: IProps) {
   const [selectedTimePeriod, setSelectedTimePeriod] = React.useState<TimePeriod>('WEEK')
   const calendarView = useRecoilValue(calendarViewState)
   const labelState = useRecoilValue(labelsState)
-
-  React.useEffect(() => {
-    updateTrendsData()
-  }, [])
 
   React.useEffect(() => {
     updateTrendsData()
@@ -138,8 +135,15 @@ function TrendChart(props: IProps) {
 
     const label = props.selectedLabel ? props.selectedLabel : Object.values(labels)[0]
     const colorHex = label ? label.color_hex : 'white'
+    const labelsDisplay = trends.labels
+      ? trends.labels.map((label) => {
+          const date = localizer.yearStringToDate(label)
+          return localizer.formatMonthDayYear(date)
+        })
+      : []
+
     const data = {
-      labels: trends.labels,
+      labels: labelsDisplay,
       datasets: [
         {
           label: 'Hours',
