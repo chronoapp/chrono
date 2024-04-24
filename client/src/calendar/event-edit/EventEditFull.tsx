@@ -35,7 +35,7 @@ import CalendarAccount from '@/models/CalendarAccount'
 import { labelsState } from '@/state/LabelsState'
 import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
 import useEventActions from '@/state/useEventActions'
-import { EventUpdateContext } from '@/state/EventsState'
+import { EditingEvent, EventUpdateContext } from '@/state/EventsState'
 import { userState } from '@/state/UserState'
 import { calendarViewState } from '@/state/CalendarViewState'
 
@@ -62,48 +62,53 @@ import TagDropdown from './TagAddDropdown'
 /**
  * Full view for event editing.
  */
-export default function EventEditFull(props: { event: Event; eventService: EventService }) {
+export default function EventEditFull(props: {
+  editingEvent: EditingEvent
+  eventService: EventService
+}) {
   const eventActions = useEventActions()
   const labelState = useRecoilValue(labelsState)
   const calendarsById = useRecoilValue(calendarsState).calendarsById
   const setCalendarView = useSetRecoilState(calendarViewState)
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
-  const originalCalendarId = props.event.syncStatus === 'SYNCED' ? props.event.calendar_id : null
+
+  const { event } = props.editingEvent
+  const originalCalendarId = event.syncStatus === 'SYNCED' ? event.calendar_id : null
   const user = useRecoilValue(userState)
 
   // Event data and overrides
   const [eventFields, setEventFields] = useState(
     new EventFields(
-      props.event.title,
-      props.event.description || '',
-      props.event.start,
-      props.event.end,
-      props.event.labels,
-      props.event.calendar_id,
-      props.event.all_day,
-      props.event.start_day,
-      props.event.end_day,
-      props.event.organizer,
-      props.event.recurrences ? props.event.recurrences.join('\n') : null,
-      props.event.guests_can_modify,
-      props.event.guests_can_invite_others,
-      props.event.guests_can_see_other_guests,
-      props.event.conference_data,
-      props.event.location,
-      props.event.visibility,
-      props.event.transparency,
-      props.event.use_default_reminders,
-      props.event.reminders
+      event.title,
+      event.description || '',
+      event.start,
+      event.end,
+      event.labels,
+      event.calendar_id,
+      event.all_day,
+      event.start_day,
+      event.end_day,
+      event.organizer,
+      event.recurrences ? event.recurrences.join('\n') : null,
+      event.guests_can_modify,
+      event.guests_can_invite_others,
+      event.guests_can_see_other_guests,
+      event.conference_data,
+      event.location,
+      event.visibility,
+      event.transparency,
+      event.use_default_reminders,
+      event.reminders
     )
   )
-  const [participants, setParticipants] = useState<EventParticipant[]>(props.event.participants)
+  const [participants, setParticipants] = useState<EventParticipant[]>(event.participants)
 
   // Derived Properties
-  const isUnsavedEvent = props.event.syncStatus === 'NOT_SYNCED'
+  const isUnsavedEvent = event.syncStatus === 'NOT_SYNCED'
 
   function getUpdatedEvent(): Event {
     return {
-      ...props.event,
+      ...event,
       ...EventFields.getMutableEventFields(eventFields),
       participants: participants,
     }
@@ -133,7 +138,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
    * This could be a new event, or an existing event that has been edited.
    */
   async function onSaveEvent() {
-    const originalEvent = props.event
+    const originalEvent = props.editingEvent.originalEvent
     const updatedEvent = getUpdatedEventWithConferencing()
 
     const hasParticipants =
@@ -142,11 +147,16 @@ export default function EventEditFull(props: { event: Event; eventService: Event
     const isRecurringEvent = originalEvent.recurring_event_id !== null
     const showConfirmDialog = hasParticipants || isRecurringEvent
 
+    const recurrenceString = (updatedEvent.recurrences || []).join('\n')
+    const originalRecurrenceString = (originalEvent.recurrences || []).join('\n')
+    const hasRecurrenceUpdate = recurrenceString !== originalRecurrenceString
+
     if (showConfirmDialog) {
       const updateContext = {
         eventEditAction: isUnsavedEvent ? 'CREATE' : 'UPDATE',
+        hasParticipants: hasParticipants,
         isRecurringEvent: originalEvent.recurring_event_id !== null,
-        hasParticipants: originalEvent.participants.length > 0,
+        hasUpdatedRecurrenceString: hasRecurrenceUpdate,
       } as EventUpdateContext
 
       eventActions.updateEditingEvent(updatedEvent)
@@ -269,7 +279,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
 
                   setEventFields(updatedFields)
                   const updatedEvent = {
-                    ...props.event,
+                    ...event,
                     ...EventFields.getMutableEventFields(updatedFields),
                   }
 
@@ -323,7 +333,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
 
                     setEventFields(updatedFields)
                     const updatedEvent = {
-                      ...props.event,
+                      ...event,
                       ...EventFields.getMutableEventFields(updatedFields),
                     }
 
@@ -345,7 +355,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                   setEventFields(updatedFields)
 
                   const updatedEvent = {
-                    ...props.event,
+                    ...event,
                     ...EventFields.getMutableEventFields(updatedFields),
                   }
                   eventActions.updateEditingEvent(updatedEvent)
@@ -355,7 +365,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                   setEventFields(updatedFields)
 
                   const updatedEvent = {
-                    ...props.event,
+                    ...event,
                     ...EventFields.getMutableEventFields(updatedFields),
                   }
                   eventActions.updateEditingEvent(updatedEvent)
@@ -399,7 +409,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                 setEventFields(newEventFields)
 
                 const updatedEvent = {
-                  ...props.event,
+                  ...event,
                   ...EventFields.getMutableEventFields(newEventFields),
                 }
                 eventActions.updateEditingEvent(updatedEvent)
@@ -410,7 +420,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
           </Flex>
 
           <RecurringEventEditor
-            initialDate={props.event.original_start || eventFields.start}
+            initialDate={event.original_start || eventFields.start}
             initialRulestr={eventFields.recurrences}
             onChange={(rules) => {
               console.log(`Rule Updated: ${rules}`)
@@ -499,7 +509,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
               <FiVideo size={'1em'} />
             </Box>
             <ConferenceList
-              event={props.event}
+              event={event}
               conferenceData={eventFields.conferenceData}
               onSelectConference={(conferenceData) => {
                 const updatedFields = {
@@ -546,7 +556,7 @@ export default function EventEditFull(props: { event: Event; eventService: Event
                 setEventFields(updatedFields)
 
                 const updatedEvent = {
-                  ...props.event,
+                  ...event,
                   ...EventFields.getMutableEventFields(updatedFields),
                 }
                 eventActions.updateEditingEvent(updatedEvent)

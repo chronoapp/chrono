@@ -1,6 +1,5 @@
 import React from 'react'
 import produce from 'immer'
-import { useRecoilValue } from 'recoil'
 import { ChronoUnit } from '@js-joda/core'
 import * as dates from '@/util/dates-joda'
 
@@ -26,14 +25,14 @@ import { EventService } from './useEventService'
 import Event from '@/models/Event'
 
 import useEventActions from '@/state/useEventActions'
-import { eventsState, EditRecurringAction, EventUpdateContext } from '@/state/EventsState'
+import { EditRecurringAction, EventUpdateContext, EditingEvent } from '@/state/EventsState'
 import { getSplitRRules } from '@/calendar/utils/RecurrenceUtils'
 
 import * as API from '@/util/Api'
 import { makeShortId } from '@/lib/js-lib/makeId'
 
 interface IProps {
-  event: Event // Event we are about to save.
+  editingEvent: EditingEvent // Event we are about to save.
   updateContext: EventUpdateContext
   eventService: EventService
 }
@@ -44,9 +43,9 @@ interface IProps {
  * 2) Notify participants of the update.
  */
 function ConfirmUpdateEventModal(props: IProps) {
-  const eventActions = useEventActions()
-  const events = useRecoilValue(eventsState)
+  const { event } = props.editingEvent
 
+  const eventActions = useEventActions()
   const initialFocusRef = React.useRef(null)
   const [radioValue, setRadioValue] = React.useState<EditRecurringAction>('SINGLE')
 
@@ -80,11 +79,10 @@ function ConfirmUpdateEventModal(props: IProps) {
   }
 
   async function updateAllRecurringEvents(parentEvent: Event | null, sendUpdates: boolean) {
-    const parent =
-      parentEvent || (await API.getEvent(props.event.calendar_id, props.event.recurring_event_id!))
+    const parent = parentEvent || (await API.getEvent(event.calendar_id, event.recurring_event_id!))
 
-    const originalChild = eventActions.getEvent(props.event.calendar_id, props.event.id)
-    const updatedParent = getUpdatedParentEvent(parent, props.event, originalChild)
+    const originalChild = eventActions.getEvent(event.calendar_id, event.id)
+    const updatedParent = getUpdatedParentEvent(parent, event, originalChild)
 
     // Delete all to refresh from the server.
     // TODO: Handle optimistic updates on the client to prevent flickering.
@@ -99,17 +97,17 @@ function ConfirmUpdateEventModal(props: IProps) {
    * 2) The recurrence from this event onwards, to create a new series of events.
    */
   async function updateThisAndFutureRecurringEvents(sendUpdates: boolean) {
-    const parent = await API.getEvent(props.event.calendar_id, props.event.recurring_event_id!)
+    const parent = await API.getEvent(event.calendar_id, event.recurring_event_id!)
 
-    if (dates.eq(parent.start, props.event.original_start!)) {
+    if (dates.eq(parent.start, event.original_start!)) {
       return await updateAllRecurringEvents(parent, sendUpdates)
     } else {
       // 1) Update the base event's recurrence, cut off at the current event's original start date.
       const rules = getSplitRRules(
-        props.event.recurrences!.join('\n'),
+        event.recurrences!.join('\n'),
         parent.start,
-        props.event.original_start!,
-        props.event.start,
+        event.original_start!,
+        event.start,
         parent.all_day
       )
 
@@ -118,7 +116,7 @@ function ConfirmUpdateEventModal(props: IProps) {
 
       // 2) Create a new recurring event for the the rest of the events
       const thisAndFollowingEvent: Event = {
-        ...props.event,
+        ...event,
         id: makeShortId(),
         recurrences: [rules.end.toString()],
         recurring_event_id: null,
@@ -134,38 +132,38 @@ function ConfirmUpdateEventModal(props: IProps) {
   }
 
   async function updateEvent(sendUpdates: boolean) {
-    const isRecurringEvent = props.event.recurring_event_id != null
+    const isRecurringEvent = event.recurring_event_id != null
     if (isRecurringEvent) {
-      if (!props.event.original_start) {
+      if (!event.original_start) {
         throw Error('Recurring event does not have original_start')
       }
 
       if (radioValue === 'SINGLE') {
-        return await props.eventService.saveEvent(props.event, sendUpdates)
+        return await props.eventService.saveEvent(event, sendUpdates)
       } else if (radioValue === 'ALL') {
         return await updateAllRecurringEvents(null, sendUpdates)
       } else if (radioValue === 'THIS_AND_FOLLOWING') {
         return await updateThisAndFutureRecurringEvents(sendUpdates)
       }
     } else {
-      return await props.eventService.saveEvent(props.event, sendUpdates)
+      return await props.eventService.saveEvent(event, sendUpdates)
     }
   }
 
   function getHeader() {
     if (props.updateContext.isRecurringEvent) {
-      return `Update recurring event: ${props.event.title}`
+      return `Update recurring event: ${event.title}`
     } else {
-      return `Update event: ${props.event.title}`
+      return `Update event: ${event.title}`
     }
   }
 
   function renderModalBody() {
     if (props.updateContext.hasParticipants && !props.updateContext.isRecurringEvent) {
-      const originalEvent = events.eventsByCalendar[props.event.calendar_id][props.event.id]
+      const originalEvent = props.editingEvent.originalEvent
       const { addedParticipants, removedParticipants } = Event.getParticipantUpdates(
         originalEvent,
-        props.event
+        event
       )
       const newGuest = addedParticipants.length > 0
       const removedGuest = removedParticipants.length > 0
@@ -192,12 +190,16 @@ function ConfirmUpdateEventModal(props: IProps) {
           value={radioValue}
         >
           <Stack>
-            <Radio size="sm" value={'SINGLE'}>
-              This event
-            </Radio>
+            {!props.updateContext.hasUpdatedRecurrenceString && (
+              <Radio size="sm" value={'SINGLE'}>
+                This event
+              </Radio>
+            )}
+
             <Radio size="sm" value={'THIS_AND_FOLLOWING'}>
               This and following events
             </Radio>
+
             <Radio size="sm" value={'ALL'}>
               All events
             </Radio>

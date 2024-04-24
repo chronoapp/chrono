@@ -91,6 +91,7 @@ export default function useEventActions() {
       id: event.id,
       originalCalendarId: event.calendar_id,
       editMode: editMode ? editMode : ('READ' as EditMode),
+      originalEvent: event,
       event: event,
       selectTailSegment: !!selectTailSegment,
       updateContext: undefined,
@@ -139,6 +140,7 @@ export default function useEventActions() {
           editRecurringAction: 'SINGLE' as EditRecurringAction,
           updateContext: updateContext,
           event: updatedEvent,
+          originalEvent: updatedEvent,
         } as EditingEvent
       }
     })
@@ -302,6 +304,7 @@ export default function useEventActions() {
       originalCalendarId: calendar.id,
       editMode: 'EDIT' as EditMode,
       event,
+      originalEvent: event,
       selectTailSegment: false,
       updateContext: undefined,
     })

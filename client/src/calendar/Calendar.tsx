@@ -219,7 +219,7 @@ function Calendar() {
   function renderFullEditMode() {
     const fullEditMode = editingEvent?.editMode == 'FULL_EDIT'
     if (fullEditMode && editingEvent) {
-      return <EventEditFull eventService={eventService} event={editingEvent.event} />
+      return <EventEditFull eventService={eventService} editingEvent={editingEvent} />
     }
   }
 
@@ -239,7 +239,7 @@ function Calendar() {
             <ConfirmUpdateEventModal
               eventService={eventService}
               updateContext={editingEvent.updateContext}
-              event={editingEvent.event}
+              editingEvent={editingEvent}
             />
           )
         case 'CREATE':

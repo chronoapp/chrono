@@ -23,6 +23,7 @@ export interface EventUpdateContext {
   eventEditAction: EventEditAction
   isRecurringEvent: boolean | undefined
   hasParticipants: boolean
+  hasUpdatedRecurrenceString: boolean
 }
 
 export interface DragDropAction {
@@ -41,6 +42,7 @@ export type EditingEvent = {
   editMode: EditMode
   selectTailSegment: boolean
   updateContext: EventUpdateContext | undefined
+  originalEvent: Event
   event: Event
 }
 
