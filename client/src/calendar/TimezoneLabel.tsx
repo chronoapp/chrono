@@ -29,7 +29,6 @@ const TimezoneLabel = forwardRef<HTMLDivElement, TimezoneLabelProps>(({ id, gutt
       alignItems="center"
       justifyContent="center"
       borderRadius="sm"
-      bg="gray.200"
       p="1px"
       mx="1px"
     >
