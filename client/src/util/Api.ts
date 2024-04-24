@@ -133,7 +133,10 @@ export async function updateUser(user: User): Promise<User> {
     .then((resp) => User.fromJson(resp))
 }
 
-export async function updateUserFlags(flagType: string, flagValue: boolean): Promise<Flags> {
+export async function updateUserFlags(
+  flagType: string,
+  flagValue: boolean | string
+): Promise<Flags> {
   return fetch(`${API_URL}/user/flags`, {
     method: 'PUT',
     headers: getHeaders(),

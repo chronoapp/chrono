@@ -35,7 +35,7 @@ class UserVM(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
     id: UUID
-    flags: dict[FlagType, bool] | None
+    flags: dict[FlagType, bool | str] | None
     email: str
     timezones: list[str]
     picture_url: str | None = None
@@ -80,17 +80,17 @@ async def updateUser(
     return _userToVM(user)
 
 
-@router.get('/user/flags/', response_model=dict[FlagType, bool])
+@router.get('/user/flags/', response_model=dict[FlagType, bool | str])
 async def getUserFlags(user: User = Depends(get_current_user)):
     return FlagUtils(user).getAllFlags()
 
 
 class UpdateFlag(BaseModel):
     flag: FlagType = Field(..., description="The flag to update")
-    value: bool = Field(..., description="The new value of the flag")
+    value: bool | str = Field(..., description="The new value of the flag")
 
 
-@router.put('/user/flags/', response_model=dict[FlagType, bool])
+@router.put('/user/flags/', response_model=dict[FlagType, bool | str])
 async def setUserFlags(flag: UpdateFlag, user: User = Depends(get_current_user)):
     flagUtils = FlagUtils(user)
     flagType = flag.flag

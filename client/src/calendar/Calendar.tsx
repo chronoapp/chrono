@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
+import { Box } from '@chakra-ui/react'
 
 import useQuery from '@/lib/hooks/useQuery'
 import useEventService, { EventService } from './event-edit/useEventService'
@@ -23,6 +24,7 @@ import EventEditFull from './event-edit/EventEditFull'
 import ConfirmDeleteEventModal from './event-edit/ConfirmDeleteEventModal'
 import ConfirmUpdateEventModal from './event-edit/ConfirmUpdateEventModal'
 import ConfirmCreateEventModal from './event-edit/ConfirmCreateEventModal'
+import TimezoneChangePrompt from './TimezoneChangePrompt'
 
 import { calendarsState, primaryCalendarSelector } from '@/state/CalendarState'
 import { eventsState, editingEventState, allVisibleEventsSelector } from '@/state/EventsState'
@@ -257,11 +259,20 @@ function Calendar() {
   }
 
   return (
-    <div className="cal-calendar">
+    <Box
+      flex="1 1 auto"
+      boxSizing="border-box"
+      height="100%"
+      display="flex"
+      flexDirection="column"
+      alignItems="stretch"
+      className="cal-calendar"
+    >
       {renderCalendar()}
       {renderFullEditMode()}
       {renderConfirmationDialog()}
-    </div>
+      <TimezoneChangePrompt />
+    </Box>
   )
 }
 
