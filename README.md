@@ -14,6 +14,8 @@ Copy over the `.env.example` file to `.env` and fill in the necessary environmen
 
 To setup Chrono with your own Google OAuth credentials, you will need to create a project in the Google Cloud Console and create OAuth 2.0 credentials. Set the `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` environment variables in the `.env` file.
 
+For use with Zoom, you will need to create an Oauth app in the Zoom Developer Console and set the `ZOOM_API_KEY` and `ZOOM_API_SECRET` environment variables in the `.env` file.
+
 2) Build and start the backend container.
 
 Docker build only needs to be done once, or when you make changes to the Dockerfile
@@ -46,6 +48,8 @@ We use [Poetry](https://python-poetry.org/) for package management.
 In the server/ directory, install packages with `poetry install`. This will install python packages in server/.venv`.
 
 ### Database Migrations
+
+Inside the docker container (run `scripts/docker-shell.sh`), you can run the following commands to create and apply database migrations.
 
 **Make Revision**
 

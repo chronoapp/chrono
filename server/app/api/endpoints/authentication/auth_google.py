@@ -166,6 +166,8 @@ def googleAuthToken(authData: AuthData, session: Session = Depends(get_db)):
     if not account:
         account = UserAccount(email, creds, CalendarProvider.Google)
         user.accounts.append(account)
+    else:
+        account.token_data = creds
 
     # Set the default timezone
     primaryCalendar = gcal.getPrimaryCalendar(account)
