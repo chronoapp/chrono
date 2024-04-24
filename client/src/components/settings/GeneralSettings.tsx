@@ -51,6 +51,8 @@ function GeneralSettings() {
   return (
     <Flex direction={'column'} width={'100%'}>
       <Heading size="sm">General</Heading>
+
+      {/* Enable / disable tags plugin */}
       <Checkbox
         mt="2"
         fontSize={'sm'}
@@ -64,6 +66,23 @@ function GeneralSettings() {
         }}
       >
         Enable tags
+      </Checkbox>
+
+      {/* Enable / disable prompt for prompting timezone changes */}
+      <Checkbox
+        mt="2"
+        fontSize={'sm'}
+        size="sm"
+        isChecked={user.flags.SHOULD_PROMPT_TIMEZONE_CHANGE}
+        onChange={(e) => {
+          const enableTimezonePrompt = e.target.checked
+          const flags = { ...user.flags, SHOULD_PROMPT_TIMEZONE_CHANGE: enableTimezonePrompt }
+
+          setUser({ ...user, flags: flags })
+          API.updateUserFlags('SHOULD_PROMPT_TIMEZONE_CHANGE', enableTimezonePrompt)
+        }}
+      >
+        Ask to update primary timezone when it changes
       </Checkbox>
 
       <TimezoneSelector

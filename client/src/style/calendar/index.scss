@@ -1,12 +1,3 @@
-.cal-calendar {
-  flex: 1 1 auto;
-  box-sizing: border-box;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
-
 .cal-calendar *,
 .cal-calendar *:before,
 .cal-calendar *:after {
@@ -23,15 +14,6 @@
 .cal-row {
   display: flex;
   flex-direction: row;
-}
-
-.cal-abs-full {
-  overflow: hidden;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
 }
 
 .cal-off-range-bg {
