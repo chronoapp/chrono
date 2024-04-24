@@ -11,6 +11,7 @@ export const SortableTimezone = ({ id, gutterWidth }) => {
     transition,
     boxShadow: isDragging ? '2px 0px 7px rgba(0,0,0,0.5)' : 'none',
     opacity: isDragging ? 0.8 : 1,
+    backgroundColor: isDragging ? 'lightgrey' : 'transparent',
   }
 
   return (

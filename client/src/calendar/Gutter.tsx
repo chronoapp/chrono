@@ -24,7 +24,11 @@ const Gutter = ({ slotMetrics, gutterRef, timezones, activeId }) => {
       </SortableContext>
       <DragOverlay>
         {activeId ? (
-          <Flex>
+          <Flex
+            border="1px solid lightgrey"
+            boxShadow="2px 0px 7px rgba(0,0,0,0.2)"
+            backgroundColor="white"
+          >
             <GutterContent slotMetrics={slotMetrics} />
           </Flex>
         ) : null}

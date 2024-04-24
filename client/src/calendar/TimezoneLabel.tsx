@@ -19,7 +19,7 @@ const TimezoneLabel = forwardRef<HTMLDivElement, TimezoneLabelProps>(({ id, gutt
     if (offset === 0) return 'GMT'
 
     const sign = offset < 0 ? '-' : '+'
-    return `GMT${sign}${Math.abs(offset)}${id}`
+    return `GMT${sign}${Math.abs(offset)}`
   }
 
   return (
