@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react'
 import { Flex, Text } from '@chakra-ui/react'
-import { DateTime } from 'luxon'
+import { ZonedDateTime, ZoneId } from '@js-joda/core'
+import '@js-joda/timezone'
 
 interface TimezoneLabelProps {
   id: string
@@ -8,7 +9,9 @@ interface TimezoneLabelProps {
 }
 
 const TimezoneLabel = forwardRef<HTMLDivElement, TimezoneLabelProps>(({ id, gutterWidth }, ref) => {
-  const timezoneOffset = DateTime.local().offset / 60
+  const now = ZonedDateTime.now(ZoneId.systemDefault())
+
+  const timezoneOffset = now.offset().totalSeconds() / 3600
 
   // Format the timezone as GMT+/-X
   const formatTimezone = (offset) => {
