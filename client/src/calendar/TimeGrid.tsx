@@ -21,8 +21,8 @@ import { dragDropActionState } from '@/state/EventsState'
 import { Flex } from '@chakra-ui/react'
 import Gutter from './Gutter'
 import GutterHeader from './GutterHeader'
-import { DndContext, DragOverlay, closestCorners } from '@dnd-kit/core'
-import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable'
+import { DndContext, closestCorners } from '@dnd-kit/core'
+import { arrayMove } from '@dnd-kit/sortable'
 function remToPixels(rem) {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
 }
@@ -61,30 +61,6 @@ function TimeGrid(props: IProps) {
   const max = dates.endOf(props.now, ChronoUnit.DAYS)
 
   const slotMetrics = useRef<SlotMetrics>(new SlotMetrics(min, max, props.step, props.timeslots))
-
-  function handleDragStart(event) {
-    const { active } = event
-
-    setActiveId(active.id)
-  }
-
-  const getGutterPos = (id) => gutters.findIndex((gutter) => gutter.id === id)
-
-  function handleDragEnd(event) {
-    const { active, over } = event
-    if (active.id === over.id) return
-    setGutters((gutters) => {
-      const originalPos = getGutterPos(active.id)
-      const newPos = getGutterPos(over.id)
-
-      return arrayMove(gutters, originalPos, newPos)
-    })
-  }
-
-  const restrictToXAxis = ({ transform }) => ({
-    ...transform,
-    y: 0, // Restrict movement to the x-axis by setting the y-coordinate to 0
-  })
 
   const gutterRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLInputElement>(null)
@@ -289,6 +265,7 @@ function TimeGrid(props: IProps) {
             marginRight={scrollbarSize}
             eventService={props.eventService}
             today={props.today}
+            now={props.now}
           />
         </Flex>
         <div ref={contentRef} className="cal-time-content">
