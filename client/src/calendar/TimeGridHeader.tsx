@@ -23,7 +23,6 @@ interface IProps {
   marginRight: number
   eventService: EventService
   now: DateTime
-  addGutter: any
   today: DateTime
 }
 

@@ -4,7 +4,6 @@ import { DragOverlay } from '@dnd-kit/core'
 import { SortableGutter } from './SortableGutter'
 import { Flex } from '@chakra-ui/react'
 import GutterContent from './GutterContent'
-import TimezoneLabel from './TimezoneLabel'
 const GUTTER_LINE_WIDTH = 0.5
 
 const Gutter = ({ slotMetrics, gutterRef, timezones, activeId }) => {
