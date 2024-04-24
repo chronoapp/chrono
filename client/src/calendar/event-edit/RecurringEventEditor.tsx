@@ -41,7 +41,7 @@ import {
   formatDayOfWeekNumeric,
   formatTwoLetterWeekday,
   getWeekRange,
-  localFullDate,
+  yearStringToDate,
   toJsDate,
   fromJsDate,
 } from '@/util/localizer-joda'
@@ -356,7 +356,7 @@ function RecurringEventEditor(props: IProps) {
                     onChange={(e) => {
                       setRecurringOptions({
                         ...recurringOptions,
-                        until: toJsDate(localFullDate(e.target.value)),
+                        until: toJsDate(yearStringToDate(e.target.value)),
                       })
                     }}
                   />
