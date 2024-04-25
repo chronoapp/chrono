@@ -2,6 +2,9 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import TimezoneLabel from './TimezoneLabel'
 
+/**
+ * This component renders a sortable timezone using useSortable fom @dnd-kit.
+ */
 export const SortableTimezone = ({ id, gutterWidth }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,

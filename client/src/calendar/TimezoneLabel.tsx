@@ -3,6 +3,9 @@ import { Flex, Text } from '@chakra-ui/react'
 import { ZonedDateTime, ZoneId } from '@js-joda/core'
 import '@js-joda/timezone'
 
+/**
+ * Component designed to display the current timezone in a formatted string
+ */
 interface TimezoneLabelProps {
   gutterWidth: string | number
 }
@@ -11,8 +14,9 @@ const TimezoneLabel = forwardRef<HTMLDivElement, TimezoneLabelProps>(({ gutterWi
   const now = ZonedDateTime.now(ZoneId.systemDefault())
 
   const timezoneOffset = now.offset().totalSeconds() / 3600
-
-  // Format the timezone as GMT+/-X
+  /**
+   * Formats the time to append either GMT -/+ at the end.
+   */
   const formatTimezone = (offset) => {
     // If the offset is 0, it means it's GMT
     if (offset === 0) return 'GMT'

@@ -7,7 +7,40 @@ import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortabl
 import { SortableTimezone } from './SortableTimezone'
 
 import * as API from '@/util/Api'
+/**
+ * The `GutterHeader` component serves as the control interface for managing and displaying sortable time zones
+ */
 
+const GutterHeader = ({ addTimezones, width, timezones, gutterWidth }) => {
+  const { expandAllDayEvents } = useUserFlags()
+
+  return (
+    <Flex
+      className="rbc-label cal-time-header-gutter"
+      width={width}
+      justifyContent="flex-end"
+      position="sticky"
+      flexDirection="column"
+    >
+      <Flex marginLeft="-5px">
+        <SortableContext items={timezones} strategy={horizontalListSortingStrategy}>
+          {timezones.map((timezone) => (
+            <SortableTimezone key={timezone.id} id={timezone.id} gutterWidth={gutterWidth} />
+          ))}
+        </SortableContext>
+      </Flex>
+
+      <Flex justifyContent="flex-end" mt="10px">
+        <ToggleAdditionalTimezone addTimezones={addTimezones} />
+        <ToggleExpandWeeklyRows expanded={expandAllDayEvents} />
+      </Flex>
+    </Flex>
+  )
+}
+
+/**
+ * Buttons for add timezones and to expand all day events
+ */
 function ToggleAdditionalTimezone({ addTimezones }) {
   return (
     <IconButton
@@ -48,32 +81,6 @@ function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
   }
 }
 
-const GutterHeader = ({ addTimezones, width, timezones, gutterWidth, activeId }) => {
-  const { expandAllDayEvents, updateExpandAllDayEvents } = useUserFlags()
-
-  return (
-    <Flex
-      className="rbc-label cal-time-header-gutter"
-      width={width}
-      justifyContent="flex-end"
-      position="sticky"
-      flexDirection="column"
-    >
-      <Flex marginLeft="-5px">
-        <SortableContext items={timezones} strategy={horizontalListSortingStrategy}>
-          {timezones.map((timezone) => (
-            <SortableTimezone key={timezone.id} id={timezone.id} gutterWidth={gutterWidth} />
-          ))}
-        </SortableContext>
-      </Flex>
-
-      <Flex justifyContent="flex-end" mt="10px">
-        <ToggleAdditionalTimezone addTimezones={addTimezones} />
-        <ToggleExpandWeeklyRows expanded={expandAllDayEvents} />
-      </Flex>
-    </Flex>
-  )
-}
 function useUserFlags() {
   const [user, setUser] = useRecoilState(userState)
   const expandAllDayEvents = user?.flags.EXPAND_ALL_DAY_EVENTS || false
