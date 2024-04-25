@@ -16,7 +16,7 @@ export const SortableTimezone = ({ id, gutterWidth }) => {
 
   return (
     <div ref={setNodeRef} style={{ ...style }} {...attributes} {...listeners}>
-      <TimezoneLabel id={id} gutterWidth={gutterWidth} />
+      <TimezoneLabel gutterWidth={gutterWidth} />
     </div>
   )
 }

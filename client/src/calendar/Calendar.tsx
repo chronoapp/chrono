@@ -52,7 +52,7 @@ function Calendar() {
   const searchQuery = (queryParams.get('search') as string) || ''
 
   const firstOfWeek = firstDayOfWeek()
-  const today = DateTime.now()
+
   useKeyPress(['ArrowLeft', 'ArrowRight'], onKeyPress)
 
   // Refresh the calendar when we receive a refresh event.
@@ -181,7 +181,6 @@ function Calendar() {
           events={allVisibleEvents}
           range={[calendarViewUserTimezone.selectedDate]}
           primaryCalendar={primaryCalendar}
-          today={today}
         />
       )
     } else if (calendarView.view == 'Week') {
@@ -192,7 +191,6 @@ function Calendar() {
           events={allVisibleEvents}
           eventService={eventService}
           primaryCalendar={primaryCalendar}
-          today={today}
         />
       )
     } else if (calendarView.view == 'WorkWeek') {
@@ -203,7 +201,6 @@ function Calendar() {
           eventService={eventService}
           primaryCalendar={primaryCalendar}
           now={calendarViewUserTimezone.now}
-          today={today}
         />
       )
     } else if (calendarView.view == 'Month') {

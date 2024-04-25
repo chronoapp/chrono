@@ -4,11 +4,10 @@ import { ZonedDateTime, ZoneId } from '@js-joda/core'
 import '@js-joda/timezone'
 
 interface TimezoneLabelProps {
-  id: string
   gutterWidth: string | number
 }
 
-const TimezoneLabel = forwardRef<HTMLDivElement, TimezoneLabelProps>(({ id, gutterWidth }, ref) => {
+const TimezoneLabel = forwardRef<HTMLDivElement, TimezoneLabelProps>(({ gutterWidth }, ref) => {
   const now = ZonedDateTime.now(ZoneId.systemDefault())
 
   const timezoneOffset = now.offset().totalSeconds() / 3600

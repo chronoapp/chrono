@@ -14,7 +14,6 @@ interface IProps {
   now: DateTime
   eventService: EventService
   primaryCalendar: Calendar
-  today: DateTime
 }
 
 function WorkWeek(props: IProps) {
@@ -27,7 +26,6 @@ function WorkWeek(props: IProps) {
       range={range}
       eventService={props.eventService}
       primaryCalendar={props.primaryCalendar}
-      today={props.today}
     />
   )
 }

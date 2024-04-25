@@ -25,9 +25,10 @@ const Gutter = ({ slotMetrics, gutterRef, timezones, activeId }) => {
       <DragOverlay>
         {activeId ? (
           <Flex
-            border="1px solid lightgrey"
+            border="1px solid"
+            borderColor={'blackAlpha.400'}
             boxShadow="2px 0px 7px rgba(0,0,0,0.2)"
-            backgroundColor="white"
+            backgroundColor={'white'}
           >
             <GutterContent slotMetrics={slotMetrics} />
           </Flex>
@@ -41,9 +42,6 @@ const Gutter = ({ slotMetrics, gutterRef, timezones, activeId }) => {
     </Flex>
   )
 }
-
-export default Gutter
-
 function renderDateTick(idx: number) {
   return (
     <div
@@ -56,3 +54,4 @@ function renderDateTick(idx: number) {
     ></div>
   )
 }
+export default Gutter
