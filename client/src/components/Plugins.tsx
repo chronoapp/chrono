@@ -93,6 +93,9 @@ export default function Plugins() {
       flexShrink={0}
       borderLeftWidth="1px"
       borderColor="gray.200"
+      borderTopEndRadius={'sm'}
+      borderBottomEndRadius={'sm'}
+      bgColor={'white'}
     >
       <Flex direction={'column'}>
         {pluginList.map((plugin) => (

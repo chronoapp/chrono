@@ -187,9 +187,9 @@ function Layout(props: Props) {
 
   return (
     <Box className="App">
-      <Flex height="100vh" width="100%" overflowY={'auto'}>
+      <Flex height="100vh" width="100%" overflowY={'auto'} bgColor={'#f3f3f3'}>
         {props.includeLeftPanel && (
-          <Flex pl="2" pt="1" direction={'column'} minWidth={LEFT_PANEL_WIDTH} bgColor="#f3f3f3">
+          <Flex pl="2" pt="3" direction={'column'} minWidth={LEFT_PANEL_WIDTH}>
             {props.canCreateEvent && <NewEventButton />}
             <Flex height="100%" flexDirection="column" pb="2" overflowY={'auto'}>
               <MiniCalendar />
@@ -202,18 +202,24 @@ function Layout(props: Props) {
           </Flex>
         )}
 
-        <Flex direction="column" width="100%">
-          <TopNavigationBar canCreateEvent={props.canCreateEvent} searchQuery={searchQuery} />
-
-          <Box height="100%" overflowY="auto">
-            {props.children}
-          </Box>
+        <Flex
+          direction="row"
+          width="100%"
+          m="2"
+          ml="1"
+          bgColor="white"
+          borderRadius={'sm'}
+          border="1px solid #e6e6e6"
+        >
+          <Flex direction="column" width="100%" overflowY="hidden">
+            <TopNavigationBar canCreateEvent={props.canCreateEvent} searchQuery={searchQuery} />
+            <Box height="100%" overflowY="auto">
+              {props.children}
+            </Box>
+          </Flex>
+          <Plugins />
         </Flex>
-
-        <Plugins />
       </Flex>
-
-      <footer></footer>
     </Box>
   )
 }
