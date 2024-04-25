@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Flex, Box, Text, IconButton } from '@chakra-ui/react'
 import {
   Popover,
   PopoverTrigger,
@@ -7,6 +6,7 @@ import {
   PopoverArrow,
   PopoverBody,
 } from '@chakra-ui/react'
+import { Flex, Box, Text, IconButton } from '@chakra-ui/react'
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 
 import { useRecoilValue } from 'recoil'
@@ -32,8 +32,7 @@ import { labelsState } from '@/state/LabelsState'
 import ViewSelector, { TrendView } from './ViewSelector'
 import TagDropdown from './TagDropdown'
 
-import { calculateColor } from './util/color'
-
+import getTrendBlocks, { TrendBlock } from './TrendBlocks'
 interface IProps {
   setSelectedView: (v: TrendView) => void
   selectedLabel?: Label
@@ -44,15 +43,12 @@ function HabitGraph(props: IProps) {
   const labelState = useRecoilValue(labelsState)
 
   const [trendMap, setTrendMap] = useState<Map<string, number>>(undefined!)
-  const [maxDuration, setMaxDuration] = useState(0)
-
+  const [trendBlocks, setTrendBlocks] = useState<TrendBlock[]>([])
   const curDate: DateTime = DateTime.now()
   const [viewDate, setViewDate] = useState<DateTime>(curDate)
   const month = dates.visibleDays(viewDate, firstDayOfWeek(), true)
 
   const weeks = chunk(month, 7)
-
-  const consecutiveDaysRef = useRef(0)
 
   useEffect(() => {
     updateTrendsData()
@@ -72,8 +68,12 @@ function HabitGraph(props: IProps) {
       trendMap.set(trends.labels[i], trends.values[i])
     }
     const maxDuration = Math.max(...trends.values)
-    setMaxDuration(maxDuration)
+
+    const { h, s, l } = hexToHSL(props.selectedLabel.color_hex)
+    const newTrendBlocks = getTrendBlocks(trendMap, maxDuration, h, s, l)
+
     setTrendMap(trendMap)
+    setTrendBlocks(newTrendBlocks)
   }
 
   function renderHeader() {
@@ -85,50 +85,22 @@ function HabitGraph(props: IProps) {
     ))
   }
 
-  function renderWeek(week: DateTime[], idx: number) {
-    const { h, s, l } = hexToHSL(props.selectedLabel!.color_hex)
-
+  function renderWeek(week: DateTime[], idx: number, trendBlocks: TrendBlock[]) {
     return (
       <Flex key={idx}>
         {week.map((day: DateTime, dayIdx: number) => {
           const dayKey = formatFullDay(day)
-          const dayValue = dates.gt(day, curDate) ? 0 : trendMap.get(dayKey) || 0
+          const trendValue = trendMap.get(dayKey)
+          const trendBlock = trendBlocks.find((block) => formatFullDay(block.day) === dayKey)
 
-          // Update consecutive day count using ref
-          if (dayValue > 0) {
-            consecutiveDaysRef.current = Math.min(consecutiveDaysRef.current + 1, 5)
-          } else {
-            consecutiveDaysRef.current = 0
-          }
-
-          const nextDayValue =
-            dayIdx < week.length - 1
-              ? dates.gt(week[dayIdx + 1], curDate)
-                ? 0
-                : trendMap.get(formatFullDay(week[dayIdx + 1])) || 0
-              : 0
-
-          const renderLink = dayValue > 0 && nextDayValue > 0
-          const dayColor = calculateColor(dayValue, maxDuration, h, s, l)
-
-          let linkColor = dayColor
-          if (renderLink) {
-            // Calculate the link value based on the consecutive day count
-            linkColor = calculateColor(
-              Math.min(consecutiveDaysRef.current * (maxDuration / 5), maxDuration),
-              maxDuration,
-              h,
-              s,
-              l
-            )
-          }
+          if (!trendBlock) return null
 
           return (
             <Popover isLazy trigger="hover" key={dayIdx}>
               <PopoverTrigger>
                 <Flex
                   className="habit-chart-day"
-                  backgroundColor={dayColor}
+                  backgroundColor={trendBlock.color}
                   height="6.5rem"
                   width="6.5rem"
                   alignItems="flex-start"
@@ -139,7 +111,7 @@ function HabitGraph(props: IProps) {
                   mx="2"
                   position="relative"
                 >
-                  {renderLink && (
+                  {trendBlock.link && (
                     <Box
                       className="consecutive-days-link"
                       position="absolute"
@@ -147,7 +119,7 @@ function HabitGraph(props: IProps) {
                       top="50%"
                       width="4"
                       height="3"
-                      backgroundColor={linkColor}
+                      backgroundColor={trendBlock.link.color}
                     ></Box>
                   )}
                 </Flex>
@@ -155,9 +127,11 @@ function HabitGraph(props: IProps) {
               <PopoverContent width={'xs'} color="white" bg="gray.600" borderColor="gray.600">
                 <PopoverArrow bg="gray.600" borderColor="gray.600" />
                 <PopoverBody textAlign={'center'}>
-                  {dayValue > 0
-                    ? `${dayValue} hours on ${formatMonthDay(day)}`
-                    : `No activity on ${formatMonthDay(day)}`}
+                  {trendValue !== undefined
+                    ? trendValue > 0
+                      ? `${trendValue} hours on ${formatMonthDay(day)}`
+                      : `No activity on ${formatMonthDay(day)}`
+                    : 'No data for this day'}
                 </PopoverBody>
               </PopoverContent>
             </Popover>
@@ -175,7 +149,9 @@ function HabitGraph(props: IProps) {
     return (
       <Box>
         <Flex mb="1">{renderHeader()}</Flex>
-        {weeks.map(renderWeek)}
+        {weeks.map((week, idx) => {
+          return renderWeek(week, idx, trendBlocks)
+        })}
         {renderLessMoreAxis()}
       </Box>
     )
