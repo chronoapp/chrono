@@ -8,7 +8,7 @@ import { SortableTimezone } from './SortableTimezone'
 
 import * as API from '@/util/Api'
 
-function ToogleAdditionalTimezone({ addTimezones }) {
+function ToggleAdditionalTimezone({ addTimezones }) {
   return (
     <IconButton
       size={'xs'}
@@ -43,7 +43,6 @@ function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
         icon={<FiChevronDown />}
         onClick={() => updateExpandAllDayEvents(true)}
         width="4"
-        mt="2"
       />
     )
   }
@@ -69,7 +68,7 @@ const GutterHeader = ({ addTimezones, width, timezones, gutterWidth, activeId })
       </Flex>
 
       <Flex justifyContent="flex-end" mt="10px">
-        <ToogleAdditionalTimezone addTimezones={addTimezones} />
+        <ToggleAdditionalTimezone addTimezones={addTimezones} />
         <ToggleExpandWeeklyRows expanded={expandAllDayEvents} />
       </Flex>
     </Flex>

@@ -3,7 +3,6 @@ import { useRecoilValue } from 'recoil'
 import getScrollbarSize from 'dom-helpers/scrollbarSize'
 
 import { ZonedDateTime as DateTime, ChronoUnit } from '@js-joda/core'
-import { formatTimeShort } from '@/util/localizer-joda'
 import * as dates from '@/util/dates-joda'
 
 import Event from '../models/Event'
@@ -23,9 +22,7 @@ import Gutter from './Gutter'
 import GutterHeader from './GutterHeader'
 import { DndContext, closestCorners } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
-function remToPixels(rem) {
-  return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
-}
+
 interface IProps {
   step: number
   timeslots: number
@@ -34,13 +31,15 @@ interface IProps {
   now: DateTime
   eventService: EventService
   primaryCalendar: Calendar
-  today: DateTime
 }
 
 const GUTTER_LINE_WIDTH = 0.5
 
 function preventScroll(e) {
   e.preventDefault()
+}
+function remToPixels(rem) {
+  return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
 }
 
 function TimeGrid(props: IProps) {
@@ -84,7 +83,7 @@ function TimeGrid(props: IProps) {
     calculateTopScroll(props.events)
     applyTopScroll()
 
-    // document.addEventListener(GlobalEvent.scrollToEvent, scrollToEvent)
+    document.addEventListener(GlobalEvent.scrollToEvent, scrollToEvent)
 
     return () => {
       document.removeEventListener(GlobalEvent.scrollToEvent, scrollToEvent)
@@ -113,9 +112,9 @@ function TimeGrid(props: IProps) {
     }
   }, [editingEvent])
 
-  // useEffect(() => {
-  //   applyTopScroll()
-  // })
+  useEffect(() => {
+    applyTopScroll()
+  })
 
   /**
    * Scrolls to time, defaults to now if date in event.detail is unspecified.
@@ -264,7 +263,6 @@ function TimeGrid(props: IProps) {
             range={props.range}
             marginRight={scrollbarSize}
             eventService={props.eventService}
-            today={props.today}
             now={props.now}
           />
         </Flex>
