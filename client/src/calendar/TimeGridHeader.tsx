@@ -78,18 +78,18 @@ function TimeGridHeader(props: IProps) {
         >
           <VStack spacing={1}>
             <Box>
+              <Text fontSize="xs">{dateString}</Text>
               <Text
                 color={isToday ? 'white' : 'gray.600'}
                 fontWeight={'500'}
                 bg={isToday ? '#5c6bc0' : 'transparent'}
                 borderRadius={5}
-                px={1}
-                py={'0.5'}
+                px={'1.5'}
+                py={'1'}
                 fontSize="sm"
               >
                 {dayNumber}
               </Text>
-              <Text fontSize="xs">{dateString}</Text>
             </Box>
           </VStack>
         </Box>
