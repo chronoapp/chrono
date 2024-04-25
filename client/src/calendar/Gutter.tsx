@@ -6,6 +6,11 @@ import { Flex } from '@chakra-ui/react'
 import GutterContent from './GutterContent'
 const GUTTER_LINE_WIDTH = 0.5
 
+/**
+ * The `Gutter` component serves as a container for sortable gutters.
+ * Sorting horizontially
+ */
+
 const Gutter = ({ slotMetrics, gutterRef, timezones, activeId }) => {
   return (
     <Flex direction={'row'}>
@@ -42,6 +47,7 @@ const Gutter = ({ slotMetrics, gutterRef, timezones, activeId }) => {
     </Flex>
   )
 }
+
 function renderDateTick(idx: number) {
   return (
     <div

@@ -2,6 +2,9 @@ import React, { forwardRef } from 'react'
 import { Box } from '@chakra-ui/react'
 import { formatTimeShort } from '@/util/localizer-joda'
 
+/**
+ * Renders timeslots labels
+ */
 interface GutterContentProps {
   slotMetrics: any
 }

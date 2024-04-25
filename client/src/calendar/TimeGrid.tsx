@@ -49,9 +49,14 @@ function TimeGrid(props: IProps) {
 
   const [timezones, setTimezones] = useState([{ id: 1 }])
 
+  /**
+   *finds the highest number and adds one in the timezone array for unique id
+   */
   const getNextId = () => timezones.reduce((max, timezone) => Math.max(max, timezone.id), 0) + 1
-
-  const addTimezones = () => {
+  /**
+   * adds new timezone objects with an id
+   */
+  function addTimezones() {
     const newTimezones = { id: getNextId() }
     setTimezones([...timezones, newTimezones])
   }
@@ -216,16 +221,22 @@ function TimeGrid(props: IProps) {
     .filter((event) => event.all_day && inRange(event, start, end))
     .sort((a, b) => sortEvents(a, b))
 
-  // util functions for dnd kit
   const [activeId, setActiveId] = useState(null)
-  const getGutterPos = (id) => timezones.findIndex((gutter) => gutter.id === id)
 
+  const getGutterPos = (id) => timezones.findIndex((gutter) => gutter.id === id) // using the id to find its positioning
+
+  /**
+   *  When clicked it sets active state and set the the contentRef to no scrolling
+   */
   function handleDragStart(event) {
     contentRef.current?.classList.add('no-scroll')
     const { active } = event
     setActiveId(active.id)
   }
 
+  /**
+   * when posistion over an event it rearranges the timezone array
+   */
   function handleDragEnd(event) {
     const { active, over } = event
 
@@ -256,7 +267,6 @@ function TimeGrid(props: IProps) {
             timezones={timezones}
             width={intitalGutterHeaderWidth + (timezones.length - 1) * gutterWidth}
             gutterWidth={gutterWidth}
-            activeId={activeId}
           />
           <TimeGridHeader
             events={allDayEvents}
