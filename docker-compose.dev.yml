@@ -7,7 +7,7 @@ services:
     volumes:
       - ./server:/app/
       - model_data:/var/lib/model_data/
-    command: /var/scripts/entrypoint-worker.sh
+    command: /var/scripts/entrypoint-worker-dev.sh
     environment:
       - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@postgres_db:5432/${DATABASE_NAME}
     env_file:
