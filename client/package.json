@@ -3,7 +3,7 @@
     "type-check": "tsc",
     "test": "jest",
     "dev": "webpack serve --mode development --port 3300",
-    "build": "webpack --config webpack.config.ts --mode development"
+    "build": "webpack --config webpack.config.ts"
   },
   "private": true,
   "dependencies": {
@@ -55,6 +55,7 @@
     "@types/jest": "^26.0.15",
     "@types/node": "^13.11.1",
     "css-loader": "^6.7.3",
+    "dotenv": "^16.4.5",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.5.0",
     "jest": "^29.7.0",
