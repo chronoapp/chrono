@@ -15,8 +15,9 @@ import Flags from '@/models/Flags'
 
 type SendUpdateType = 'none' | 'all' | 'external'
 
-export const API_URL = 'http://localhost:8888/api/v1'
-export const WEBSOCKET_URL = 'ws://localhost:8888/api/v1/ws'
+const BASE_API_URL = process.env.API_URL
+const API_URL = `${BASE_API_URL}/api/v1`
+export const WEBSOCKET_URL = API_URL.replace(/^http(s)?:/, 'ws:') + '/ws'
 
 function handleErrors(response: any) {
   if (!response.ok) {

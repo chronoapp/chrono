@@ -1,6 +1,7 @@
 const path = require('path')
 const webpack = require('webpack')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const dotenv = require('dotenv')
 
 const HTMLWebpackPluginConfig = new HtmlWebpackPlugin({
   template: __dirname + '/src/index.html',
@@ -8,12 +9,19 @@ const HTMLWebpackPluginConfig = new HtmlWebpackPlugin({
   favicon: __dirname + '/src/assets/chrono.svg',
 })
 
-const definePlugin = new webpack.DefinePlugin({
-  ENABLE_MONTHLY_VIEW: false,
-  ENABLE_EMAIL_LOGIN: false,
-})
+function buildConfig(env, argv) {
+  const isDev = argv.mode === 'development'
+  if (isDev) {
+    // Load the environment variables from the .env file
+    dotenv.config({ path: path.resolve(__dirname, '../.env') })
+  }
 
-function buildConfig(env) {
+  const definePlugin = new webpack.DefinePlugin({
+    ENABLE_MONTHLY_VIEW: false,
+    ENABLE_EMAIL_LOGIN: false,
+    'process.env.API_URL': JSON.stringify(process.env.API_URL),
+  })
+
   return {
     entry: './src/app.tsx',
     resolve: {
