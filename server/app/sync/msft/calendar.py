@@ -12,7 +12,7 @@ def getMsftSettings():
     return {
         'app_id': config.MSFT_APP_ID,
         'app_secret': config.MSFT_APP_SECRET,
-        'redirect': "http://localhost:8888/api/v1/oauth/msft/callback",
+        'redirect': f"{config.API_URL}/oauth/msft/callback",
         'scopes': 'profile openid User.Read Calendars.Read Calendars.ReadWrite',
         'authority': "https://login.microsoftonline.com/common",
         'authorize_endpoint': "/oauth2/v2.0/authorize",
