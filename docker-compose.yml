@@ -17,6 +17,7 @@ services:
       - MSFT_APP_ID=${MSFT_APP_ID}
       - MSFT_APP_SECRET=${MSFT_APP_SECRET}
       - TOKEN_SECRET=${TOKEN_SECRET}
+      - REDIS_URL=${REDIS_URL}
     logging:
       driver: loki
       options:

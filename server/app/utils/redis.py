@@ -1,8 +1,6 @@
-import os
 import redis
-
-redisUrl = os.getenv('REDIS_URL', 'redis://redis:6379')
+from app.core.config import REDIS_URL
 
 
 def getRedisConnection():
-    return redis.Redis.from_url(redisUrl)
+    return redis.Redis.from_url(REDIS_URL)
