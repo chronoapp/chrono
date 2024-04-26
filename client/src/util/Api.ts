@@ -17,7 +17,7 @@ type SendUpdateType = 'none' | 'all' | 'external'
 
 const BASE_API_URL = process.env.API_URL
 const API_URL = `${BASE_API_URL}/api/v1`
-export const WEBSOCKET_URL = API_URL.replace(/^http(s)?:/, 'ws:') + '/ws'
+export const WEBSOCKET_URL = API_URL.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:') + '/ws'
 
 function handleErrors(response: any) {
   if (!response.ok) {
