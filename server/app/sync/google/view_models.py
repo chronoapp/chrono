@@ -80,7 +80,7 @@ class ConferenceData(BaseModel):
     createRequest: CreateRequest | None = None
     entryPoints: list[EntryPoint] = []
     conferenceSolution: ConferenceSolution | None = None
-    conferenceId: str
+    conferenceId: str | None = None
     signature: str | None = None
     notes: str | None = None
 
