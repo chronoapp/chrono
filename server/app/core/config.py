@@ -19,6 +19,7 @@ MSFT_APP_SECRET = os.environ.get('MSFT_APP_SECRET')
 TOKEN_SECRET = os.environ.get('TOKEN_SECRET', '')
 
 DEBUG = os.environ.get('DEBUG', True)
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://redis:6379')
 
 if uri := os.environ.get('DATABASE_URL'):
     SQLALCHEMY_DATABASE_URI = uri.replace('postgres://', 'postgresql://')
