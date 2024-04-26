@@ -138,7 +138,7 @@ export async function updateUserFlags(
   flagType: string,
   flagValue: boolean | string
 ): Promise<Flags> {
-  return fetch(`${API_URL}/user/flags`, {
+  return fetch(`${API_URL}/user/flags/`, {
     method: 'PUT',
     headers: getHeaders(),
     body: JSON.stringify({
