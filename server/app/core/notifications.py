@@ -1,10 +1,10 @@
-import redis
 import json
 import asyncio
 from enum import Enum
 
 from fastapi import WebSocket
 from app.core.logger import logger
+from app.utils.redis import getRedisConnection
 
 
 class NotificationType(Enum):
@@ -63,8 +63,8 @@ def notification_listener():
     Look for the websocket connection within the manager and sends the message
     to the client if it exists.
     """
-    r = redis.Redis(host='redis', port=6379, db=0)
-    pubsub = r.pubsub()
+    redis = getRedisConnection()
+    pubsub = redis.pubsub()
     pubsub.subscribe('app_notifications')
 
     for message in pubsub.listen():
@@ -83,6 +83,5 @@ def sendClientNotification(clientID: str, message: NotificationType):
     the one that has the websocket connection will send it to the client.
     """
     logger.debug(f"Sending notification to client {clientID}: {message.value}")
-
-    r = redis.Redis(host='redis', port=6379, db=0)
-    r.publish('app_notifications', json.dumps({'clientID': clientID, 'text': message.value}))
+    redis = getRedisConnection()
+    redis.publish('app_notifications', json.dumps({'clientID': clientID, 'text': message.value}))
