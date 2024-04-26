@@ -158,7 +158,7 @@ export async function removeUserAccount(accountId: string) {
 }
 
 export async function removeZoomConnection() {
-  return fetch(`${API_URL}/user/zoom-connection`, {
+  return fetch(`${API_URL}/user/zoom-connection/`, {
     method: 'DELETE',
     headers: getHeaders(),
   }).then(handleErrors)

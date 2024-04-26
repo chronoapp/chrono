@@ -16,6 +16,8 @@ To setup Chrono with your own Google OAuth credentials, you will need to create 
 
 For use with Zoom, you will need to create an Oauth app in the Zoom Developer Console and set the `ZOOM_API_KEY` and `ZOOM_API_SECRET` environment variables in the `.env` file.
 
+In order to OAuth with Google and get updates through webhooks, you'll need to use a reverse proxy like [ngrok](https://ngrok.com/) to expose your local server to the internet. 
+
 2) Build and start the backend container.
 
 Docker build only needs to be done once, or when you make changes to the Dockerfile
@@ -26,7 +28,7 @@ or add new python dependencies.
 ./scripts/docker-start.sh
 ```
 
-4) Start the frontend
+3) Start the frontend
 
 ```bash
 cd client
@@ -34,7 +36,7 @@ yarn install
 yarn dev
 ```
 
-5) Develop!
+4) Develop!
 
 Go to http://localhost:3300 in your browser.
 
@@ -58,3 +60,10 @@ Inside the docker container (run `scripts/docker-shell.sh`), you can run the fol
 **Upgrade Database**
 
 `alembic upgrade head`
+
+### Deployment
+
+TODO: Add deployment options and instructions:
+
+1) Use DigitalOcean App Platform
+2) render.com
