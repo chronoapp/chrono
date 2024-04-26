@@ -1,15 +1,11 @@
 import uuid
 from typing import Optional, Dict, List, Any, Tuple
-from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload, Session
 
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
-from dateutil.rrule import rrulestr
-from app.core.logger import logger
-
 
 from app.db.models.access_control import AccessControlRule
 from app.db.models import (
@@ -216,7 +212,7 @@ def syncCalendarEvents(calendar: UserCalendar, session: Session, fullSync: bool 
                     nextPageToken,
                 )
 
-            except gcal.InvalidSyncToken as e:
+            except gcal.InvalidSyncToken:
                 # Indicates the sync token is invalid => do a full sync.
                 calendar.sync_token = None
                 continue
@@ -265,7 +261,6 @@ def syncEventsToDb(
     updates = 0
 
     for eventItem in eventItems:
-
         googleEventId = eventItem['id']
         existingEvent = eventRepo.getGoogleEvent(calendar, googleEventId)
 
@@ -276,10 +271,6 @@ def syncEventsToDb(
             event, updated = syncCreatedOrUpdatedGoogleEvent(
                 calendar, eventRepo, existingEvent, eventItem, session
             )
-
-            if updated:
-                autoLabelEvents(event, user, session)
-                updates += 1
 
         session.commit()
 
