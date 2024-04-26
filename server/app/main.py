@@ -49,10 +49,11 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1' if config.DEBUG else '0'
 
 
 @app.middleware("http")
-def db_session_middleware(request: Request, call_next):
+async def db_session_middleware(request: Request, call_next):
+    response = None
     with scoped_session() as session:
         request.state.db = session
-        response = call_next(request)
+        response = await call_next(request)
 
     return response
 
