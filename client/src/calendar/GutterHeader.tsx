@@ -1,3 +1,4 @@
+import React, { useState, useCallback } from 'react'
 import { IconButton, Flex } from '@chakra-ui/react'
 import User from '@/models/User'
 import { FiChevronUp, FiChevronDown, FiPlus } from 'react-icons/fi'
@@ -5,14 +6,24 @@ import { userState } from '@/state/UserState'
 import { useRecoilState } from 'recoil'
 import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable'
 import { SortableTimezone } from './SortableTimezone'
-
+import TimezoneModal from './TimezoneModal'
 import * as API from '@/util/Api'
 /**
  * The `GutterHeader` component serves as the control interface for managing and displaying sortable time zones
  */
 
 const GutterHeader = ({ addTimezones, width, timezones, gutterWidth }) => {
+  const [user] = useRecoilState(userState)
   const { expandAllDayEvents } = useUserFlags()
+  const [isOpen, setIsOpen] = useState(false)
+
+  const handleOpen = useCallback(() => {
+    setIsOpen(true)
+  }, [])
+
+  const handleClose = useCallback(() => {
+    setIsOpen(false)
+  }, [])
 
   return (
     <Flex
@@ -31,7 +42,13 @@ const GutterHeader = ({ addTimezones, width, timezones, gutterWidth }) => {
       </Flex>
 
       <Flex justifyContent="flex-end" mt="10px">
-        <ToggleAdditionalTimezone addTimezones={addTimezones} />
+        <ToggleAdditionalTimezone
+          addTimezones={addTimezones}
+          isOpen={isOpen}
+          onOpen={handleOpen}
+          onClose={handleClose}
+          user={user}
+        />
         <ToggleExpandWeeklyRows expanded={expandAllDayEvents} />
       </Flex>
     </Flex>
@@ -41,16 +58,19 @@ const GutterHeader = ({ addTimezones, width, timezones, gutterWidth }) => {
 /**
  * Buttons for add timezones and to expand all day events
  */
-function ToggleAdditionalTimezone({ addTimezones }) {
+function ToggleAdditionalTimezone({ addTimezones, isOpen, onOpen, onClose, user }) {
   return (
-    <IconButton
-      size={'xs'}
-      variant="ghost"
-      aria-label="adding additional timezones"
-      icon={<FiPlus />}
-      onClick={() => addTimezones()}
-      width="4"
-    />
+    <>
+      <IconButton
+        size={'xs'}
+        variant="ghost"
+        aria-label="adding additional timezones"
+        icon={<FiPlus />}
+        onClick={onOpen}
+        width="4"
+      />
+      <TimezoneModal isOpen={isOpen} onClose={onClose} addTimezones={addTimezones} user={user} />
+    </>
   )
 }
 function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
