@@ -5,7 +5,7 @@ import TimezoneLabel from './TimezoneLabel'
 /**
  * This component renders a sortable timezone using useSortable fom @dnd-kit.
  */
-export const SortableTimezone = ({ id, gutterWidth }) => {
+export const SortableTimezone = ({ id, timezone, gutterWidth }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
   })
@@ -19,7 +19,7 @@ export const SortableTimezone = ({ id, gutterWidth }) => {
 
   return (
     <div ref={setNodeRef} style={{ ...style }} {...attributes} {...listeners}>
-      <TimezoneLabel gutterWidth={gutterWidth} />
+      <TimezoneLabel timezone={timezone} gutterWidth={gutterWidth} />
     </div>
   )
 }
