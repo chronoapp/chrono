@@ -36,7 +36,12 @@ const GutterHeader = ({ addTimezones, width, timezones, gutterWidth }) => {
       <Flex marginLeft="-5px">
         <SortableContext items={timezones} strategy={horizontalListSortingStrategy}>
           {timezones.map((timezone) => (
-            <SortableTimezone key={timezone.id} id={timezone.id} gutterWidth={gutterWidth} />
+            <SortableTimezone
+              key={timezone.id}
+              timezone={timezone}
+              id={timezone.id}
+              gutterWidth={gutterWidth}
+            />
           ))}
         </SortableContext>
       </Flex>

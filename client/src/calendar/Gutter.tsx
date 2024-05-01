@@ -12,16 +12,18 @@ const GUTTER_LINE_WIDTH = 0.5
  */
 
 const Gutter = ({ slotMetrics, gutterRef, timezones, activeId }) => {
+  const activeTimezone = timezones.find((tz) => tz.id === activeId)
   return (
     <Flex direction={'row'}>
       <SortableContext
         items={timezones.map((gutter) => gutter.id)}
         strategy={horizontalListSortingStrategy}
       >
-        {timezones.map((gutter) => (
+        {timezones.map((timezone) => (
           <SortableGutter
-            key={gutter.id}
-            id={gutter.id}
+            key={timezone.id}
+            timezone={timezone}
+            id={timezone.id}
             slotMetrics={slotMetrics}
             gutterRef={gutterRef}
           />
@@ -35,7 +37,7 @@ const Gutter = ({ slotMetrics, gutterRef, timezones, activeId }) => {
             boxShadow="2px 0px 7px rgba(0,0,0,0.2)"
             backgroundColor={'white'}
           >
-            <GutterContent slotMetrics={slotMetrics} />
+            <GutterContent slotMetrics={slotMetrics} timezone={activeTimezone} />
           </Flex>
         ) : null}
       </DragOverlay>

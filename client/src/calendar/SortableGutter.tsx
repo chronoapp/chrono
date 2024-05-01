@@ -5,7 +5,7 @@ import GutterContent from './GutterContent' // Make sure to import the child com
 /**
  * This component renders a sortable gutter using useSortable fom @dnd-kit.
  */
-export function SortableGutter({ id, gutterRef, slotMetrics }) {
+export function SortableGutter({ id, gutterRef, slotMetrics, timezone }) {
   // removed const {listeners} to remove useDraggable hook for the gutter while keeping sortable functionality
   const { attributes, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
@@ -22,7 +22,7 @@ export function SortableGutter({ id, gutterRef, slotMetrics }) {
   return (
     // removed {..listeners} to remove useDraggable hook for the gutter while keeping sortable functionality
     <div ref={setNodeRef} style={{ ...style }} {...attributes}>
-      <GutterContent ref={gutterRef} slotMetrics={slotMetrics} />
+      <GutterContent ref={gutterRef} slotMetrics={slotMetrics} timezone={timezone} />
     </div>
   )
 }

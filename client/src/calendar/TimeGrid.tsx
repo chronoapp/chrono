@@ -46,26 +46,26 @@ function TimeGrid(props: IProps) {
   const [intitalGutterHeaderWidth, setIntitalGutterHeaderWidth] = useState(0)
   const [gutterWidth, setGutterWidth] = useState(0)
   const [scrollbarSize, setScrollbarSize] = useState(0)
-
-  const [timezones, setTimezones] = useState([{ id: 1 }])
+  const initialTimezoneId = props.now.zone().id()
+  const [timezones, setTimezones] = useState([{ id: 1, timezoneId: initialTimezoneId }])
 
   /**
    *finds the highest number and adds one in the timezone array for unique id
    */
   const getNextId = () => timezones.reduce((max, timezone) => Math.max(max, timezone.id), 0) + 1
   /**
-   * adds new timezone objects with an id
+   * adds new timezone objects with an id and timezoneId e.g "America/Toronto"
    */
-  function addTimezones() {
-    const newTimezones = { id: getNextId() }
-    setTimezones([...timezones, newTimezones])
+  function addTimezones(timezoneId) {
+    const newTimezone = { id: getNextId(), timezoneId: timezoneId }
+    setTimezones([newTimezone, ...timezones])
   }
 
   const min = dates.startOf(props.now, ChronoUnit.DAYS)
   const max = dates.endOf(props.now, ChronoUnit.DAYS)
 
   const slotMetrics = useRef<SlotMetrics>(new SlotMetrics(min, max, props.step, props.timeslots))
-
+  console.log(slotMetrics)
   const gutterRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLInputElement>(null)
   const scrollTopRatio = useRef<number | undefined>(undefined)
