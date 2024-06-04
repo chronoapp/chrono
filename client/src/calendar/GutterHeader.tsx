@@ -12,7 +12,7 @@ import * as API from '@/util/Api'
  * The `GutterHeader` component serves as the control interface for managing and displaying sortable time zones
  */
 
-const GutterHeader = ({ addTimezones, width, timezones, gutterWidth }) => {
+const GutterHeader = ({ addTimezones, width, timezones, gutterWidth, timezonelabelRef }) => {
   const [user] = useRecoilState(userState)
   const { expandAllDayEvents } = useUserFlags()
   const [isOpen, setIsOpen] = useState(false)
@@ -33,9 +33,11 @@ const GutterHeader = ({ addTimezones, width, timezones, gutterWidth }) => {
       position="sticky"
       flexDirection="column"
     >
-      <Flex marginLeft="-5px">
+      <Flex marginLeft="-5px" ref={timezonelabelRef}>
         <SortableContext items={timezones} strategy={horizontalListSortingStrategy}>
-          {timezones.map((timezone) => (
+          {/* Creates a reversed copy of the timezone state to ensure the primary time is closest to
+        the calendar. */}
+          {timezones.toReversed().map((timezone) => (
             <SortableTimezone
               key={timezone.id}
               timezone={timezone}

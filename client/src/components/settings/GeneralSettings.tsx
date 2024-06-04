@@ -90,13 +90,18 @@ function GeneralSettings() {
         onUpdateTimezone={(timezone) => {
           // Don't prompt the user to update their timezone again.
           const flags = { ...user.flags, LAST_PROMPTED_TIMEZONE_TO_CHANGE: timezone }
-          const updatedUser = { ...user, flags: flags, timezones: [timezone] }
+
+          // Create a new array of timezones with the updated primary timezone
+          const updatedTimezones = [timezone, ...user.timezones.slice(1)]
+          console.log(updatedTimezones)
+          const updatedUser = { ...user, flags: flags, timezones: updatedTimezones }
           setUser(updatedUser)
 
           API.updateUser(updatedUser)
           API.updateUserFlags('LAST_PROMPTED_TIMEZONE_TO_CHANGE', timezone)
         }}
       />
+
       <CalendarSettings user={user} onUpdateUser={setUser} addMessage={addMessage} />
       <ConferencingSettings user={user} onUpdateUser={setUser} addMessage={addMessage} />
     </Flex>
