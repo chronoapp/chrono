@@ -19,7 +19,6 @@ const TimezoneModal = ({ isOpen, onClose, addTimezones, user }) => {
    */
   const handleUpdateTimezone = useCallback(
     (timezone) => {
-      console.log(timezones)
       const updatedTimezones = [...timezones, timezone]
       setTimezones(updatedTimezones)
       const updatedUser = {

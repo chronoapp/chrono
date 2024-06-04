@@ -93,7 +93,6 @@ function GeneralSettings() {
 
           // Create a new array of timezones with the updated primary timezone
           const updatedTimezones = [timezone, ...user.timezones.slice(1)]
-          console.log(updatedTimezones)
           const updatedUser = { ...user, flags: flags, timezones: updatedTimezones }
           setUser(updatedUser)
 
