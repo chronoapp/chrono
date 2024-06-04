@@ -127,7 +127,7 @@ function TimeGrid(props: IProps) {
           ...user,
           timezones: newTimezones,
         }
-        console.log(updatedUser)
+
         API.updateUser(updatedUser)
           .then(() => {
             console.log('User timezones updated successfully')
@@ -146,7 +146,6 @@ function TimeGrid(props: IProps) {
     function handlePointerDown(event) {
       const startPosition = { x: event.clientX, y: event.clientY }
       setInitialPosition(startPosition)
-      console.log(startPosition)
     }
 
     const gutterElement = timezonelabelRef.current
@@ -302,7 +301,6 @@ function TimeGrid(props: IProps) {
       }
       return newPosition
     })
-    console.log(overlayPosition)
   }
 
   /**
@@ -316,12 +314,9 @@ function TimeGrid(props: IProps) {
 
     if (gutterContent) {
       const boundary = gutterContent.getBoundingClientRect()
-      console.log('Boundary:', boundary)
-      console.log('Overlay Position:', overlayPosition)
 
       // Check if the item is dragged beyond the removal boundary
       if (overlayPosition.x > boundary.right + DRAG_REMOVE_LIMIT) {
-        console.log('Removing item:', active.id)
         setTimezones((timezones) => {
           const updatedTimezones = timezones.filter((timezone) => timezone.id !== active.id)
           updateUserTimezones(updatedTimezones.map((tz) => tz.timezoneId))
@@ -338,7 +333,6 @@ function TimeGrid(props: IProps) {
       setTimezones((timezones) => {
         const originalPos = getGutterPos(active.id)
         const newPos = getGutterPos(over.id)
-        console.log('Reordering from:', originalPos, 'to:', newPos)
 
         if (newPos !== -1) {
           const updatedTimezones = arrayMove(timezones, originalPos, newPos)
