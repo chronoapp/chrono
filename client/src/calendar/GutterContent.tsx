@@ -12,11 +12,13 @@ interface GutterContentProps {
 }
 
 const GutterContent = forwardRef<HTMLDivElement, GutterContentProps>(
-  ({ slotMetrics, timezone }, ref) => (
-    <div ref={ref} className="cal-time-gutter">
-      {slotMetrics.current.groups.map((group, idx) => renderDateLabel(group, idx, timezone))}
-    </div>
-  )
+  ({ slotMetrics, timezone }, ref) => {
+    return (
+      <div ref={ref} className="cal-time-gutter">
+        {slotMetrics.current.groups.map((group, idx) => renderDateLabel(group, idx, timezone))}
+      </div>
+    )
+  }
 )
 
 function renderDateLabel(group, idx, timezone) {

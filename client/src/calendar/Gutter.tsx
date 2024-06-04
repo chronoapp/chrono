@@ -13,13 +13,16 @@ const GUTTER_LINE_WIDTH = 0.5
 
 const Gutter = ({ slotMetrics, gutterRef, timezones, activeId }) => {
   const activeTimezone = timezones.find((tz) => tz.id === activeId)
+
   return (
-    <Flex direction={'row'}>
+    <Flex direction={'row'} className="cal-gutter">
       <SortableContext
         items={timezones.map((gutter) => gutter.id)}
         strategy={horizontalListSortingStrategy}
       >
-        {timezones.map((timezone) => (
+        {/* Creates a reversed copy of the timezone state to ensure the primary time is closest to
+        the calendar. */}
+        {timezones.toReversed().map((timezone) => (
           <SortableGutter
             key={timezone.id}
             timezone={timezone}
