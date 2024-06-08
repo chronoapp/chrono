@@ -51,6 +51,10 @@ function TimeGridEvent(props: IProps) {
     if (e.button === 0 && canEditEvent) {
       eventActions.onBeginAction(props.event, 'RESIZE', null, direction)
     }
+
+    // Prevent the onDragStart event from firing, which will
+    // cause it to start the Drag & Drop event.
+    e.preventDefault()
   }
 
   function handleStartDragging(e) {
