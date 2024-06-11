@@ -50,6 +50,7 @@ function TimeGrid(props: IProps) {
   const [intitalGutterHeaderWidth, setIntitalGutterHeaderWidth] = useState(0)
   const [gutterWidth, setGutterWidth] = useState(0)
   const [scrollbarSize, setScrollbarSize] = useState(0)
+  const [toRemove, setToRemove] = useState(false)
 
   const user = useRecoilValue(userState)
   const [timezones, setTimezones] = useState(() =>
@@ -299,6 +300,18 @@ function TimeGrid(props: IProps) {
         x: initialPosition.x + delta.x,
         y: initialPosition.y + delta.y,
       }
+      const gutterContent = contentRef.current?.querySelector('.cal-gutter')
+      const DRAG_REMOVE_LIMIT = 20
+
+      if (gutterContent) {
+        const boundary = gutterContent.getBoundingClientRect()
+        if (newPosition.x > boundary.right + DRAG_REMOVE_LIMIT) {
+          setToRemove(true)
+        } else {
+          setToRemove(false)
+        }
+      }
+
       return newPosition
     })
   }
@@ -377,6 +390,7 @@ function TimeGrid(props: IProps) {
             timezones={timezones}
             gutterRef={gutterRef}
             activeId={activeId}
+            toRemove={toRemove}
           />
           <DragDropZone
             scrollContainerRef={contentRef}
