@@ -2,9 +2,7 @@ services:
   # Background worker for processing jobs
   worker: &worker
     build: .
-    volumes:
-      - ./server:/app/
-    command: /var/scripts/entrypoint-worker-dev.sh
+    command: supervisord -n -c /etc/supervisord/supervisord-worker.conf
     environment:
       - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@postgres_db:5432/${DATABASE_NAME}
     env_file:
@@ -13,9 +11,9 @@ services:
   # FastAPI / Starlette
   api:
     <<: *worker
-    command: /var/scripts/entrypoint-dev.sh
+    command: /var/scripts/entrypoint.sh
     ports:
-      - 8888:8080
+      - 8888:80
 
   # Redis for job queue.
   redis:
@@ -28,9 +26,9 @@ services:
 
   # PostgreSQL database
   postgres_db:
-    image: postgres:13-alpine
+    image: postgres:16.3
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - '7432:5432'
     environment:
@@ -38,12 +36,6 @@ services:
       POSTGRES_PASSWORD: ${DATABASE_PASS}
       POSTGRES_DB: ${DATABASE_NAME}
 
-  # PostgreSQL database (Testing)
-  postgres_test:
-    image: postgres:13-alpine
-    environment:
-      POSTGRES_HOST_AUTH_METHOD: trust
-
 volumes:
-  postgres-data:
+  postgres_data: # PostgreSQL data volume
   redis-data:
