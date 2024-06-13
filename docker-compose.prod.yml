@@ -1,7 +1,7 @@
 services:
   # Background worker for processing jobs
   worker: &worker
-    image: chrono:latest # TODO: Publish to docker hub
+    build: .
     command: supervisord -n -c /etc/supervisord/supervisord-worker.conf
     environment:
       - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@postgres_db:5432/${DATABASE_NAME}
@@ -13,7 +13,7 @@ services:
     <<: *worker
     command: /var/scripts/entrypoint.sh
     ports:
-      - 8888:80
+      - 80:80
 
   # Redis for job queue.
   redis:
@@ -30,7 +30,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - '7432:5432'
+      - 5432
     environment:
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASS}
