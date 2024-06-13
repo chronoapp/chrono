@@ -1,8 +1,11 @@
 services:
   # Background worker for processing jobs
   worker: &worker
-    build: .
-    command: supervisord -n -c /etc/supervisord/supervisord-worker.conf
+    build:
+      context: .
+      args:
+        - API_URL=${API_URL}
+    command: /var/scripts/entrypoint-worker.sh
     environment:
       - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@postgres_db:5432/${DATABASE_NAME}
     env_file:
@@ -30,7 +33,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - 5432:5432
+      - 6432:5432
     environment:
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASS}

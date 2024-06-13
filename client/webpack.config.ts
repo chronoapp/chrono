@@ -55,7 +55,8 @@ function buildConfig(env, argv) {
     plugins: [HTMLWebpackPluginConfig, definePlugin],
     output: {
       path: path.resolve(__dirname, 'dist'),
-      filename: '[name].bundle.js',
+      filename: '[name].[contenthash].bundle.js',
+      chunkFilename: '[name].[contenthash].js',
       publicPath: '/',
     },
     devServer: {
@@ -66,6 +67,9 @@ function buildConfig(env, argv) {
     },
     optimization: {
       runtimeChunk: 'single',
+      splitChunks: {
+        chunks: 'all',
+      },
     },
   }
 }

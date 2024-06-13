@@ -9,6 +9,8 @@
 # ======== Frontend Build ========
 #
 FROM node:18.19.1-bullseye-slim AS frontend-build
+ARG API_URL
+ENV API_URL=${API_URL}
 
 WORKDIR /app
 SHELL ["/bin/bash", "-e", "-o", "pipefail", "-c"]
