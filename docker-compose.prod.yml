@@ -1,7 +1,7 @@
 services:
   # Background worker for processing jobs
   worker: &worker
-    build: .
+    image: chrono:latest # TODO: Publish to docker hub
     command: supervisord -n -c /etc/supervisord/supervisord-worker.conf
     environment:
       - DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASS}@postgres_db:5432/${DATABASE_NAME}
