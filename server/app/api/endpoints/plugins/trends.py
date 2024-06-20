@@ -161,6 +161,6 @@ def getTrendsDataResult(
     for row in result:
         date, duration, _ = row
         labels.append(date.strftime('%Y-%m-%d'))
-        durations.append(duration / 60.0 / 60.0)
+        durations.append(float(duration) / 60.0 / 60.0)
 
     return labels, durations
