@@ -1,19 +1,15 @@
 import React, { useState, useCallback } from 'react'
-import { IconButton, Flex } from '@chakra-ui/react'
+import { IconButton, Flex, Box } from '@chakra-ui/react'
 import User from '@/models/User'
 import { FiChevronUp, FiChevronDown, FiPlus } from 'react-icons/fi'
 import { userState } from '@/state/UserState'
 import { useRecoilState } from 'recoil'
 import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable'
 import { SortableTimezone } from './SortableTimezone'
-import TimezoneModal from './TimezoneModal'
+import TimezonePopover from './TimezonePopover'
 import * as API from '@/util/Api'
-/**
- * The `GutterHeader` component serves as the control interface for managing and displaying sortable time zones
- */
 
 const GutterHeader = ({ addTimezones, width, timezones, gutterWidth, timezonelabelRef }) => {
-  const [user] = useRecoilState(userState)
   const { expandAllDayEvents } = useUserFlags()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -35,8 +31,6 @@ const GutterHeader = ({ addTimezones, width, timezones, gutterWidth, timezonelab
     >
       <Flex marginLeft="-5px" ref={timezonelabelRef}>
         <SortableContext items={timezones} strategy={horizontalListSortingStrategy}>
-          {/* Creates a reversed copy of the timezone state to ensure the primary time is closest to
-        the calendar. */}
           {timezones.toReversed().map((timezone) => (
             <SortableTimezone
               key={timezone.id}
@@ -54,7 +48,6 @@ const GutterHeader = ({ addTimezones, width, timezones, gutterWidth, timezonelab
           isOpen={isOpen}
           onOpen={handleOpen}
           onClose={handleClose}
-          user={user}
         />
         <ToggleExpandWeeklyRows expanded={expandAllDayEvents} />
       </Flex>
@@ -62,28 +55,21 @@ const GutterHeader = ({ addTimezones, width, timezones, gutterWidth, timezonelab
   )
 }
 
-/**
- * Buttons for add timezones and to expand all day events
- */
-function ToggleAdditionalTimezone({ addTimezones, isOpen, onOpen, onClose, user }) {
+function ToggleAdditionalTimezone({ addTimezones, isOpen, onOpen, onClose }) {
   return (
-    <>
-      <IconButton
-        size={'xs'}
-        variant="ghost"
-        aria-label="adding additional timezones"
-        icon={<FiPlus />}
-        onClick={onOpen}
-        width="4"
-      />
-      <TimezoneModal isOpen={isOpen} onClose={onClose} addTimezones={addTimezones} user={user} />
-    </>
+    <TimezonePopover
+      isOpen={isOpen}
+      onOpen={onOpen}
+      onClose={onClose}
+      addTimezones={addTimezones}
+    />
   )
 }
-function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
+
+function ToggleExpandWeeklyRows({ expanded }) {
   const { updateExpandAllDayEvents } = useUserFlags()
 
-  if (props.expanded) {
+  if (expanded) {
     return (
       <IconButton
         size={'xs'}
@@ -112,10 +98,9 @@ function useUserFlags() {
   const [user, setUser] = useRecoilState(userState)
   const expandAllDayEvents = user?.flags.EXPAND_ALL_DAY_EVENTS || false
 
-  function updateExpandAllDayEvents(expand: boolean) {
+  function updateExpandAllDayEvents(expand) {
     const updatedFlags = { ...user?.flags, EXPAND_ALL_DAY_EVENTS: expand }
 
-    // Update local state
     setUser((state) =>
       state
         ? ({
