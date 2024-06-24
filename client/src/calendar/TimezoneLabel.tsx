@@ -23,7 +23,7 @@ const TimezoneLabel = forwardRef<HTMLDivElement, TimezoneLabelProps>(
      * Formats the time to append either GMT -/+ at the end.
      */
     const formatTimezone = (offset) => {
-      if (offset === 0) return 'GMT'
+      if (offset === 0) return 'GMT-0'
 
       const sign = offset < 0 ? '-' : '+'
       const hourOffset = Math.abs(offset)

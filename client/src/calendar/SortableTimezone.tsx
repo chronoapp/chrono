@@ -9,6 +9,7 @@ export const SortableTimezone = ({ id, timezone, gutterWidth }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
   })
+  
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,

@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react'
-import { useRecoilValue } from 'recoil'
+import { useRecoilValue, useRecoilState } from 'recoil'
 import getScrollbarSize from 'dom-helpers/scrollbarSize'
 
 import { ZonedDateTime as DateTime, ChronoUnit } from '@js-joda/core'
@@ -26,6 +26,7 @@ import { arrayMove } from '@dnd-kit/sortable'
 import { userState } from '@/state/UserState'
 import * as API from '@/util/Api'
 import User from '@/models/User'
+import TrashBin from './TrashBin'
 interface IProps {
   step: number
   timeslots: number
@@ -37,7 +38,7 @@ interface IProps {
 }
 
 const GUTTER_LINE_WIDTH = 0.5
-const DRAG_REMOVE_LIMIT = 10
+const DRAG_REMOVE_LIMIT = 30
 
 function preventScroll(e) {
   e.preventDefault()
@@ -51,14 +52,14 @@ function TimeGrid(props: IProps) {
   const [gutterWidth, setGutterWidth] = useState(0)
   const [scrollbarSize, setScrollbarSize] = useState(0)
   const [toRemove, setToRemove] = useState(false)
-
-  const user = useRecoilValue(userState)
+  const [activeTimezoneId, setActiveTimezoneId] = useState(null)
+  const [user, setUser] = useRecoilState(userState)
   const [timezones, setTimezones] = useState(() =>
     user
       ? [...user.timezones].map((timezone, index) => ({ id: index + 1, timezoneId: timezone }))
       : []
   )
-
+  const [isDragging, setIsDragging] = useState(false)
   const [overlayPosition, setOverlayPosition] = useState({ x: 0, y: 0 })
   const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 })
 
@@ -74,9 +75,12 @@ function TimeGrid(props: IProps) {
   const editingEvent = useRecoilValue(editingEventState)
   const dragAndDropAction = useRecoilValue(dragDropActionState)
 
+  /**
+   * Sets up initial scrollbar size, gutter width, and scrolls to the center of events.
+   * Adds an event listener for scrolling to events.
+   */
   useEffect(() => {
     const scrollbarSize = getScrollbarSize()
-
     // Adjust gutter width to account for scrollbar.
     if (gutterRef.current) {
       const gutterWidth = gutterRef.current.getBoundingClientRect().width
@@ -95,14 +99,16 @@ function TimeGrid(props: IProps) {
       document.removeEventListener(GlobalEvent.scrollToEvent, scrollToEvent)
     }
   }, [])
+
   /**
-   * Disable scrolling when editing an event.
+   * Disables scrolling when editing an event.
+   * Re-enables scrolling when not editing an event or when component unmounts.
    */
   useEffect(() => {
     if (contentRef.current) {
       const disableScroll = editingEvent !== null && !dragAndDropAction
       if (disableScroll) {
-        // Disable scrolling
+        // Disable scrollings
         contentRef.current.addEventListener('wheel', preventScroll, { passive: false })
       } else {
         // Enable scrolling
@@ -117,29 +123,7 @@ function TimeGrid(props: IProps) {
       }
     }
   }, [editingEvent])
-  /**
-   * updates the User state with the front-end timezone state.
-   * Uses `useCallback` to maintain stable function reference across renders
-   */
-  const updateUserTimezones = useCallback(
-    (newTimezones) => {
-      if (user) {
-        const updatedUser = {
-          ...user,
-          timezones: newTimezones,
-        }
 
-        API.updateUser(updatedUser)
-          .then(() => {
-            console.log('User timezones updated successfully')
-          })
-          .catch((error) => {
-            console.error('Failed to update user timezones:', error)
-          })
-      }
-    },
-    [user]
-  )
   /**
    *  Finds the intial posistion of the mouse when clicking the sortable timezones
    */
@@ -161,15 +145,43 @@ function TimeGrid(props: IProps) {
       }
     }
   }, [])
+
+  /**
+   * updates the User state with the front-end timezone state and then updates the backend.
+   * Uses `useCallback` to maintain stable function reference across renders
+   */
+  useEffect(() => {
+    if (user) {
+      const newTimezones = timezones.map((tz) => tz.timezoneId)
+      if (JSON.stringify(newTimezones) !== JSON.stringify(user.timezones)) {
+        const updatedUser = {
+          ...user,
+          timezones: newTimezones,
+        } as User
+        setUser(updatedUser)
+
+        API.updateUser(updatedUser)
+          .then(() => {
+            console.log('User timezones updated successfully')
+          })
+          .catch((error) => {
+            console.error('Failed to update user timezones:', error)
+          })
+      }
+    }
+  }, [timezones])
+
   useEffect(() => {
     applyTopScroll()
   })
+
   /**
    *Finds the highest number and adds one in the timezone array for unique id
    */
   const getNextId = () => timezones.reduce((max, timezone) => Math.max(max, timezone.id), 0) + 1
+
   /**
-   * Adds new timezone objects with an id and timezoneId e.g "America/Toronto to the frontend state"
+   * Adds new timezone objects with an id and timezoneId e.g "America/Toronto to the frontend timezone state"
    */
   function addTimezones(timezoneId) {
     const newTimezone = { id: getNextId(), timezoneId: timezoneId }
@@ -281,15 +293,16 @@ function TimeGrid(props: IProps) {
    */
   const getGutterPos = (id) => timezones.findIndex((gutter) => gutter.id === id) // using the id to find its positioning
 
-  const [activeId, setActiveId] = useState(null)
   /**
    *  When clicked it sets active state and set the the contentRef to no scrolling
    */
   function handleDragStart(event) {
     contentRef.current?.classList.add('no-scroll')
     const { active } = event
-    setActiveId(active.id)
+    setActiveTimezoneId(active.id)
+    setIsDragging(true)
   }
+
   /**
    * Track the drag move event to update overlay position.
    */
@@ -301,61 +314,63 @@ function TimeGrid(props: IProps) {
         y: initialPosition.y + delta.y,
       }
       const gutterContent = contentRef.current?.querySelector('.cal-gutter')
-      const DRAG_REMOVE_LIMIT = 20
 
       if (gutterContent) {
-        const boundary = gutterContent.getBoundingClientRect()
-        if (newPosition.x > boundary.right + DRAG_REMOVE_LIMIT) {
+        const trashBin = document.getElementById('trash-bin')
+        const trashBinRect = trashBin?.getBoundingClientRect()
+        if (
+          trashBinRect &&
+          newPosition.x > trashBinRect.left &&
+          newPosition.x < trashBinRect.right &&
+          newPosition.y > trashBinRect.top &&
+          newPosition.y < trashBinRect.bottom &&
+          // checks if there is atleast one timezone
+          timezones.length > 1
+        ) {
           setToRemove(true)
         } else {
           setToRemove(false)
         }
       }
-
       return newPosition
     })
   }
 
   /**
-   * when posistion over an event it rearranges the timezone array
+   * Checks if the position is within the trash bin and removes the item if true.
+   * Otherwise, rearranges the timezone array.
    */
-
   function handleDragEnd(event) {
     const { active, over } = event
-    const gutterContent = contentRef.current?.querySelector('.cal-gutter')
-    const DRAG_REMOVE_LIMIT = 20 // Define your drag remove limit value
+    const trashBin = document.getElementById('trash-bin')
+    const trashBinRect = trashBin?.getBoundingClientRect()
 
-    if (gutterContent) {
-      const boundary = gutterContent.getBoundingClientRect()
+    setIsDragging(false)
+    contentRef.current?.classList.remove('no-scroll')
 
-      // Check if the item is dragged beyond the removal boundary
-      if (overlayPosition.x > boundary.right + DRAG_REMOVE_LIMIT) {
-        setTimezones((timezones) => {
-          const updatedTimezones = timezones.filter((timezone) => timezone.id !== active.id)
-          updateUserTimezones(updatedTimezones.map((tz) => tz.timezoneId))
-          return updatedTimezones
-        })
-        setOverlayPosition({ x: 0, y: 0 }) // Reset overlay position
-        contentRef.current?.classList.remove('no-scroll')
-        return // Exit the function early to avoid unnecessary reordering logic
-      }
-    }
-
-    // Proceed with reordering only if not removed
-    if (over && active.id !== over.id) {
+    if (
+      trashBinRect &&
+      overlayPosition.x > trashBinRect.left &&
+      overlayPosition.x < trashBinRect.right &&
+      overlayPosition.y > trashBinRect.top &&
+      overlayPosition.y < trashBinRect.bottom &&
+      timezones.length > 1
+    ) {
+      setTimezones((timezones) => {
+        const updatedTimezones = timezones.filter((timezone) => timezone.id !== active.id)
+        return updatedTimezones
+      })
+    } else if (over && active.id !== over.id) {
       setTimezones((timezones) => {
         const originalPos = getGutterPos(active.id)
         const newPos = getGutterPos(over.id)
-
         if (newPos !== -1) {
           const updatedTimezones = arrayMove(timezones, originalPos, newPos)
-          updateUserTimezones(updatedTimezones.map((tz) => tz.timezoneId))
           return updatedTimezones
         }
         return timezones
       })
     }
-
     setOverlayPosition({ x: 0, y: 0 }) // Reset overlay position
     contentRef.current?.classList.remove('no-scroll')
   }
@@ -368,6 +383,7 @@ function TimeGrid(props: IProps) {
       onDragMove={handleDragMove}
     >
       <Flex className="cal-time-view" direction="column">
+        <TrashBin isDragging={isDragging} toRemove={toRemove} />
         <Flex>
           <GutterHeader
             addTimezones={addTimezones}
@@ -389,7 +405,7 @@ function TimeGrid(props: IProps) {
             slotMetrics={slotMetrics}
             timezones={timezones}
             gutterRef={gutterRef}
-            activeId={activeId}
+            activeTimezoneId={activeTimezoneId}
             toRemove={toRemove}
           />
           <DragDropZone

@@ -3,7 +3,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import GutterContent from './GutterContent' // Make sure to import the child component
 
 /**
- * This component renders a sortable gutter using useSortable fom @dnd-kit.
+ * This component renders a sortable gutter using useSortable from @dnd-kit.
  */
 export function SortableGutter({ id, gutterRef, slotMetrics, timezone }) {
   // removed const {listeners} to remove useDraggable hook for the gutter while keeping sortable functionality

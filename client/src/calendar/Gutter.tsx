@@ -11,8 +11,8 @@ const GUTTER_LINE_WIDTH = 0.5
  * Sorting horizontially
  */
 
-const Gutter = ({ slotMetrics, gutterRef, timezones, activeId, toRemove }) => {
-  const activeTimezone = timezones.find((tz) => tz.id === activeId)
+const Gutter = ({ slotMetrics, gutterRef, timezones, activeTimezoneId, toRemove }) => {
+  const activeTimezone = timezones.find((tz) => tz.id === activeTimezoneId)
 
   return (
     <Flex direction={'row'} className="cal-gutter">
@@ -33,10 +33,10 @@ const Gutter = ({ slotMetrics, gutterRef, timezones, activeId, toRemove }) => {
         ))}
       </SortableContext>
       <DragOverlay>
-        {activeId ? (
+        {activeTimezoneId ? (
           <Flex
             border="1px solid"
-            borderColor={toRemove ? 'red.400' : 'blackAlpha.400'}
+            borderColor={'blackAlpha.400'}
             boxShadow="2px 0px 7px rgba(0,0,0,0.2)"
             backgroundColor={'white'}
           >
