@@ -90,7 +90,26 @@
 
 // Headers
 
-.cal-divider {
+.cal-time-header-content {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
   border-left: 1px solid $cell-border;
-  height: 8px;
+  box-shadow: -2px 2px 3px 0px $grey-lighter;
+}
+
+
+
+.cal-allday-cell {
+  box-sizing: content-box;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+
+
+.no-scroll {
+  overflow: hidden;
 }

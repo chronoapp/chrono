@@ -1,10 +1,8 @@
-import { useRef, useState, useEffect } from 'react'
-import { useRecoilValue } from 'recoil'
+import React, { useRef, useState, useEffect, useCallback } from 'react'
+import { useRecoilValue, useRecoilState } from 'recoil'
 import getScrollbarSize from 'dom-helpers/scrollbarSize'
-import { Box } from '@chakra-ui/react'
 
 import { ZonedDateTime as DateTime, ChronoUnit } from '@js-joda/core'
-import { formatTimeShort } from '@/util/localizer-joda'
 import * as dates from '@/util/dates-joda'
 
 import Event from '../models/Event'
@@ -19,11 +17,16 @@ import Calendar from '@/models/Calendar'
 
 import { editingEventState } from '@/state/EventsState'
 import { dragDropActionState } from '@/state/EventsState'
+import { Flex } from '@chakra-ui/react'
+import Gutter from './Gutter'
+import GutterHeader from './GutterHeader'
+import { DndContext, closestCorners } from '@dnd-kit/core'
+import { arrayMove } from '@dnd-kit/sortable'
 
-function remToPixels(rem) {
-  return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
-}
-
+import { userState } from '@/state/UserState'
+import * as API from '@/util/Api'
+import User from '@/models/User'
+import TrashBin from './TrashBin'
 interface IProps {
   step: number
   timeslots: number
@@ -35,14 +38,30 @@ interface IProps {
 }
 
 const GUTTER_LINE_WIDTH = 0.5
+const DRAG_REMOVE_LIMIT = 30
 
 function preventScroll(e) {
   e.preventDefault()
 }
+function remToPixels(rem) {
+  return rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
+}
 
 function TimeGrid(props: IProps) {
+  const [intitalGutterHeaderWidth, setIntitalGutterHeaderWidth] = useState(0)
   const [gutterWidth, setGutterWidth] = useState(0)
   const [scrollbarSize, setScrollbarSize] = useState(0)
+  const [toRemove, setToRemove] = useState(false)
+  const [activeTimezoneId, setActiveTimezoneId] = useState(null)
+  const [user, setUser] = useRecoilState(userState)
+  const [timezones, setTimezones] = useState(() =>
+    user
+      ? [...user.timezones].map((timezone, index) => ({ id: index + 1, timezoneId: timezone }))
+      : []
+  )
+  const [isDragging, setIsDragging] = useState(false)
+  const [overlayPosition, setOverlayPosition] = useState({ x: 0, y: 0 })
+  const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 })
 
   const min = dates.startOf(props.now, ChronoUnit.DAYS)
   const max = dates.endOf(props.now, ChronoUnit.DAYS)
@@ -50,21 +69,26 @@ function TimeGrid(props: IProps) {
   const slotMetrics = useRef<SlotMetrics>(new SlotMetrics(min, max, props.step, props.timeslots))
   const gutterRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLInputElement>(null)
+  const timezonelabelRef = useRef<HTMLInputElement>(null)
   const scrollTopRatio = useRef<number | undefined>(undefined)
 
   const editingEvent = useRecoilValue(editingEventState)
   const dragAndDropAction = useRecoilValue(dragDropActionState)
 
+  /**
+   * Sets up initial scrollbar size, gutter width, and scrolls to the center of events.
+   * Adds an event listener for scrolling to events.
+   */
   useEffect(() => {
     const scrollbarSize = getScrollbarSize()
-
     // Adjust gutter width to account for scrollbar.
     if (gutterRef.current) {
-      const width = remToPixels(GUTTER_LINE_WIDTH) + gutterRef.current.getBoundingClientRect().width
-      setGutterWidth(width)
+      const gutterWidth = gutterRef.current.getBoundingClientRect().width
+      const gutterAndScrollbar = remToPixels(GUTTER_LINE_WIDTH) + gutterWidth
+      setIntitalGutterHeaderWidth(gutterAndScrollbar)
+      setGutterWidth(gutterWidth)
       setScrollbarSize(scrollbarSize)
     }
-
     // Scroll such that the screen is centered where most events are positioned.
     calculateTopScroll(props.events)
     applyTopScroll()
@@ -77,13 +101,14 @@ function TimeGrid(props: IProps) {
   }, [])
 
   /**
-   * Disable scrolling when editing an event.
+   * Disables scrolling when editing an event.
+   * Re-enables scrolling when not editing an event or when component unmounts.
    */
   useEffect(() => {
     if (contentRef.current) {
       const disableScroll = editingEvent !== null && !dragAndDropAction
       if (disableScroll) {
-        // Disable scrolling
+        // Disable scrollings
         contentRef.current.addEventListener('wheel', preventScroll, { passive: false })
       } else {
         // Enable scrolling
@@ -99,9 +124,69 @@ function TimeGrid(props: IProps) {
     }
   }, [editingEvent])
 
+  /**
+   *  Finds the intial posistion of the mouse when clicking the sortable timezones
+   */
+  useEffect(() => {
+    function handlePointerDown(event) {
+      const startPosition = { x: event.clientX, y: event.clientY }
+      setInitialPosition(startPosition)
+    }
+
+    const gutterElement = timezonelabelRef.current
+
+    if (gutterElement) {
+      gutterElement.addEventListener('pointerdown', handlePointerDown)
+    }
+    // Cleanup function to remove the event listeners when the component unmounts
+    return () => {
+      if (gutterElement) {
+        gutterElement.removeEventListener('pointerdown', handlePointerDown)
+      }
+    }
+  }, [])
+
+  /**
+   * updates the User state with the front-end timezone state and then updates the backend.
+   * Uses `useCallback` to maintain stable function reference across renders
+   */
+  useEffect(() => {
+    if (user) {
+      const newTimezones = timezones.map((tz) => tz.timezoneId)
+      if (JSON.stringify(newTimezones) !== JSON.stringify(user.timezones)) {
+        const updatedUser = {
+          ...user,
+          timezones: newTimezones,
+        } as User
+        setUser(updatedUser)
+
+        API.updateUser(updatedUser)
+          .then(() => {
+            console.log('User timezones updated successfully')
+          })
+          .catch((error) => {
+            console.error('Failed to update user timezones:', error)
+          })
+      }
+    }
+  }, [timezones])
+
   useEffect(() => {
     applyTopScroll()
   })
+
+  /**
+   *Finds the highest number and adds one in the timezone array for unique id
+   */
+  const getNextId = () => timezones.reduce((max, timezone) => Math.max(max, timezone.id), 0) + 1
+
+  /**
+   * Adds new timezone objects with an id and timezoneId e.g "America/Toronto to the frontend timezone state"
+   */
+  function addTimezones(timezoneId) {
+    const newTimezone = { id: getNextId(), timezoneId: timezoneId }
+    setTimezones([...timezones, newTimezone])
+  }
 
   /**
    * Scrolls to time, defaults to now if date in event.detail is unspecified.
@@ -197,72 +282,142 @@ function TimeGrid(props: IProps) {
     })
   }
 
-  function renderDateTick(idx: number) {
-    return (
-      <div
-        className="cal-timeslot-group"
-        key={idx}
-        style={{
-          width: `${GUTTER_LINE_WIDTH}rem`,
-          borderLeft: 0,
-        }}
-      ></div>
-    )
-  }
-
-  function renderDateLabel(group: DateTime[], idx: number) {
-    const timeRange = formatTimeShort(group[0], true).toUpperCase()
-
-    return (
-      <div className="cal-time-gutter-box" key={idx}>
-        {idx === 0 ? null : (
-          <Box className="cal-time-gutter-label" color="gray.600">
-            {timeRange}
-          </Box>
-        )}
-      </div>
-    )
-  }
-
   const start = props.range[0]
   const end = props.range[props.range.length - 1]
   const allDayEvents = props.events
     .filter((event) => event.all_day && inRange(event, start, end))
     .sort((a, b) => sortEvents(a, b))
 
+  /**
+   * Finds the position of a given timezone ID within the timezone array.
+   */
+  const getGutterPos = (id) => timezones.findIndex((gutter) => gutter.id === id) // using the id to find its positioning
+
+  /**
+   *  When clicked it sets active state and set the the contentRef to no scrolling
+   */
+  function handleDragStart(event) {
+    contentRef.current?.classList.add('no-scroll')
+    const { active } = event
+    setActiveTimezoneId(active.id)
+    setIsDragging(true)
+  }
+
+  /**
+   * Track the drag move event to update overlay position.
+   */
+  function handleDragMove(event) {
+    const { delta } = event
+    setOverlayPosition(() => {
+      const newPosition = {
+        x: initialPosition.x + delta.x,
+        y: initialPosition.y + delta.y,
+      }
+      const gutterContent = contentRef.current?.querySelector('.cal-gutter')
+
+      if (gutterContent) {
+        const trashBin = document.getElementById('trash-bin')
+        const trashBinRect = trashBin?.getBoundingClientRect()
+        if (
+          trashBinRect &&
+          newPosition.x > trashBinRect.left &&
+          newPosition.x < trashBinRect.right &&
+          newPosition.y > trashBinRect.top &&
+          newPosition.y < trashBinRect.bottom &&
+          // checks if there is atleast one timezone
+          timezones.length > 1
+        ) {
+          setToRemove(true)
+        } else {
+          setToRemove(false)
+        }
+      }
+      return newPosition
+    })
+  }
+
+  /**
+   * Checks if the position is within the trash bin and removes the item if true.
+   * Otherwise, rearranges the timezone array.
+   */
+  function handleDragEnd(event) {
+    const { active, over } = event
+    const trashBin = document.getElementById('trash-bin')
+    const trashBinRect = trashBin?.getBoundingClientRect()
+
+    setIsDragging(false)
+    contentRef.current?.classList.remove('no-scroll')
+
+    if (
+      trashBinRect &&
+      overlayPosition.x > trashBinRect.left &&
+      overlayPosition.x < trashBinRect.right &&
+      overlayPosition.y > trashBinRect.top &&
+      overlayPosition.y < trashBinRect.bottom &&
+      timezones.length > 1
+    ) {
+      setTimezones((timezones) => {
+        const updatedTimezones = timezones.filter((timezone) => timezone.id !== active.id)
+        return updatedTimezones
+      })
+    } else if (over && active.id !== over.id) {
+      setTimezones((timezones) => {
+        const originalPos = getGutterPos(active.id)
+        const newPos = getGutterPos(over.id)
+        if (newPos !== -1) {
+          const updatedTimezones = arrayMove(timezones, originalPos, newPos)
+          return updatedTimezones
+        }
+        return timezones
+      })
+    }
+    setOverlayPosition({ x: 0, y: 0 }) // Reset overlay position
+    contentRef.current?.classList.remove('no-scroll')
+  }
+
   return (
-    <div className="cal-time-view">
-      <TimeGridHeader
-        events={allDayEvents}
-        range={props.range}
-        leftPad={gutterWidth}
-        marginRight={scrollbarSize}
-        eventService={props.eventService}
-        now={props.now}
-      />
-
-      <div ref={contentRef} className="cal-time-content">
-        <div ref={gutterRef} className="cal-time-gutter">
-          {slotMetrics.current.groups.map((group, idx) => {
-            return renderDateLabel(group, idx)
-          })}
+    <DndContext
+      collisionDetection={closestCorners}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragMove={handleDragMove}
+    >
+      <Flex className="cal-time-view" direction="column">
+        <TrashBin isDragging={isDragging} toRemove={toRemove} />
+        <Flex>
+          <GutterHeader
+            addTimezones={addTimezones}
+            timezones={timezones}
+            width={intitalGutterHeaderWidth + (timezones.length - 1) * gutterWidth}
+            gutterWidth={gutterWidth}
+            timezonelabelRef={timezonelabelRef}
+          />
+          <TimeGridHeader
+            events={allDayEvents}
+            range={props.range}
+            marginRight={scrollbarSize}
+            eventService={props.eventService}
+            now={props.now}
+          />
+        </Flex>
+        <div ref={contentRef} className="cal-time-content">
+          <Gutter
+            slotMetrics={slotMetrics}
+            timezones={timezones}
+            gutterRef={gutterRef}
+            activeTimezoneId={activeTimezoneId}
+            toRemove={toRemove}
+          />
+          <DragDropZone
+            scrollContainerRef={contentRef}
+            range={props.range}
+            eventService={props.eventService}
+          >
+            {renderDays(props.range)}
+          </DragDropZone>
         </div>
-
-        <div className="cal-time-gutter">
-          {slotMetrics.current.groups.map((_group, idx) => {
-            return renderDateTick(idx)
-          })}
-        </div>
-
-        <DragDropZone
-          scrollContainerRef={contentRef}
-          range={props.range}
-          eventService={props.eventService}
-        >
-          {renderDays(props.range)}
-        </DragDropZone>
-      </div>
-    </div>
+      </Flex>
+    </DndContext>
   )
 }
 

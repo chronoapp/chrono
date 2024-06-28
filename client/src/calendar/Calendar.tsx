@@ -39,7 +39,6 @@ import { calendarViewState, calendarViewStateUserTimezone } from '@/state/Calend
  */
 function Calendar() {
   const eventService: EventService = useEventService()
-
   const calendars = useRecoilValue(calendarsState)
   const primaryCalendar = useRecoilValue(primaryCalendarSelector)
   const events = useRecoilValue(eventsState)

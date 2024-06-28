@@ -11,8 +11,7 @@ import Flags from '@/models/Flags'
 import WeekHeaderRow from './WeekHeaderRow'
 import { EventService } from './event-edit/useEventService'
 
-import { IconButton, Flex, Box, Text, VStack, Divider } from '@chakra-ui/react'
-import { FiChevronUp, FiChevronDown, FiPlus } from 'react-icons/fi'
+import { Flex, Box, Text, VStack } from '@chakra-ui/react'
 import { userState } from '@/state/UserState'
 import { calendarViewStateUserTimezone } from '@/state/CalendarViewState'
 
@@ -21,40 +20,9 @@ import * as API from '@/util/Api'
 interface IProps {
   range: DateTime[]
   events: Event[]
-  leftPad: number
   marginRight: number
   eventService: EventService
   now: DateTime
-}
-
-function ToggleExpandWeeklyRows(props: { expanded: boolean }) {
-  const { updateExpandAllDayEvents } = useUserFlags()
-
-  if (props.expanded) {
-    return (
-      <IconButton
-        size={'xs'}
-        variant="ghost"
-        aria-label="collapse events"
-        icon={<FiChevronUp />}
-        onClick={() => updateExpandAllDayEvents(false)}
-        width="4"
-        mt="8"
-      />
-    )
-  } else {
-    return (
-      <IconButton
-        size={'xs'}
-        variant="ghost"
-        aria-label="expand events"
-        icon={<FiChevronDown />}
-        onClick={() => updateExpandAllDayEvents(true)}
-        width="4"
-        mt="8"
-      />
-    )
-  }
 }
 
 function TimeGridHeader(props: IProps) {
@@ -96,32 +64,16 @@ function TimeGridHeader(props: IProps) {
       )
     })
   }
-
   return (
     <Flex
       className="cal-time-header"
       style={{ marginRight: props.marginRight }}
-      display="flex"
-      flex="0 0 auto"
       flexDirection="row"
+      w="100%"
+      flex="1"
     >
       <Flex
-        className="rbc-label cal-time-header-gutter"
-        width={props.leftPad}
-        direction={'column'}
-        justifyContent={'flex-start'}
-        alignItems={'center'}
-        position="sticky"
-        left="0"
-        background-color="white"
-        z-index="10"
-        margin-right="-1px"
-      >
-        <ToggleExpandWeeklyRows expanded={expandAllDayEvents} />
-      </Flex>
-      <Flex
         className="cal-time-header-content"
-        flex={1}
         minWidth="0"
         flexDirection="column"
         borderLeft="1px solid"
@@ -130,11 +82,11 @@ function TimeGridHeader(props: IProps) {
       >
         <Flex
           className="cal-row"
-          display="flex"
           flex-direction="row"
           justifyContent="space-around"
           borderLeft="1px solid"
           borderColor="rgb(235, 235, 235)"
+          width="100%"
         >
           {renderHeaderCells()}
         </Flex>
