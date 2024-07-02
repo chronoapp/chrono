@@ -5,14 +5,17 @@ import {
   PopoverContent,
   PopoverArrow,
   PopoverBody,
+  Flex,
+  Box,
+  Text,
+  IconButton,
 } from '@chakra-ui/react'
-import { Flex, Box, Text, IconButton } from '@chakra-ui/react'
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
-
 import { useRecoilValue } from 'recoil'
 import chunk from '@/lib/js-lib/chunk'
 
-import { ChronoUnit, ZonedDateTime as DateTime } from '@js-joda/core'
+import { ChronoUnit, ZonedDateTime as DateTime, DayOfWeek } from '@js-joda/core'
+import { DateTimeFormatter } from '@js-joda/core'
 import * as dates from '@/util/dates-joda'
 import {
   firstDayOfWeek,
@@ -22,28 +25,77 @@ import {
   formatDayOfMonth,
   formatMonthDay,
   formatMonthTitle,
+  yearStringToDate,
 } from '@/util/localizer-joda'
 
 import { hexToHSL } from '@/calendar/utils/Colors'
 import { Label } from '@/models/Label'
 import { getTrends } from '@/util/Api'
-
 import { labelsState } from '@/state/LabelsState'
 import ViewSelector, { TrendView } from './ViewSelector'
 import TagDropdown from './TagDropdown'
 
-import getTrendBlocks, { TrendBlock } from './TrendBlocks'
+interface TrendBlock {
+  day: DateTime
+  color: string
+  link?: TrendLink
+}
+
+interface TrendLink {
+  color: string
+  density: number
+}
 interface IProps {
   setSelectedView: (v: TrendView) => void
   selectedLabel?: Label
   setSelectedLabel: (label: Label) => void
 }
+function getTrendBlocks(
+  trendsMap: Map<string, number>,
+  maxDuration: number,
+  color_hex: string
+): TrendBlock[] {
+  let consecutiveDays = 0
+  let trendBlocks: TrendBlock[] = []
+  let entries = Array.from(trendsMap.entries())
+  const { h, s, l } = hexToHSL(color_hex)
+  for (let i = 0; i < entries.length; i++) {
+    const [dayString, value] = entries[i]
+    const day = yearStringToDate(dayString)
+    let color = calculateColor(value, maxDuration, h, s, l)
+    let block: TrendBlock = { day, color }
 
+    if (value > 0) {
+      consecutiveDays++
+      let nextValue = i + 1 < entries.length ? entries[i + 1][1] : 0
+      if (nextValue > 0 && day.dayOfWeek() !== DayOfWeek.SATURDAY) {
+        block.link = {
+          color: calculateColor(consecutiveDays * (maxDuration / 5), maxDuration, h, s, l),
+          density: consecutiveDays,
+        }
+      } else {
+        consecutiveDays = 0
+      }
+    }
+    trendBlocks.push(block)
+  }
+
+  return trendBlocks
+}
+function calculateColor(value, maxDuration, h, s, l) {
+  if (value === 0 || maxDuration === 0) {
+    return '#E0E0E0' // Default color for days with no activity
+  }
+  const ratio = value / maxDuration
+  const remainingLight = 100 - l
+  const addLight = (1 - ratio) * remainingLight
+  return `hsl(${h}, ${s}%, ${l + addLight}%)`
+}
 function HabitGraph(props: IProps) {
   const labelState = useRecoilValue(labelsState)
 
   const [trendMap, setTrendMap] = useState<Map<string, number>>(undefined!)
-  const [trendBlocks, setTrendBlocks] = useState<TrendBlock[]>([])
+
   const curDate: DateTime = DateTime.now()
   const [viewDate, setViewDate] = useState<DateTime>(curDate)
   const month = dates.visibleDays(viewDate, firstDayOfWeek(), true)
@@ -67,13 +119,7 @@ function HabitGraph(props: IProps) {
     for (let i = 0; i < trends.labels.length; i++) {
       trendMap.set(trends.labels[i], trends.values[i])
     }
-    const maxDuration = Math.max(...trends.values)
-
-    const { h, s, l } = hexToHSL(props.selectedLabel.color_hex)
-    const newTrendBlocks = getTrendBlocks(trendMap, maxDuration, h, s, l)
-
     setTrendMap(trendMap)
-    setTrendBlocks(newTrendBlocks)
   }
 
   function renderHeader() {
@@ -113,7 +159,6 @@ function HabitGraph(props: IProps) {
                 >
                   {trendBlock.link && (
                     <Box
-                      className="consecutive-days-link"
                       position="absolute"
                       right="-4"
                       top="50%"
@@ -145,6 +190,8 @@ function HabitGraph(props: IProps) {
     if (!trendMap || !props.selectedLabel) {
       return
     }
+    const maxDuration = Math.max(...Array.from(trendMap.values()))
+    const trendBlocks = getTrendBlocks(trendMap, maxDuration, props.selectedLabel.color_hex)
 
     return (
       <Box>
