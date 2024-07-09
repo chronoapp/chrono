@@ -45,11 +45,13 @@ interface TrendLink {
   color: string
   density: number
 }
+
 interface IProps {
   setSelectedView: (v: TrendView) => void
   selectedLabel?: Label
   setSelectedLabel: (label: Label) => void
 }
+
 function getTrendBlocks(
   trendsMap: Map<string, number>,
   maxDuration: number,
@@ -82,6 +84,7 @@ function getTrendBlocks(
 
   return trendBlocks
 }
+
 function calculateColor(value, maxDuration, h, s, l) {
   if (value === 0 || maxDuration === 0) {
     return '#E0E0E0' // Default color for days with no activity
@@ -91,6 +94,7 @@ function calculateColor(value, maxDuration, h, s, l) {
   const addLight = (1 - ratio) * remainingLight
   return `hsl(${h}, ${s}%, ${l + addLight}%)`
 }
+
 function HabitGraph(props: IProps) {
   const labelState = useRecoilValue(labelsState)
 
