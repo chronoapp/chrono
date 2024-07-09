@@ -136,12 +136,19 @@ function HabitGraph(props: IProps) {
   }
 
   function renderWeek(week: DateTime[], idx: number, trendBlocks: TrendBlock[]) {
+    // Create a map from trendBlocks for quick lookup
+    const trendBlockMap = new Map<string, TrendBlock>()
+    trendBlocks.forEach((block) => {
+      const blockDayKey = formatFullDay(block.day)
+      trendBlockMap.set(blockDayKey, block)
+    })
+
     return (
       <Flex key={idx}>
         {week.map((day: DateTime, dayIdx: number) => {
           const dayKey = formatFullDay(day)
           const trendValue = trendMap.get(dayKey)
-          const trendBlock = trendBlocks.find((block) => formatFullDay(block.day) === dayKey)
+          const trendBlock = trendBlockMap.get(dayKey)
 
           if (!trendBlock) return null
 
