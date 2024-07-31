@@ -70,6 +70,18 @@ def sync_cal_all(email: str, full: bool):
 
 
 @main.command()
+def refresh_webhooks():
+    from app.db.repos.webhook_repo import WebhookRepository
+    from app.db.repos.user_repo import UserRepository
+
+    with scoped_session() as session:
+        userRepo = UserRepository(session)
+        for user in userRepo.getAllUsers():
+            webhookRepo = WebhookRepository(session)
+            webhookRepo.refreshExpiringWebhooks(user)
+
+
+@main.command()
 @click.argument('email', type=click.STRING)
 @click.argument('cal', type=click.STRING)
 @click.option('--full', is_flag=True, default=False)

@@ -1,5 +1,5 @@
 import uuid
-from typing import Optional
+from typing import Optional, Sequence
 
 from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload, Session
@@ -11,6 +11,13 @@ from .exceptions import NotFoundError
 class UserRepository:
     def __init__(self, session: Session):
         self.session = session
+
+    def getAllUsers(self) -> Sequence[User]:
+        users = (
+            self.session.execute(select(User).options(selectinload(User.accounts))).scalars().all()
+        )
+
+        return users
 
     def getUser(self, userId: uuid.UUID) -> User:
         user = (
