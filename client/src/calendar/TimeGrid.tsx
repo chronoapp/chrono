@@ -52,6 +52,9 @@ function TimeGrid(props: IProps) {
   const [scrollbarSize, setScrollbarSize] = useState(0)
   const [activeTimezoneId, setActiveTimezoneId] = useState(null)
   const [user, setUser] = useRecoilState(userState)
+
+  // TODO: This is duplicated, so we need to keep the two states updated,
+  // via a useEffect hook from user.timezones to timezones and vice versa.
   const [timezones, setTimezones] = useState(() =>
     user
       ? [...user.timezones].map((timezone, index) => ({ id: index + 1, timezoneId: timezone }))
@@ -171,9 +174,25 @@ function TimeGrid(props: IProps) {
           .catch((error) => {
             console.error('Failed to update user timezones:', error)
           })
+
+        API.updateUserFlags('LAST_PROMPTED_TIMEZONE_TO_CHANGE', userTimezone)
       }
     }
   }, [timezones])
+
+  /**
+   * Updates the timezones state whenever user.timezones changes.
+   */
+  useEffect(() => {
+    if (user) {
+      setTimezones(
+        user.timezones.map((timezone, index) => ({
+          id: index + 1,
+          timezoneId: timezone,
+        }))
+      )
+    }
+  }, [user?.timezones])
 
   useEffect(() => {
     applyTopScroll()

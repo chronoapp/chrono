@@ -44,7 +44,7 @@ export default function TimezoneChangePrompt() {
   }
 
   function handleYes(user: User) {
-    const updatedTimezones = user.timezones.filter((tz) => tz !== userTimezone)
+    const updatedTimezones = user.timezones.filter((tz) => tz !== detectedTimezone)
     updatedTimezones.unshift(detectedTimezone)
 
     const updatedUser = {
