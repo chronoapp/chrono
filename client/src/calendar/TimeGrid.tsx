@@ -143,13 +143,9 @@ function TimeGrid(props: IProps) {
 
         setUser(updatedUser)
 
-        API.updateUser(updatedUser)
-          .then(() => {
-            console.log('User timezones updated successfully')
-          })
-          .catch((error) => {
-            console.error('Failed to update user timezones:', error)
-          })
+        API.updateUser(updatedUser).catch((error) => {
+          console.error('Failed to update user timezones:', error)
+        })
 
         API.updateUserFlags('LAST_PROMPTED_TIMEZONE_TO_CHANGE', userTimezone)
       }
