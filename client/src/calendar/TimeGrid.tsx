@@ -152,10 +152,16 @@ function TimeGrid(props: IProps) {
     if (user) {
       const newTimezones = timezones.map((tz) => tz.timezoneId)
       if (JSON.stringify(newTimezones) !== JSON.stringify(user.timezones)) {
+        // Assuming the first timezone is the primary one.
+        // If this changes, set the last prompted timezone so that the user is not prompted again,
+        // since they changed this timezone by themselves.
+        const userTimezone = newTimezones[0]
         const updatedUser = {
           ...user,
           timezones: newTimezones,
+          flags: { ...user.flags, LAST_PROMPTED_TIMEZONE_TO_CHANGE: userTimezone },
         } as User
+
         setUser(updatedUser)
 
         API.updateUser(updatedUser)
