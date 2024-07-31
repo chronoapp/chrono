@@ -38,15 +38,15 @@ export default function TimezoneChangePrompt() {
   }
 
   // Don't prompt if the user's timezone is the same as the local timezone
-  const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
-  if (currentTimezone === userTimezone) {
+  if (detectedTimezone === userTimezone) {
     return null
   }
 
-  function handlesYes(user: User) {
+  function handleYes(user: User) {
     const updatedTimezones = user.timezones.filter((tz) => tz !== userTimezone)
-    updatedTimezones.unshift(currentTimezone)
+    updatedTimezones.unshift(detectedTimezone)
 
     const updatedUser = {
       ...user,
@@ -85,12 +85,12 @@ export default function TimezoneChangePrompt() {
       <ModalContent>
         <ModalBody mt="4">
           <Text>
-            Would you like to change your active timezone to <b>{currentTimezone}</b>?
+            Would you like to change your active timezone to <b>{detectedTimezone}</b>?
           </Text>
         </ModalBody>
 
         <ModalFooter>
-          <Button colorScheme="primary" mr={3} onClick={() => handlesYes(user)}>
+          <Button colorScheme="primary" mr={3} onClick={() => handleYes(user)}>
             Yes
           </Button>
           <Button variant="ghost" onClick={() => handleNo(user)}>
