@@ -23,9 +23,7 @@ class Webhook(Base):
     account_id: Mapped[UUID] = mapped_column(
         UUID, ForeignKey('user_credentials.id'), nullable=False
     )
-    account: Mapped['UserAccount'] = relationship(
-        'UserAccount', back_populates='webhooks', cascade='all, delete'
-    )
+    account: Mapped['UserAccount'] = relationship('UserAccount', back_populates='webhooks')
 
     calendar_id: Mapped[uuid.UUID] = mapped_column(
         UUID, ForeignKey('user_calendar.id'), nullable=True
