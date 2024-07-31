@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react'
-import { Flex, Text } from '@chakra-ui/react'
+import { Flex, Text, Tooltip } from '@chakra-ui/react'
 import { ZonedDateTime, ZoneId } from '@js-joda/core'
 import '@js-joda/timezone'
 
@@ -40,11 +40,12 @@ const TimezoneLabel = forwardRef<HTMLDivElement, TimezoneLabelProps>(
         borderRadius="sm"
         p="1px"
         mx="1px"
-        title={`Timezone: ${timezone.timezoneId}`}
       >
-        <Text width={gutterWidth} fontSize="9px" textAlign="center">
-          {formatTimezone(timezoneOffset)}
-        </Text>
+        <Tooltip label={timezone.timezoneId} placement="top" hasArrow>
+          <Text width={gutterWidth} fontSize="9px" textAlign="center">
+            {formatTimezone(timezoneOffset)}
+          </Text>
+        </Tooltip>
       </Flex>
     )
   }
