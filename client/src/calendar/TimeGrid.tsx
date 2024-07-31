@@ -61,8 +61,6 @@ function TimeGrid(props: IProps) {
       : []
   )
   const [isDragging, setIsDragging] = useState(false)
-  const [overlayPosition, setOverlayPosition] = useState({ x: 0, y: 0 })
-  const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 })
 
   const min = dates.startOf(props.now, ChronoUnit.DAYS)
   const max = dates.endOf(props.now, ChronoUnit.DAYS)
@@ -124,28 +122,6 @@ function TimeGrid(props: IProps) {
       }
     }
   }, [editingEvent])
-
-  /**
-   *  Finds the intial posistion of the mouse when clicking the sortable timezones
-   */
-  useEffect(() => {
-    function handlePointerDown(event) {
-      const startPosition = { x: event.clientX, y: event.clientY }
-      setInitialPosition(startPosition)
-    }
-
-    const gutterElement = timezonelabelRef.current
-
-    if (gutterElement) {
-      gutterElement.addEventListener('pointerdown', handlePointerDown)
-    }
-    // Cleanup function to remove the event listeners when the component unmounts
-    return () => {
-      if (gutterElement) {
-        gutterElement.removeEventListener('pointerdown', handlePointerDown)
-      }
-    }
-  }, [])
 
   /**
    * updates the User state with the front-end timezone state and then updates the backend.
@@ -334,22 +310,6 @@ function TimeGrid(props: IProps) {
   }
 
   /**
-   * Track the drag move event to update overlay position.
-   */
-  function handleDragMove(event) {
-    const { delta } = event
-
-    setOverlayPosition(() => {
-      const newPosition = {
-        x: initialPosition.x + delta.x,
-        y: initialPosition.y + delta.y,
-      }
-
-      return newPosition
-    })
-  }
-
-  /**
    * Checks if the position is within the trash bin and removes the item if true.
    * Otherwise, rearranges the timezone array.
    */
@@ -373,7 +333,6 @@ function TimeGrid(props: IProps) {
       })
     }
 
-    setOverlayPosition({ x: 0, y: 0 }) // Reset overlay position
     contentRef.current?.classList.remove('no-scroll')
   }
 
@@ -382,7 +341,6 @@ function TimeGrid(props: IProps) {
       collisionDetection={closestCorners}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      onDragMove={handleDragMove}
     >
       <Flex className="cal-time-view" direction="column">
         <Flex>
