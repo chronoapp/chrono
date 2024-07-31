@@ -77,7 +77,7 @@ def recreate_webhooks():
     with scoped_session() as session:
         userRepo = UserRepository(session)
         for user in userRepo.getAllUsers():
-            print(f'Re-create webhooks for {user}')
+            print(f'Re-create webhooks for {user.email}')
             webhookRepo = WebhookRepository(session)
             try:
                 webhookRepo.recreateAllWebhooks(user)
@@ -93,6 +93,7 @@ def refresh_webhooks():
     with scoped_session() as session:
         userRepo = UserRepository(session)
         for user in userRepo.getAllUsers():
+            print(f'Re-create webhooks for {user.email}')
             webhookRepo = WebhookRepository(session)
             webhookRepo.refreshExpiringWebhooks(user)
 

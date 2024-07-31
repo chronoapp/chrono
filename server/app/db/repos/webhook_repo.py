@@ -147,12 +147,20 @@ class WebhookRepository:
 
         for webhook in expiringWebhooks:
             # Store necessary information before canceling the webhook
-            account = webhook.account
-            calendar = webhook.calendar
+            account_id = webhook.account_id
+            calendar_id = webhook.calendar_id
             webhookType = webhook.type
 
             # Cancel the existing webhook
             self.cancelWebhook(webhook)
+
+            # Fetch fresh instances of account and calendar
+            account = self.session.get(UserAccount, account_id)
+            calendar = self.session.get(UserCalendar, calendar_id) if calendar_id else None
+
+            # If the account no longer exists, skip this webhook
+            if not account:
+                continue
 
             # Recreate the webhook based on its type
             if webhookType == 'calendar_list':
