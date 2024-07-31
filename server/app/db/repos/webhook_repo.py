@@ -127,15 +127,19 @@ class WebhookRepository:
 
             return None
 
-    def refreshExpiringWebhooks(self, user: User):
-        """Refreshes all webhooks that are about to expire."""
-        for webhook in self._getExpiringWebhooks(user):
+    def recreateAllWebhooks(self, user: User):
+        """Delete and re-create all webhooks."""
+        for webhook in self._getAllWebhooks(user):
+            # Cancel the existing webhook
             self.cancelWebhook(webhook)
 
-            if webhook.type == 'calendar_list':
-                self.createCalendarListWebhook(webhook.account)
-            elif webhook.type == 'calendar_events':
-                self.createCalendarEventsWebhook(webhook.calendar.account, webhook.calendar)
+        for account in user.accounts:
+            # Create calendar list webhook for each account
+            self.createCalendarListWebhook(account)
+
+            # Create calendar events webhooks for each calendar in the account
+            for calendar in account.calendars:
+                self.createCalendarEventsWebhook(account, calendar)
 
     def cancelWebhook(self, webhook: Webhook):
         try:
@@ -144,6 +148,13 @@ class WebhookRepository:
             logger.error(e.reason)
 
         self.session.delete(webhook)
+        self.session.commit()
+
+    def _getAllWebhooks(self, user: User) -> list[Webhook]:
+        stmt = select(Webhook).join(UserAccount).where(UserAccount.user_id == user.id)
+        webhooks = (self.session.execute(stmt)).scalars().all()
+
+        return list(webhooks)
 
     def _getExpiringWebhooks(self, user: User) -> list[Webhook]:
         expiresDt = datetime.now() + timedelta(days=EXPIRING_SOON_DAYS)

@@ -14,7 +14,10 @@ class UserRepository:
 
     def getAllUsers(self) -> Sequence[User]:
         users = (
-            self.session.execute(select(User).options(selectinload(User.accounts))).scalars().all()
+            self.session.execute(select(User).options(selectinload(User.accounts)))
+            .unique()
+            .scalars()
+            .all()
         )
 
         return users

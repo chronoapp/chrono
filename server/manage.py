@@ -70,6 +70,22 @@ def sync_cal_all(email: str, full: bool):
 
 
 @main.command()
+def recreate_webhooks():
+    from app.db.repos.webhook_repo import WebhookRepository
+    from app.db.repos.user_repo import UserRepository
+
+    with scoped_session() as session:
+        userRepo = UserRepository(session)
+        for user in userRepo.getAllUsers():
+            print(f'Re-create webhooks for {user}')
+            webhookRepo = WebhookRepository(session)
+            try:
+                webhookRepo.recreateAllWebhooks(user)
+            except Exception as e:
+                print(e)
+
+
+@main.command()
 def refresh_webhooks():
     from app.db.repos.webhook_repo import WebhookRepository
     from app.db.repos.user_repo import UserRepository
