@@ -45,6 +45,7 @@ const GutterHeader = ({
               id={timezone.id}
               gutterWidth={gutterWidth}
               onDeleteTimezone={deleteTimezone}
+              allowDelete={timezones.length > 1}
             />
           ))}
         </SortableContext>
