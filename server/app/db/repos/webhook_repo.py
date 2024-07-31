@@ -141,6 +141,26 @@ class WebhookRepository:
             for calendar in account.calendars:
                 self.createCalendarEventsWebhook(account, calendar)
 
+    def refreshExpiringWebhooks(self, user: User):
+        """Re-create webhooks that are about to expire."""
+        expiringWebhooks = self._getExpiringWebhooks(user)
+
+        for webhook in expiringWebhooks:
+            # Store necessary information before canceling the webhook
+            account = webhook.account
+            calendar = webhook.calendar
+            webhookType = webhook.type
+
+            # Cancel the existing webhook
+            self.cancelWebhook(webhook)
+
+            # Recreate the webhook based on its type
+            if webhookType == 'calendar_list':
+                self.createCalendarListWebhook(account)
+            elif webhookType == 'calendar_events':
+                if calendar:
+                    self.createCalendarEventsWebhook(account, calendar)
+
     def cancelWebhook(self, webhook: Webhook):
         try:
             gcal.removeWebhook(webhook.account, webhook.id, webhook.resource_id)
