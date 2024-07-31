@@ -44,6 +44,7 @@ const Gutter = ({ slotMetrics, gutterRef, timezones, activeTimezoneId }) => {
           </Flex>
         ) : null}
       </DragOverlay>
+
       <div className="cal-time-gutter">
         {slotMetrics.current.groups.map((_group, idx) => {
           return renderDateTick(idx)

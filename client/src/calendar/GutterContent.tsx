@@ -21,7 +21,7 @@ const GutterContent = forwardRef<HTMLDivElement, GutterContentProps>(
   }
 )
 
-function renderDateLabel(group, idx, timezone) {
+function renderDateLabel(group, idx: number, timezone: { id: number; timezoneId: string }) {
   // Ensure the date uses the passed timezone
   const zonedDate = group[0].withZoneSameInstant(ZoneId.of(timezone.timezoneId))
   const timeRange = formatTimeShort(zonedDate, true).toUpperCase()
