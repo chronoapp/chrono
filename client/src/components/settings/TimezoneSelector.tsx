@@ -10,7 +10,7 @@ import User from '@/models/User'
 
 interface IProps {
   user: User
-  onUpdateTimezone: (timezone: string) => void
+  onAddTimezone: (timezone: string) => void
 }
 
 const UTCTime = {
@@ -87,7 +87,7 @@ export default function TimezoneSelector(props: IProps) {
         setInputValue(newSelectedItem ? newSelectedItem.name : '')
 
         if (newSelectedItem) {
-          props.onUpdateTimezone(newSelectedItem.tzCode)
+          props.onAddTimezone(newSelectedItem.tzCode)
         }
       },
       scrollIntoView: () => {},

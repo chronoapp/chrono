@@ -9,7 +9,6 @@ import { InfoAlert } from '@/components/Alert'
 import * as API from '@/util/Api'
 import CalendarSettings from './CalendarSettings'
 import ConferencingSettings from './ConferencingSettings'
-import TimezoneSelector from './TimezoneSelector'
 
 function GeneralSettings() {
   const [user, setUser] = useRecoilState(userState)
@@ -85,18 +84,6 @@ function GeneralSettings() {
         Ask to update primary timezone when it changes
       </Checkbox>
 
-      <TimezoneSelector
-        user={user}
-        onUpdateTimezone={(timezone) => {
-          // Don't prompt the user to update their timezone again.
-          const flags = { ...user.flags, LAST_PROMPTED_TIMEZONE_TO_CHANGE: timezone }
-          const updatedUser = { ...user, flags: flags, timezones: [timezone] }
-          setUser(updatedUser)
-
-          API.updateUser(updatedUser)
-          API.updateUserFlags('LAST_PROMPTED_TIMEZONE_TO_CHANGE', timezone)
-        }}
-      />
       <CalendarSettings user={user} onUpdateUser={setUser} addMessage={addMessage} />
       <ConferencingSettings user={user} onUpdateUser={setUser} addMessage={addMessage} />
     </Flex>
