@@ -6,16 +6,25 @@ import {
   PopoverCloseButton,
   IconButton,
 } from '@chakra-ui/react'
-import { useRecoilState } from 'recoil'
+import { useRecoilValue } from 'recoil'
 import TimezoneSelector from '../components/settings/TimezoneSelector'
 import { userState } from '@/state/UserState'
 import { FiPlus } from 'react-icons/fi'
 
+/**
+ * Popover to select additional timezones to display on the calendar.
+ */
 const TimezonePopover = ({ isOpen, onOpen, onClose, addTimezones }) => {
-  const [user, setUser] = useRecoilState(userState)
+  const user = useRecoilValue(userState)
 
   return (
-    <Popover isOpen={isOpen} onClose={onClose} placement="bottom-end">
+    <Popover
+      isOpen={isOpen}
+      onClose={onClose}
+      placement="bottom-end"
+      closeOnBlur={true}
+      closeOnEsc={true}
+    >
       <PopoverTrigger>
         <IconButton
           size={'xs'}

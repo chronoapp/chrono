@@ -52,26 +52,16 @@ const GutterHeader = ({
       </Flex>
 
       <Flex justifyContent="flex-end" mt="10px">
-        <ToggleAdditionalTimezone
-          addTimezones={addTimezones}
+        <TimezonePopover
           isOpen={isOpen}
           onOpen={handleOpen}
           onClose={handleClose}
+          addTimezones={addTimezones}
         />
+
         <ToggleExpandWeeklyRows expanded={expandAllDayEvents} />
       </Flex>
     </Flex>
-  )
-}
-
-function ToggleAdditionalTimezone({ addTimezones, isOpen, onOpen, onClose }) {
-  return (
-    <TimezonePopover
-      isOpen={isOpen}
-      onOpen={onOpen}
-      onClose={onClose}
-      addTimezones={addTimezones}
-    />
   )
 }
 
