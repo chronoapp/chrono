@@ -11,7 +11,7 @@ const GUTTER_LINE_WIDTH = 0.5
  * Sorting horizontially
  */
 
-const Gutter = ({ slotMetrics, gutterRef, timezones, activeTimezoneId, toRemove }) => {
+const Gutter = ({ slotMetrics, gutterRef, timezones, activeTimezoneId }) => {
   const activeTimezone = timezones.find((tz) => tz.id === activeTimezoneId)
 
   return (

@@ -40,7 +40,6 @@ const TimezoneLabel = forwardRef<HTMLDivElement, TimezoneLabelProps>(
         borderRadius="sm"
         p="1px"
         mx="1px"
-        backgroundColor="gray.100"
         title={`Timezone: ${timezone.timezoneId}`}
       >
         <Text width={gutterWidth} fontSize="9px" textAlign="center">

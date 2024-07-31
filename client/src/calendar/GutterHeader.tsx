@@ -9,7 +9,14 @@ import { SortableTimezone } from './SortableTimezone'
 import TimezonePopover from './TimezonePopover'
 import * as API from '@/util/Api'
 
-const GutterHeader = ({ addTimezones, width, timezones, gutterWidth, timezonelabelRef }) => {
+const GutterHeader = ({
+  deleteTimezone,
+  addTimezones,
+  width,
+  timezones,
+  gutterWidth,
+  timezonelabelRef,
+}) => {
   const { expandAllDayEvents } = useUserFlags()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -37,6 +44,7 @@ const GutterHeader = ({ addTimezones, width, timezones, gutterWidth, timezonelab
               timezone={timezone}
               id={timezone.id}
               gutterWidth={gutterWidth}
+              onDeleteTimezone={deleteTimezone}
             />
           ))}
         </SortableContext>

@@ -26,7 +26,6 @@ import { arrayMove } from '@dnd-kit/sortable'
 import { userState } from '@/state/UserState'
 import * as API from '@/util/Api'
 import User from '@/models/User'
-import TrashBin from './TrashBin'
 interface IProps {
   step: number
   timeslots: number
@@ -51,7 +50,6 @@ function TimeGrid(props: IProps) {
   const [intitalGutterHeaderWidth, setIntitalGutterHeaderWidth] = useState(0)
   const [gutterWidth, setGutterWidth] = useState(0)
   const [scrollbarSize, setScrollbarSize] = useState(0)
-  const [toRemove, setToRemove] = useState(false)
   const [activeTimezoneId, setActiveTimezoneId] = useState(null)
   const [user, setUser] = useRecoilState(userState)
   const [timezones, setTimezones] = useState(() =>
@@ -189,6 +187,13 @@ function TimeGrid(props: IProps) {
   }
 
   /**
+   * Deletes a timezone from the frontend timezone state.
+   */
+  function deleteTimezone(id) {
+    setTimezones((timezones) => timezones.filter((timezone) => timezone.id !== id))
+  }
+
+  /**
    * Scrolls to time, defaults to now if date in event.detail is unspecified.
    */
   function scrollToEvent(event) {
@@ -308,30 +313,13 @@ function TimeGrid(props: IProps) {
    */
   function handleDragMove(event) {
     const { delta } = event
+
     setOverlayPosition(() => {
       const newPosition = {
         x: initialPosition.x + delta.x,
         y: initialPosition.y + delta.y,
       }
-      const gutterContent = contentRef.current?.querySelector('.cal-gutter')
 
-      if (gutterContent) {
-        const trashBin = document.getElementById('trash-bin')
-        const trashBinRect = trashBin?.getBoundingClientRect()
-        if (
-          trashBinRect &&
-          newPosition.x > trashBinRect.left &&
-          newPosition.x < trashBinRect.right &&
-          newPosition.y > trashBinRect.top &&
-          newPosition.y < trashBinRect.bottom &&
-          // checks if there is atleast one timezone
-          timezones.length > 1
-        ) {
-          setToRemove(true)
-        } else {
-          setToRemove(false)
-        }
-      }
       return newPosition
     })
   }
@@ -342,25 +330,13 @@ function TimeGrid(props: IProps) {
    */
   function handleDragEnd(event) {
     const { active, over } = event
-    const trashBin = document.getElementById('trash-bin')
-    const trashBinRect = trashBin?.getBoundingClientRect()
 
     setIsDragging(false)
+
+    // Make sure one can't scroll when dragging
     contentRef.current?.classList.remove('no-scroll')
 
-    if (
-      trashBinRect &&
-      overlayPosition.x > trashBinRect.left &&
-      overlayPosition.x < trashBinRect.right &&
-      overlayPosition.y > trashBinRect.top &&
-      overlayPosition.y < trashBinRect.bottom &&
-      timezones.length > 1
-    ) {
-      setTimezones((timezones) => {
-        const updatedTimezones = timezones.filter((timezone) => timezone.id !== active.id)
-        return updatedTimezones
-      })
-    } else if (over && active.id !== over.id) {
+    if (over && active.id !== over.id) {
       setTimezones((timezones) => {
         const originalPos = getGutterPos(active.id)
         const newPos = getGutterPos(over.id)
@@ -371,6 +347,7 @@ function TimeGrid(props: IProps) {
         return timezones
       })
     }
+
     setOverlayPosition({ x: 0, y: 0 }) // Reset overlay position
     contentRef.current?.classList.remove('no-scroll')
   }
@@ -383,10 +360,10 @@ function TimeGrid(props: IProps) {
       onDragMove={handleDragMove}
     >
       <Flex className="cal-time-view" direction="column">
-        <TrashBin isDragging={isDragging} toRemove={toRemove} />
         <Flex>
           <GutterHeader
             addTimezones={addTimezones}
+            deleteTimezone={deleteTimezone}
             timezones={timezones}
             width={intitalGutterHeaderWidth + (timezones.length - 1) * gutterWidth}
             gutterWidth={gutterWidth}
@@ -406,7 +383,6 @@ function TimeGrid(props: IProps) {
             timezones={timezones}
             gutterRef={gutterRef}
             activeTimezoneId={activeTimezoneId}
-            toRemove={toRemove}
           />
           <DragDropZone
             scrollContainerRef={contentRef}
