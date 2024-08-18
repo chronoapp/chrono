@@ -671,7 +671,9 @@ class EventRepository:
         elif prevEvent:
             # Remove the existing event's private properties if it has been removed.
             # Need to copy the extended properties to a new dict to avoid SQLAlchemy errors.
-            existingProperties = json.loads(json.dumps(dict(prevEvent.extended_properties or {})))
+            existingProperties = (
+                json.loads(json.dumps(dict(prevEvent.extended_properties or {}))) or {}
+            )
             if existingProperties.get('private', {}).get('chrono_conference'):
                 del existingProperties['private']['chrono_conference']
 
