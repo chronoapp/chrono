@@ -102,10 +102,10 @@ class Source(BaseModel):
 
 class Attachment(BaseModel):
     fileUrl: str
-    title: str
-    mimeType: str
-    iconLink: str
-    fileId: str
+    iconLink: str | None = None
+    mimeType: str | None = None
+    fileId: str | None = None
+    title: str | None = None
 
 
 class WorkingLocation(BaseModel):
